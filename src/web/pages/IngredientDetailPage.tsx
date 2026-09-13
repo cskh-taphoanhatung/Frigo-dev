@@ -103,6 +103,9 @@ export const IngredientDetailPage: React.FC = () => {
   }
 
   const expiry = presentExpiry(item);
+  const status = item.freshness === 'out_of_stock' ? 'out_of_stock'
+    : expiry.tone === 'unknown' ? 'unknown'
+      : expiry.tone === 'estimated' ? 'estimated' : item.freshness;
   const matchingRecipes = ALL_RECIPES.filter((recipe) =>
     recipe.ingredients.some((ingredient) =>
       ingredient.ingredientId === item.ingredientId
@@ -127,7 +130,7 @@ export const IngredientDetailPage: React.FC = () => {
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-heading font-bold text-xl text-slate-900 leading-tight">{item.name}</h3>
-              <StatusChip status={item.freshness} />
+              <StatusChip status={status} />
             </div>
             <p className="text-sm font-semibold text-emerald-700">{item.quantity} {item.unit}</p>
           </div>

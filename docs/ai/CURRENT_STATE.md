@@ -1,5 +1,54 @@
 # Frigo current state — isolated T09 development
 
+## Current authoritative state — T13B-B quota-safe WIP, 2026-09-13
+
+Implementation stopped on the owner's instruction. The focused Part B preflight
+completed **109/109 tests in 6 files**; full/frozen verification and final acceptance
+are not complete. Repository access now returns 404, so publication/equality is not
+verified. Actual branch base is `c31567ec7dfa8f95808c20c834b327cbb3425f9c`, not the
+safe-stop expected documentation base `69b0dc676fcb4136861a8ca0c66994259eba5116`.
+Read [T13B_B_WIP_HANDOFF.md](inventory-truth/t13/T13B_B_WIP_HANDOFF.md) for changed
+files, executed checks, pending review, migration status and exact resumption steps.
+No further implementation, main merge, deployment or remote D1 work is authorized.
+
+## Current authoritative state — T13B-A backend checkpoint, 2026-09-13
+
+**T13B-A COMPLETE — READY FOR T13B-B.** This is backend-only continuation,
+not final T13 certification. The older T13 completion claim below is historical.
+Repository ID **1364064929**, current owner/name **vn-2l/frigo-dev**; branch
+`hoplite/megara-hyblaia-888f1514`, exact base `3458c6cb971f5d96fce8eda3abc3d708437ce713`.
+Main remains `d1b06732f8a80db4e77986df31ff28d9f04641fa`; no merge/rebase/deploy.
+
+**T13B_A_CHECKPOINT=c31567ec7dfa8f95808c20c834b327cbb3425f9c** was committed,
+published without force, fetched and verified equal to the remote branch.
+Documentation follows separately; this is not a final application freeze.
+
+Adopted receipts create one new T09 RECEIPT lot per accepted line, preserving old
+manual/receipt lots and separate purchase facts, storage and expiry. Fridge SCAN
+retains grouped CORRECT addition. Raw/confirmed correction evidence is validated
+command intent in the existing receipt fingerprint and event metadata fingerprint;
+`correctionOf()` is used in production. T10 rawName uses retained OCR, not the
+reviewed name; absent raw stays null with a real subject identity. Concurrent and
+post-commit response-loss attempts recover through scoped confirmed-status replay,
+without repeating stock writes. Review/observation/command/status atomicity remains.
+
+Executed: focused backend **1,122/1,122 (17 files)**; real local D1 **92/92
+(5 files; 11 new)**; `pnpm typecheck`; scoped ESLint on all six changed code/test
+files; `git diff --check`, scope/ancestry/migration checks — PASS. Four new regressions
+fail on the exact pre-fix base as expected. Full commands, initial failures and fixes:
+`inventory-truth/t13/T13B_A_HANDOFF.md`. In particular, the initial D1 race failure
+(91/92) was fixed rather than weakening its both-success/exactly-once assertions.
+
+Migration count **31**; 0001–0031 unchanged, no 0032. Focused writer UNKNOWN **0**,
+canonical reader UNKNOWN **0**; T09/T11 authority unchanged. No frontend, protected
+payment/auth, Week, setup or infrastructure change.
+
+**NOT RUN — DEFERRED TO T13B-B FINAL VERIFICATION:** full application suite,
+full lint/build, dedicated migration smoke/schema/upgrade gates, browser/mobile
+checks, receipt/scan UX and adoption path, final T13 matrix/certification.
+Next: continue from the published documentation HEAD with this exact application
+checkpoint, following `T13B_A_HANDOFF.md` and DEC-016; do not start from main.
+
 ## Current authoritative state — T13 Receipt/Vision Truth & Inventory UX V2, 2026-09-13
 
 **Verdict: T13 IMPLEMENTED AND VERIFIED on branch `hoplite/lindos-0368e413`; NOT merged to

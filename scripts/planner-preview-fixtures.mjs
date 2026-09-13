@@ -1,4 +1,5 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { seedT13ReviewEvidence } from './t13-preview-fixtures.mjs';
 
 export const PREVIEW_USER_ID = 'planner-preview-user';
 export const PREVIEW_HOUSEHOLD_ID = 'planner-preview-household';
@@ -150,6 +151,9 @@ export function createPreviewControls({ getDatabase, resetDatabase }) {
     if (request.method !== 'POST') return new Response(null, { status: 405, headers: { ...headers, Allow: 'POST' } });
     if (url.pathname === '/__preview/state') {
       return Response.json(previewFixtureState(getDatabase()), { headers });
+    }
+    if (url.pathname === '/__preview/t13-scans') {
+      return Response.json(seedT13ReviewEvidence(getDatabase(), PREVIEW_HOUSEHOLD_ID, PREVIEW_USER_ID), { headers });
     }
     if (url.pathname === '/__preview/stale-inventory') {
       getDatabase().execute("UPDATE inventory_items SET quantity = quantity + 1, version = version + 1 WHERE id = 'preview-stock-chicken'");

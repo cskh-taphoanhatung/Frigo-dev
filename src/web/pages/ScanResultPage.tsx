@@ -3,13 +3,22 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useScanStore } from '../stores/useScanStore';
 import { api } from '../services/api';
 import { TopBar } from '../components/common/TopBar';
-import { QuantityStepper } from '../components/common/QuantityStepper';
 import { Button } from '../components/common/Button';
 import { getIngredientImage } from '../lib/ingredient-images';
 import { Plus, Trash2, CheckCircle2, X } from 'lucide-react';
 import { StandardUnit } from '@frigo/domain';
 import { capturePrivateSession } from '../lib/private-session';
 import { invalidateInventoryDependents } from '../lib/query-invalidation';
+import { presentConfidence } from '../lib/inventory-truth';
+
+const UNITS: StandardUnit[] = ['piece', 'g', 'kg', 'ml', 'l', 'pack', 'bunch', 'slice'];
+const fieldClass = 'mt-1 w-full min-w-0 h-11 px-3 rounded-lg border border-slate-200 text-sm text-slate-900 bg-white focus:border-emerald-600 focus:outline-none';
+const confidenceClass = {
+  unknown: 'text-slate-600 bg-slate-100',
+  low: 'text-amber-900 bg-amber-100',
+  medium: 'text-amber-800 bg-amber-50',
+  high: 'text-emerald-700 bg-emerald-50',
+};
 
 export const ScanResultPage: React.FC = () => {
   const navigate = useNavigate();
@@ -26,11 +35,12 @@ export const ScanResultPage: React.FC = () => {
   const [scanStatus, setScanStatus] = useState<'pending' | 'ready' | 'failed'>(
     items.length > 0 || effectiveScanId.startsWith('scan_offline_') ? 'ready' : 'pending'
   );
+  const acceptedCount = items.filter((item) => !item.rejected).length;
 
   // Async queue canary returns a pending scan. Poll only while the result is
   // pending so the existing review flow remains unchanged for sync scans.
   useEffect(() => {
-    if (items.length > 0 || !effectiveScanId || effectiveScanId.startsWith('scan_offline_')) return;
+    if (scanStatus !== 'pending' || items.length > 0 || !effectiveScanId || effectiveScanId.startsWith('scan_offline_')) return;
     let cancelled = false;
     let attempts = 0;
     const poll = async () => {
@@ -56,16 +66,17 @@ export const ScanResultPage: React.FC = () => {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [effectiveScanId, items.length]);
+  }, [effectiveScanId, items.length, scanStatus]);
 
-  const handleUpdateQty = (id: string, delta: number) => {
-    const item = items.find((i) => i.id === id);
-    if (!item) return;
-    updateItem(id, { estimatedQuantity: Math.max(1, item.estimatedQuantity + delta) });
+  const handleEstimateExpiry = (id: string, days: number) => {
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    const expiryDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    updateItem(id, { expiryDate, expiryEstimated: true });
   };
 
   const handleConfirm = async () => {
-    if (items.length === 0 || scanStatus !== 'ready') return;
+    if (items.length === 0 || scanStatus !== 'ready' || isConfirming) return;
     const isCurrent = capturePrivateSession();
     setConfirmError(null);
     setIsConfirming(true);
@@ -108,78 +119,133 @@ export const ScanResultPage: React.FC = () => {
           <div className="text-xs">
             <p className="font-heading font-bold text-sm text-slate-900">
               {items.length > 0
-                ? `AI đã phát hiện ${items.length} nguyên liệu`
+                ? `${items.length} nguyên liệu cần kiểm tra`
                 : scanStatus === 'failed'
                   ? 'Bản quét không thể xử lý'
-                  : 'Đang chờ AI hoàn tất bản quét'}
+                  : scanStatus === 'ready'
+                    ? 'Chưa có nguyên liệu trong danh sách'
+                    : 'Đang chờ AI hoàn tất bản quét'}
             </p>
             <p className="text-slate-600 mt-0.5">
               {items.length > 0
-                ? 'Bạn có thể sửa số lượng, tên hoặc xóa trước khi bấm lưu.'
+                ? 'Sửa tên, số lượng, đơn vị, nơi bảo quản, hạn dùng hoặc từ chối từng dòng trước khi lưu.'
                 : scanStatus === 'failed'
                   ? 'Vui lòng quay lại và thử lại với ảnh khác.'
-                  : 'Kết quả sẽ tự động xuất hiện khi queue xử lý xong.'}
+                  : scanStatus === 'ready'
+                    ? 'Bạn có thể thêm nguyên liệu thủ công trước khi xác nhận.'
+                    : 'Kết quả sẽ tự động xuất hiện khi queue xử lý xong.'}
             </p>
           </div>
         </div>
 
         {/* Detected Items List */}
-        <div className="space-y-2.5">
-          {items.map((item) => (
-            <div
-              key={item.id}
-              className="bg-white rounded-xl p-3 flex items-center justify-between border border-slate-200/80 shadow-xs"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-12 h-12 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 p-1.5 overflow-hidden">
-                  <img
-                    src={getIngredientImage(item.canonicalId, item.rawName)}
-                    alt={item.rawName}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <h4 className="font-heading font-semibold text-sm text-slate-900 truncate">
-                      {item.rawName}
-                    </h4>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/60">
-                      {Math.round((item.confidence || 0.9) * 100)}%
-                    </span>
+        <p className="text-xs text-slate-600">
+          Bản quét tủ lạnh bổ sung số lượng vào nguyên liệu phù hợp đã có; không đổi nơi bảo quản hay hạn dùng của lô cũ.
+        </p>
+        <form id="scan-review" className="space-y-3" onSubmit={(event) => {
+          event.preventDefault();
+          void handleConfirm();
+        }}>
+          {items.map((item, index) => {
+            const confidence = presentConfidence(item.confidence);
+            const persisted = item.sourceItemId !== undefined;
+            const raw = item.rawEvidence;
+            const corrected = raw && (
+              (raw.rawName != null && raw.rawName !== item.rawName)
+              || (raw.estimatedQuantity != null && raw.estimatedQuantity !== item.estimatedQuantity)
+              || (raw.unit != null && raw.unit !== item.unit)
+            );
+            return (
+              <article key={item.id} data-scan-item-id={item.id} aria-label={`Nguyên liệu ${index + 1}`}
+                className={`rounded-xl p-3 border shadow-xs ${item.rejected ? 'bg-rose-50 border-rose-200' : 'bg-white border-slate-200/80'}`}>
+                <div className="flex items-start gap-3">
+                  <img src={getIngredientImage(item.canonicalId ?? undefined, item.rawName)} alt=""
+                    className="w-10 h-10 object-contain shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <h2 className="font-heading font-semibold text-sm text-slate-900 break-words">{item.rawName}</h2>
+                    {persisted ? (
+                      <span className={`inline-block text-xs px-1.5 py-0.5 rounded font-semibold ${confidenceClass[confidence.tone]}`}>
+                        {confidence.label}
+                      </span>
+                    ) : <span className="text-xs text-slate-600">Nhập thủ công</span>}
+                    {persisted && (
+                      <p className="text-xs text-slate-600 mt-1 break-words" data-raw-evidence>
+                        AI đọc: {raw
+                          ? `${raw.rawName ?? 'Không rõ tên'} · ${raw.estimatedQuantity ?? 'Không rõ số lượng'} ${raw.unit ?? 'Không rõ đơn vị'}`
+                          : 'Không có dữ liệu gốc'}
+                      </p>
+                    )}
+                    {corrected && <p className="text-xs text-amber-800 mt-1">Đã chỉnh sửa so với dữ liệu gốc</p>}
+                    {item.rejected && <p className="text-xs font-semibold text-rose-800 mt-1">Đã từ chối · Không thêm vào tủ lạnh</p>}
                   </div>
-                  <p className="text-xs text-slate-500">
-                    Bảo quản: Ngăn mát
-                  </p>
+                  <button type="button" disabled={isConfirming}
+                    onClick={() => persisted ? updateItem(item.id, { rejected: !item.rejected }) : removeItem(item.id)}
+                    aria-pressed={persisted ? Boolean(item.rejected) : undefined}
+                    className="p-2 rounded-lg text-rose-700 hover:bg-rose-100 tap-target shrink-0 text-xs font-semibold"
+                    aria-label={persisted ? (item.rejected ? 'Khôi phục dòng này' : 'Từ chối dòng này') : 'Xóa dòng thủ công'}>
+                    {persisted ? (item.rejected ? 'Khôi phục' : 'Từ chối') : <Trash2 className="w-4 h-4" />}
+                  </button>
                 </div>
-              </div>
-
-              {/* Edit Controls */}
-              <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                <QuantityStepper
-                  quantity={item.estimatedQuantity}
-                  unit={item.unit}
-                  onIncrement={() => handleUpdateQty(item.id, item.unit === 'g' ? 50 : 1)}
-                  onDecrement={() => handleUpdateQty(item.id, item.unit === 'g' ? -50 : -1)}
-                />
-
-                <button
-                  onClick={() => removeItem(item.id)}
-                  className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 active:scale-95 transition-colors tap-target flex items-center justify-center"
-                  aria-label="Xóa món này"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+                <fieldset disabled={isConfirming} className="mt-3 grid grid-cols-2 gap-3 min-w-0">
+                  <label className="col-span-2 text-xs font-semibold text-slate-700">
+                    Tên nguyên liệu
+                    <input className={fieldClass} value={item.rawName} required pattern=".*\S.*"
+                      onChange={(event) => updateItem(item.id, { rawName: event.target.value })} />
+                  </label>
+                  <label className="text-xs font-semibold text-slate-700">
+                    Số lượng
+                    <input className={fieldClass} type="number" min="0.001" max="10000" step="any" required
+                      value={item.estimatedQuantity || ''}
+                      onChange={(event) => updateItem(item.id, { estimatedQuantity: Number(event.target.value) })} />
+                  </label>
+                  <label className="text-xs font-semibold text-slate-700">
+                    Đơn vị
+                    <select className={fieldClass} value={item.unit}
+                      onChange={(event) => updateItem(item.id, { unit: event.target.value as StandardUnit })}>
+                      {UNITS.map((unit) => <option key={unit} value={unit}>{unit}</option>)}
+                    </select>
+                  </label>
+                  <label className="text-xs font-semibold text-slate-700">
+                    Bảo quản
+                    <select className={fieldClass} value={item.storage}
+                      onChange={(event) => updateItem(item.id, { storage: event.target.value as typeof item.storage })}>
+                      <option value="fridge">Ngăn mát</option>
+                      <option value="freezer">Ngăn đông</option>
+                      <option value="pantry">Kệ bếp</option>
+                    </select>
+                  </label>
+                  <label className="text-xs font-semibold text-slate-700">
+                    Hạn dùng
+                    <input className={`${fieldClass} px-1`} type="date" value={item.expiryDate ?? ''}
+                      onChange={(event) => updateItem(item.id, {
+                        expiryDate: event.target.value || undefined, expiryEstimated: false,
+                      })} />
+                  </label>
+                  <div className="col-span-2">
+                    <p className="text-xs text-slate-600" data-expiry-state>
+                      {!item.expiryDate ? 'Chưa rõ hạn dùng' : item.expiryEstimated ? 'Hạn dùng ước tính' : 'Ngày do bạn xác nhận'}
+                    </p>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {[3, 7].map((days) => (
+                        <button key={days} type="button" className="text-xs px-2 py-1.5 rounded-lg border border-slate-200 tap-target"
+                          onClick={() => handleEstimateExpiry(item.id, days)}>Ước tính {days} ngày</button>
+                      ))}
+                      <button type="button" className="text-xs px-2 py-1.5 rounded-lg border border-slate-200 tap-target"
+                        onClick={() => updateItem(item.id, { expiryDate: undefined, expiryEstimated: false })}>Không rõ hạn dùng</button>
+                    </div>
+                  </div>
+                </fieldset>
+              </article>
+            );
+          })}
+        </form>
 
         {/* Add Missing Item Button */}
         <Button
           variant="outline"
           fullWidth
           size="md"
+          disabled={isConfirming || scanStatus !== 'ready'}
           onClick={() => setIsManualAddOpen(true)}
           className="flex items-center justify-center gap-1.5 text-xs text-slate-700"
         >
@@ -193,13 +259,14 @@ export const ScanResultPage: React.FC = () => {
         <Button
           fullWidth
           size="lg"
-          onClick={handleConfirm}
+          type="submit"
+          form="scan-review"
           isLoading={isConfirming}
           disabled={items.length === 0 || scanStatus !== 'ready'}
           className="flex items-center justify-center gap-2"
         >
           <CheckCircle2 className="w-5 h-5" />
-          <span>Xác nhận nguyên liệu ({items.length} món)</span>
+          <span>Xác nhận nguyên liệu ({acceptedCount} món)</span>
         </Button>
       </div>
 
@@ -225,8 +292,9 @@ export const ScanResultPage: React.FC = () => {
 
             <form onSubmit={handleAddManualItem} className="space-y-3.5">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Tên nguyên liệu</label>
+                <label htmlFor="scan-add-name" className="block text-xs font-semibold text-slate-700 mb-1.5">Tên nguyên liệu</label>
                 <input
+                  id="scan-add-name"
                   type="text"
                   required
                   value={addName}
@@ -238,10 +306,13 @@ export const ScanResultPage: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">Số lượng</label>
+                  <label htmlFor="scan-add-quantity" className="block text-xs font-semibold text-slate-700 mb-1.5">Số lượng</label>
                   <input
+                    id="scan-add-quantity"
                     type="number"
-                    min="1"
+                    min="0.001"
+                    max="10000"
+                    step="any"
                     required
                     value={addQty}
                     onChange={(e) => setAddQty(Number(e.target.value))}
@@ -250,18 +321,14 @@ export const ScanResultPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">Đơn vị</label>
+                  <label htmlFor="scan-add-unit" className="block text-xs font-semibold text-slate-700 mb-1.5">Đơn vị</label>
                   <select
+                    id="scan-add-unit"
                     value={addUnit}
                     onChange={(e) => setAddUnit(e.target.value as StandardUnit)}
                     className="w-full h-11 px-2.5 rounded-lg border border-slate-200/80 text-xs font-semibold text-slate-800 bg-white focus:border-emerald-600 focus:outline-none transition-colors"
                   >
-                    <option value="piece">quả / củ / bìa</option>
-                    <option value="g">gam (g)</option>
-                    <option value="kg">kg</option>
-                    <option value="bunch">bó</option>
-                    <option value="pack">gói / hộp</option>
-                    <option value="ml">ml</option>
+                    {UNITS.map((unit) => <option key={unit} value={unit}>{unit}</option>)}
                   </select>
                 </div>
               </div>

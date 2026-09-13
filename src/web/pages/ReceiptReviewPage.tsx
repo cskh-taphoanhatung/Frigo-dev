@@ -1,13 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { TopBar } from '../components/common/TopBar';
-import { QuantityStepper } from '../components/common/QuantityStepper';
 import { Button } from '../components/common/Button';
 import { api } from '../services/api';
 import { useWeekStore } from '../stores/useWeekStore';
 import { getIngredientImage } from '../lib/ingredient-images';
 import { CheckCircle2, ShoppingBag, Trash2, Store, Calendar, CalendarCheck } from 'lucide-react';
-import { StandardUnit } from '@frigo/domain';
+import type { StandardUnit } from '@frigo/domain';
 import { clsx } from 'clsx';
 import { capturePrivateSession } from '../lib/private-session';
 import { invalidateInventoryDependents } from '../lib/query-invalidation';
@@ -17,19 +16,55 @@ import { ApiError } from '../services/http';
 interface ReceiptItemState {
   id: string;
   rawName: string;
-  canonicalId?: string;
-  estimatedQuantity: number;
+  canonicalId?: string | null;
+  estimatedQuantity: number | '';
   unit: StandardUnit;
   unitPriceVnd?: number;
   totalPriceVnd?: number;
   category?: string;
   storage: 'fridge' | 'freezer' | 'pantry';
   /** Provider-reported confidence; undefined means the model reported none. */
-  confidence?: number;
+  confidence?: number | null;
   /** Raw OCR extraction, retained separately from the confirmed value. */
-  rawEvidence?: { rawName?: string; estimatedQuantity?: number; unit?: StandardUnit };
+  rawEvidence?: { rawName?: string | null; estimatedQuantity?: number | null; unit?: StandardUnit | null };
   /** Explicit reviewer rejection, recorded durably by the server. */
   rejected?: boolean;
+  reviewState?: 'PENDING' | 'CONFIRMED' | 'REJECTED';
+  expiryDate?: string;
+  expiryEstimated?: boolean;
+}
+
+interface ReceiptState {
+  id: string;
+  status: 'pending' | 'processing' | 'ready' | 'confirmed' | 'failed';
+  items: ReceiptItemState[];
+  merchantName?: string;
+  purchaseDate?: string;
+  invoiceNumber?: string;
+  totalAmountVnd?: number;
+}
+
+const RECEIPT_UNITS: ReadonlyArray<{ value: StandardUnit; label: string }> = [
+  { value: 'g', label: 'g' }, { value: 'kg', label: 'kg' },
+  { value: 'ml', label: 'ml' }, { value: 'l', label: 'l' },
+  { value: 'piece', label: 'Cái / quả' }, { value: 'pack', label: 'Gói' },
+  { value: 'bunch', label: 'Bó' }, { value: 'slice', label: 'Lát' },
+];
+
+function reviewedItems(receipt: ReceiptState): ReceiptItemState[] {
+  return receipt.items.map((item) => ({
+    ...item, rejected: item.reviewState === 'REJECTED' || item.rejected === true,
+  }));
+}
+
+function validQuantity(quantity: number | ''): boolean {
+  return typeof quantity === 'number' && Number.isFinite(quantity) && quantity > 0 && quantity <= 10000;
+}
+
+function validExpiry(date?: string): boolean {
+  if (!date) return true;
+  const timestamp = Date.parse(`${date}T00:00:00Z`);
+  return Number.isFinite(timestamp) && new Date(timestamp).toISOString().slice(0, 10) === date;
 }
 
 export const ReceiptReviewPage: React.FC = () => {
@@ -48,130 +83,114 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
   }, []);
 
   // History survives logout. Only the authorized scan endpoint may supply receipt data.
-  const [liveReceipt, setLiveReceipt] = useState<any>({
+  const [liveReceipt, setLiveReceipt] = useState<ReceiptState>({
     id: receiptScanId || '', status: receiptScanId ? 'pending' : 'failed', items: [],
   });
   const [pollError, setPollError] = useState<string | null>(
     receiptScanId ? null : 'Không tìm thấy bản quét hóa đơn. Vui lòng quay lại và quét ảnh mới.'
   );
+  const [retryIndex, setRetryIndex] = useState(0);
+  const [items, setItems] = useState<ReceiptItemState[]>([]);
   const isPending = liveReceipt.status === 'pending' || liveReceipt.status === 'processing';
-  const isReady = liveReceipt.status === 'ready' || liveReceipt.status === 'confirmed';
+  const isReady = liveReceipt.status === 'ready';
+  const isConfirmed = liveReceipt.status === 'confirmed';
 
   // Async receipt scans arrive as a pending DTO. Poll the tenant-scoped scan
   // endpoint until the queue processor publishes ready/failed state.
   useEffect(() => {
-    if (!liveReceipt.id || !isPending) return;
+    if (!receiptScanId) return;
     let cancelled = false;
     let attempts = 0;
+    let timer: number;
+    const isCurrent = capturePrivateSession();
+    setPollError(null);
+    setLiveReceipt((previous) => ({ ...previous, status: 'pending' }));
     const poll = async () => {
       try {
-        const next = await api.getScan(liveReceipt.id);
-        if (cancelled) return;
+        const next: ReceiptState = await api.getScan(receiptScanId);
+        if (cancelled || !isCurrent()) return;
         setLiveReceipt(next);
+        setItems(reviewedItems(next));
         if (next.status === 'pending' || next.status === 'processing') {
           attempts += 1;
-          if (attempts < 60) window.setTimeout(poll, 1000);
+          if (attempts < 60) timer = window.setTimeout(poll, 1000);
           else setPollError('Bản quét đang mất nhiều thời gian hơn dự kiến. Vui lòng thử lại sau.');
         } else if (next.status === 'failed') {
           setPollError('Không thể đọc hóa đơn. Vui lòng thử lại với ảnh rõ nét hơn.');
         }
       } catch {
-        if (!cancelled) setPollError('Không thể cập nhật trạng thái hóa đơn. Vui lòng tải lại trang.');
+        if (!cancelled && isCurrent()) setPollError('Không thể cập nhật trạng thái hóa đơn. Vui lòng thử lại.');
       }
     };
-    const timer = window.setTimeout(poll, 500);
+    timer = window.setTimeout(poll, 500);
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [liveReceipt.id, isPending]);
-
-  const [items, setItems] = useState<ReceiptItemState[]>([]);
-  useEffect(() => {
-    if (Array.isArray(liveReceipt.items) && liveReceipt.items.length > 0) {
-      setItems(liveReceipt.items);
-    }
-  }, [liveReceipt.items]);
+  }, [receiptScanId, retryIndex]);
   // Rejected lines stay in the request (the server records the rejection)
   // but they are not part of what will enter the fridge.
   const acceptedItems = items.filter((it) => !it.rejected);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successToast, setSuccessToast] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const invalidItems = acceptedItems.some((item) => !item.rawName.trim()
+    || !validQuantity(item.estimatedQuantity) || !validExpiry(item.expiryDate));
+  const canSubmit = isReady && items.length > 0 && !invalidItems && !isSubmitting;
 
-  const handleUpdateQty = (id: string, delta: number) => {
-    setItems((prev) =>
-      prev.map((it) => {
-        if (it.id === id) {
-          const newQty = Math.max(1, it.estimatedQuantity + delta);
-          const newTotal = it.unitPriceVnd ? it.unitPriceVnd * (it.unit === 'g' ? newQty / 1000 : newQty) : undefined;
-          return { ...it, estimatedQuantity: newQty, totalPriceVnd: newTotal };
-        }
-        return it;
-      })
-    );
+  const updateItem = (id: string, changes: Partial<ReceiptItemState>) => {
+    setItems((prev) => prev.map((item) => item.id === id ? { ...item, ...changes } : item));
   };
 
-  // T13: rejecting a line is durable review evidence, so it is toggled and
-  // submitted explicitly rather than silently dropped from the request.
-  const handleToggleReject = (id: string) => {
-    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, rejected: !it.rejected } : it)));
-  };
-
-  const handleRename = (id: string, rawName: string) => {
-    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, rawName } : it)));
-  };
-
-  const handleStorage = (id: string, storage: 'fridge' | 'freezer' | 'pantry') => {
-    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, storage } : it)));
-  };
-
-  const handleImportToFridge = async () => {
-    if (acceptedItems.length === 0 || !isReady) return;
+  const handleConfirm = async (openWeek = false) => {
+    if (!canSubmit) return;
     const isCurrent = capturePrivateSession();
     setIsSubmitting(true);
+    setSubmitError(null);
     try {
-      await api.confirmScan(liveReceipt.id, items);
+      // Purchase facts and raw evidence remain server-owned, never recomputed from edits.
+      const confirmation = items.map((item) => item.rejected ? { id: item.id, rejected: true } : {
+        id: item.id, rawName: item.rawName.trim(), estimatedQuantity: item.estimatedQuantity,
+        unit: item.unit, canonicalId: item.canonicalId, category: item.category,
+        storage: item.storage, expiryDate: item.expiryDate || undefined,
+        expiryEstimated: Boolean(item.expiryDate && item.expiryEstimated), rejected: false,
+      });
+      const result = await api.confirmScan(liveReceipt.id, confirmation);
       if (!mounted.current || !isCurrent()) return;
       void invalidateInventoryDependents();
-      setSuccessToast('Đã nhập nguyên liệu hóa đơn vào tủ lạnh thành công!');
+      setSuccessToast(result?.pendingSync
+        ? 'Đã lưu yêu cầu, đang chờ đồng bộ khi có kết nối.'
+        : acceptedItems.length > 0 ? 'Đã nhập nguyên liệu hóa đơn vào tủ lạnh thành công!' : 'Đã lưu các dòng bỏ qua.');
       setTimeout(() => {
-        if (mounted.current && isCurrent()) navigate('/fridge');
+        if (mounted.current && isCurrent()) {
+          navigate(openWeek && currentPlan ? `/week/${currentPlan.id}/shopping` : '/fridge');
+        }
       }, 1200);
     } catch (err) {
       if (!mounted.current || !isCurrent()) return;
       // Recoverable domain states get specific guidance, never raw JSON.
       const code = err instanceof ApiError ? err.code : null;
-      setPollError(presentDomainError(code, 'Chưa nhập được nguyên liệu. Vui lòng thử lại.').message);
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleReconcileWeeklyPlan = async () => {
-    if (acceptedItems.length === 0 || !isReady) return;
-    const isCurrent = capturePrivateSession();
-    setIsSubmitting(true);
-    try {
-      await api.confirmScan(liveReceipt.id, items);
-      if (!mounted.current || !isCurrent()) return;
-      setSuccessToast('Đã đối chiếu hóa đơn & cập nhật tủ lạnh!');
-      setTimeout(() => {
-        if (!mounted.current || !isCurrent()) return;
-        if (currentPlan) {
-          navigate(`/week/${currentPlan.id}/shopping`);
-        } else {
-          navigate('/week');
+      const presentation = presentDomainError(code, 'Chưa lưu được hóa đơn. Vui lòng thử lại.');
+      if (presentation.refetch) {
+        try {
+          const next: ReceiptState = await api.getScan(liveReceipt.id);
+          if (!mounted.current || !isCurrent()) return;
+          setLiveReceipt(next);
+          setItems(reviewedItems(next));
+        } catch {
+          if (!mounted.current || !isCurrent()) return;
+          setSubmitError('Thông tin đã thay đổi nhưng chưa tải lại được. Vui lòng tải lại trang trước khi thử lại.');
+          setIsSubmitting(false);
+          return;
         }
-      }, 1200);
-    } catch (err) {
-      console.error('Failed to reconcile with week plan:', err);
+      }
+      setSubmitError(presentation.message);
       setIsSubmitting(false);
     }
   };
-
-  const calculatedTotal = acceptedItems.reduce((sum, it) => sum + (it.totalPriceVnd || 0), 0);
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] pb-32 max-w-md mx-auto">
+    <div className="min-h-screen bg-[#F8FAF9] pb-[calc(12rem+env(safe-area-inset-bottom))] max-w-md mx-auto">
       <TopBar showBack title="Chi tiết Hóa đơn" subtitle="Bóc tách tự động bởi AI Vision" />
 
       {/* Success Toast */}
@@ -183,15 +202,21 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
       )}
 
       <div className="px-4 pt-3 space-y-4">
-        {isPending && (
+        {isPending && !pollError && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
             Hóa đơn đang được AI xử lý nền. Trang sẽ tự cập nhật khi hoàn tất...
           </div>
         )}
         {pollError && (
-          <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
+          <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
             {pollError}
+            {receiptScanId && <button className="ml-2 underline font-semibold tap-target" onClick={() => setRetryIndex((value) => value + 1)}>Thử tải lại</button>}
           </div>
+        )}
+        {isConfirmed && (
+          <p role="status" className="rounded-xl bg-emerald-50 p-3 text-xs text-emerald-800">
+            Hóa đơn đã được xác nhận. Thông tin dưới đây đã lưu; sửa lô trong tủ lạnh nếu cần.
+          </p>
         )}
         {/* Receipt Header Card */}
         <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-xs space-y-3">
@@ -217,9 +242,9 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
           </div>
 
           <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-            <span className="text-xs text-slate-500">Tổng thanh toán:</span>
-            <span className="font-heading font-bold text-lg text-slate-900">
-              {presentPrice(calculatedTotal || liveReceipt.totalAmountVnd)}
+            <span className="text-xs text-slate-500">Tổng hóa đơn (OCR):</span>
+            <span data-testid="receipt-total" className="font-heading font-bold text-lg text-slate-900">
+              {presentPrice(liveReceipt.totalAmountVnd)}
             </span>
           </div>
         </div>
@@ -229,16 +254,18 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
           <h4 className="font-heading font-semibold text-sm text-slate-900">
             Hàng hóa nhận diện ({items.length} món)
           </h4>
-          <span className="text-xs text-slate-500">Chạm để chỉnh số lượng</span>
+          <span className="text-xs text-slate-500">Kiểm tra từng dòng</span>
         </div>
 
         {/* Items List */}
         <div className="space-y-2.5">
           {items.map((item) => {
             const confidence = presentConfidence(item.confidence);
-            const corrected = item.rawEvidence
-              && (item.rawEvidence.estimatedQuantity !== undefined
-                && item.rawEvidence.estimatedQuantity !== item.estimatedQuantity);
+            const raw = item.rawEvidence;
+            const corrected = (raw?.rawName != null && raw.rawName !== item.rawName)
+              || (raw?.estimatedQuantity != null && raw.estimatedQuantity !== item.estimatedQuantity)
+              || (raw?.unit != null && raw.unit !== item.unit);
+            const disabled = item.rejected || !isReady || isSubmitting;
             return (
               <div
                 key={item.id}
@@ -246,8 +273,8 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
                 className={clsx('bg-white rounded-xl p-3 border shadow-xs space-y-2',
                   item.rejected ? 'border-rose-200 bg-rose-50/40 opacity-70' : 'border-slate-200/80')}
               >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex flex-1 items-center gap-3 min-w-0">
                     <div className="w-12 h-12 rounded-lg bg-slate-50 border border-slate-100 p-1.5 shrink-0 flex items-center justify-center">
                       <img
                         src={getIngredientImage(item.canonicalId || item.rawName)}
@@ -260,14 +287,14 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
                       <input
                         id={`receipt-name-${item.id}`}
                         value={item.rawName}
-                        onChange={(event) => handleRename(item.id, event.target.value)}
-                        disabled={item.rejected}
+                        onChange={(event) => updateItem(item.id, { rawName: event.target.value })}
+                        disabled={disabled}
+                        aria-invalid={!item.rejected && !item.rawName.trim()}
                         className="w-full font-heading font-semibold text-sm text-slate-900 bg-transparent border-b border-transparent focus:border-emerald-500 focus:outline-none disabled:text-slate-400"
                       />
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        {/* Missing price reads as unknown; never 0đ. */}
                         <span className="text-xs font-semibold text-emerald-700" data-testid="receipt-price">
-                          {presentPrice(item.totalPriceVnd)}
+                          Thành tiền OCR: {presentPrice(item.totalPriceVnd)}
                         </span>
                         <span
                           data-testid="receipt-confidence"
@@ -280,19 +307,15 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
                           {confidence.label}
                         </span>
                       </div>
+                      {!item.canonicalId && <p className="text-[11px] text-amber-800 mt-1">Chưa nhận diện nguyên liệu chuẩn</p>}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <QuantityStepper
-                      quantity={item.estimatedQuantity}
-                      unit={item.unit}
-                      onIncrement={() => handleUpdateQty(item.id, item.unit === 'g' ? 100 : 1)}
-                      onDecrement={() => handleUpdateQty(item.id, item.unit === 'g' ? -100 : -1)}
-                    />
+                  <div className="shrink-0">
                     <button
                       type="button"
-                      onClick={() => handleToggleReject(item.id)}
+                      onClick={() => updateItem(item.id, { rejected: !item.rejected })}
+                      disabled={!isReady || isSubmitting}
                       aria-label={item.rejected ? `Khôi phục ${item.rawName}` : `Bỏ qua ${item.rawName}`}
                       aria-pressed={Boolean(item.rejected)}
                       className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors tap-target"
@@ -302,23 +325,69 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 flex-wrap">
-                  <label className="sr-only" htmlFor={`receipt-storage-${item.id}`}>Nơi bảo quản</label>
+                <div className="grid grid-cols-2 gap-2 text-xs text-slate-600">
+                  <label htmlFor={`receipt-quantity-${item.id}`}>
+                    Số lượng
+                    <input
+                      id={`receipt-quantity-${item.id}`}
+                      type="number" inputMode="decimal" min="0" max="10000" step="any"
+                      value={item.estimatedQuantity}
+                      disabled={disabled}
+                      aria-invalid={!item.rejected && !validQuantity(item.estimatedQuantity)}
+                      onChange={(event) => updateItem(item.id, {
+                        estimatedQuantity: event.target.value === '' ? '' : Number(event.target.value),
+                      })}
+                      className="w-full min-w-0 mt-1 rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-900"
+                    />
+                  </label>
+                  <label htmlFor={`receipt-unit-${item.id}`}>
+                    Đơn vị
+                    <select id={`receipt-unit-${item.id}`} value={item.unit} disabled={disabled}
+                      onChange={(event) => updateItem(item.id, { unit: event.target.value as StandardUnit })}
+                      className="w-full min-w-0 mt-1 rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-900">
+                      {RECEIPT_UNITS.map((unit) => <option key={unit.value} value={unit.value}>{unit.label}</option>)}
+                    </select>
+                  </label>
+                  <label htmlFor={`receipt-storage-${item.id}`}>Nơi bảo quản
                   <select
                     id={`receipt-storage-${item.id}`}
                     value={item.storage}
-                    disabled={item.rejected}
-                    onChange={(event) => handleStorage(item.id, event.target.value as 'fridge' | 'freezer' | 'pantry')}
-                    className="text-[11px] px-2 py-1 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 font-medium"
+                    disabled={disabled}
+                    onChange={(event) => updateItem(item.id, { storage: event.target.value as ReceiptItemState['storage'] })}
+                    className="w-full min-w-0 mt-1 rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-900"
                   >
                     <option value="fridge">Tủ mát</option>
                     <option value="freezer">Tủ đông</option>
                     <option value="pantry">Tủ khô</option>
                   </select>
-                  {corrected && (
-                    <span className="text-[10px] text-slate-500" data-testid="receipt-raw-evidence">
-                      AI đọc: {item.rawEvidence?.estimatedQuantity} {item.rawEvidence?.unit ?? item.unit}
-                    </span>
+                  </label>
+                  {!isConfirmed && <label htmlFor={`receipt-expiry-${item.id}`}>Hạn dùng trên nhãn
+                    <input id={`receipt-expiry-${item.id}`} type="date" value={item.expiryDate ?? ''}
+                      disabled={disabled}
+                      onChange={(event) => updateItem(item.id, { expiryDate: event.target.value || undefined, expiryEstimated: false })}
+                      className="w-full min-w-0 mt-1 rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-900" />
+                  </label>}
+                </div>
+                {!isConfirmed ? <div className="text-[11px] text-slate-500 space-y-1">
+                  <p data-testid="receipt-expiry-status">{item.expiryDate
+                    ? item.expiryEstimated ? 'Hạn dùng ước tính' : 'Hạn dùng do bạn cung cấp'
+                    : 'Chưa cung cấp hạn dùng. Hệ thống có thể gợi ý hạn dùng ước tính.'}</p>
+                  {item.expiryDate && <button disabled={disabled} onClick={() => updateItem(item.id, { expiryDate: undefined, expiryEstimated: false })}
+                    className="underline tap-target">Không rõ hạn dùng</button>}
+                </div> : <p className="text-[11px] text-slate-500">Hạn dùng đã lưu: xem chi tiết lô trong tủ lạnh.</p>}
+                {item.unitPriceVnd != null && <p className="text-[11px] text-slate-500">Đơn giá OCR: {presentPrice(item.unitPriceVnd)}</p>}
+                <details className="text-xs text-slate-600 break-words">
+                  <summary className="cursor-pointer py-1 font-medium">Xem OCR gốc và giá trị xác nhận{corrected ? ' · Đã chỉnh sửa' : ''}</summary>
+                  <p data-testid="receipt-raw-evidence" className="mt-1">
+                    OCR gốc: {raw?.rawName ?? 'Chưa rõ tên'} · {raw?.estimatedQuantity ?? 'Chưa rõ số lượng'} · {raw?.unit ?? 'Chưa rõ đơn vị'}
+                  </p>
+                  <p data-testid="receipt-confirmed-evidence" className="mt-1">
+                    {item.rejected ? 'Đã bỏ qua' : isConfirmed ? 'Đã xác nhận' : 'Bạn xác nhận'}: {item.rawName || 'Chưa có tên'} · {item.estimatedQuantity} · {item.unit}
+                  </p>
+                </details>
+                <div className="text-[11px]">
+                  {!item.rejected && (!item.rawName.trim() || !validQuantity(item.estimatedQuantity) || !validExpiry(item.expiryDate)) && (
+                    <p role="alert" className="text-rose-700">Cần có tên, số lượng lớn hơn 0 (tối đa 10.000) và ngày hợp lệ.</p>
                   )}
                   {item.rejected && (
                     <span className="text-[10px] font-semibold text-rose-700">Đã bỏ qua khỏi tủ lạnh</span>
@@ -328,7 +397,7 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
             );
           })}
 
-          {items.length === 0 && (
+          {items.length === 0 && !isPending && !pollError && (
             <div className="text-center py-10 bg-white rounded-xl p-6 border border-slate-200/80">
               <p className="text-xs text-slate-400">Không còn món nào trong hóa đơn</p>
             </div>
@@ -337,16 +406,19 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
       </div>
 
       {/* Floating Action Bottom */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-40 max-w-md mx-auto space-y-2 shadow-lg">
+      <div className="fixed bottom-0 left-0 right-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-40 max-w-md mx-auto space-y-2 shadow-lg">
+        {submitError && <p role="alert" className="text-xs text-rose-800">{submitError}</p>}
+        {isConfirmed ? <Button fullWidth onClick={() => navigate('/fridge')}>Xem tủ lạnh</Button> : <>
         <Button
           fullWidth
           size="lg"
-            disabled={acceptedItems.length === 0 || isSubmitting || !isReady}
-          onClick={handleImportToFridge}
+          disabled={!canSubmit}
+          onClick={() => void handleConfirm()}
           className="flex items-center justify-center gap-2"
         >
           <ShoppingBag className="w-4 h-4" />
-          <span>Nhập {acceptedItems.length} món vào Tủ lạnh</span>
+          <span>{isSubmitting ? 'Đang lưu…' : acceptedItems.length === 0 && items.length > 0
+            ? `Lưu ${items.length} dòng bỏ qua` : `Nhập ${acceptedItems.length} món vào Tủ lạnh`}</span>
         </Button>
 
         {currentPlan && (
@@ -354,14 +426,15 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
             fullWidth
             variant="outline"
             size="md"
-          disabled={acceptedItems.length === 0 || isSubmitting || !isReady}
-            onClick={handleReconcileWeeklyPlan}
+            disabled={!canSubmit}
+            onClick={() => void handleConfirm(true)}
             className="flex items-center justify-center gap-2 text-slate-800"
           >
             <CalendarCheck className="w-4 h-4 text-emerald-600" />
-            <span>Đối chiếu & Đánh dấu đi chợ tuần</span>
+            <span>Lưu hóa đơn & mở danh sách tuần</span>
           </Button>
         )}
+        </>}
       </div>
     </div>
   );

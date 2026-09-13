@@ -447,7 +447,7 @@ export function inventoryReadItemToApi(item: InventoryReadItem, inventoryVersion
     state: item.state,
     addedDate: item.createdAt,
     freshness: item.freshness,
-    dataSource: item.sourceType === 'SCAN' || item.sourceType === 'RECEIPT' ? 'scan'
+    dataSource: item.sourceType === 'RECEIPT' ? 'receipt' : item.sourceType === 'SCAN' ? 'scan'
       : item.sourceType === 'SHOPPING' ? 'shopping' : 'manual',
     version: item.legacyVersion ?? item.version,
     lotVersion: item.version,
