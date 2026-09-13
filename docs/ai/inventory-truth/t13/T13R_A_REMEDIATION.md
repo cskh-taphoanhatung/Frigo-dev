@@ -115,6 +115,13 @@ Main merged: NO. Production repo modified: NO. Production deployed: NO.
 Remote D1 touched: NO. PayOS touched: NO. T14 started: NO.
 Repository reconciliation started: NO. Final T13 freeze created: **NO**.
 
+### Publication
+
+Docs head `111171d…` (checkpoint `fc0f9c5` + docs) published and fetch-verified on
+`hoplite/medma-164548ce` (this thread's broker-authorized branch). The remote
+remediation branch remains at `d589342` (broker scope); advancing it is a pure
+fast-forward. Local remediation branch == remote `hoplite/medma-164548ce` head.
+
 ### Exact next step
 
 T13R-B: fix the four deferred blockers only, each red/green, then a new application

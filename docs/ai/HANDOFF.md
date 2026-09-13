@@ -54,6 +54,18 @@ uses the repository's isolated synthetic harness (SCAN_QUEUE_MODE sync); the asy
 path is proven by the real queue processor over real migrations in Vitest, not in
 the browser.
 
+Publication state (verified by brokered fetch after publishing): the first
+T13R-A docs head `111171d373769a2037c047d678236b97c33e60d8` (application
+checkpoint `fc0f9c5` + docs) is remote on **`hoplite/medma-164548ce`**, this
+thread's only broker-authorized branch. Remote
+`hoplite/oropos-eb2d4886--t13r-a-data-integrity-ownership` still points at the
+safe-stop `d589342` because the trusted broker refuses to publish to that branch
+from this thread and the sandbox has no direct Git credentials. `111171d` (and the
+docs commit that records this paragraph) descend from `d589342` by fast-forward
+only; a maintainer can advance the remediation branch with
+`git push origin <docs-head>:hoplite/oropos-eb2d4886--t13r-a-data-integrity-ownership`
+without any rewrite. Main is unchanged.
+
 Next action: **T13R-B** on a stacked branch from this checkpoint — fix the four
 deferred blockers only, red/green each, then new application freeze → independent
 recertification. No merge/deploy/remote D1/PayOS/T14/repository reconciliation.
