@@ -15,7 +15,7 @@ const baseURL = `http://127.0.0.1:${frontend}`;
 
 export default defineConfig({
   testDir: './tests/e2e',
-  testMatch: 't13b-*.e2e.ts',
+  testMatch: ['t13b-*.e2e.ts', 't13r-a-*.e2e.ts'],
   fullyParallel: false,
   workers: 1,
   retries: 0,

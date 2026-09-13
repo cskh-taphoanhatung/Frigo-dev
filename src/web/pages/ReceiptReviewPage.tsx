@@ -53,6 +53,17 @@ const RECEIPT_UNITS: ReadonlyArray<{ value: StandardUnit; label: string }> = [
   { value: 'bunch', label: 'Bó' }, { value: 'slice', label: 'Lát' },
 ];
 
+const MISMATCH_MESSAGE = 'Dữ liệu trả về không khớp với hóa đơn đang mở nên không được hiển thị. Vui lòng tải lại.';
+
+class ReceiptOwnershipError extends Error {
+  constructor() { super('Receipt response does not belong to this route'); this.name = 'ReceiptOwnershipError'; }
+}
+
+/** The only acceptable receipt for this route is the one whose id equals the route's scanId. */
+function ownsReceipt(receiptScanId: string, receipt: { id?: unknown } | null | undefined): boolean {
+  return Boolean(receipt) && typeof receipt!.id === 'string' && receipt!.id === receiptScanId;
+}
+
 function reviewedItems(receipt: ReceiptState): ReceiptItemState[] {
   return receipt.items.map((item) => ({
     ...item, rejected: item.reviewState === 'REJECTED' || item.rejected === true,
@@ -111,6 +122,14 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
       try {
         const next: ReceiptState = await api.getScan(receiptScanId);
         if (cancelled || !isCurrent()) return;
+        // T13R-A P1-4: the route's scanId is the only identity. A DTO for any
+        // other scan — however it arrived — is never rendered or reviewable.
+        if (!ownsReceipt(receiptScanId, next)) {
+          setLiveReceipt({ id: receiptScanId, status: 'failed', items: [] });
+          setItems([]);
+          setPollError(MISMATCH_MESSAGE);
+          return;
+        }
         setLiveReceipt(next);
         setItems(reviewedItems(next));
         if (next.status === 'pending' || next.status === 'processing') {
@@ -157,7 +176,11 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
         storage: item.storage, expiryDate: item.expiryDate || undefined,
         expiryEstimated: Boolean(item.expiryDate && item.expiryEstimated), rejected: false,
       });
-      const result = await api.confirmScan(liveReceipt.id, confirmation);
+      // Mutation target is the authoritative route id, never the DTO's.
+      if (!receiptScanId || !ownsReceipt(receiptScanId, liveReceipt)) {
+        throw new ReceiptOwnershipError();
+      }
+      const result = await api.confirmScan(receiptScanId, confirmation);
       if (!mounted.current || !isCurrent()) return;
       void invalidateInventoryDependents();
       setSuccessToast(result?.pendingSync
@@ -170,13 +193,25 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
       }, 1200);
     } catch (err) {
       if (!mounted.current || !isCurrent()) return;
+      if (err instanceof ReceiptOwnershipError) {
+        setSubmitError(MISMATCH_MESSAGE);
+        setIsSubmitting(false);
+        return;
+      }
       // Recoverable domain states get specific guidance, never raw JSON.
       const code = err instanceof ApiError ? err.code : null;
       const presentation = presentDomainError(code, 'Chưa lưu được hóa đơn. Vui lòng thử lại.');
       if (presentation.refetch) {
         try {
-          const next: ReceiptState = await api.getScan(liveReceipt.id);
+          const next: ReceiptState = await api.getScan(receiptScanId as string);
           if (!mounted.current || !isCurrent()) return;
+          if (!ownsReceipt(receiptScanId as string, next)) {
+            setLiveReceipt({ id: receiptScanId as string, status: 'failed', items: [] });
+            setItems([]);
+            setSubmitError(MISMATCH_MESSAGE);
+            setIsSubmitting(false);
+            return;
+          }
           setLiveReceipt(next);
           setItems(reviewedItems(next));
         } catch {

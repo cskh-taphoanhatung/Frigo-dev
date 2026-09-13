@@ -34,13 +34,25 @@ const CATEGORY_LABEL: Record<string, string> = {
 type EditDraft = { name: string; unit: string; category: string; storage: string; expiryDate: string };
 const EMPTY_DRAFT: EditDraft = { name: '', unit: '', category: '', storage: '', expiryDate: '' };
 
+/** The lot an edit draft was opened for. A draft is never submitted elsewhere. */
+type DraftOwner = { routeId: string; itemId: string };
+
 export const IngredientDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  // T13R-A P1-3: the route's lot id keys the detail so every draft, baseline
+  // and error state is discarded on a same-component route change. A chicken
+  // draft cannot survive into the tofu view, let alone be saved there.
+  return <LotDetail key={id ?? ''} routeId={id ?? ''} />;
+};
+
+const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
+  const id = routeId || undefined;
   const navigate = useNavigate();
   const [actionError, setActionError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<EditDraft>(EMPTY_DRAFT);
   const [editBaseline, setEditBaseline] = useState<EditDraft>(EMPTY_DRAFT);
+  const [draftOwner, setDraftOwner] = useState<DraftOwner | null>(null);
 
   // Adopted households read canonical lot truth; the legacy projection is
   // never the source for provenance or expiry semantics.
@@ -64,13 +76,14 @@ export const IngredientDetailPage: React.FC = () => {
 
   const mutate = useMutation({
     retry: false,
-    mutationFn: async (updates: Record<string, unknown>) => {
-      if (!item) throw new Error('missing item');
-      return api.updateInventoryItem(item.id, updates, item.version);
-    },
+    // The target is fixed at submit time from the verified draft owner, not
+    // re-read from whatever the component happens to display later.
+    mutationFn: async ({ target, updates }: { target: { id: string; version: number }; updates: Record<string, unknown> }) =>
+      api.updateInventoryItem(target.id, updates, target.version),
     onSuccess: async () => {
       setActionError(null);
       setEditing(false);
+      setDraftOwner(null);
       await invalidateInventoryDependents();
       await lotQuery.refetch();
     },
@@ -128,7 +141,40 @@ export const IngredientDetailPage: React.FC = () => {
     };
     setDraft(initialDraft);
     setEditBaseline(initialDraft);
+    setDraftOwner({ routeId, itemId: String(item.id) });
     setEditing(true);
+  };
+
+  const cancelEdit = () => {
+    setEditing(false);
+    setDraftOwner(null);
+  };
+
+  const submitDraft = () => {
+    // Draft owner == current route == current authoritative item, or no
+    // mutation at all. Any mismatch means the draft belongs to another lot.
+    if (!draftOwner || draftOwner.routeId !== routeId || String(item.id) !== draftOwner.itemId) {
+      setEditing(false);
+      setDraftOwner(null);
+      setDraft(EMPTY_DRAFT);
+      setEditBaseline(EMPTY_DRAFT);
+      setActionError('Bản chỉnh sửa thuộc nguyên liệu khác nên chưa được lưu. Vui lòng mở lại và sửa trên nguyên liệu này.');
+      return;
+    }
+    const updates: Record<string, unknown> = {};
+    // Refetches must not turn untouched draft fields into corrections.
+    if (draft.name.trim() !== editBaseline.name.trim()) updates.name = draft.name.trim();
+    if (draft.unit !== editBaseline.unit) updates.unit = draft.unit;
+    if (draft.category !== editBaseline.category) updates.category = draft.category;
+    if (draft.expiryDate !== editBaseline.expiryDate) {
+      updates.expiryDate = draft.expiryDate || null;
+      // The date picker is an explicit dated fact, so the correction
+      // establishes KNOWN expiry rather than another estimate.
+      updates.expiryEstimated = false;
+    }
+    if (draft.storage !== editBaseline.storage) updates.storage = draft.storage;
+    if (Object.keys(updates).length === 0) { cancelEdit(); return; }
+    mutate.mutate({ target: { id: String(item.id), version: Number(item.version) }, updates });
   };
 
   return (
@@ -209,22 +255,10 @@ export const IngredientDetailPage: React.FC = () => {
         ) : (
           <form
             className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-xs space-y-3"
+            data-draft-owner={draftOwner?.itemId ?? ''}
             onSubmit={(event) => {
               event.preventDefault();
-              const updates: Record<string, unknown> = {};
-              // Refetches must not turn untouched draft fields into corrections.
-              if (draft.name.trim() !== editBaseline.name.trim()) updates.name = draft.name.trim();
-              if (draft.unit !== editBaseline.unit) updates.unit = draft.unit;
-              if (draft.category !== editBaseline.category) updates.category = draft.category;
-              if (draft.expiryDate !== editBaseline.expiryDate) {
-                updates.expiryDate = draft.expiryDate || null;
-                // The date picker is an explicit dated fact, so the correction
-                // establishes KNOWN expiry rather than another estimate.
-                updates.expiryEstimated = false;
-              }
-              if (draft.storage !== editBaseline.storage) updates.storage = draft.storage;
-              if (Object.keys(updates).length === 0) { setEditing(false); return; }
-              mutate.mutate(updates);
+              submitDraft();
             }}
           >
             <div>
@@ -310,7 +344,7 @@ export const IngredientDetailPage: React.FC = () => {
               <Button type="submit" fullWidth disabled={mutate.isPending || !draft.name.trim()}>
                 {mutate.isPending ? 'Đang lưu…' : 'Lưu thay đổi'}
               </Button>
-              <Button type="button" variant="outline" onClick={() => setEditing(false)}>Hủy</Button>
+              <Button type="button" variant="outline" onClick={cancelEdit}>Hủy</Button>
             </div>
           </form>
         )}
