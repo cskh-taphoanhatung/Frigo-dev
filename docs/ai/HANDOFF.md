@@ -1,5 +1,48 @@
 # Frigo AI Handoff — isolated T09 development
 
+## Current authoritative handoff — T13B-A backend continuation, 2026-09-13
+
+Program: Inventory Truth Layer — T13B split continuation
+Task: T13B-A BACKEND TRUTH HARDENING (Part A only)
+Status: **T13B-A COMPLETE — READY FOR T13B-B**; no final T13 certification
+Repository: vn-2l/frigo-dev; verified numeric ID 1364064929
+Branch: hoplite/megara-hyblaia-888f1514 (platform-generated equivalent)
+Base: 3458c6cb971f5d96fce8eda3abc3d708437ce713; verified HEAD before edits
+origin/main: d1b06732f8a80db4e77986df31ff28d9f04641fa; unchanged, no merge/rebase
+T13B_A_CHECKPOINT: c31567ec7dfa8f95808c20c834b327cbb3425f9c
+Publication: application/test checkpoint pushed without force, fetched, local/remote equality PASS
+Documentation: separate descendant commit; continue from final published branch HEAD
+Primary handoff: docs/ai/inventory-truth/t13/T13B_A_HANDOFF.md
+Decision: docs/ai/inventory-truth/DECISIONS.md, DEC-016
+
+Actual changes: per-line T09 CREATE for adopted receipt purchases preserves old lot
+and new purchase truth; fridge grouped CORRECT unchanged. Validated `scanEvidence`
+is in existing receipt/event fingerprints, not a new ledger/event-envelope key.
+Production `correctionOf()` use; T10 rawName from retained OCR, null when absent,
+with actual subject identity. Atomic confirmation retained. Committed concurrent
+twins/response loss recover through scoped status-based replay and strict T11 reads.
+
+Executed checks: `pnpm install --frozen-lockfile`; focused Vitest **1,122/1,122
+(17 suites)**; real local workerd/D1 **92/92 (5 suites)**; `pnpm typecheck`;
+scoped ESLint (all six changed application/test files); `git diff --check`;
+scope/ancestry/migration comparisons. All PASS. Exact commands in primary handoff.
+Negative control: four new regression tests fail as expected at exact base; removed
+the temporary worktree. Migration count 31; 0001–0031 untouched; 0032 absent.
+Focused writer UNKNOWN = 0; canonical reader UNKNOWN = 0; no new stock SQL/readers.
+
+Failures resolved: typed OCR/expiry mapping; incompatible top-level event metadata
+(0025 guard, replaced by existing fingerprint extension); test helper binding and
+storage-path assertions; intermittent D1 concurrent replay 500 (91/92 before fix,
+92/92 after). No known failing Part A backend gate remains. Setup tool state issue
+reported; direct locked dependency install worked without changing configuration.
+
+NOT RUN — DEFERRED TO T13B-B FINAL VERIFICATION: full application suite/full lint/
+build, dedicated migration smoke/schema/upgrade matrix, browser/mobile/UX checks,
+adoption workflow, final T13 acceptance matrix/certification. No hosted CI requested.
+Next action: verify repository/main guards and checkpoint ancestry, read the primary
+handoff, complete Part B frontend/adoption scope and final verification. Do not
+restart from main, rewrite prior T13, mutate migrations, merge or deploy.
+
 ## Current authoritative handoff — T13 Receipt/Vision Truth & Inventory UX V2, 2026-09-13
 
 Program: Inventory Truth Layer — T08-T12 release train + T13 (final roadmap task)

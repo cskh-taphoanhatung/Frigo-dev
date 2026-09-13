@@ -1,5 +1,39 @@
 # Inventory Truth architecture decisions
 
+## DEC-016 — Receipt purchases retain lot identity and fingerprinted review evidence
+
+T13B-A, 2026-09-13. A receipt is new purchase evidence, not a physical recount of
+an older lot. For adopted households, each accepted receipt line composes a T09
+CREATE even when its ingredient/name already exists. Keep the older lot unchanged;
+do not coalesce different receipt lines' price, purchase date, storage or expiry.
+Fridge scans retain the established grouped CORRECT quantity-addition behavior.
+Legacy/unadopted compatibility remains unchanged; adoption UX belongs to T13B-B.
+
+Extend CREATE/CORRECT intent with optional structured `scanEvidence`. Retain it in
+the existing `inventory_commands.fingerprint` and the identical fingerprint in
+`inventory_events.metadata`; do not add a ledger or event-envelope key. The 0025
+SQL guard requires the exact existing event envelope. Historical commands omit the
+optional field and retain their original fingerprints. New evidence participates
+in T09 replay equality and strict decoding, with consistent expiry fields, CREATE
+source/scan-ID agreement, at most 50 lines and 64 KiB of evidence (fail closed,
+never truncate retained raw authority).
+
+Record persisted OCR name/quantity/unit separately from confirmed name, quantity,
+unit, storage and expiry semantics. Missing OCR remains null. The production
+`scanCorrectionLine()` calls `correctionOf()`; confirmed expiry describes the
+review claim, while the existing event after-state describes the applied lot,
+including any separately inferred shelf-life estimate. T10 `rawName` uses retained
+OCR, trimmed/bounded to its 200-character contract. Without OCR, retain null and
+use canonical identity, or the actual affected projection ID for an unmapped line.
+
+Keep review writes, observations, T09 commands and completion-last status in one
+atomic batch. A failed concurrent attempt may recover only after a scoped read
+proves the scan is confirmed, returning the existing strict T11 replay response
+without retrying stock writes. Valid altered payloads after confirmation preserve
+the existing scan-level replay contract; direct T09 altered intent still conflicts.
+No migration or frontend/read-authority cutover is required. See
+`t13/T13B_A_HANDOFF.md` for the continuation checkpoint and executed verification.
+
 ## DEC-015 — Client contract for the deferred guest transfer (DEC-012 addendum)
 
 Final release review defect D3 (2026-09-12): the DEC-012 server refusal

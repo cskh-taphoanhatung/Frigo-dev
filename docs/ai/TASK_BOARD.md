@@ -1,5 +1,29 @@
 # Frigo task board
 
+## Current authoritative board — T13B-A / T13B-B split, 2026-09-13
+
+- **T13B-A COMPLETE — READY FOR T13B-B**, backend-only. Prior T13 completion
+  statements below do not certify the remaining Part B scope.
+- Application/test continuation checkpoint:
+  `c31567ec7dfa8f95808c20c834b327cbb3425f9c`; branch
+  `hoplite/megara-hyblaia-888f1514`; base `3458c6cb971f5d96fce8eda3abc3d708437ce713`.
+  Checkpoint pushed/fetched with equality verified; docs follow separately.
+- DONE: separate adopted receipt purchase lots; unchanged older lot provenance;
+  exact new purchase facts; preserved fridge CORRECT semantics; production
+  raw/confirmed correction metadata in the existing command/event fingerprint;
+  retained OCR T10 rawName; atomic rollback and concurrent/response-loss replay.
+- PASS: focused **1,122/1,122 / 17 files**, real D1 **92/92 / 5 files**, typecheck,
+  scoped ESLint, diff/scope/ancestry checks. Four pre-fix negative controls fail as
+  expected. Initial event-envelope and race failures were corrected; exact commands
+  and iteration failures are in `inventory-truth/t13/T13B_A_HANDOFF.md`.
+- Migrations **31**, all unchanged; no 0032. Writer UNKNOWN **0**; canonical
+  reader UNKNOWN **0**. Main `d1b0673` unchanged, nothing merged/deployed.
+- NEXT: Part B ReceiptReviewPage/ScanResultPage UX, adoption product/operator path,
+  final matrix and full verification. **NOT RUN — DEFERRED TO T13B-B FINAL
+  VERIFICATION:** full suite/lint/build, dedicated migration smoke/schema/upgrade
+  matrix, browser/mobile checks and final certification. Preserve DEC-016 and the
+  backend checkpoint; do not rewrite T13 or begin from main.
+
 ## Current authoritative board — T13 Receipt/Vision Truth & Inventory UX V2, 2026-09-13
 
 - **T13 COMPLETE on branch `hoplite/lindos-0368e413`; NOT merged to main.** Freeze
