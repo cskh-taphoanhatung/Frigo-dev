@@ -1,4 +1,32 @@
-# Frigo current state — T13 certified, independent review next
+# Frigo current state — T13 independent review failed
+
+## Current authoritative state — independent T13 final review, 2026-09-13
+
+**T13 INDEPENDENT FINAL REVIEW — FAIL.** The exact application freeze
+`7b7bb695ee597a46cf4022a2c534e2fea374be5d` is not accepted for leaving T13.
+Repository ID **1368281478** is verified; the provider now calls the same repo
+`vn-co2/Frigo-dev`. Protected main and certified docs head remain unchanged.
+Freeze → `4fcbc96b5a5d4b3cea2c2ad0bdb5682b1866891a` has an empty non-doc diff.
+
+Fresh exact-freeze checks PASS: lint/typecheck/build, **3372/132** full,
+**194/10** focused, **92/5** real local D1, **36/36** browser at 360/390/430,
+migration smoke, all **31** fresh local migrations, legacy upgrade/replay,
+local schema and diff checks. Detached status remains empty. Hosted checks and
+legacy status contexts for the exact freeze are both absent.
+
+Those gates miss confirmed blockers: **P0 0, P1 4, blocking P2 6**. Async queue
+processing omits raw evidence and mishandles absent confidence; U7 can clear
+canonical identity and submit a draft to another lot; receipt review accepts a
+mismatched scan ID. Additional defects affect confidence, retained review fields,
+confirmed expiry, conflict recovery, estimated-date labels and opening-state truth.
+Independent local/browser counterexamples are retained; no application fix ran.
+
+See [the independent report](release/T13_INDEPENDENT_FINAL_REVIEW.md) for exact
+findings, original AC1–AC14, roadmap closure, commands, failed/inconclusive probes,
+and evidence. Earlier COMPLETE/all-PASS statements below are historical and
+superseded, not current approval. Next: a new T13 remediation branch for confirmed
+blockers, then a new freeze and independent review. No merge/deploy/remote D1/
+PayOS/T14/repository reconciliation. This review changed documentation only.
 
 ## Current authoritative state — T13 detached certification, 2026-09-13
 

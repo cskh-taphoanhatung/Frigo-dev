@@ -1,5 +1,24 @@
 # Frigo task board
 
+## Current board — T13 independent review failed, 2026-09-13
+
+- **T13 BLOCKED — INDEPENDENT FINAL REVIEW FAILED.** Exact freeze
+  `7b7bb695ee597a46cf4022a2c534e2fea374be5d`; reviewed docs head
+  `4fcbc96b5a5d4b3cea2c2ad0bdb5682b1866891a`; numeric repo ID 1368281478.
+- Fresh gates passed: **3372/132** full, **194/10** focused, **92/5** local D1,
+  **36/36** browser, lint/typecheck/build, 31-migration smoke/replay, populated
+  legacy upgrade, local schema and diff checks. No hosted exact-freeze results.
+- Review found **4 P1 and 6 blocking P2** defects despite those green gates.
+  Original AC4/6/10/12 fail; AC9/11 remain partial. R5/R7/R8 and
+  U4/U7/U8/U12/U13 are not closed. Do not treat the old DONE table as approval.
+- Read [T13_INDEPENDENT_FINAL_REVIEW.md](release/T13_INDEPENDENT_FINAL_REVIEW.md)
+  for reproducible findings, evidence boundaries and retained failed probes.
+- Next task, not started here: **new T13 remediation branch**, confirmed blockers
+  only, new application freeze, independent recertification. Reconciliation,
+  merge, deploy, remote D1, PayOS and T14 remain prohibited.
+- Application/permanent tests/migrations/harness remain unchanged; this review
+  only updates audit/status documents. Earlier board sections are historical.
+
 ## Current board — T13 complete, 2026-09-13
 
 - **T13 COMPLETE — STOP for INDEPENDENT T13 FINAL REVIEW.** Repo

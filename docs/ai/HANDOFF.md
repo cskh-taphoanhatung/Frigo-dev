@@ -1,4 +1,42 @@
-# Frigo AI Handoff — T13 certified, independent review next
+# Frigo AI Handoff — T13 remediation required after independent review
+
+## Current handoff — independent final review failed, 2026-09-13
+
+Status: **T13 INDEPENDENT FINAL REVIEW — FAIL**. No remediation was performed.
+Review branch `hoplite/oropos-eb2d4886` starts at docs head
+`4fcbc96b5a5d4b3cea2c2ad0bdb5682b1866891a`. The detached application freeze
+`7b7bb695ee597a46cf4022a2c534e2fea374be5d` remains clean. Repository ID 1368281478
+is verified under current provider name `vn-co2/Frigo-dev`; protected main and
+the certified remote branch retain their required exact SHAs. Non-doc delta from
+freeze to docs is empty; all 31 migration blobs retain their introducing bytes.
+
+Fresh verification: lint/typecheck/build, **3372/132** full, **194/10** focused,
+**92/5** real local D1, **36/36** browser, migration smoke, fresh local 31-migration
+apply, legacy replay/upgrade, local schema and diff PASS. Existing browser suite
+ran serially after source-writing tests. Hosted exact-freeze checks are absent.
+
+Findings: **P0 0 / P1 4 / blocking P2 6 / P3 3 groups**. Independent probes
+reproduced async evidence/confidence loss, U7 canonical-identity loss and cross-lot
+draft submission, receipt response-ID mismatch, fabricated fridge confidence,
+lost confirmed expiry, stale generic inventory conflict recovery, unqualified
+Home estimates, and false unopened labels for NULL opening evidence. Raw review
+field coverage and failed-refetch handling also have source evidence.
+
+Retained diagnostic limitations: one audit input initially used the wrong version
+field; its corrected focus-refetch probe remained inconclusive and is not a
+finding. Home initially lacked the synthetic onboarding prerequisite; the corrected
+fixture reproduced the defect. Original historical certification logs were absent;
+fresh exact-freeze gates replaced, rather than authenticated, those historical runs.
+
+Complete report, original acceptance and roadmap matrix, exact commands and
+evidence: [T13_INDEPENDENT_FINAL_REVIEW.md](release/T13_INDEPENDENT_FINAL_REVIEW.md).
+Only that report and required status/handoff docs changed; pre-existing
+`.hoplite/settings.json` work was preserved and excluded. No PR, merge, deploy,
+remote D1, PayOS application work, T14, or repository reconciliation.
+
+Next action: **NEW T13 REMEDIATION BRANCH → confirmed blockers only → new freeze
+→ independent certification**. Do not reconcile production yet. Earlier handoffs
+below are historical and superseded by this failed independent review.
 
 ## Current handoff — T13 final detached certification, 2026-09-13
 
