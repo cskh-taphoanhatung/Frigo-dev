@@ -146,3 +146,19 @@ D1 apply + legacy 0031→0032 replay, `pnpm schema:check:local`, writer/reader
 authority audit vs `fc0f9c5`, re-evaluate P1-1..P1-4/P2-A/P2-B and
 AC1–AC14, then create the T13R application freeze and docs-only head on
 `hoplite/medma-164548ce`.
+
+### Publication status — HOPLITE PUBLICATION BLOCKED
+
+Direct `git push` has no credentials in the sandbox and the first-party
+publisher tool (`source_control_publish_git_commit`, used for T13R-A) is not
+available in this session's toolset. Per protocol the broker was NOT
+bypassed.
+
+- LOCAL_HEAD: `d0006a44a396cf1d5ce95e06979b1cfb284c8c64`
+- REMOTE_HEAD: `551db17f43dc8a903655420d5e1c01a6d7df8c35`
+- LOCAL == REMOTE: NO (two commits pending publication)
+- main `d1b06732f8a80db4e77986df31ff28d9f04641fa`: unchanged (YES)
+
+Safe-stop verdict: INCOMPLETE — commits exist locally on the authorized
+branch only; publish `d0006a44` to `hoplite/medma-164548ce` from a session
+with the brokered publisher, then fetch and re-verify. No force push.
