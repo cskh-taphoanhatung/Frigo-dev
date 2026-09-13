@@ -6,6 +6,16 @@ by this checkpoint. It is not final acceptance or certification.
 
 ## Identity, lineage and publication blocker
 
+**Publication recovery:** after the initial 404/fetch failures below, the trusted
+Git broker successfully published application-bearing WIP commit
+`a8cefd13505bc6b45dd11f45a6323539deb60f93` to the original successor branch without
+force. A subsequent fetch verified exact local/remote equality and unchanged main
+`d1b06732f8a80db4e77986df31ff28d9f04641fa`. No fallback branch was needed.
+The unauthenticated numeric metadata endpoint still returns 404, so the numeric
+identity/owner attribution remains the previously verified value, not a fresh public
+metadata confirmation. This documentation-only follow-up records that recovery;
+its final published SHA/equality is in the safe-stop report.
+
 - Repository ID **1364064929**, owner/name **vn-2l/frigo-dev**, were verified using
   GitHub metadata at the start of Part B. Fresh safe-stop verification is blocked:
   the numeric repository endpoint, both historical owner/name endpoints and the
@@ -116,8 +126,9 @@ published proof package was completed. Screenshots/logs are ignored local artifa
 
 ## Failures, pending review and not started
 
-- Remote repository access is blocked (404 / `Repository not found`); remote
-  publication and equality cannot be certified until access is restored.
+- Initial API/fetch access failed (404 / `Repository not found`); broker publication
+  and fetch subsequently succeeded as recorded above. Fresh public numeric metadata
+  remains unavailable. Do not confuse metadata visibility with Git publication.
 - Earlier typecheck failed with two TS7016 errors importing MJS preview fixtures
   from a TS test. That test was converted to MJS, matching existing preview tests,
   and the 109-test run passed; **whole-project typecheck has not been rerun**.
@@ -141,10 +152,10 @@ No main merge, deployment, remote D1 access, PayOS change or settings commit.
 
 ## Exact next step
 
-First restore authorized access to repository ID 1364064929, verify its current
-owner/name and guarded main, publish this saved WIP without force and fetch/compare
-the exact local/remote SHA. Resolve the documented base discrepancy with the owner
-without reset/rebase or discarding WIP. Only after explicit resumption authorization:
+Wait for explicit resumption authorization. Then reverify numeric repository identity
+and current owner/name through an authorized metadata path, guarded main and the
+published WIP SHA. Resolve the documented base discrepancy with the owner without
+reset/rebase or discarding WIP. Only after explicit resumption authorization:
 finish pending review, restart/reseed the isolated preview and rerun affected browser
 flows, then complete original AC/roadmap audits and clean detached final gates. Do
 not declare an application freeze from this quota-stop commit.

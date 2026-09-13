@@ -6,10 +6,12 @@
 [T13B_B_WIP_HANDOFF.md](inventory-truth/t13/T13B_B_WIP_HANDOFF.md) first.
 It records the actual application-checkpoint base versus the owner's expected docs
 base, all implementation/test changes, 109 passing focused tests, partial browser
-evidence and the interrupted review. Fresh repository access returns 404; do not
-assume WIP was published or remote main reverified. Preserve the checkpoint, restore
-authorized access, verify/publish without force, and wait for explicit permission
-before resuming implementation or final gates. No settings edits or main merge.
+evidence and the interrupted review. After initial access failures, WIP
+`a8cefd13505bc6b45dd11f45a6323539deb60f93` was published/fetched with exact equality;
+main was reverified unchanged. Fresh public numeric metadata still returns 404.
+Preserve the checkpoint and wait for explicit permission before resuming work;
+reverify identity and the documented base discrepancy first. No settings edits or
+main merge. The safe-stop report records the final documentation-follow-up SHA.
 
 ## Current authoritative handoff — T13B-A backend continuation, 2026-09-13
 

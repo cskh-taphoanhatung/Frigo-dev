@@ -5,12 +5,13 @@
 - WIP implemented: receipt/fridge full review, truthful evidence/confidence, explicit
   persisted rejection, adoption operator CLI, two truth-presentation fixes and tests.
 - Focused combined preflight: **109/109, 6 files PASS**. No final full-suite freeze.
-- BLOCKED: provider API/fetch now report repository not found; remote equality is
-  unverified. Base discrepancy is recorded, not repaired by reset/rebase.
+- SAVED: WIP `a8cefd13505bc6b45dd11f45a6323539deb60f93` was published/fetched with
+  equality after initial repository-access failures. Public numeric metadata still
+  returns 404. Base discrepancy is recorded, not repaired by reset/rebase.
 - PENDING: interrupted review, affected browser rerun, original AC/roadmap matrix,
   final authority audits, full/D1/lint/typecheck/build/migration/schema/freeze gates.
-- Next: restore/verify repository access, publish saved WIP, then wait for explicit
-  resumption authorization. Details: [WIP handoff](inventory-truth/t13/T13B_B_WIP_HANDOFF.md).
+- Next: wait for explicit resumption authorization, then reverify identity/base and
+  continue from saved WIP. Details: [WIP handoff](inventory-truth/t13/T13B_B_WIP_HANDOFF.md).
 
 ## Current authoritative board — T13B-A / T13B-B split, 2026-09-13
 

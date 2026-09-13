@@ -4,8 +4,10 @@
 
 Implementation stopped on the owner's instruction. The focused Part B preflight
 completed **109/109 tests in 6 files**; full/frozen verification and final acceptance
-are not complete. Repository access now returns 404, so publication/equality is not
-verified. Actual branch base is `c31567ec7dfa8f95808c20c834b327cbb3425f9c`, not the
+are not complete. Initial 404/fetch failures were followed by successful broker
+publication/fetch equality for WIP `a8cefd13505bc6b45dd11f45a6323539deb60f93`;
+main was reverified unchanged. Fresh public numeric metadata still returns 404.
+Actual branch base is `c31567ec7dfa8f95808c20c834b327cbb3425f9c`, not the
 safe-stop expected documentation base `69b0dc676fcb4136861a8ca0c66994259eba5116`.
 Read [T13B_B_WIP_HANDOFF.md](inventory-truth/t13/T13B_B_WIP_HANDOFF.md) for changed
 files, executed checks, pending review, migration status and exact resumption steps.
