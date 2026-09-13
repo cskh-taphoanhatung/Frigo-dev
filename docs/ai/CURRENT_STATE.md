@@ -763,3 +763,11 @@ planner flags in this bookkeeping task.
 
 Record the new post-merge main SHA in the final operator receipt; the
 pre-cleanup main head is `41d2de6bc76331322cc63e8038432b0b02f60da1`.
+
+## SAFE STOP — T13R-B — 2026-09-13T21:35Z
+
+Branch `hoplite/medma-164548ce`, WIP `7e68e3b` (P2-1 `4d587eb` below it).
+T13R-B truthful presentation + conflict remediation code/tests complete and
+green on executed checks (typecheck, t13r-b-presentation 12/12, full
+Playwright 51 passed); certification and freeze not started. Details:
+`docs/ai/inventory-truth/t13/T13R_B_REMEDIATION.md`.

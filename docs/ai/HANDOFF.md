@@ -1044,3 +1044,11 @@ application lineage anchored at `PRODUCTION_APPLICATION_BASE_SHA`. Do not deploy
 run remote migrations, enable planner flags or alter production configuration as
 part of this bookkeeping task. Do not treat `PRE_CLEANUP_MAIN_HEAD` as the final
 head.
+
+## SAFE STOP — T13R-B — 2026-09-13T21:35Z
+
+T13R-B truth-presentation remediation checkpointed at WIP `7e68e3b` on
+`hoplite/medma-164548ce` (P2-1 already committed as `4d587eb`). Full
+status, test evidence, and next step: `docs/ai/inventory-truth/t13/T13R_B_REMEDIATION.md`.
+Findings P2-1/P2-4/P2-5/P2-6 = FIXED (test-backed, NOT certified). No
+freeze created. Main unchanged. See T13R_B_REMEDIATION.md before continuing.
