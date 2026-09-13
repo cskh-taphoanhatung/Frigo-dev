@@ -1,5 +1,34 @@
 # Frigo current state — isolated T09 development
 
+## Current authoritative state — fresh-session Preview safe-stop, 2026-09-13
+
+**T13 NOT COMPLETE — BROWSER VERIFICATION BLOCKED.** Fresh-session public metadata
+confirmed `vn-ca1/Frigo-dev`, ID **1368281478**. Trusted refs remain guarded main
+`d1b06732f8a80db4e77986df31ff28d9f04641fa` and continuation
+`hoplite/kos-9d39545d--t13b-b-final-certification` at
+`a9b5904aeba0fc7e4d649165770a4e86701312a2`; fresh branch `hoplite/mende-26679a14` started at the
+same SHA with an empty status/diff. The required ancestry
+`2334a6f -> c37a9b8 -> f845d04 -> fd32aa8 -> a9b5904` and the empty non-doc delta
+from `fd32aa8` to `a9b5904` were reverified.
+
+The effective isolated run is `node scripts/security-preview.mjs`; no settings,
+scripts, application code, tests, or final T13 documents changed. Three schema-valid
+managed-Preview attempts (`preview`, 120 seconds, promotion `preview:3000`) failed
+before harness startup with: `Preview port must be a currently discovered HTTP
+listener owned by the managed preview run`. Port 3000 is the harness default, but
+no managed harness listener existed; `sandbox_ports` showed only browser processes.
+No ad-hoc server or unsupported workaround was used.
+
+Flows A–I and widths 360/390/430 are **NOT RUN**; real viewport-emulation capability
+was not tested. No current focused/full/type/lint/build/D1/migration-replay/schema/authority
+audit ran. Historical 176/9 and 26 hardening/adoption results remain historical only;
+`CURRENT_FULL_TEST_COUNT` and `CURRENT_FULL_FILE_COUNT` are not established. No defect,
+freeze, final docs head, merge, deploy, remote D1, PayOS, or T14 work is claimed.
+Migration integrity passed: 31 tracked migrations, unchanged 0031, no 0032; replay is
+not certified. `git diff --check` passed. The platform fault was reported and recorded.
+Next: repair the supported managed Preview interface, then resume the mandatory WIP
+browser flows before baseline, acceptance closure, freeze, and independent review.
+
 ## Current authoritative state — confirmed-review UX WIP, 2026-09-13 12:40 UTC
 
 **T13 NOT COMPLETE — BROWSER VERIFICATION BLOCKED.** New continuation branch

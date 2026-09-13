@@ -1,5 +1,33 @@
 # Frigo AI Handoff — isolated T09 development
 
+## Current handoff — fresh-session Preview safe-stop, 2026-09-13
+
+Task: resume T13B-B browser/final-certification WIP only; do not begin T14 or integration.
+Status: **T13 NOT COMPLETE — BROWSER VERIFICATION BLOCKED**; no application defect was
+found or reopened.
+Repository: `vn-ca1/Frigo-dev`, ID **1368281478**. Main:
+`d1b06732f8a80db4e77986df31ff28d9f04641fa` (unchanged).
+Branch/start: fresh thread branch `hoplite/mende-26679a14` and prior continuation
+`hoplite/kos-9d39545d--t13b-b-final-certification` both started at
+`a9b5904aeba0fc7e4d649165770a4e86701312a2`; initial status/diff empty.
+Lineage: verified `2334a6f -> c37a9b8 -> f845d04 -> fd32aa8 -> a9b5904`, with the
+`fd32aa8..a9b5904` non-doc diff empty.
+Preview: effective run `node scripts/security-preview.mjs`. Three schema-valid calls
+(`preview`, 120 seconds, promotion `preview:3000`) all failed before startup:
+`Preview port must be a currently discovered HTTP listener owned by the managed preview run`.
+Port 3000 is the harness default, but no harness listener was running; only browser
+processes were listening. No settings/script change, ad-hoc server, or workaround.
+Checks: workspace setup reported ready with no configured setup run. No fresh
+focused/full/type/lint/build/D1/migration-replay/schema/authority checks ran; 176/9 and
+26 hardening/adoption results are historical only. `CURRENT_FULL_TEST_COUNT` and
+`CURRENT_FULL_FILE_COUNT` are not established. Migration integrity passed (31,
+unchanged 0031, no 0032); `git diff --check` passed. Platform fault report recorded.
+Not run: flows A–I, 360/390/430 checks, and real viewport-emulation capability.
+Next: repair the supported managed Preview interface and resume every mandatory WIP
+flow before measuring the baseline, closing AC/roadmap evidence, freezing, and clean
+certification. No `T13B_APPLICATION_FREEZE` or `T13B_DOCS_HEAD`; no merge, deploy,
+remote D1, PayOS, or T14 work.
+
 ## Current handoff — confirmed UX checkpoint, 2026-09-13 12:40 UTC
 
 Task: finish T13B-B, not T14/integration/deployment.

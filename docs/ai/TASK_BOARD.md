@@ -1,5 +1,27 @@
 # Frigo task board
 
+## Current board — fresh-session Preview safe-stop, 2026-09-13
+
+- **T13 NOT COMPLETE — BROWSER VERIFICATION BLOCKED.** Fresh metadata: `vn-ca1/Frigo-dev`,
+  ID 1368281478; main remains `d1b06732f8a80db4e77986df31ff28d9f04641fa` and the
+  prior continuation/current fresh-thread start is `a9b5904aeba0fc7e4d649165770a4e86701312a2`.
+  The required `2334a6f -> c37a9b8 -> f845d04 -> fd32aa8 -> a9b5904` lineage and empty
+  `fd32aa8..a9b5904` non-doc delta were reverified with a clean starting worktree.
+- BLOCKED: all three schema-valid managed Preview attempts (`preview`, 120 seconds,
+  promotion `preview:3000`) failed before starting `scripts/security-preview.mjs`:
+  `Preview port must be a currently discovered HTTP listener owned by the managed preview run`.
+  Only browser processes were listening. No settings edit, alternate server, or workaround.
+- NOT RUN in this fresh session: flows A–I, 360/390/430 checks, viewport-emulation
+  capability, focused/full suite, typecheck, lint, build, D1/migration-replay/schema and
+  authority audits. Historical 176/9 and 26 hardening/adoption results are not current
+  certification; current full counts are unestablished.
+- Fresh checks: migration integrity PASS (31, unchanged 0031, no 0032),
+  `git diff --check` PASS. Platform report recorded. Docs-only WIP publication target:
+  `hoplite/mende-26679a14`; prior continuation branch preserved.
+- NEXT: repair the supported managed Preview interface; resume all mandatory WIP flows,
+  then establish the real baseline and complete AC/roadmap, freeze, and certification gates.
+  No application freeze/final docs head, merge, deploy, remote D1, PayOS, or T14 work.
+
 ## Current board — confirmed UX fixed; browser gate blocked, 2026-09-13 12:40 UTC
 
 - New branch: `hoplite/kos-9d39545d--t13b-b-final-certification`, exact f845d04 base.
