@@ -58,11 +58,21 @@ async function click(label: string) {
   await act(async () => button(label).click());
   await flush();
 }
-async function fillExpiry(value: string) {
-  const input = find<HTMLInputElement>('#lot-expiry-input');
+async function fillInput(selector: string, value: string) {
+  const input = find<HTMLInputElement>(selector);
   await act(async () => {
     Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value);
     input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+}
+async function fillExpiry(value: string) {
+  await fillInput('#lot-expiry-input', value);
+}
+async function select(selector: string, value: string) {
+  const input = find<HTMLSelectElement>(selector);
+  await act(async () => {
+    input.value = value;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
   });
 }
 async function mount(value = lot()) {
@@ -139,7 +149,7 @@ describe('T13B ingredient detail expiry truth', () => {
 
   it('corrects UNKNOWN expiry to an explicit known date and renders the refetched lot', async () => {
     await mount();
-    await click('Sửa hạn dùng & vị trí');
+    await click('Sửa thông tin nguyên liệu');
     expect(find<HTMLInputElement>('#lot-expiry-input').value).toBe('');
     await fillExpiry('2026-10-01');
     mocks.getLot.mockResolvedValue(lot({ expiryKind: 'KNOWN', expiryAt: '2026-10-01', version: 8, lotVersion: 8 }));
@@ -153,7 +163,7 @@ describe('T13B ingredient detail expiry truth', () => {
 
   it('clears a known expiry explicitly and displays unknown after the refetch', async () => {
     await mount(lot({ expiryKind: 'KNOWN', expiryAt: '2026-10-01' }));
-    await click('Sửa hạn dùng & vị trí');
+    await click('Sửa thông tin nguyên liệu');
     await fillExpiry('');
     mocks.getLot.mockResolvedValue(lot({ version: 8, lotVersion: 8 }));
     await click('Lưu thay đổi');
@@ -164,10 +174,11 @@ describe('T13B ingredient detail expiry truth', () => {
 
   it('shows a readable conflict, refetches real query state and retries against the refreshed version', async () => {
     await mount();
-    await click('Sửa hạn dùng & vị trí');
+    await click('Sửa thông tin nguyên liệu');
     await fillExpiry('2026-10-01');
     mocks.update.mockRejectedValueOnce(new ApiError('http', 'HTTP 409: {"code":"CONFLICT","private":"secret"}', 409));
-    mocks.getLot.mockResolvedValue(lot({ version: 8, lotVersion: 8, quantity: 5 }));
+    mocks.getLot.mockResolvedValue(lot({ version: 8, lotVersion: 8, quantity: 5,
+      name: 'Cà chua mới', unit: 'g', category: 'other', storage: 'freezer' }));
     await click('Lưu thay đổi');
     await until(() => {
       expect(container.textContent).toContain('v8');
@@ -176,6 +187,7 @@ describe('T13B ingredient detail expiry truth', () => {
     expect(find('[role="alert"]').textContent).toContain('Đã tải lại trạng thái mới nhất');
     expect(container.textContent).not.toContain('secret');
     expect(mocks.getLot).toHaveBeenCalledTimes(2);
+    expect(mocks.update).toHaveBeenCalledTimes(1);
     expect(mocks.update).toHaveBeenNthCalledWith(1, 'projection-1', { expiryDate: '2026-10-01', expiryEstimated: false }, 7);
     mocks.getLot.mockResolvedValue(lot({ version: 9, lotVersion: 9, expiryKind: 'KNOWN', expiryAt: '2026-10-01' }));
     await click('Lưu thay đổi');
@@ -183,5 +195,137 @@ describe('T13B ingredient detail expiry truth', () => {
     expect(mocks.update).toHaveBeenNthCalledWith(2, 'projection-1', { expiryDate: '2026-10-01', expiryEstimated: false }, 8);
     expect(mocks.getLot).toHaveBeenCalledTimes(3);
     expect(mocks.invalidate).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('T13B U7 existing-lot metadata editing', () => {
+  it('submits name, compatible unit, category, storage and explicit expiry without overwriting quantity', async () => {
+    await mount(lot({ unit: 'g', quantity: 500, canonicalUnit: 'g', quantityMilli: 500000 }));
+    await click('Sửa thông tin nguyên liệu');
+    expect(find<HTMLInputElement>('#lot-name-input').value).toBe('Cà chua');
+    expect(find<HTMLSelectElement>('#lot-unit-input').value).toBe('g');
+    expect(find<HTMLSelectElement>('#lot-category-input').value).toBe('vegetable');
+    await fillInput('#lot-name-input', '  Cà chua đã kiểm tra  ');
+    await select('#lot-unit-input', 'kg');
+    await select('#lot-category-input', 'other');
+    await select('#lot-storage-input', 'freezer');
+    await fillExpiry('2026-10-01');
+    mocks.getLot.mockResolvedValue(lot({ name: 'Cà chua đã kiểm tra', unit: 'kg', quantity: 0.5,
+      category: 'other', storage: 'freezer', expiryKind: 'KNOWN', expiryAt: '2026-10-01',
+      version: 9, lotVersion: 9 }));
+    await click('Lưu thay đổi');
+    await until(() => expect(container.querySelector('#lot-name-input')).toBeNull());
+    expect(mocks.update).toHaveBeenCalledExactlyOnceWith('projection-1', {
+      name: 'Cà chua đã kiểm tra', unit: 'kg', category: 'other', storage: 'freezer',
+      expiryDate: '2026-10-01', expiryEstimated: false,
+    }, 7);
+    expect(find('h3').textContent).toBe('Cà chua đã kiểm tra');
+    expect(container.textContent).toContain('0.5 kg');
+    expect(find('[data-testid="lot-expiry"]').textContent).toBe('Hạn dùng 2026-10-01');
+    expect(mocks.invalidate).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    ['name', 'Cà chua mới'], ['unit', 'kg'], ['category', 'other'], ['storage', 'freezer'],
+  ])('submits only dirty %s and leaves an unchanged estimate as estimated', async (field, value) => {
+    await mount(lot({ unit: 'g', expiryKind: 'ESTIMATED', estimatedExpiryAt: '2026-10-01' }));
+    await click('Sửa thông tin nguyên liệu');
+    if (field === 'name') await fillInput('#lot-name-input', value);
+    else await select(`#lot-${field}-input`, value);
+    await click('Lưu thay đổi');
+    await until(() => expect(container.querySelector('#lot-name-input')).toBeNull());
+    expect(mocks.update).toHaveBeenCalledExactlyOnceWith('projection-1', { [field]: value }, 7);
+    expect(find('[data-testid="lot-expiry"]').textContent).toBe('Hạn ước tính 2026-10-01');
+  });
+
+  it('does not mutate an unchanged or reverted draft, including an estimated date and custom category', async () => {
+    await mount(lot({ category: 'fruit', expiryKind: 'ESTIMATED', estimatedExpiryAt: '2026-10-01' }));
+    await click('Sửa thông tin nguyên liệu');
+    expect(find<HTMLSelectElement>('#lot-category-input').value).toBe('fruit');
+    await click('Lưu thay đổi');
+    expect(mocks.update).not.toHaveBeenCalled();
+    await click('Sửa thông tin nguyên liệu');
+    await fillInput('#lot-name-input', 'Tên mới');
+    await fillInput('#lot-name-input', 'Cà chua');
+    await select('#lot-unit-input', 'kg');
+    await select('#lot-unit-input', 'piece');
+    await select('#lot-category-input', 'other');
+    await select('#lot-category-input', 'fruit');
+    await fillExpiry('2026-10-02');
+    await fillExpiry('2026-10-01');
+    await click('Lưu thay đổi');
+    expect(mocks.update).not.toHaveBeenCalled();
+    expect(mocks.getLot).toHaveBeenCalledOnce();
+  });
+
+  it('rejects a blank name and discards canceled metadata drafts', async () => {
+    await mount();
+    await click('Sửa thông tin nguyên liệu');
+    await fillInput('#lot-name-input', '   ');
+    expect(button('Lưu thay đổi').disabled).toBe(true);
+    await click('Lưu thay đổi');
+    expect(mocks.update).not.toHaveBeenCalled();
+    await click('Hủy');
+    await click('Sửa thông tin nguyên liệu');
+    expect(find<HTMLInputElement>('#lot-name-input').value).toBe('Cà chua');
+    expect(button('Lưu thay đổi').disabled).toBe(false);
+  });
+
+  it.each(['CONFLICT', 'IDEMPOTENCY_CONFLICT'])('retains only dirty metadata after %s refetch without clobbering newer fields', async (code) => {
+    await mount(lot({ expiryKind: 'ESTIMATED', estimatedExpiryAt: '2026-10-01' }));
+    await click('Sửa thông tin nguyên liệu');
+    await fillInput('#lot-name-input', 'Cà chua đã kiểm tra');
+    mocks.update.mockRejectedValueOnce(new ApiError('http', `HTTP 409: {"code":"${code}"}`, 409));
+    const refreshed = lot({ version: 8, lotVersion: 8, name: 'Cà chua từ thiết bị khác',
+      unit: 'g', quantity: 500, category: 'other', storage: 'freezer',
+      expiryKind: 'KNOWN', expiryAt: '2026-10-02' });
+    mocks.getLot.mockResolvedValue(refreshed);
+    await click('Lưu thay đổi');
+    await until(() => {
+      expect(container.textContent).toContain('v8');
+      expect(button('Lưu thay đổi').disabled).toBe(false);
+    });
+    expect(find('[role="alert"]').textContent).toContain(code === 'CONFLICT'
+      ? 'Đã tải lại trạng thái mới nhất' : 'Yêu cầu này đã được dùng cho một thao tác khác');
+    expect(find<HTMLInputElement>('#lot-name-input').value).toBe('Cà chua đã kiểm tra');
+    expect(mocks.update).toHaveBeenCalledExactlyOnceWith('projection-1', { name: 'Cà chua đã kiểm tra' }, 7);
+    mocks.getLot.mockResolvedValue({ ...refreshed, name: 'Cà chua đã kiểm tra', version: 9, lotVersion: 9 });
+    await click('Lưu thay đổi');
+    await until(() => expect(container.querySelector('#lot-name-input')).toBeNull());
+    expect(mocks.update).toHaveBeenNthCalledWith(2, 'projection-1', { name: 'Cà chua đã kiểm tra' }, 8);
+    expect(mocks.update).toHaveBeenCalledTimes(2);
+    expect(container.textContent).toContain('500 g');
+    expect(find('[data-testid="lot-expiry"]').textContent).toBe('Hạn dùng 2026-10-02');
+  });
+
+  it('preserves the safe draft on UNIT_MISMATCH with no automatic retry or refetch', async () => {
+    client.setDefaultOptions({ mutations: { retry: 2, retryDelay: 0 } });
+    await mount(lot({ unit: 'g', quantity: 500 }));
+    await click('Sửa thông tin nguyên liệu');
+    await fillInput('#lot-name-input', 'Cà chua đã kiểm tra');
+    await select('#lot-unit-input', 'piece');
+    await select('#lot-category-input', 'other');
+    await select('#lot-storage-input', 'freezer');
+    await fillExpiry('2026-10-01');
+    mocks.update.mockRejectedValueOnce(new ApiError('http', 'HTTP 422: {"code":"UNIT_MISMATCH","private":"secret"}', 422));
+    await click('Lưu thay đổi');
+    await until(() => expect(button('Lưu thay đổi').disabled).toBe(false));
+    expect(find('[role="alert"]').textContent).toContain('Không thể quy đổi đơn vị này');
+    expect(container.textContent).not.toContain('secret');
+    expect(find<HTMLInputElement>('#lot-name-input').value).toBe('Cà chua đã kiểm tra');
+    expect(find<HTMLSelectElement>('#lot-unit-input').value).toBe('piece');
+    expect(find<HTMLSelectElement>('#lot-category-input').value).toBe('other');
+    expect(find<HTMLSelectElement>('#lot-storage-input').value).toBe('freezer');
+    expect(find<HTMLInputElement>('#lot-expiry-input').value).toBe('2026-10-01');
+    expect(mocks.update).toHaveBeenCalledTimes(1);
+    expect(mocks.getLot).toHaveBeenCalledOnce();
+    expect(mocks.invalidate).not.toHaveBeenCalled();
+    await select('#lot-unit-input', 'kg');
+    await click('Lưu thay đổi');
+    await until(() => expect(container.querySelector('#lot-name-input')).toBeNull());
+    expect(mocks.update).toHaveBeenNthCalledWith(2, 'projection-1', {
+      name: 'Cà chua đã kiểm tra', unit: 'kg', category: 'other', storage: 'freezer',
+      expiryDate: '2026-10-01', expiryEstimated: false,
+    }, 7);
   });
 });

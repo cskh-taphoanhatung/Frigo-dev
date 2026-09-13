@@ -26,13 +26,21 @@ const STORAGE_LABEL: Record<string, string> = {
   fridge: 'Ngăn mát tủ lạnh', freezer: 'Ngăn đông đá', pantry: 'Tủ đồ khô',
 };
 
+const CATEGORY_LABEL: Record<string, string> = {
+  vegetable: 'Rau củ', meat: 'Thịt', egg: 'Trứng', seafood: 'Hải sản',
+  dairy: 'Sữa / Bơ', spice: 'Gia vị', grain: 'Gạo / Mì', other: 'Khác',
+};
+
+type EditDraft = { name: string; unit: string; category: string; storage: string; expiryDate: string };
+const EMPTY_DRAFT: EditDraft = { name: '', unit: '', category: '', storage: '', expiryDate: '' };
+
 export const IngredientDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [actionError, setActionError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
-  const [expiryDraft, setExpiryDraft] = useState('');
-  const [storageDraft, setStorageDraft] = useState('');
+  const [draft, setDraft] = useState<EditDraft>(EMPTY_DRAFT);
+  const [editBaseline, setEditBaseline] = useState<EditDraft>(EMPTY_DRAFT);
 
   // Adopted households read canonical lot truth; the legacy projection is
   // never the source for provenance or expiry semantics.
@@ -55,6 +63,7 @@ export const IngredientDetailPage: React.FC = () => {
   const item: any = lot ?? legacyItem;
 
   const mutate = useMutation({
+    retry: false,
     mutationFn: async (updates: Record<string, unknown>) => {
       if (!item) throw new Error('missing item');
       return api.updateInventoryItem(item.id, updates, item.version);
@@ -113,8 +122,12 @@ export const IngredientDetailPage: React.FC = () => {
 
   const startEdit = () => {
     setActionError(null);
-    setExpiryDraft(expiry.date ?? '');
-    setStorageDraft(item.storage ?? 'fridge');
+    const initialDraft = {
+      name: item.name, unit: item.unit, category: item.category ?? 'other',
+      storage: item.storage ?? 'fridge', expiryDate: expiry.date ?? '',
+    };
+    setDraft(initialDraft);
+    setEditBaseline(initialDraft);
     setEditing(true);
   };
 
@@ -191,7 +204,7 @@ export const IngredientDetailPage: React.FC = () => {
         {!editing ? (
           <Button fullWidth variant="outline" onClick={startEdit} className="flex items-center justify-center gap-2">
             <PackageOpen className="w-4 h-4 text-emerald-600" />
-            <span>Sửa hạn dùng &amp; vị trí</span>
+            <span>Sửa thông tin nguyên liệu</span>
           </Button>
         ) : (
           <form
@@ -199,17 +212,70 @@ export const IngredientDetailPage: React.FC = () => {
             onSubmit={(event) => {
               event.preventDefault();
               const updates: Record<string, unknown> = {};
-              if (expiryDraft !== (expiry.date ?? '')) {
-                updates.expiryDate = expiryDraft || null;
+              // Refetches must not turn untouched draft fields into corrections.
+              if (draft.name.trim() !== editBaseline.name.trim()) updates.name = draft.name.trim();
+              if (draft.unit !== editBaseline.unit) updates.unit = draft.unit;
+              if (draft.category !== editBaseline.category) updates.category = draft.category;
+              if (draft.expiryDate !== editBaseline.expiryDate) {
+                updates.expiryDate = draft.expiryDate || null;
                 // The date picker is an explicit dated fact, so the correction
                 // establishes KNOWN expiry rather than another estimate.
                 updates.expiryEstimated = false;
               }
-              if (storageDraft !== item.storage) updates.storage = storageDraft;
+              if (draft.storage !== editBaseline.storage) updates.storage = draft.storage;
               if (Object.keys(updates).length === 0) { setEditing(false); return; }
               mutate.mutate(updates);
             }}
           >
+            <div>
+              <label htmlFor="lot-name-input" className="block text-xs font-semibold text-slate-700 mb-1">
+                Tên nguyên liệu
+              </label>
+              <input
+                id="lot-name-input"
+                required
+                maxLength={100}
+                value={draft.name}
+                onChange={(event) => setDraft({ ...draft, name: event.target.value })}
+                className="w-full h-11 px-3 rounded-xl border border-slate-200/80 text-sm font-medium text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="lot-unit-input" className="block text-xs font-semibold text-slate-700 mb-1">
+                  Đơn vị
+                </label>
+                <select
+                  id="lot-unit-input"
+                  value={draft.unit}
+                  onChange={(event) => setDraft({ ...draft, unit: event.target.value })}
+                  className="w-full h-11 px-3 rounded-xl border border-slate-200/80 text-sm font-medium text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600"
+                >
+                  <option value="g">gam (g)</option>
+                  <option value="kg">kg</option>
+                  <option value="piece">quả / củ / bìa / miếng</option>
+                  <option value="bunch">bó</option>
+                  <option value="pack">gói / hộp</option>
+                  <option value="slice">lát</option>
+                  <option value="ml">ml</option>
+                  <option value="l">lít</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="lot-category-input" className="block text-xs font-semibold text-slate-700 mb-1">
+                  Danh mục
+                </label>
+                <select
+                  id="lot-category-input"
+                  value={draft.category}
+                  onChange={(event) => setDraft({ ...draft, category: event.target.value })}
+                  className="w-full h-11 px-3 rounded-xl border border-slate-200/80 text-sm font-medium text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600"
+                >
+                  {!Object.hasOwn(CATEGORY_LABEL, editBaseline.category) && <option value={editBaseline.category}>{editBaseline.category}</option>}
+                  {Object.entries(CATEGORY_LABEL).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+              </div>
+            </div>
             <div>
               <label htmlFor="lot-expiry-input" className="block text-xs font-semibold text-slate-700 mb-1">
                 Hạn sử dụng chính xác
@@ -217,8 +283,8 @@ export const IngredientDetailPage: React.FC = () => {
               <input
                 id="lot-expiry-input"
                 type="date"
-                value={expiryDraft}
-                onChange={(event) => setExpiryDraft(event.target.value)}
+                value={draft.expiryDate}
+                onChange={(event) => setDraft({ ...draft, expiryDate: event.target.value })}
                 className="w-full h-11 px-3 rounded-xl border border-slate-200/80 text-sm font-medium text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600"
               />
               <p className="text-[11px] text-slate-500 mt-1">
@@ -231,8 +297,8 @@ export const IngredientDetailPage: React.FC = () => {
               </label>
               <select
                 id="lot-storage-input"
-                value={storageDraft}
-                onChange={(event) => setStorageDraft(event.target.value)}
+                value={draft.storage}
+                onChange={(event) => setDraft({ ...draft, storage: event.target.value })}
                 className="w-full h-11 px-3 rounded-xl border border-slate-200/80 text-sm font-medium text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600"
               >
                 <option value="fridge">Ngăn mát</option>
@@ -241,7 +307,7 @@ export const IngredientDetailPage: React.FC = () => {
               </select>
             </div>
             <div className="flex gap-2">
-              <Button type="submit" fullWidth disabled={mutate.isPending}>
+              <Button type="submit" fullWidth disabled={mutate.isPending || !draft.name.trim()}>
                 {mutate.isPending ? 'Đang lưu…' : 'Lưu thay đổi'}
               </Button>
               <Button type="button" variant="outline" onClick={() => setEditing(false)}>Hủy</Button>
