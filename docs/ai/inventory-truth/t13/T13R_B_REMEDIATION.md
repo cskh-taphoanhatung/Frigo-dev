@@ -160,5 +160,20 @@ bypassed.
 - main `d1b06732f8a80db4e77986df31ff28d9f04641fa`: unchanged (YES)
 
 Safe-stop verdict: INCOMPLETE — commits exist locally on the authorized
-branch only; publish `d0006a44` to `hoplite/medma-164548ce` from a session
-with the brokered publisher, then fetch and re-verify. No force push.
+branch only. Rescue evidence (second stop, 2026-09-13T21:55Z):
+
+- Rescue branch: `rescue/t13r-b-local-830d3cb3` -> `830d3cb3d56d5c58cd451f7bcab0d30d957d1c22`
+- Bundle: `/tmp/frigo-t13r-b-rescue-830d3cb3.bundle` and durable copy
+  `.hoplite/artifacts/frigo-t13r-b-rescue-830d3cb3.bundle` (29,742,161 bytes,
+  complete history, verified; contains 830d3cb3)
+- Bundle SHA-256: `29dc15023807ba9d7eef5e1dd150888bbf6a647d69a604a32e95c49ed5c53b1d`
+- Chain order: 4d587eb -> 7e68e3b (application/WIP head) -> d0006a4 -> 830d3cb3
+  (docs head; docs-only after WIP — no src/tests/scripts/migrations/harness changes)
+- Publication re-attempted at rescue time: trusted publisher still unavailable
+  in-session, direct push still lacks credentials. Do NOT bypass the broker;
+  do NOT start from remote 551db17 and reimplement.
+
+To publish from a session with the brokered publisher: fast-forward
+`hoplite/medma-164548ce` from `551db17f43dc...` to `830d3cb3d56d5c58...`
+(or the final docs head below), then fetch and verify local == remote and
+main `d1b06732f8a80db4e77986df31ff28d9f04641fa` unchanged. No force push.
