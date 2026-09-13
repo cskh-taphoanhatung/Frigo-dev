@@ -1,5 +1,25 @@
 # Frigo current state — isolated T09 development
 
+## Current authoritative state — T13B-B hardening WIP, 2026-09-13
+
+**T13 NOT COMPLETE — browser/final certification blocked.** Current repository is
+`vn-ca1/Frigo-dev`, ID **1368281478**; historical `Tungjpstore/Frigo-dev` redirects to
+that same ID. All guarded SHAs/ancestry passed; continuation starts exactly at
+`2334a6f41cf68d42ae1eba7a30440b8fe324eb31`, never main.
+Branch: `hoplite/kos-9d39545d--t13b-b-final-hardening`.
+Published application-bearing **WIP**, not freeze:
+`c37a9b8d7afc66507052bbc8f1e8a24fdc896e8d` (fetched remote equality verified).
+Route/store ownership, private-session async fencing, fridge domain-error recovery,
+and confirmed-review status retention are fixed with **23 new regressions**.
+Final focused **173/173 (9 files)**; T13B-A backend **1122/1122 (17 files)**;
+typecheck, scoped lint, operator syntax and diff check PASS. Migration count 31,
+0031 unchanged/no 0032; current-source writer/reader UNKNOWN 0/0.
+Managed Preview is blocked by its mandatory promotion schema; no browser/final
+detached/full-suite/D1/schema/build certification or application freeze is claimed.
+Full evidence, corrected intermediate check failures, transfer/docs-lineage proof
+and exact next action: [T13B_B_WIP_HANDOFF.md](inventory-truth/t13/T13B_B_WIP_HANDOFF.md).
+Main remains `d1b06732f8a80db4e77986df31ff28d9f04641fa`; no merge/deploy/remote D1/PayOS.
+
 ## Current authoritative state — T13B-B quota-safe WIP, 2026-09-13
 
 Implementation stopped on the owner's instruction. The focused Part B preflight

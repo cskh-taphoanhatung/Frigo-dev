@@ -1,5 +1,32 @@
 # Frigo AI Handoff — isolated T09 development
 
+## Current authoritative handoff — T13B-B hardened WIP, 2026-09-13
+
+Program: Inventory Truth Layer / T13B-B final hardening after recovery
+Status: **BLOCKED_FINAL_VERIFICATION — T13 NOT COMPLETE**
+Repository: `vn-ca1/Frigo-dev`, ID **1368281478**; historical `Tungjpstore/Frigo-dev`
+transfer/redirect verified against that ID.
+Starting WIP: `2334a6f41cf68d42ae1eba7a30440b8fe324eb31`; all specified main/rescue/
+quota-WIP refs and `c31567e` ancestry passed before editing.
+Branch: `hoplite/kos-9d39545d--t13b-b-final-hardening`
+Published/fetched WIP: `c37a9b8d7afc66507052bbc8f1e8a24fdc896e8d`, **not a freeze**.
+Changed: route-authoritative ScanResultPage, fenced polling/confirm/refetch, safe
+domain errors, store-retained terminal review status, 23 permanent regressions.
+Checks: final focused 173/173 (9 files), preserved backend 1122/1122 (17 files),
+typecheck, scoped lint, CLI syntax and diff check PASS. Red/green diagnostic:
+5 targeted cases fail against recovered WIP, all pass on continuation.
+Failures resolved: missing node_modules; two incorrect test DTO TS2345 errors;
+duplicate discovery of an initially nested diagnostic worktree (moved outside).
+Remaining blocker: mandatory `preview_start` promotion schema rejects first startup;
+reported to platform. Effective run override selects the existing isolated harness;
+pre-existing settings overlay stays uncommitted. No browser/mobile proof or final
+freeze/full-suite/real-D1/migration/schema/build certification was fabricated.
+Migration/authority: 31 unchanged, no 0032; writer/reader UNKNOWN 0/0. Historical
+`69b0dc6` is not an ancestor, but all five Part A docs were retained; no history rewrite.
+Next: follow `inventory-truth/t13/T13B_B_WIP_HANDOFF.md` to unblock Preview, finish
+original AC1–AC14/roadmap evidence, freeze, run clean detached gates, publish docs-only
+head, then independent T13 final review. Main unchanged; no merge/deploy/remote D1/PayOS.
+
 ## Current authoritative handoff — T13B-B stopped by owner, 2026-09-13
 
 **Quota-safe WIP; not final certification.** Read

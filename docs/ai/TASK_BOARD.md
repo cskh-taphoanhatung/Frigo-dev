@@ -1,5 +1,23 @@
 # Frigo task board
 
+## T13B-B continuation — 2026-09-13, BLOCKED_FINAL_VERIFICATION
+
+- Repository transfer verified: `vn-ca1/Frigo-dev`, ID 1368281478; exact recovered
+  WIP/guarded main/rescue refs and ancestry passed before edits.
+- Branch `hoplite/kos-9d39545d--t13b-b-final-hardening`; published WIP
+  `c37a9b8d7afc66507052bbc8f1e8a24fdc896e8d`, not application freeze.
+- P1 route/store mismatch and private-session race: fixed. P2 safe fridge domain
+  errors/refetch and confirmed-review remount truthfulness: fixed. 23 regressions.
+- PASS: final focused 173 tests/9 files; T13B-A backend 1122/17; typecheck, scoped
+  lint, operator syntax, diff check. Writer/reader UNKNOWN 0/0; 31 unchanged migrations.
+- BLOCKER: managed Preview's required promotion argument prevents initial startup.
+  Reported platform fault; fresh browser flows and widths remain unverified.
+- NEXT: unblock managed Preview, complete all browser/AC/roadmap gates, then create
+  application freeze and run clean detached/full/D1/migration/schema/build gates.
+  Only afterwards update final T13 documents and create final docs HEAD.
+- **T13 NOT COMPLETE.** No main merge, production deploy, remote D1 or PayOS change.
+  See `inventory-truth/t13/T13B_B_WIP_HANDOFF.md` for exact commands/failures/lineage.
+
 ## Current authoritative board — T13B-B quota stop, 2026-09-13
 
 - WIP implemented: receipt/fridge full review, truthful evidence/confidence, explicit
