@@ -30,7 +30,8 @@ required_migrations(name) AS (
     ('0028_inventory_adoption_authority.sql'),
     ('0029_inventory_fefo_backfill_compatibility.sql'),
     ('0030_inventory_observation_reconciliation.sql'),
-    ('0031_scan_evidence_retention.sql')
+    ('0031_scan_evidence_retention.sql'),
+    ('0032_scan_evidence_completeness.sql')
 ),
 required_tables(name) AS (
   VALUES
@@ -140,6 +141,12 @@ required_columns(table_name, column_name) AS (
     ,('scan_items', 'ocr_unit')
     ,('scan_items', 'ocr_confidence')
     ,('scan_items', 'review_state')
+    -- T13R-A (0032): complete raw mapping evidence and the reviewed expiry.
+    ,('scan_items', 'ocr_canonical_id')
+    ,('scan_items', 'ocr_category')
+    ,('scan_items', 'ocr_storage')
+    ,('scan_items', 'reviewed_expiry_date')
+    ,('scan_items', 'reviewed_expiry_kind')
 ),
 required_triggers(name) AS (
   VALUES
@@ -147,6 +154,9 @@ required_triggers(name) AS (
     -- T13 (0031): CONFIRMED review state and is_confirmed must stay one fact.
     ('trg_scan_items_review_state_insert'),
     ('trg_scan_items_review_state_update'),
+    -- T13R-A (0032): reviewed expiry kind/date pairing is fail-closed.
+    ('trg_scan_items_reviewed_expiry_insert'),
+    ('trg_scan_items_reviewed_expiry_update'),
     ('trg_inventory_commands_immutable_update'),
     ('trg_inventory_commands_immutable_insert'),
     ('trg_inventory_commands_immutable_delete'),

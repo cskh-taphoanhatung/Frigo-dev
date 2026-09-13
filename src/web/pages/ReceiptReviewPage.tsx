@@ -32,6 +32,8 @@ interface ReceiptItemState {
   reviewState?: 'PENDING' | 'CONFIRMED' | 'REJECTED';
   expiryDate?: string;
   expiryEstimated?: boolean;
+  /** Server-recorded accepted expiry kind for a CONFIRMED line (T13R-A P2-B). */
+  expiryKind?: 'KNOWN' | 'ESTIMATED' | 'UNKNOWN';
 }
 
 interface ReceiptState {
@@ -361,12 +363,12 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
                     <option value="pantry">Tủ khô</option>
                   </select>
                   </label>
-                  {!isConfirmed && <label htmlFor={`receipt-expiry-${item.id}`}>Hạn dùng trên nhãn
+                  <label htmlFor={`receipt-expiry-${item.id}`}>Hạn dùng trên nhãn
                     <input id={`receipt-expiry-${item.id}`} type="date" value={item.expiryDate ?? ''}
                       disabled={disabled}
                       onChange={(event) => updateItem(item.id, { expiryDate: event.target.value || undefined, expiryEstimated: false })}
                       className="w-full min-w-0 mt-1 rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-900" />
-                  </label>}
+                  </label>
                 </div>
                 {!isConfirmed ? <div className="text-[11px] text-slate-500 space-y-1">
                   <p data-testid="receipt-expiry-status">{item.expiryDate
@@ -374,7 +376,15 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
                     : 'Chưa cung cấp hạn dùng. Hệ thống có thể gợi ý hạn dùng ước tính.'}</p>
                   {item.expiryDate && <button disabled={disabled} onClick={() => updateItem(item.id, { expiryDate: undefined, expiryEstimated: false })}
                     className="underline tap-target">Không rõ hạn dùng</button>}
-                </div> : <p className="text-[11px] text-slate-500">Hạn dùng đã lưu: xem chi tiết lô trong tủ lạnh.</p>}
+                </div> : <p className="text-[11px] text-slate-500" data-testid="receipt-expiry-status">
+                  {/* T13R-A P2-B: a confirmed line reports the accepted expiry the server recorded, never a re-derived guess. */}
+                  {item.rejected ? 'Đã bỏ qua: không có hạn dùng.'
+                    : item.expiryDate
+                      ? item.expiryEstimated ? 'Hạn dùng ước tính đã xác nhận.' : 'Hạn dùng do bạn cung cấp.'
+                      : item.reviewState === 'CONFIRMED' && item.expiryKind === 'UNKNOWN'
+                        ? 'Đã xác nhận không rõ hạn dùng.'
+                        : 'Hạn dùng đã lưu: xem chi tiết lô trong tủ lạnh.'}
+                </p>}
                 {item.unitPriceVnd != null && <p className="text-[11px] text-slate-500">Đơn giá OCR: {presentPrice(item.unitPriceVnd)}</p>}
                 <details className="text-xs text-slate-600 break-words">
                   <summary className="cursor-pointer py-1 font-medium">Xem OCR gốc và giá trị xác nhận{corrected ? ' · Đã chỉnh sửa' : ''}</summary>

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  correctionOf, lotExpiryFromEvidence, provenanceDataSource, rawScanEvidence,
-  receiptLineFacts, receiptPurchasePrice, scanProvenance, trustworthyCalendarDate,
+  correctionOf, lotExpiryFromEvidence, provenanceDataSource, rawEvidenceAbsent, rawScanEvidence,
+  receiptLineFacts, receiptPurchasePrice, reviewedScanExpiry, scanProvenance, trustworthyCalendarDate,
 } from '../../src/worker/routes/../utils/scan-evidence';
 import { ReceiptScanResultSchema, ReceiptItemSchema } from '../../packages/ai/src/schemas';
 import { CloudflareAIProvider } from '../../packages/ai/src/providers/cloudflare';
@@ -127,12 +127,37 @@ describe('T13 purchase facts', () => {
 describe('T13 raw vs confirmed evidence', () => {
   it('reads retained raw extraction', () => {
     expect(rawScanEvidence({ ocr_raw_name: 'Thịt heo', ocr_quantity: 2, ocr_unit: 'kg' }))
-      .toEqual({ rawName: 'Thịt heo', quantity: 2, unit: 'kg' });
+      .toEqual({ rawName: 'Thịt heo', quantity: 2, unit: 'kg', canonicalId: null, category: null, storage: null });
+    // T13R-A (0032): the ingested mapping is evidence too.
+    expect(rawScanEvidence({ ocr_raw_name: 'Thịt heo', ocr_quantity: 2, ocr_unit: 'kg',
+      ocr_canonical_id: 'PORK_BELLY', ocr_category: 'meat', ocr_storage: 'freezer' }))
+      .toEqual({ rawName: 'Thịt heo', quantity: 2, unit: 'kg', canonicalId: 'PORK_BELLY', category: 'meat', storage: 'freezer' });
   });
 
   it('reports absent raw evidence as absent', () => {
-    expect(rawScanEvidence({ ocr_raw_name: null, ocr_quantity: null, ocr_unit: null }))
-      .toEqual({ rawName: null, quantity: null, unit: null });
+    const absent = rawScanEvidence({ ocr_raw_name: null, ocr_quantity: null, ocr_unit: null });
+    expect(absent).toEqual({ rawName: null, quantity: null, unit: null, canonicalId: null, category: null, storage: null });
+    expect(rawEvidenceAbsent(absent)).toBe(true);
+    // A pre-0032 row with only the 0031 subset is still evidence, and an
+    // unrecognised storage value is unknown rather than coerced to a shelf.
+    expect(rawEvidenceAbsent(rawScanEvidence({ ocr_raw_name: 'x', ocr_quantity: null, ocr_unit: null }))).toBe(false);
+    expect(rawScanEvidence({ ocr_storage: 'attic', ocr_canonical_id: '', ocr_category: '' }))
+      .toMatchObject({ storage: null, canonicalId: null, category: null });
+  });
+
+  it('reads the reviewed expiry only in its lawful shapes', () => {
+    expect(reviewedScanExpiry({ reviewed_expiry_kind: 'KNOWN', reviewed_expiry_date: '2030-12-31' }))
+      .toEqual({ expiryKind: 'KNOWN', expiryDate: '2030-12-31', expiryEstimated: false });
+    expect(reviewedScanExpiry({ reviewed_expiry_kind: 'ESTIMATED', reviewed_expiry_date: '2026-09-20' }))
+      .toEqual({ expiryKind: 'ESTIMATED', expiryDate: '2026-09-20', expiryEstimated: true });
+    expect(reviewedScanExpiry({ reviewed_expiry_kind: 'UNKNOWN', reviewed_expiry_date: null }))
+      .toEqual({ expiryKind: 'UNKNOWN' });
+    // Never reviewed (pre-0032 or PENDING/REJECTED) is null, and a dated kind
+    // without a trustworthy date is not promoted to a fact.
+    expect(reviewedScanExpiry({ reviewed_expiry_kind: null, reviewed_expiry_date: null })).toBeNull();
+    expect(reviewedScanExpiry({})).toBeNull();
+    expect(reviewedScanExpiry({ reviewed_expiry_kind: 'KNOWN', reviewed_expiry_date: '2030-02-30' })).toBeNull();
+    expect(reviewedScanExpiry({ reviewed_expiry_kind: 'KNOWN', reviewed_expiry_date: null })).toBeNull();
   });
 
   it('keeps raw and confirmed separable after a correction', () => {

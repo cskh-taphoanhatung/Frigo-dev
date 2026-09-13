@@ -4,7 +4,8 @@ import { composeInventoryLotCommands, readAdoptedLotSnapshot, type LotCommandSpe
 import { LotCommandError, type InventoryScanEvidence } from '../../../packages/domain/src/inventory-lot-commands';
 import { inventoryAuthorityFailure } from '../utils/inventory-authority';
 import {
-  lotExpiryFromEvidence, rawScanEvidence, receiptLineFacts, scanCorrectionLine, scanProvenance,
+  lotExpiryFromEvidence, rawEvidenceAbsent, rawScanEvidence, receiptLineFacts, reviewedScanExpiry,
+  scanCorrectionLine, scanProvenance,
   type ExpiryBasis, type ScanProvenanceType,
 } from '../utils/scan-evidence';
 import { buildInventoryObservation, guardedObservationInsertStatement } from '../../../packages/db/src/inventory-observations';
@@ -263,6 +264,9 @@ export interface PersistedScanItem {
   ocr_raw_name?: string | null;
   ocr_quantity?: number | null;
   ocr_unit?: string | null;
+  ocr_canonical_id?: string | null;
+  ocr_category?: string | null;
+  ocr_storage?: string | null;
 }
 
 export interface ResolvedScanItem {
@@ -444,6 +448,10 @@ export function scanItemDto(row: any, scanId: string) {
   const raw = rawScanEvidence(row);
   const reviewState = row.review_state === 'CONFIRMED' || row.review_state === 'REJECTED'
     ? row.review_state : 'PENDING';
+  // T13R-A P2-B: the expiry the reviewer accepted, exposed only for a
+  // CONFIRMED line and in the exact shape the review UI submits, so a
+  // reopened review hydrates KNOWN/ESTIMATED/UNKNOWN faithfully.
+  const reviewedExpiry = reviewState === 'CONFIRMED' ? reviewedScanExpiry(row) : null;
   return {
     id: row.id,
     scanId: row.scan_id ?? scanId,
@@ -459,12 +467,16 @@ export function scanItemDto(row: any, scanId: string) {
     reviewState,
     unitPriceVnd: row.unit_price_vnd == null ? undefined : Number(row.unit_price_vnd),
     totalPriceVnd: row.total_price_vnd == null ? undefined : Number(row.total_price_vnd),
+    ...(reviewedExpiry ?? {}),
     // Raw extraction kept separable from the confirmed value so a correction
     // can still be explained after the fact.
-    rawEvidence: raw.rawName === null && raw.quantity === null && raw.unit === null ? undefined : {
+    rawEvidence: rawEvidenceAbsent(raw) ? undefined : {
       rawName: raw.rawName ?? undefined,
       estimatedQuantity: raw.quantity ?? undefined,
       unit: raw.unit ?? undefined,
+      canonicalId: raw.canonicalId ?? undefined,
+      category: raw.category ?? undefined,
+      storage: raw.storage ?? undefined,
     },
   };
 }
@@ -731,7 +743,12 @@ scanRoutes.post('/scans/fridge', async (c) => {
             item.rawName,
             item.estimatedQuantity,
             item.unit,
-            item.confidence ?? null
+            item.confidence ?? null,
+            // T13R-A: the ingested mapping, retained before any review can
+            // rewrite the working canonical_id/category/storage.
+            item.canonicalId,
+            item.category,
+            item.storage
           )
       );
     }
@@ -946,6 +963,9 @@ scanRoutes.post('/scans/receipt', async (c) => {
             item.estimatedQuantity,
             item.unit,
             item.confidence ?? null,
+            item.canonicalId,
+            item.category,
+            item.storage,
           )
       );
     }
@@ -1072,7 +1092,8 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
     const scanItemsResult = await db
       .prepare(
         `SELECT id, raw_name, canonical_id, estimated_quantity, unit, category, storage, is_confirmed,
-                unit_price_vnd, total_price_vnd, ocr_raw_name, ocr_quantity, ocr_unit, ocr_confidence
+                unit_price_vnd, total_price_vnd, ocr_raw_name, ocr_quantity, ocr_unit, ocr_confidence,
+                ocr_canonical_id, ocr_category, ocr_storage
          FROM scan_items WHERE scan_id = ?`
       )
       .bind(id)
@@ -1296,12 +1317,17 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
       // a later GET of the scan reflects exactly what was imported. Omitted
       // predictions remain unconfirmed and retain their original AI values.
       for (const item of selectedItems) {
+        // T13R-A P2-B: record the expiry the reviewer accepted for THIS line
+        // (KNOWN / ESTIMATED / UNKNOWN) so a reopened review reports the
+        // review, not an absence re-derived from stock.
+        const reviewed = lotExpiryFromEvidence(item.expiryDate, item.expiryBasis);
         batchStatements.push(
           db
             .prepare(
               `UPDATE scan_items
                SET raw_name = ?, canonical_id = ?, estimated_quantity = ?, unit = ?,
-                   category = ?, storage = ?, is_confirmed = 1, review_state = 'CONFIRMED'
+                   category = ?, storage = ?, is_confirmed = 1, review_state = 'CONFIRMED',
+                   reviewed_expiry_date = ?, reviewed_expiry_kind = ?
                WHERE id = ? AND scan_id = ? AND ${readyScanPredicate}`
             )
             .bind(
@@ -1311,6 +1337,8 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
               item.unit,
               item.category,
               item.storage,
+              reviewed.expiryAt ?? reviewed.estimatedExpiryAt ?? null,
+              reviewed.expiryKind,
               item.sourceId,
               id,
               id,

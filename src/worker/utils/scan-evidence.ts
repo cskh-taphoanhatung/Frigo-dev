@@ -141,36 +141,74 @@ export interface RawScanEvidence {
   rawName: string | null;
   quantity: number | null;
   unit: string | null;
+  /** Ingested canonical mapping (0032); null when unmapped or never retained. */
+  canonicalId: string | null;
+  /** Ingested category (0032); null when never retained. */
+  category: string | null;
+  /** Ingested storage (0032); null when never retained. */
+  storage: 'fridge' | 'freezer' | 'pantry' | null;
 }
 
-/** Raw extraction as persisted by 0031; absent when it was never retained. */
+/** Raw extraction as persisted by 0031/0032; each field is absent when it was never retained. */
 export function rawScanEvidence(row: {
   ocr_raw_name?: unknown; ocr_quantity?: unknown; ocr_unit?: unknown;
+  ocr_canonical_id?: unknown; ocr_category?: unknown; ocr_storage?: unknown;
 }): RawScanEvidence {
   const quantity = row.ocr_quantity === null || row.ocr_quantity === undefined
     ? null : Number(row.ocr_quantity);
+  const storage = row.ocr_storage;
   return {
     rawName: typeof row.ocr_raw_name === 'string' ? row.ocr_raw_name : null,
     quantity: quantity !== null && Number.isFinite(quantity) && quantity > 0 ? quantity : null,
     unit: typeof row.ocr_unit === 'string' ? row.ocr_unit : null,
+    canonicalId: typeof row.ocr_canonical_id === 'string' && row.ocr_canonical_id ? row.ocr_canonical_id : null,
+    category: typeof row.ocr_category === 'string' && row.ocr_category ? row.ocr_category : null,
+    storage: storage === 'fridge' || storage === 'freezer' || storage === 'pantry' ? storage : null,
   };
+}
+
+/** True when no raw evidence at all was retained for the line. */
+export function rawEvidenceAbsent(raw: RawScanEvidence): boolean {
+  return raw.rawName === null && raw.quantity === null && raw.unit === null
+    && raw.canonicalId === null && raw.category === null && raw.storage === null;
+}
+
+/**
+ * The expiry a reviewer accepted at confirmation, as persisted by 0032, in
+ * the same shape the review UI submits (`expiryDate` + `expiryEstimated`) plus
+ * the explicit kind. Null when the line carries no reviewed expiry (never
+ * confirmed, rejected, or confirmed before 0032 — genuinely unknown).
+ */
+export function reviewedScanExpiry(row: {
+  reviewed_expiry_date?: unknown; reviewed_expiry_kind?: unknown;
+}): { expiryKind: 'KNOWN' | 'ESTIMATED' | 'UNKNOWN'; expiryDate?: string; expiryEstimated?: boolean } | null {
+  const kind = row.reviewed_expiry_kind;
+  if (kind === 'UNKNOWN') return { expiryKind: 'UNKNOWN' };
+  if (kind !== 'KNOWN' && kind !== 'ESTIMATED') return null;
+  const date = trustworthyCalendarDate(row.reviewed_expiry_date);
+  if (date === null) return null;
+  return { expiryKind: kind, expiryDate: date, expiryEstimated: kind === 'ESTIMATED' };
 }
 
 /**
  * Whether the user's confirmed values differ from the retained extraction.
  * Used to record correction provenance so raw and confirmed stay separable
- * after the fact.
+ * after the fact. The T09 evidence contract retains the name/quantity/unit
+ * comparison; the ingested mapping stays readable on the scan line itself.
  */
-export function correctionOf(raw: RawScanEvidence, confirmed: {
+/** The raw subset the T09 scan-evidence contract retains per line. */
+export type RawScanLine = Pick<RawScanEvidence, 'rawName' | 'quantity' | 'unit'>;
+
+export function correctionOf(raw: RawScanLine, confirmed: {
   name: string; quantity: number; unit: string;
-}): { corrected: boolean; raw: RawScanEvidence } {
+}): { corrected: boolean; raw: RawScanLine } {
   const corrected = (raw.rawName !== null && raw.rawName !== confirmed.name)
     || (raw.quantity !== null && raw.quantity !== confirmed.quantity)
     || (raw.unit !== null && raw.unit !== confirmed.unit);
-  return { corrected, raw };
+  return { corrected, raw: { rawName: raw.rawName, quantity: raw.quantity, unit: raw.unit } };
 }
 
-export function scanCorrectionLine(scanItemId: string | null, raw: RawScanEvidence,
+export function scanCorrectionLine(scanItemId: string | null, raw: RawScanLine,
   confirmed: InventoryScanEvidence['lines'][number]['confirmed']): InventoryScanEvidence['lines'][number] {
   return { scanItemId, ...correctionOf(raw, confirmed), confirmed };
 }

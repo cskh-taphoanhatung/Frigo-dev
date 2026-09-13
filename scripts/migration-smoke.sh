@@ -83,6 +83,26 @@ VALUES ('migration_smoke_line_done', 'migration_smoke_receipt', 'Trung ga', 6, '
 
 .read migrations/0031_scan_evidence_retention.sql
 
+-- T13R-A: seed representative post-0031 / pre-0032 rows so the 0032 upgrade
+-- is exercised over populated data: a T13 pending line with retained 0031
+-- evidence, a T13 confirmed line (its reviewed expiry basis is genuinely
+-- unknown and must stay NULL, never backfilled from the lot), and a T13
+-- rejected line. The two 0031-era legacy rows above stay as they are.
+INSERT INTO scan_items (id, scan_id, raw_name, canonical_id, estimated_quantity, unit, confidence, category, storage,
+  is_confirmed, review_state, ocr_raw_name, ocr_quantity, ocr_unit, ocr_confidence)
+VALUES ('migration_smoke_t13_pending', 'migration_smoke_receipt', 'Ca chua', 'TOMATO', 3, 'piece', 0.9, 'vegetable', 'fridge',
+  0, 'PENDING', 'Ca chua OCR', 3, 'piece', 0.42);
+INSERT INTO scan_items (id, scan_id, raw_name, canonical_id, estimated_quantity, unit, confidence, category, storage,
+  is_confirmed, review_state, ocr_raw_name, ocr_quantity, ocr_unit, ocr_confidence)
+VALUES ('migration_smoke_t13_confirmed', 'migration_smoke_receipt', 'Dau phu', 'TOFU', 2, 'piece', 0.9, 'other', 'pantry',
+  1, 'CONFIRMED', 'Dau hu OCR', 1, 'piece', NULL);
+INSERT INTO scan_items (id, scan_id, raw_name, canonical_id, estimated_quantity, unit, confidence, category, storage,
+  is_confirmed, review_state, ocr_raw_name, ocr_quantity, ocr_unit, ocr_confidence)
+VALUES ('migration_smoke_t13_rejected', 'migration_smoke_receipt', 'Vet ban', NULL, 1, 'piece', 0.9, 'other', 'fridge',
+  0, 'REJECTED', 'Vet ban', 1, 'piece', 0);
+
+.read migrations/0032_scan_evidence_completeness.sql
+
 CREATE TEMP TABLE assert_zero (value INTEGER NOT NULL CHECK (value = 0));
 INSERT INTO assert_zero SELECT COUNT(*) FROM pragma_foreign_key_check;
 INSERT INTO assert_zero SELECT COUNT(*) FROM pragma_integrity_check WHERE integrity_check <> 'ok';
@@ -231,6 +251,47 @@ INSERT INTO assert_one SELECT COUNT(*) FROM scan_items
 UPDATE scan_items SET review_state = 'REJECTED' WHERE id = 'migration_smoke_line_open';
 INSERT INTO assert_one SELECT COUNT(*) FROM scan_items
   WHERE id = 'migration_smoke_line_open' AND review_state = 'REJECTED' AND is_confirmed = 0;
+
+-- T13R-A / 0032: complete raw mapping evidence and the reviewed expiry exist,
+-- and NO populated row gained fabricated evidence: every pre-0032 row keeps
+-- NULL ocr_canonical_id/ocr_category/ocr_storage and NULL reviewed expiry,
+-- whatever its review state (legacy pending/confirmed, T13 pending/confirmed/
+-- rejected). The legacy 0031 evidence and lifecycle are untouched.
+INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('scan_items') WHERE name = 'ocr_canonical_id';
+INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('scan_items') WHERE name = 'ocr_category';
+INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('scan_items') WHERE name = 'ocr_storage';
+INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('scan_items') WHERE name = 'reviewed_expiry_date';
+INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('scan_items') WHERE name = 'reviewed_expiry_kind';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master
+  WHERE type = 'trigger' AND name = 'trg_scan_items_reviewed_expiry_insert';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master
+  WHERE type = 'trigger' AND name = 'trg_scan_items_reviewed_expiry_update';
+INSERT INTO assert_zero SELECT COUNT(*) FROM scan_items
+  WHERE scan_id = 'migration_smoke_receipt'
+    AND (ocr_canonical_id IS NOT NULL OR ocr_category IS NOT NULL OR ocr_storage IS NOT NULL
+      OR reviewed_expiry_date IS NOT NULL OR reviewed_expiry_kind IS NOT NULL);
+INSERT INTO assert_one SELECT COUNT(*) FROM scan_items
+  WHERE id = 'migration_smoke_t13_pending' AND review_state = 'PENDING' AND is_confirmed = 0
+    AND ocr_raw_name = 'Ca chua OCR' AND ocr_quantity = 3 AND ocr_unit = 'piece' AND ocr_confidence = 0.42;
+INSERT INTO assert_one SELECT COUNT(*) FROM scan_items
+  WHERE id = 'migration_smoke_t13_confirmed' AND review_state = 'CONFIRMED' AND is_confirmed = 1
+    AND ocr_raw_name = 'Dau hu OCR' AND ocr_quantity = 1 AND ocr_confidence IS NULL;
+INSERT INTO assert_one SELECT COUNT(*) FROM scan_items
+  WHERE id = 'migration_smoke_t13_rejected' AND review_state = 'REJECTED' AND is_confirmed = 0 AND ocr_confidence = 0;
+-- The new writers' shapes are accepted; unlawful shapes are refused fail-closed.
+UPDATE scan_items SET is_confirmed = 1, review_state = 'CONFIRMED',
+  reviewed_expiry_date = '2030-12-31', reviewed_expiry_kind = 'KNOWN'
+  WHERE id = 'migration_smoke_t13_pending';
+INSERT INTO assert_one SELECT COUNT(*) FROM scan_items
+  WHERE id = 'migration_smoke_t13_pending' AND review_state = 'CONFIRMED'
+    AND reviewed_expiry_date = '2030-12-31' AND reviewed_expiry_kind = 'KNOWN';
+INSERT INTO scan_items (id, scan_id, raw_name, estimated_quantity, unit, confidence, is_confirmed, review_state,
+  ocr_raw_name, ocr_quantity, ocr_unit, ocr_confidence, ocr_canonical_id, ocr_category, ocr_storage)
+VALUES ('migration_smoke_t13r_a_new', 'migration_smoke_receipt', 'Trung ga', 6, 'piece', 0.9, 0, 'PENDING',
+  'Trung ga', 6, 'piece', 0.77, 'CHICKEN_EGG', 'egg', 'fridge');
+INSERT INTO assert_one SELECT COUNT(*) FROM scan_items
+  WHERE id = 'migration_smoke_t13r_a_new' AND ocr_canonical_id = 'CHICKEN_EGG' AND ocr_category = 'egg' AND ocr_storage = 'fridge';
+INSERT INTO assert_zero SELECT COUNT(*) FROM pragma_foreign_key_check;
 
 SELECT 'migration-smoke=ok';
 SQL

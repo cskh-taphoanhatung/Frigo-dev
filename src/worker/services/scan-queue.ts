@@ -229,21 +229,25 @@ export async function processScanJob(env: Env, messageBody: unknown): Promise<vo
       const statements = receipt.items.map((item, index) => {
         const canonical = findCanonicalIngredient(item.raw_name);
         const providerCanonical = item.canonical_id ? findCanonicalIngredient(item.canonical_id) : null;
+        const canonicalId = canonical?.id || providerCanonical?.id || null;
+        const category = canonical?.category || item.category || 'other';
+        const storage = item.storage || 'fridge';
         return env.DB.prepare(
           `INSERT INTO scan_items
             (id, scan_id, raw_name, canonical_id, estimated_quantity, unit, confidence, category, storage,
-             unit_price_vnd, total_price_vnd, ocr_raw_name, ocr_quantity, ocr_unit, ocr_confidence)
-           SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ${fence.guard}`,
+             unit_price_vnd, total_price_vnd, ocr_raw_name, ocr_quantity, ocr_unit, ocr_confidence,
+             ocr_canonical_id, ocr_category, ocr_storage)
+           SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ${fence.guard}`,
         ).bind(
           `scan_item_${message.scanId}_${index}`,
           message.scanId,
           item.raw_name,
-          canonical?.id || providerCanonical?.id || null,
+          canonicalId,
           item.estimated_quantity,
           item.unit as StandardUnit,
           item.confidence ?? LEGACY_CONFIDENCE_FILLER,
-          canonical?.category || item.category || 'other',
-          item.storage || 'fridge',
+          category,
+          storage,
           item.unit_price_vnd ?? null,
           item.total_price_vnd ?? null,
           // T13 raw evidence: exactly what the provider reported, kept apart
@@ -252,6 +256,9 @@ export async function processScanJob(env: Env, messageBody: unknown): Promise<vo
           item.estimated_quantity,
           item.unit,
           item.confidence ?? null,
+          canonicalId,
+          category,
+          storage,
           ...fence.bindings,
         );
       });
@@ -278,25 +285,31 @@ export async function processScanJob(env: Env, messageBody: unknown): Promise<vo
       });
       const statements = result.items.map((item, index) => {
       const canonical = findCanonicalIngredient(item.raw_name);
+      const canonicalId = canonical?.id || item.canonical_id || null;
+      const category = canonical?.category || item.category || 'other';
+      const storage = item.storage || 'fridge';
       return env.DB.prepare(
         `INSERT INTO scan_items
           (id, scan_id, raw_name, canonical_id, estimated_quantity, unit, confidence, category, storage,
-           ocr_raw_name, ocr_quantity, ocr_unit, ocr_confidence)
-         SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ${fence.guard}`,
+           ocr_raw_name, ocr_quantity, ocr_unit, ocr_confidence, ocr_canonical_id, ocr_category, ocr_storage)
+         SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ${fence.guard}`,
       ).bind(
         `scan_item_${message.scanId}_${index}`,
         message.scanId,
         item.raw_name,
-        canonical?.id || item.canonical_id || null,
+        canonicalId,
         item.estimated_quantity,
         item.unit as StandardUnit,
         item.confidence ?? LEGACY_CONFIDENCE_FILLER,
-        canonical?.category || item.category || 'other',
-        item.storage || 'fridge',
+        category,
+        storage,
         item.raw_name,
         item.estimated_quantity,
         item.unit,
         item.confidence ?? null,
+        canonicalId,
+        category,
+        storage,
         ...fence.bindings,
       );
       });

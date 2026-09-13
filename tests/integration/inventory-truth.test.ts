@@ -24,10 +24,10 @@ describe('T08 inventory truth persistence and legacy backfill', () => {
   };
   afterEach(() => { for (const db of databases.splice(0)) db.close(); });
 
-  it('replays all 30 migrations on a fresh database with no automatic lot cutover', () => {
+  it('replays all 32 migrations on a fresh database with no automatic lot cutover', () => {
     const db = database();
-    expect(db.migrations).toHaveLength(31);
-    expect(db.migrations.at(-1)).toBe('0031_scan_evidence_retention.sql');
+    expect(db.migrations).toHaveLength(32);
+    expect(db.migrations.at(-1)).toBe('0032_scan_evidence_completeness.sql');
     expect(db.query('SELECT * FROM inventory_lots')).toEqual([]);
     expect(db.query('SELECT * FROM storage_locations')).toEqual([]);
     expect(db.query('PRAGMA foreign_key_check')).toEqual([]);

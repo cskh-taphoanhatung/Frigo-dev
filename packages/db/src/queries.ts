@@ -15,12 +15,13 @@ export const SQL = {
   // (ocr_*) alongside the reviewable working values, so a later user
   // correction cannot destroy the original evidence. ocr_confidence is NULL
   // when the provider reported none — the legacy NOT NULL `confidence`
-  // column cannot express that.
+  // column cannot express that. T13R-A (0032): ocr_canonical_id/category/
+  // storage retain the mapping exactly as ingested, before any review.
   CREATE_SCAN: `INSERT INTO scans (id, user_id, household_id, image_key, status, scan_type) VALUES (?, ?, ?, ?, ?, ?)`,
   GET_SCAN: `SELECT * FROM scans WHERE id = ?`,
   UPDATE_SCAN_STATUS: `UPDATE scans SET status = ?, updated_at = datetime('now') WHERE id = ?`,
-  INSERT_SCAN_ITEM: `INSERT INTO scan_items (id, scan_id, raw_name, canonical_id, estimated_quantity, unit, confidence, category, storage, ocr_raw_name, ocr_quantity, ocr_unit, ocr_confidence) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-  INSERT_RECEIPT_SCAN_ITEM: `INSERT INTO scan_items (id, scan_id, raw_name, canonical_id, estimated_quantity, unit, confidence, category, storage, unit_price_vnd, total_price_vnd, ocr_raw_name, ocr_quantity, ocr_unit, ocr_confidence) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  INSERT_SCAN_ITEM: `INSERT INTO scan_items (id, scan_id, raw_name, canonical_id, estimated_quantity, unit, confidence, category, storage, ocr_raw_name, ocr_quantity, ocr_unit, ocr_confidence, ocr_canonical_id, ocr_category, ocr_storage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  INSERT_RECEIPT_SCAN_ITEM: `INSERT INTO scan_items (id, scan_id, raw_name, canonical_id, estimated_quantity, unit, confidence, category, storage, unit_price_vnd, total_price_vnd, ocr_raw_name, ocr_quantity, ocr_unit, ocr_confidence, ocr_canonical_id, ocr_category, ocr_storage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   GET_SCAN_ITEMS: `SELECT * FROM scan_items WHERE scan_id = ?`,
   
   // Recipes

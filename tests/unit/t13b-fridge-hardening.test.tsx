@@ -256,11 +256,26 @@ describe('T13B ScanResultPage route, session, and confirmation hardening', () =>
 
   it('shows completed confirmed-review UX and opens the fridge without another mutation', async () => {
     useScanStore.getState().setScanResults('B', [
-      item('ACCEPTED'), { ...item('REJECTED'), rejected: true, reviewState: 'REJECTED' },
+      { ...item('ACCEPTED'), reviewState: 'CONFIRMED', expiryDate: '2030-12-31', expiryEstimated: false },
+      { ...item('ESTIMATED'), reviewState: 'CONFIRMED', expiryDate: '2026-09-20', expiryEstimated: true },
+      { ...item('NO_EXPIRY'), reviewState: 'CONFIRMED' },
+      { ...item('REJECTED'), rejected: true, reviewState: 'REJECTED' },
     ], 'confirmed');
     await mount();
-    expectConfirmedReview();
-    expect(container.querySelectorAll('article input, article select')).toHaveLength(10);
+    expectConfirmedReview(3);
+    expect(container.querySelectorAll('article input, article select')).toHaveLength(20);
+    // T13R-A P2-B: a confirmed line reports the server-recorded accepted expiry, never a fresh unknown.
+    const states = [...container.querySelectorAll('article')].map((article) => ({
+      date: article.querySelector<HTMLInputElement>('input[type="date"]')!.value,
+      state: article.querySelector('[data-expiry-state]')!.textContent,
+    }));
+    expect(states).toEqual([
+      { date: '2030-12-31', state: 'Ngày do bạn xác nhận' },
+      { date: '2026-09-20', state: 'Hạn dùng ước tính đã xác nhận' },
+      { date: '', state: 'Đã xác nhận không rõ hạn dùng' },
+      { date: '', state: 'Đã bỏ qua: không có hạn dùng' },
+    ]);
+    expect(container.textContent).not.toContain('Chưa rõ hạn dùng');
     expect(container.querySelector<HTMLButtonElement>('[aria-label="Từ chối dòng này"]')?.disabled).toBe(true);
     expect(container.querySelector<HTMLButtonElement>('[aria-label="Khôi phục dòng này"]')?.disabled).toBe(true);
     await act(async () => {

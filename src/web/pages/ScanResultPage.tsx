@@ -305,7 +305,14 @@ const ScanReview: React.FC<{ effectiveScanId: string }> = ({ effectiveScanId }) 
                   </label>
                   <div className="col-span-2">
                     <p className="text-xs text-slate-600" data-expiry-state>
-                      {!item.expiryDate ? 'Chưa rõ hạn dùng' : item.expiryEstimated ? 'Hạn dùng ước tính' : 'Ngày do bạn xác nhận'}
+                      {isConfirmed
+                        // A confirmed line reports the review the server recorded
+                        // (T13R-A P2-B): the accepted date, its estimate basis, or
+                        // an explicit "no expiry accepted" — never a fresh guess.
+                        ? (item.rejected ? 'Đã bỏ qua: không có hạn dùng'
+                          : !item.expiryDate ? 'Đã xác nhận không rõ hạn dùng'
+                            : item.expiryEstimated ? 'Hạn dùng ước tính đã xác nhận' : 'Ngày do bạn xác nhận')
+                        : (!item.expiryDate ? 'Chưa rõ hạn dùng' : item.expiryEstimated ? 'Hạn dùng ước tính' : 'Ngày do bạn xác nhận')}
                     </p>
                     <div className="flex flex-wrap gap-2 mt-2">
                       {[3, 7].map((days) => (

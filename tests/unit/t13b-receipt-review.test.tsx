@@ -33,6 +33,7 @@ interface Line {
   unitPriceVnd?: number;
   expiryDate?: string;
   expiryEstimated?: boolean;
+  expiryKind?: 'KNOWN' | 'ESTIMATED' | 'UNKNOWN';
   reviewState?: 'PENDING' | 'CONFIRMED' | 'REJECTED';
   rawEvidence?: { rawName?: string | null; estimatedQuantity?: number | null; unit?: StandardUnit | null };
 }
@@ -293,9 +294,33 @@ describe('T13B receipt evidence truth', () => {
     expect(find<HTMLSelectElement>('#receipt-storage-line-1').value).toBe('freezer');
     expect(find('button[aria-label="Khôi phục Cà chua"]').getAttribute('aria-pressed')).toBe('true');
     expect(find<HTMLButtonElement>('button[aria-label="Khôi phục Cà chua"]').disabled).toBe(true);
-    expect(container.querySelector('#receipt-expiry-line-1')).toBeNull();
+    // T13R-A P2-B: the expiry field stays visible but read-only. A confirmed
+    // line without a server-recorded reviewed expiry (pre-0032) is reported
+    // as "saved elsewhere", never as a fresh unknown.
+    expect(find<HTMLInputElement>('#receipt-expiry-line-1').disabled).toBe(true);
+    expect(find<HTMLInputElement>('#receipt-expiry-line-1').value).toBe('');
+    expect(find('[data-testid="receipt-expiry-status"]').textContent).toBe('Hạn dùng đã lưu: xem chi tiết lô trong tủ lạnh.');
     await click(button('Xem tủ lạnh'));
     expect(mocks.navigate).toHaveBeenCalledWith('/fridge');
+    expect(mocks.confirmScan).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['KNOWN', { expiryDate: '2030-12-31', expiryEstimated: false, expiryKind: 'KNOWN' }, '2030-12-31', 'Hạn dùng do bạn cung cấp.'],
+    ['ESTIMATED', { expiryDate: '2026-09-20', expiryEstimated: true, expiryKind: 'ESTIMATED' }, '2026-09-20', 'Hạn dùng ước tính đã xác nhận.'],
+    ['UNKNOWN', { expiryKind: 'UNKNOWN' }, '', 'Đã xác nhận không rõ hạn dùng.'],
+  ] as const)('renders the server-recorded %s reviewed expiry on a confirmed fresh visit without mutating', async (_kind, reviewed, value, status) => {
+    await mount(receipt({ status: 'confirmed', items: [
+      line({ reviewState: 'CONFIRMED', ...reviewed }),
+      line({ id: 'line-2', reviewState: 'REJECTED' }),
+    ] }));
+    const input = find<HTMLInputElement>('#receipt-expiry-line-1');
+    expect(input.disabled).toBe(true);
+    expect(input.value).toBe(value);
+    expect(container.querySelector('[data-testid="receipt-line"] [data-testid="receipt-expiry-status"]')!.textContent).toBe(status);
+    const [, rejectedStatus] = [...container.querySelectorAll('[data-testid="receipt-expiry-status"]')];
+    expect(rejectedStatus.textContent).toBe('Đã bỏ qua: không có hạn dùng.');
+    expect(find<HTMLInputElement>('#receipt-expiry-line-2').value).toBe('');
     expect(mocks.confirmScan).not.toHaveBeenCalled();
   });
 });

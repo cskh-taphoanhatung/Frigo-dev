@@ -294,4 +294,39 @@ describe('T13B actual review DOM → authenticated scan route → T09/T10/T11', 
     expect(db.query('SELECT id FROM inventory_commands WHERE household_id = ?', scope.householdId)).toEqual([{ id: commands[0].id }]);
     expect(rawRows(scanId)).toEqual(originalRaw);
   });
+
+  // T13R-A P2-B: reopening a confirmed review in a NEW document must hydrate
+  // the exact expiry the reviewer accepted from the server DTO, not an absence.
+  it.each(['receipt', 'fridge'] as const)('%s confirmed review reopened in a fresh document shows the accepted expiry as KNOWN', async (type) => {
+    const scanId = `t13b-remount-${type}`;
+    await seedScan(scanId, type);
+    await mount(scanId, type);
+    const [accepted, rejected] = rows(type);
+    await fill(field(accepted, 'Hạn dùng'), '2030-12-31');
+    await click(type === 'receipt' ? 'Bỏ qua OCR spurious item' : 'Từ chối dòng này', rejected);
+    await click(type === 'receipt' ? 'Nhập 1 món vào Tủ lạnh' : 'Xác nhận nguyên liệu (1 món)');
+    expect(captured.filter((call) => call.method === 'POST')).toMatchObject([{ path: `/api/v1/scans/${scanId}/confirm`, status: 200 }]);
+    expect(db.query(`SELECT id, review_state, reviewed_expiry_date, reviewed_expiry_kind
+      FROM scan_items WHERE scan_id = ? ORDER BY id`, scanId)).toEqual([
+      { id: `${scanId}-accepted`, review_state: 'CONFIRMED', reviewed_expiry_date: '2030-12-31', reviewed_expiry_kind: 'KNOWN' },
+      { id: `${scanId}-rejected`, review_state: 'REJECTED', reviewed_expiry_date: null, reviewed_expiry_kind: null },
+    ]);
+
+    // Fresh document: unmount, drop every client-side store, remount from the route alone.
+    await act(async () => { root!.unmount(); });
+    root = undefined;
+    useScanStore.getState().reset();
+    captured.length = 0;
+    await mount(scanId, type);
+    const [reopened, reopenedRejected] = rows(type);
+    const expiryInput = field(reopened, 'Hạn dùng') as HTMLInputElement;
+    expect(expiryInput.value).toBe('2030-12-31');
+    // Read-only: disabled directly (receipt) or through its fieldset (fridge).
+    expect(expiryInput.disabled || expiryInput.closest('fieldset')?.disabled).toBe(true);
+    expect(reopened.textContent).not.toContain('Chưa rõ hạn dùng');
+    expect(reopened.textContent).toContain(type === 'receipt' ? 'Hạn dùng do bạn cung cấp' : 'Ngày do bạn xác nhận');
+    expect((field(reopenedRejected, 'Hạn dùng') as HTMLInputElement).value).toBe('');
+    // Nothing was mutated by reopening.
+    expect(captured.filter((call) => call.method === 'POST')).toEqual([]);
+  });
 });
