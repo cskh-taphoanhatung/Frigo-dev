@@ -39,15 +39,18 @@ test('U7 edits existing lot name, compatible unit, category, storage and expiry 
   expect(mutations).toHaveLength(2);
   await expect(page.getByRole('heading', { name: 'Thịt gà đã kiểm tra', exact: true }).first()).toBeVisible();
   const { lot: after } = await getJson<{ lot: InventoryLotDetail }>(page, `/api/v1/inventory/lots/${id}`);
-  expect(after).toMatchObject({ name: 'Thịt gà đã kiểm tra', category: 'other', storage: 'freezer',
+  // T13R-A P1-2: a free-form rename is a label; canonical identity survives,
+  // and T11 therefore keeps projecting the canonical category (meat). The
+  // pre-remediation 'other' here was only ever the symptom of the erased id.
+  expect(after).toMatchObject({ name: 'Thịt gà đã kiểm tra', category: before.category, storage: 'freezer',
     expiryKind: 'KNOWN', expiryAt: '2030-12-31', estimatedExpiryAt: null,
     lotId: before.lotId, sourceType: before.sourceType, sourceId: before.sourceId,
-    // T13R-A P1-2: a free-form rename is a label; canonical identity survives.
     ingredientId: before.ingredientId,
     quantityMilli: before.quantityMilli, canonicalUnit: before.canonicalUnit });
   expect(after.ingredientId).toBe('CHICKEN_BREAST');
+  expect(after.category).toBe('meat');
   expect(after.lotVersion).toBeGreaterThan(before.lotVersion);
   await page.getByRole('button', { name: /Sửa (hạn dùng & vị trí|thông tin nguyên liệu)/ }).click();
   await expect(page.getByLabel('Tên nguyên liệu', { exact: true })).toHaveValue(after.name);
-  await expect(page.getByRole('combobox', { name: 'Danh mục', exact: true })).toHaveValue('other');
+  await expect(page.getByRole('combobox', { name: 'Danh mục', exact: true })).toHaveValue(after.category);
 });

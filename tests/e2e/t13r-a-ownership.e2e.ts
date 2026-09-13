@@ -42,7 +42,10 @@ test('P1-3 chicken draft cannot be saved into tofu after a same-document route c
   const { lot: tofuAfter } = await getJson<{ lot: InventoryLotDetail }>(page, `/api/v1/inventory/lots/${tofu}`);
   const { lot: chickenAfter } = await getJson<{ lot: InventoryLotDetail }>(page, `/api/v1/inventory/lots/${chicken}`);
   expect(tofuAfter).toMatchObject({ name: 'Đậu phụ đã kiểm tra', ingredientId: 'TOFU', quantityMilli: tofuBefore.quantityMilli });
-  expect(chickenAfter).toEqual(chickenBefore);
+  // inventoryVersion is household-wide and legitimately advanced with the tofu save; the chicken lot itself is untouched.
+  const { inventoryVersion: _before, ...chickenLotBefore } = chickenBefore;
+  const { inventoryVersion: _after, ...chickenLotAfter } = chickenAfter;
+  expect(chickenLotAfter).toEqual(chickenLotBefore);
 
   // Back to chicken: its own detail, no stale draft or error.
   await navigate(page, `/ingredients/${chicken}`);
@@ -86,7 +89,8 @@ test('P1-4 receipt review refuses a mismatched scan response and never confirms 
   await expect(page.getByRole('alert')).toContainText('không khớp');
   await expect(page.getByText(bName, { exact: false })).toHaveCount(0);
   await expect(page.getByTestId('receipt-line')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: /Nhập .* vào Tủ lạnh/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /Nhập .* vào Tủ lạnh/ })).toBeDisabled();
+  await page.getByRole('button', { name: /Nhập .* vào Tủ lạnh/ }).click({ force: true });
   expect(confirms).toEqual([]);
 
   // Both receipts are untouched on the server.
@@ -101,6 +105,7 @@ test('P1-4 receipt review refuses a mismatched scan response and never confirms 
   // With honest transport, A renders A and can be reviewed normally.
   await page.getByRole('button', { name: 'Thử tải lại' }).click();
   await expect(page.getByTestId('receipt-line').first()).toBeVisible();
-  await expect(page.getByText(aName, { exact: false }).first()).toBeVisible();
+  await expect(page.getByRole('textbox', { name: 'Tên sản phẩm' }).first()).toHaveValue(aName);
+  await expect(page.getByRole('textbox', { name: 'Tên sản phẩm' })).toHaveCount(aScan.items.length);
   await expect(page.getByText(bName, { exact: false })).toHaveCount(0);
 });
