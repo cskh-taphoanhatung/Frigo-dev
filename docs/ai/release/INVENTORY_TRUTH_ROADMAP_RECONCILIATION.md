@@ -1,5 +1,12 @@
 # Inventory Truth — roadmap reconciliation / gap audit (2026-09-12)
 
+> Current closure (2026-09-13): T13 is complete at application freeze
+> `7b7bb695ee597a46cf4022a2c534e2fea374be5d`. Required R3/R4/R5/R6/R7/R8/R11
+> and U1/U4/U6/U7/U8/U12/U13/U14 are DONE with implementation, automated and
+> browser evidence in [the current T13 matrix](../inventory-truth/t13/TEST_MATRIX.md).
+> The RC64c5501 gap analysis below is preserved as historical evidence, not current status.
+> Next: INDEPENDENT T13 FINAL REVIEW only; no merge, deploy or reconciliation.
+
 Application RC audited: **`64c5501ab0110658718b3752bd84e537f0854e12`** (technically
 certified, `INVENTORY_TRUTH_RECERTIFICATION.md`). Starting docs HEAD: **`1cae11ee2e5acdc1d6c76266ad72b3ef744d7797`**
 (branch `hoplite/akraiphia-akraiphnion-a03445c7--inventory-truth-final-recertification`).

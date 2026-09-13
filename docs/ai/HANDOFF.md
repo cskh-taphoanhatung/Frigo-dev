@@ -1,4 +1,45 @@
-# Frigo AI Handoff — isolated T09 development
+# Frigo AI Handoff — T13 certified, independent review next
+
+## Current handoff — T13 final detached certification, 2026-09-13
+
+Task: T13B-B repository-owned browser harness → freeze → detached certification.
+Status: **T13 COMPLETE — STOP for INDEPENDENT T13 FINAL REVIEW**.
+Repository: `vn-ca1/Frigo-dev`, ID **1368281478**.
+Main: `d1b06732f8a80db4e77986df31ff28d9f04641fa`, unchanged.
+Branch: `hoplite/mende-26679a14--browser-harness-final-cert`.
+Starting HEAD: `3262eaff86333da142ada1135e5a20c58ea640eb`; application fd32aa8.
+Separate U7 application fix: `47b10e25d6853a9bc4f9dfcf2e83bc01ba330bf2`.
+**T13B_APPLICATION_FREEZE: `7b7bb695ee597a46cf4022a2c534e2fea374be5d`**,
+published/fetched equal. Final docs publication follows separately and must have
+an empty non-doc delta; its exact SHA is recorded after commit creation.
+
+Changed: Playwright 1.63/Chromium isolated harness, mobile A–I/U7/reconciliation
+tests, test-only fixture controls and privacy-safe failure artifacts. A real
+browser negative test identified missing U7 existing-lot metadata fields; the
+separate fix adds name/unit/category to expiry/storage through existing T09 adapters.
+No prior scan hardening, inventory architecture, production configuration or schema
+was redesigned. HTML report output was removed after synthetic leakage proof.
+
+Executed: full pre-freeze **3372/132**, detached **3372/132**; browser before and
+after freeze **36/36** at all three widths. Detached T08 **130/2**, T09 **1259/17**,
+T10 **98/6**, T11 **39/2**, T12 **22/3**, T13/T13B **271/12**; 10-file focused
+**194/194** including hardening 26 and CLI 26. Real local workerd/D1 **92/5**.
+Lint/typecheck/build/migration smoke/fresh local D1/legacy replay/schema/diff PASS;
+new detached checkout `/tmp/frigo-t13b-detached-cert` remains clean. Writer/reader
+UNKNOWN 0/0, 31 migrations, unchanged 0031, no 0032. Original AC1–AC14 PASS and all
+required roadmap rows DONE. Scoped P0/P1/blocking P2/P3: 0.
+
+Failures: first concurrent detached browser 35/36 (H document marker lost on Vite
+reload from existing generator test); same freeze passed all 36 serially afterward.
+No frozen file or assertion was changed. Reproduce browser only after source-writing
+checks finish. Complete chronology and exact commands:
+[T13B_FINAL_HARDENING.md](inventory-truth/t13/T13B_FINAL_HARDENING.md).
+Hosted: **NO HOSTED GITHUB CI STATUS FOR T13B_APPLICATION_FREEZE**.
+
+Next action: independent final review of the frozen tree, original AC matrix,
+roadmap closure and docs-only delta. Do not implement further work, merge main,
+deploy, access remote D1, touch PayOS, start T14, or reconcile repositories.
+Earlier handoffs below are historical and superseded by this section.
 
 ## Current handoff — fresh-session Preview safe-stop, 2026-09-13
 

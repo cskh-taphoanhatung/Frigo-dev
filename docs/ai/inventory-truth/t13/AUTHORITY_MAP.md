@@ -1,97 +1,103 @@
-# T13 authority map — writer and reader audit
+# T13 authority map — certified writer and reader audit
 
-Scope: everything T13 adds or changes. T08–T12 classifications are unchanged
-and remain authoritative in `../t12/FINAL_AUTHORITY_MAP.md`.
+**T13 COMPLETE — STOP for INDEPENDENT T13 FINAL REVIEW.** Audited application
+freeze: `7b7bb695ee597a46cf4022a2c534e2fea374be5d`.
+**Writer UNKNOWN=0; reader UNKNOWN=0.** These are classification results, not a
+claim that the repository contains no legacy SQL or deferred projection reader.
+The existing [T12 authority map](../t12/FINAL_AUTHORITY_MAP.md) remains the
+baseline; T13 does not remove its compatibility or cutover conditions.
 
-## Writer audit
+## Writer classifications
 
-**Question:** does T13 create a second thing that can change stock?
+| Path / source | Classification and boundary | Permanent proof |
+| --- | --- | --- |
+| `packages/db/src/inventory-lot-commands.ts` | T09 adopted stock authority: versioned/idempotent commands, lots, events and same-batch compatibility projection | T09 command/event/parity/fence/concurrency suites; real local D1 |
+| `src/worker/routes/scans.ts` → `confirmAdoptedScan()` | Adapter, not a second stock writer. Receipt lines compose separate `CREATE` lots; fridge matches retain existing grouped `CORRECT` behavior | `t13-receipt-vision-truth.test.ts`: manual 3 + receipt 2, receipt A/B, grouped fridge corrections, replay/rollback |
+| `packages/db/src/inventory-observations.ts` → `guardedObservationInsertStatement()` | T10 evidence-only insert, sharing scan confirmation's READY predicate and batch | T13 observation/event/final-status rollback tests; real D1 atomicity |
+| `scan_items` / `scans` writes in scan routes | Scan draft, retained OCR and explicit review lifecycle; evidence, not stock | Raw/review retention, reject and confirmed replay tests |
+| `src/worker/routes/inventory.ts` and `src/worker/utils/inventory-authority.ts` | Existing adopted PATCH adapter → T09 `CORRECT` / `MOVE`. U7 supplies dirty name/unit/category/storage/expiry fields; conversion stays backend-owned | `t13b-inventory-detail.test.tsx`; PATCH parity suites; browser F/G/U7 |
+| `src/worker/routes/inventory-truth.ts` → T10 decision services | Re-derive authorized proposals; `confirmReconciliationDecision()` composes T09 commands, not route-owned stock SQL | T10 composition/fence suites; browser accept/dismiss |
+| `scripts/inventory-adopt.mjs` → existing adoption endpoint | Explicit operator adapter to certified adoption/bootstrap, not a new inventory ledger or bypass | Actual executable integration suite (26 cases); browser I |
+| Existing legacy inventory/scan/cook/Week writers | `LEGACY_COMPATIBILITY`: reachable only for non-adopted households; `runLegacyInventoryBatch` fences native authority | T09 writer-fence and T12 closed-loop regressions |
+| Existing backfill/adoption SQL | Controlled T08/T09 migration/bootstrap authority, not ongoing competing native mutation | T08 populated/fresh replay, T09 adoption and real D1 |
+| `scripts/{planner,t13}-preview-fixtures.mjs`, query-plan fixtures | Synthetic local fixture/bootstrap only; not deployed production writers | Preview fixture origin/production-404 tests; browser reset/isolation |
 
-**Answer:** no. T13 adds exactly one new write statement, and it writes
-evidence, not stock.
+The previous statement “T13 adds exactly one SQL write statement” was not a valid
+whole-scope audit: it confused one observation helper with all draft/review,
+fixture and compatibility writes. The invariant is **one adopted mutation
+authority (T09)**, not a textual count of SQL statements.
 
-### Every SQL write statement added by T13
+### Atomic evidence and stock
 
-| Target table | Count | Kind | Classification |
-| --- | --- | --- | --- |
-| `inventory_observations` | 1 new statement | Guarded `INSERT` | **Evidence.** Not stock. |
-| `scan_items` | `INSERT` / `UPDATE` | Scan draft + review state | **Evidence.** Not stock. |
-| `scans` | `INSERT` | Scan header | **Evidence.** Not stock. |
-| `inventory_lots` | **0** | — | Unchanged: T09 only. |
-| `inventory_items` | **0** | — | Unchanged: T09 projection only. |
-| `inventory_events` | **0** | — | Unchanged: T09 only. |
+Reviewed rows, T10 observations, T09 command/effects/events and completion-last
+scan status commit in one guarded D1 batch. An injected failure in any stage
+rolls back all stages. Rejected lines keep raw/review evidence but contribute no
+stock command or stock observation. No standalone observation becomes stock.
 
-Verification command:
+`scanEvidence` is validated command intent retained in the command fingerprint
+and the existing event metadata fingerprint; no second ledger or top-level event
+schema extension is introduced. Same-key changed evidence conflicts. Distinct
+receipt purchases stay distinct lots; manual 3 plus receipt 2 reads as total 5
+without rewriting the original lot.
 
+## Reader classifications
+
+| Consumer / route | Classification and boundary | Permanent proof |
+| --- | --- | --- |
+| `GET /inventory`, scan candidate/replay reads and existing recipe/Week funnels | `READ_AUTHORITY` for adopted households through `fetchHouseholdInventoryFromDb` / T11; no native empty-result legacy fallback | T11/T12 strict read, cache bypass and closed-loop tests |
+| `GET /inventory/lots/:lotId` | T11 `readInventoryLot`, household-bound lot truth | T13 route tenancy/detail tests; browser A/B/F/U7 |
+| `GET /inventory/summary` | T11 `readInventorySummary`, canonical aggregate truth | T13 summary integration; manual 3 + receipt 2 total 5 |
+| `GET /inventory/observations` | T10 `readInventoryObservations` + `planInventoryReconciliationForHousehold`, evidence/verdict/proposals | T13 decision route and real D1 tests; browser reconciliation |
+| `POST /inventory/observations/:id/decision` | T10 server revalidation of version/intent/proposal; frontend does not confer authority | T10 fences and T13 stale/ID-bound/replay tests |
+| `IngredientDetailPage`, receipt/fridge review, reconciliation UI | Present T11 lot truth or retained T10/scan evidence as such; no client projection becomes adopted authority | T13B DOM→real route tests, detail/hardening units, 36 browser cases |
+| Non-adopted legacy funnel and matching/preflight reads | `LEGACY_COMPATIBILITY`, explicit `readInventoryAuthorityMode` / writer fencing; legacy KV behavior preserved | T09/T11/T12 compatibility and adoption suites |
+| `packages/db/src/meal-planning-snapshot.ts` → `loadMealPlanningSnapshot()` | **`SAFE_DEFERRED`**, not canonical T11 authority; details below | Retained T12 audit and production flag boundary |
+
+### Meal-planner cutover remains deferred
+
+`loadMealPlanningSnapshot()` still reads `inventory_items` for planner ranking and
+shopping suggestions without an adoption gate. If enabled, adopted households
+could reach that projection reader. It is read-only and normally sees the T09
+same-batch mirror, but is **not drift-immune canonical authority**.
+
+Production `MEAL_PLANNER_ENABLED` remains unbound/off; disabled routes return
+`MEAL_PLANNER_DISABLED`. Synthetic preview enabling is not a production cutover.
+Before enabling for adopted households, **`MEAL_PLANNER_AUTHORITY_CUTOVER`** must
+route inventory reads through T11 (or an equivalent canonical adapter), keeping
+projection reads only for non-adopted households behind the authority-mode gate.
+T13 COMPLETE does not remove this `SAFE_DEFERRED` condition or authorize the flag.
+
+## Tenancy, errors and replay
+
+New truth routes are protected by `tenancyGuard` and server-owned household scope.
+Foreign lot/observation identities do not disclose existence; cross-household
+access is indistinguishable from absence. Existing CSRF/rate-limit behavior is
+preserved. Operator adoption verifies the requested household and session owner;
+it does not weaken authentication or retry mutations automatically.
+
+Real scan IDs are 64-character digests. `scanCommandKey()` (200-character command
+key), `scanObservationSourceRef()` (200-character source ref) and
+`boundedDecisionKey()` (160-character decision key) preserve deterministic identity
+without truncation collisions. Observation IDs include the household/type prefix
+and can exceed 200 characters; route validation follows `observationIdentity()`.
+
+## Audit reproduction and evidence
+
+The detached source audit and its classification were recorded at the exact
+freeze, not inferred from an empty working-tree diff. Inspect candidates with:
+
+```sh
+FREEZE=7b7bb695ee597a46cf4022a2c534e2fea374be5d
+git grep -n -E '(INSERT INTO|UPDATE|DELETE FROM) +(inventory_lots|inventory_items|inventory_events)' \
+  "$FREEZE" -- packages src scripts
+git grep -n 'inventory_items' "$FREEZE" -- packages src scripts
+git grep -n -E 'readInventoryAuthorityMode|runLegacyInventoryBatch|fetchHouseholdInventoryFromDb|MEAL_PLANNER_ENABLED' \
+  "$FREEZE" -- packages src scripts wrangler.jsonc
 ```
-git diff -U0 -- packages src scripts | grep '^+' \
-  | grep -oE "(INSERT INTO|UPDATE|DELETE FROM) +[a-z_]+" | sort | uniq -c
-```
 
-Result at the freeze commit: `inventory_observations`, `scan_items` and
-`scans` only. **UNKNOWN = 0.**
-
-### The one new writer, in detail
-
-`guardedObservationInsertStatement` (`packages/db/src/inventory-observations.ts`)
-
-- Writes **only** `inventory_observations`.
-- Carries the *same* `READY` predicate as every other statement in the scan
-  confirmation batch, so evidence and stock commit or roll back together —
-  there is no window where stock exists without its evidence, or the reverse.
-- Rides the **existing** T09 atomic batch. It does not open its own
-  transaction, does not run its own fence, and cannot execute alone.
-- Cannot change stock: an observation only becomes stock through an explicit
-  reconciliation decision, which composes existing T09 commands.
-
-### Stock changes in the receipt path
-
-`confirmAdoptedScan` (`src/worker/routes/scans.ts`) changes stock **only** by
-composing canonical T09 `CREATE` / `CORRECT` lot commands. It builds command
-specs; it never writes a lot, item or event row itself.
-
-Two bounded-identity helpers exist because real scan ids are 64-char digests:
-
-- `scanCommandKey()` — collapses an over-long T09 client key to a stable
-  digest instead of truncating it.
-- `scanObservationSourceRef()` — same, for the T10 200-char source ref.
-
-Both are deterministic, so a response-loss retry replays the same identity
-rather than double-adding stock.
-
-## Reader audit
-
-**Question:** does T13 add any read of the legacy `inventory_items`
-projection?
-
-**Answer:** no.
-
-| T13 file | `inventory_items` reads |
-| --- | --- |
-| `src/worker/routes/inventory-truth.ts` | 0 |
-| `src/worker/utils/scan-evidence.ts` | 0 |
-| `src/web/lib/inventory-truth.ts` | 0 |
-| `src/web/services/inventory-truth.ts` | 0 |
-| `src/web/pages/ReconciliationPage.tsx` | 0 |
-
-Every new read composes a **certified** service:
-
-| New route | Composes |
-| --- | --- |
-| `GET /inventory/summary` | T11 `readInventorySummary` |
-| `GET /inventory/lots/:lotId` | T11 `readInventoryLot` |
-| `GET /inventory/observations` | T10 `readInventoryObservations` + `planInventoryReconciliationForHousehold` |
-| `POST /inventory/observations/:id/decision` | T10 `confirmReconciliationDecision` |
-
-No reconciliation algorithm is reimplemented in route code. The frontend
-submits **intent only**; the server re-derives and re-validates every proposal,
-so a stale client plan is rejected rather than applied.
-
-**UNKNOWN = 0** for both audits.
-
-## Tenancy
-
-Every new route is behind `tenancyGuard` and scoped to the caller's household.
-Cross-tenant reads are indistinguishable from "no such thing": a foreign lot
-returns `404 NOT_FOUND`, never a status that would leak existence. Non-GET
-routes additionally pass through the shared rate limiter.
+These searches enumerate candidates; review their callers and gates against the
+classifications above. Preview/bootstrap/legacy paths are not “unknown” merely
+because they contain stock SQL. Detailed executed gates and private
+`authority-audit.log` location are in
+[T13B_FINAL_HARDENING.md](T13B_FINAL_HARDENING.md). No remote D1, production
+credentials, PayOS, main merge or deployment was used for certification.

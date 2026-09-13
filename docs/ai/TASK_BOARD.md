@@ -1,5 +1,30 @@
 # Frigo task board
 
+## Current board — T13 complete, 2026-09-13
+
+- **T13 COMPLETE — STOP for INDEPENDENT T13 FINAL REVIEW.** Repo
+  `vn-ca1/Frigo-dev`, ID 1368281478; branch
+  `hoplite/mende-26679a14--browser-harness-final-cert`.
+- Published/fetched application freeze:
+  `7b7bb695ee597a46cf4022a2c534e2fea374be5d`. Separate browser-proven U7 fix:
+  `47b10e25d6853a9bc4f9dfcf2e83bc01ba330bf2`. Final checkpoint is docs-only.
+- Original **AC1–AC14 PASS**. **R3/R4/R5/R6/R7/R8/R11 and
+  U1/U4/U6/U7/U8/U12/U13/U14 DONE**, including both review editors and existing-lot
+  metadata edits. Current matrices: [T13 TEST_MATRIX](inventory-truth/t13/TEST_MATRIX.md).
+- Pre-freeze and detached full: **3372 tests / 132 files**; browser **36/36** before
+  and after freeze at 360/390/430. Focused **194/10**; T08 **130/2**, T09 **1259/17**,
+  T10 **98/6**, T11 **39/2**, T12 **22/3**, T13/T13B **271/12**; real D1 **92/5**.
+  Static/build/migration/legacy/fresh local replay/schema/diff gates PASS; clean
+  detached status EMPTY. Writer/reader UNKNOWN 0/0; 31 migrations, unchanged 0031/no 0032.
+- Resolved certification interference: first detached browser 35/36 under concurrent
+  source-writing tests; unchanged complete browser suite passed 36/36 serially.
+  Exact checks/failures: [T13B_FINAL_HARDENING](inventory-truth/t13/T13B_FINAL_HARDENING.md).
+- **NO HOSTED GITHUB CI STATUS FOR T13B_APPLICATION_FREEZE**. No merge/deploy/remote
+  D1/PayOS/T14/reconciliation. Main remains
+  `d1b06732f8a80db4e77986df31ff28d9f04641fa`.
+- Only next task: **INDEPENDENT T13 FINAL REVIEW**. All board sections below are
+  historical checkpoints, not current blockers or authorization to resume other work.
+
 ## Current board — fresh-session Preview safe-stop, 2026-09-13
 
 - **T13 NOT COMPLETE — BROWSER VERIFICATION BLOCKED.** Fresh metadata: `vn-ca1/Frigo-dev`,

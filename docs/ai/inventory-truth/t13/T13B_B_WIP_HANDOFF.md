@@ -1,5 +1,107 @@
 # T13B-B — quota-safe WIP handoff
 
+## SAFE STOP — Browser Harness WIP — 2026-09-13T14:20:00Z
+
+Repository: vn-ca1/Frigo-dev. Repository ID: **1368281478** (fresh public metadata).
+Current branch: `hoplite/mende-26679a14--browser-harness-final-cert`.
+Pre-stop HEAD: `7b7bb695ee597a46cf4022a2c534e2fea374be5d` (equals remote).
+origin/main: `d1b06732f8a80db4e77986df31ff28d9f04641fa`, unchanged, never merged.
+Application WIP before this continuation: `fd32aa8deaee7df454245591015780c59f909352`.
+Docs checkpoint before this continuation: `3262eaff86333da142ada1135e5a20c58ea640eb`.
+
+### Work completed this session (all before this safe-stop request, last gate 14:08 UTC)
+
+Repository-owned Playwright harness (`pnpm test:browser` owns
+`node scripts/security-preview.mjs`, frontend 127.0.0.1:3000, API 8787, no
+production/external fallback), browser E2E for flows A–I plus U7 metadata and
+T10 reconciliation, test-only `/__preview` controls (production-404 tested),
+privacy-redacting failure artifacts (HTML reporter removed after synthetic-leak
+proof), a real-browser U7 negative test, and the separate application fix
+`47b10e25d6853a9bc4f9dfcf2e83bc01ba330bf2` adding name/unit/category editing.
+**T13B_APPLICATION_FREEZE=7b7bb695ee597a46cf4022a2c534e2fea374be5d** was created
+at 14:01 UTC only after all pre-freeze gates had passed, published/fetched equal.
+
+### Browser harness status
+
+Playwright 1.63.0/Chromium 153.0.8010.12: PASS. Harness startup/launch: PASS.
+External application isolation: VERIFIED (same-origin guard, Unsplash aborted).
+Flows A–I: COMPLETE; plus U7 metadata and R11/U14 reconciliation flows.
+360/390/430: PASS (36/36) pre-freeze and again from the detached freeze worktree
+`/tmp/frigo-t13b-detached-cert` (status EMPTY; serial final run 36/36).
+
+### Tests/checks completed (exact counts)
+
+Pre-freeze full 3372/132; detached full 3372/132. Detached T08 130/2, T09 1259/17,
+T10 98/6, T11 39/2, T12 22/3, T13/T13B 271/12, focused 194/10 (hardening 26,
+actual CLI 26). Real local workerd/D1 92/5. Lint/typecheck/build/migration smoke/
+fresh local D1 replay/populated-0022 legacy replay/local schema gate/
+`git diff --check` PASS. Writer/reader UNKNOWN 0/0; 31 migrations, 0031 unchanged,
+0032 absent. Original AC1–AC14 PASS; R3/R4/R5/R6/R7/R8/R11 and
+U1/U4/U6/U7/U8/U12/U13/U14 DONE. Logs: `.hoplite/artifacts/t13b-*` (gitignored).
+
+### Not run after this request
+
+Full suite, real D1, lint, build, migration replay, schema gate, detached
+certification were not rerun after the safe-stop packet; they completed before it.
+`pnpm typecheck` skipped as valueless for a docs-only delta since 7b7bb69.
+**NO HOSTED GITHUB CI STATUS FOR T13B_APPLICATION_FREEZE** (workflow does not
+trigger on this branch; local gates are not hosted CI).
+
+### Known failures/blockers (resolved, retained)
+
+First detached browser run 35/36: flow H at 430px lost its same-document marker
+because the concurrent full suite's `tests/unit/generate-migration.test.ts`
+rewrote watched `packages/recipes/src/vietnamese-bank.ts`, triggering Vite reload
+(browser log 14:02:32). No frozen file changed; the entire unchanged browser suite
+passed 36/36 serially afterward. Rule recorded: never run source-writing checks
+concurrently with browser certification. Earlier U7/privacy failures were fixed
+before freeze with red/green evidence; see T13B_FINAL_HARDENING.md.
+
+### Application changes
+
+YES — browser work proved one genuine gap: missing existing-lot metadata editing
+(U7). Fixed in separate commit 47b10e2 (`src/web/pages/IngredientDetailPage.tsx`,
+`tests/unit/t13b-inventory-detail.test.tsx`), preserving T09 authority, versioning
+and domain messages. No other application behavior changed; no architecture, schema,
+auth, payment, or deployment change. Uncommitted delta since the freeze is
+**documentation only** (11 modified docs + new T13B_FINAL_HARDENING.md).
+
+### Production safety
+
+Main merged: NO. Production deployed: NO. Remote D1 touched: NO. PayOS touched: NO.
+
+### Exact next step
+
+Commit the docs-only checkpoint as T13B_DOCS_HEAD, verify the freeze→docs non-doc
+diff is EMPTY, publish normally, fetch, verify local == remote, then STOP for
+INDEPENDENT T13 FINAL REVIEW. Do not start T14, merge main, deploy, touch remote
+D1/PayOS, or begin repository reconciliation.
+
+## Superseding final checkpoint — 2026-09-13
+
+**T13 COMPLETE — STOP for INDEPENDENT T13 FINAL REVIEW.** The browser-blocked
+sections below are historical. The owner authorized repository-owned Playwright
+against the existing isolated preview, so Managed Preview is no longer mandatory.
+
+Started at `3262eaff86333da142ada1135e5a20c58ea640eb` on new branch
+`hoplite/mende-26679a14--browser-harness-final-cert`.
+Separate browser-proven U7 application fix:
+`47b10e25d6853a9bc4f9dfcf2e83bc01ba330bf2`.
+**T13B_APPLICATION_FREEZE=7b7bb695ee597a46cf4022a2c534e2fea374be5d**,
+published/fetched exact. No non-doc changes after freeze.
+
+Pre-freeze and detached full **3372/132**; browser **36/36** before and after
+freeze at 360/390/430; focused **194/10**, real local D1 **92/5**. All detached
+static/build/migration/legacy/fresh-D1/schema/authority/diff/status gates PASS;
+all original ACs PASS, required roadmap rows DONE. First detached browser run
+35/36 was invalidated by a concurrent source-writing generator's Vite reload;
+the entire unchanged suite passed serially. Retained failure details and exact
+commands: [T13B_FINAL_HARDENING.md](T13B_FINAL_HARDENING.md).
+
+No hosted freeze CI status, main merge, deployment, remote D1, PayOS, T14 or
+repository reconciliation. Repo `vn-ca1/Frigo-dev`, ID1368281478; main unchanged
+at `d1b06732f8a80db4e77986df31ff28d9f04641fa`. Do not continue implementation.
+
 ## Authoritative fresh-session Preview safe-stop — 2026-09-13
 
 **T13 NOT COMPLETE — BROWSER VERIFICATION BLOCKED.** This supersedes the current-status

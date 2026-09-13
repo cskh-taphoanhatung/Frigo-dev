@@ -1,4 +1,42 @@
-# Frigo current state — isolated T09 development
+# Frigo current state — T13 certified, independent review next
+
+## Current authoritative state — T13 detached certification, 2026-09-13
+
+**T13 COMPLETE — STOP for INDEPENDENT T13 FINAL REVIEW.** Repository
+`vn-ca1/Frigo-dev`, ID **1368281478**. Protected main remains
+`d1b06732f8a80db4e77986df31ff28d9f04641fa`.
+Continuation: `hoplite/mende-26679a14--browser-harness-final-cert`, started at
+`3262eaff86333da142ada1135e5a20c58ea640eb` with application WIP fd32aa8.
+Browser-proven U7 metadata correction was committed separately as
+`47b10e25d6853a9bc4f9dfcf2e83bc01ba330bf2`.
+**T13B_APPLICATION_FREEZE=7b7bb695ee597a46cf4022a2c534e2fea374be5d** was
+published, fetched and matched; subsequent changes are documentation only.
+
+The repository-owned Playwright harness removes the Managed Preview dependency:
+`pnpm test:browser` owns `node scripts/security-preview.mjs`, with synthetic
+in-memory SQLite, blocked external application traffic and no remote bindings.
+Pre-freeze and clean-detached browser **36/36** at 360/390/430; full baseline and
+detached full suite both **3372/132 files**. Detached focused: T08 **130/2**,
+T09 **1259/17**, T10 **98/6**, T11 **39/2**, T12 **22/3**, T13/T13B **271/12**;
+current hardening/privacy/operator gate **194/10** (26 hardening, 26 actual CLI).
+Fresh real local workerd/D1 **92/5**. Lint/typecheck/build/migration smoke/fresh
+local D1 replay/legacy replay/schema/diff PASS; detached status **EMPTY**.
+Writer/reader UNKNOWN **0/0**, **31 migrations**, 0031 unchanged/no 0032.
+Original AC1–AC14 PASS; R3/R4/R5/R6/R7/R8/R11 and
+U1/U4/U6/U7/U8/U12/U13/U14 DONE. P0/P1/blocking P2/unresolved scoped P3: 0.
+
+Failure retained: concurrent detached browser initially passed 35/36 because the
+full suite's existing source-writing generator triggered Vite reload during H.
+The entire unchanged browser suite then passed 36/36 serially. Run source-writing
+checks before browser certification, never alongside it in the same worktree.
+HTML report credential leakage was fixed before freeze by removing that reporter
+and adding actual lifecycle sanitization coverage. No freeze file changed afterward.
+**NO HOSTED GITHUB CI STATUS FOR T13B_APPLICATION_FREEZE**; local gates are not hosted CI.
+
+Exact commands, evidence, resolved failures and next action:
+[T13B_FINAL_HARDENING.md](inventory-truth/t13/T13B_FINAL_HARDENING.md).
+No main merge/deploy/remote D1/PayOS/T14/repository reconciliation.
+All earlier current-state sections below are historical checkpoints, superseded here.
 
 ## Current authoritative state — fresh-session Preview safe-stop, 2026-09-13
 
