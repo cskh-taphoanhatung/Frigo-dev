@@ -32,11 +32,12 @@ interface ScanState {
   isProcessing: boolean;
   statusText: string;
   scanId: string | null;
+  reviewStatus: 'ready' | 'confirmed' | null;
   items: ScanDraftItem[];
   setImage: (url: string, base64?: string) => void;
   setScanType: (type: 'fridge' | 'food' | 'receipt') => void;
   setProcessing: (processing: boolean, status?: string) => void;
-  setScanResults: (scanId: string, items: ScanDraftItem[]) => void;
+  setScanResults: (scanId: string, items: ScanDraftItem[], reviewStatus?: 'ready' | 'confirmed' | null) => void;
   updateItem: (id: string, updates: Partial<ScanItemEdits>) => void;
   addItem: (item: Omit<ScanItemEdits, 'rejected'>) => void;
   removeItem: (id: string) => void;
@@ -50,13 +51,15 @@ export const useScanStore = create<ScanState>((set) => ({
   isProcessing: false,
   statusText: '',
   scanId: null,
+  reviewStatus: null,
   items: [],
 
   setImage: (url, base64) => set({ imagePreviewUrl: url, imageBase64: base64 || null }),
   setScanType: (type) => set({ scanType: type }),
   setProcessing: (isProcessing, statusText = '') => set({ isProcessing, statusText }),
-  setScanResults: (scanId, items) => set({
+  setScanResults: (scanId, items, reviewStatus = null) => set({
     scanId,
+    reviewStatus,
     items: items.map((item) => ({
       ...item,
       // Server membership, not an ID prefix, distinguishes predictions from local drafts.
@@ -92,6 +95,7 @@ export const useScanStore = create<ScanState>((set) => ({
     isProcessing: false,
     statusText: '',
     scanId: null,
+    reviewStatus: null,
     items: [],
   }),
 }));

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useScanStore } from '../stores/useScanStore';
 import { api } from '../services/api';
@@ -9,7 +9,8 @@ import { Plus, Trash2, CheckCircle2, X } from 'lucide-react';
 import { StandardUnit } from '@frigo/domain';
 import { capturePrivateSession } from '../lib/private-session';
 import { invalidateInventoryDependents } from '../lib/query-invalidation';
-import { presentConfidence } from '../lib/inventory-truth';
+import { presentConfidence, presentDomainError } from '../lib/inventory-truth';
+import { ApiError } from '../services/http';
 
 const UNITS: StandardUnit[] = ['piece', 'g', 'kg', 'ml', 'l', 'pack', 'bunch', 'slice'];
 const fieldClass = 'mt-1 w-full min-w-0 h-11 px-3 rounded-lg border border-slate-200 text-sm text-slate-900 bg-white focus:border-emerald-600 focus:outline-none';
@@ -21,10 +22,23 @@ const confidenceClass = {
 };
 
 export const ScanResultPage: React.FC = () => {
-  const navigate = useNavigate();
   const { id: paramScanId } = useParams<{ id: string }>();
-  const { scanId, items, updateItem, addItem, removeItem, reset } = useScanStore();
-  const effectiveScanId = scanId || paramScanId || `scan_${Date.now()}`;
+  const scanId = useScanStore((state) => state.scanId);
+  const targetScanId = paramScanId || scanId || '';
+  return <ScanReview key={targetScanId} effectiveScanId={targetScanId} />;
+};
+
+const ScanReview: React.FC<{ effectiveScanId: string }> = ({ effectiveScanId }) => {
+  const navigate = useNavigate();
+  const { scanId, reviewStatus, items: storedItems, updateItem, addItem, removeItem, reset } = useScanStore();
+  // A route change must hide the previous scan before hydration's first effect.
+  const matchesScan = scanId === effectiveScanId;
+  const items = matchesScan ? storedItems : [];
+  const mounted = useRef(false);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
 
   const [isConfirming, setIsConfirming] = useState(false);
   const [confirmError, setConfirmError] = useState<string | null>(null);
@@ -32,41 +46,64 @@ export const ScanResultPage: React.FC = () => {
   const [addName, setAddName] = useState('');
   const [addQty, setAddQty] = useState(1);
   const [addUnit, setAddUnit] = useState<StandardUnit>('piece');
-  const [scanStatus, setScanStatus] = useState<'pending' | 'ready' | 'failed'>(
-    items.length > 0 || effectiveScanId.startsWith('scan_offline_') ? 'ready' : 'pending'
+  const [scanStatus, setScanStatus] = useState<'pending' | 'ready' | 'confirmed' | 'failed'>(
+    !effectiveScanId ? 'failed'
+      : matchesScan && reviewStatus ? reviewStatus
+        : items.length > 0 || (matchesScan && effectiveScanId.startsWith('scan_offline_')) ? 'ready' : 'pending'
   );
+  const [loadError, setLoadError] = useState<string | null>(
+    effectiveScanId ? null : 'Không tìm thấy bản quét. Vui lòng quay lại và quét ảnh mới.'
+  );
+  const [retryIndex, setRetryIndex] = useState(0);
+  const canEdit = matchesScan && scanStatus === 'ready' && !isConfirming;
   const acceptedCount = items.filter((item) => !item.rejected).length;
 
-  // Async queue canary returns a pending scan. Poll only while the result is
-  // pending so the existing review flow remains unchanged for sync scans.
   useEffect(() => {
-    if (scanStatus !== 'pending' || items.length > 0 || !effectiveScanId || effectiveScanId.startsWith('scan_offline_')) return;
+    if (!effectiveScanId || scanStatus !== 'pending') return;
     let cancelled = false;
     let attempts = 0;
+    let timer: number;
+    const isCurrent = capturePrivateSession();
+    const active = () => !cancelled && isCurrent();
     const poll = async () => {
+      if (!active()) return;
       try {
         const scan = await api.getScan(effectiveScanId);
-        if (cancelled) return;
+        if (!active()) return;
+        if (scan.id !== effectiveScanId) throw new Error('Mismatched scan response');
         if (scan.status === 'ready' || scan.status === 'confirmed') {
-          setScanStatus('ready');
-          useScanStore.getState().setScanResults(effectiveScanId, scan.items || []);
+          setScanStatus(scan.status);
+          if (!active()) return;
+          useScanStore.getState().setScanResults(effectiveScanId, scan.items || [], scan.status);
           return;
         }
         if (scan.status === 'failed') {
           setScanStatus('failed');
+          if (!active()) return;
+          setLoadError('Không thể đọc bản quét. Vui lòng thử lại với ảnh rõ nét hơn.');
           return;
         }
       } catch {
-        // Keep the review screen available; the next poll may succeed.
+        if (!active()) return;
+        setScanStatus('failed');
+        if (!active()) return;
+        setLoadError('Không thể tải bản quét. Vui lòng thử tải lại.');
+        return;
       }
-      if (!cancelled && attempts++ < 30) window.setTimeout(poll, 2000);
+      if (!active()) return;
+      if (++attempts < 30) timer = window.setTimeout(poll, 2000);
+      else {
+        setScanStatus('failed');
+        if (!active()) return;
+        setLoadError('Bản quét đang mất nhiều thời gian hơn dự kiến. Vui lòng thử lại sau.');
+      }
     };
-    const timer = window.setTimeout(poll, 500);
+    timer = window.setTimeout(poll, 500);
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [effectiveScanId, items.length, scanStatus]);
+  }, [effectiveScanId, scanStatus, retryIndex]);
 
   const handleEstimateExpiry = (id: string, days: number) => {
     const date = new Date();
@@ -76,26 +113,56 @@ export const ScanResultPage: React.FC = () => {
   };
 
   const handleConfirm = async () => {
-    if (items.length === 0 || scanStatus !== 'ready' || isConfirming) return;
+    if (items.length === 0 || !canEdit || useScanStore.getState().scanId !== effectiveScanId) return;
     const isCurrent = capturePrivateSession();
+    const active = () => mounted.current && isCurrent()
+      && useScanStore.getState().scanId === effectiveScanId;
+    if (!active()) return;
     setConfirmError(null);
     setIsConfirming(true);
     try {
       await api.confirmScan(effectiveScanId, items);
-      if (!isCurrent()) return;
+      if (!active()) return;
       void invalidateInventoryDependents();
+      if (!active()) return;
       reset();
       navigate('/fridge');
-    } catch {
-      if (!isCurrent()) return;
-      setConfirmError('Chưa lưu được nguyên liệu. Vui lòng thử lại.');
+    } catch (error) {
+      if (!active()) return;
+      const presentation = presentDomainError(error instanceof ApiError ? error.code : null,
+        'Chưa lưu được nguyên liệu. Vui lòng thử lại.');
+      if (presentation.refetch) {
+        try {
+          const scan = await api.getScan(effectiveScanId);
+          if (!active()) return;
+          if (scan.id !== effectiveScanId) throw new Error('Mismatched scan response');
+          // Conflicts invalidate local edits; review authoritative evidence again.
+          setScanStatus(scan.status === 'ready' || scan.status === 'confirmed' ? scan.status : 'failed');
+          if (!active()) return;
+          useScanStore.getState().setScanResults(effectiveScanId, scan.items || [],
+            scan.status === 'ready' || scan.status === 'confirmed' ? scan.status : null);
+          if (!active()) return;
+          void invalidateInventoryDependents();
+        } catch {
+          if (!active()) return;
+          setScanStatus('failed');
+          if (!active()) return;
+          setLoadError('Thông tin đã thay đổi nhưng chưa tải lại được. Vui lòng tải lại trước khi thử xác nhận.');
+          if (!active()) return;
+          setIsConfirming(false);
+          return;
+        }
+      }
+      if (!active()) return;
+      setConfirmError(presentation.message);
+      if (!active()) return;
       setIsConfirming(false);
     }
   };
 
   const handleAddManualItem = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!addName.trim()) return;
+    if (!addName.trim() || !canEdit) return;
     addItem({
       rawName: addName.trim(),
       estimatedQuantity: Number(addQty),
@@ -113,6 +180,17 @@ export const ScanResultPage: React.FC = () => {
 
       <div className="px-4 pt-3 space-y-4">
         {confirmError && <p role="alert" className="text-sm text-red-700">{confirmError}</p>}
+        {loadError && <p role="alert" className="text-sm text-red-700">
+          {loadError}
+          {effectiveScanId && <button className="ml-2 underline tap-target" onClick={() => {
+            setLoadError(null);
+            setScanStatus('pending');
+            setRetryIndex((value) => value + 1);
+          }}>Thử tải lại</button>}
+        </p>}
+        {scanStatus === 'confirmed' && matchesScan && <p role="status" className="text-sm text-emerald-800">
+          Bản quét đã được xác nhận. Thông tin dưới đây đã lưu; sửa lô trong tủ lạnh nếu cần.
+        </p>}
         {/* Banner Alert */}
         <div className="bg-emerald-50/80 border border-emerald-200/70 rounded-xl p-3.5 flex items-start gap-3">
           <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
@@ -178,7 +256,7 @@ export const ScanResultPage: React.FC = () => {
                     {corrected && <p className="text-xs text-amber-800 mt-1">Đã chỉnh sửa so với dữ liệu gốc</p>}
                     {item.rejected && <p className="text-xs font-semibold text-rose-800 mt-1">Đã từ chối · Không thêm vào tủ lạnh</p>}
                   </div>
-                  <button type="button" disabled={isConfirming}
+                  <button type="button" disabled={!canEdit}
                     onClick={() => persisted ? updateItem(item.id, { rejected: !item.rejected }) : removeItem(item.id)}
                     aria-pressed={persisted ? Boolean(item.rejected) : undefined}
                     className="p-2 rounded-lg text-rose-700 hover:bg-rose-100 tap-target shrink-0 text-xs font-semibold"
@@ -186,7 +264,7 @@ export const ScanResultPage: React.FC = () => {
                     {persisted ? (item.rejected ? 'Khôi phục' : 'Từ chối') : <Trash2 className="w-4 h-4" />}
                   </button>
                 </div>
-                <fieldset disabled={isConfirming} className="mt-3 grid grid-cols-2 gap-3 min-w-0">
+                <fieldset disabled={!canEdit} className="mt-3 grid grid-cols-2 gap-3 min-w-0">
                   <label className="col-span-2 text-xs font-semibold text-slate-700">
                     Tên nguyên liệu
                     <input className={fieldClass} value={item.rawName} required pattern=".*\S.*"
@@ -245,7 +323,7 @@ export const ScanResultPage: React.FC = () => {
           variant="outline"
           fullWidth
           size="md"
-          disabled={isConfirming || scanStatus !== 'ready'}
+          disabled={!canEdit}
           onClick={() => setIsManualAddOpen(true)}
           className="flex items-center justify-center gap-1.5 text-xs text-slate-700"
         >
@@ -262,7 +340,7 @@ export const ScanResultPage: React.FC = () => {
           type="submit"
           form="scan-review"
           isLoading={isConfirming}
-          disabled={items.length === 0 || scanStatus !== 'ready'}
+          disabled={items.length === 0 || !canEdit}
           className="flex items-center justify-center gap-2"
         >
           <CheckCircle2 className="w-5 h-5" />
