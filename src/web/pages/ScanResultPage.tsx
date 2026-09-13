@@ -56,6 +56,7 @@ const ScanReview: React.FC<{ effectiveScanId: string }> = ({ effectiveScanId }) 
   );
   const [retryIndex, setRetryIndex] = useState(0);
   const canEdit = matchesScan && scanStatus === 'ready' && !isConfirming;
+  const isConfirmed = matchesScan && scanStatus === 'confirmed';
   const acceptedCount = items.filter((item) => !item.rejected).length;
 
   useEffect(() => {
@@ -176,7 +177,8 @@ const ScanReview: React.FC<{ effectiveScanId: string }> = ({ effectiveScanId }) 
 
   return (
     <div className="min-h-screen bg-[#F8FAF9] pb-28">
-      <TopBar showBack title="Kết quả nhận diện AI" subtitle="Kiểm tra & chỉnh sửa trước khi xác nhận" />
+      <TopBar showBack title="Kết quả nhận diện AI"
+        subtitle={isConfirmed ? 'Bản quét đã xác nhận · Chỉ xem' : 'Kiểm tra & chỉnh sửa trước khi xác nhận'} />
 
       <div className="px-4 pt-3 space-y-4">
         {confirmError && <p role="alert" className="text-sm text-red-700">{confirmError}</p>}
@@ -188,15 +190,15 @@ const ScanReview: React.FC<{ effectiveScanId: string }> = ({ effectiveScanId }) 
             setRetryIndex((value) => value + 1);
           }}>Thử tải lại</button>}
         </p>}
-        {scanStatus === 'confirmed' && matchesScan && <p role="status" className="text-sm text-emerald-800">
-          Bản quét đã được xác nhận. Thông tin dưới đây đã lưu; sửa lô trong tủ lạnh nếu cần.
-        </p>}
         {/* Banner Alert */}
-        <div className="bg-emerald-50/80 border border-emerald-200/70 rounded-xl p-3.5 flex items-start gap-3">
+        <div role={isConfirmed ? 'status' : undefined}
+          className="bg-emerald-50/80 border border-emerald-200/70 rounded-xl p-3.5 flex items-start gap-3">
           <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
           <div className="text-xs">
             <p className="font-heading font-bold text-sm text-slate-900">
-              {items.length > 0
+              {isConfirmed
+                ? `Đã xác nhận ${acceptedCount} nguyên liệu`
+                : items.length > 0
                 ? `${items.length} nguyên liệu cần kiểm tra`
                 : scanStatus === 'failed'
                   ? 'Bản quét không thể xử lý'
@@ -205,7 +207,9 @@ const ScanReview: React.FC<{ effectiveScanId: string }> = ({ effectiveScanId }) 
                     : 'Đang chờ AI hoàn tất bản quét'}
             </p>
             <p className="text-slate-600 mt-0.5">
-              {items.length > 0
+              {isConfirmed
+                ? 'Thông tin bản quét đã được lưu. Bạn có thể xem hoặc chỉnh sửa lô từ trang tủ lạnh.'
+                : items.length > 0
                 ? 'Sửa tên, số lượng, đơn vị, nơi bảo quản, hạn dùng hoặc từ chối từng dòng trước khi lưu.'
                 : scanStatus === 'failed'
                   ? 'Vui lòng quay lại và thử lại với ảnh khác.'
@@ -319,7 +323,7 @@ const ScanReview: React.FC<{ effectiveScanId: string }> = ({ effectiveScanId }) 
         </form>
 
         {/* Add Missing Item Button */}
-        <Button
+        {!isConfirmed && <Button
           variant="outline"
           fullWidth
           size="md"
@@ -329,12 +333,14 @@ const ScanReview: React.FC<{ effectiveScanId: string }> = ({ effectiveScanId }) 
         >
           <Plus className="w-4 h-4 text-emerald-700" />
           <span>Thêm nguyên liệu AI còn thiếu</span>
-        </Button>
+        </Button>}
       </div>
 
       {/* Fixed Confirm CTA Bar */}
       <div className="fixed bottom-0 left-0 right-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] bg-white/95 backdrop-blur-md border-t border-slate-200/80 max-w-md mx-auto z-40 shadow-lg">
-        <Button
+        {isConfirmed ? <Button fullWidth size="lg" onClick={() => navigate('/fridge')}>
+          Xem tủ lạnh
+        </Button> : <Button
           fullWidth
           size="lg"
           type="submit"
@@ -345,11 +351,11 @@ const ScanReview: React.FC<{ effectiveScanId: string }> = ({ effectiveScanId }) 
         >
           <CheckCircle2 className="w-5 h-5" />
           <span>Xác nhận nguyên liệu ({acceptedCount} món)</span>
-        </Button>
+        </Button>}
       </div>
 
       {/* Manual Add Sheet */}
-      {isManualAddOpen && (
+      {isManualAddOpen && canEdit && (
         <div className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-sm flex items-end justify-center p-0 animate-in fade-in duration-200">
           <div className="bg-white rounded-t-2xl w-full max-w-md p-5 shadow-2xl border-t border-slate-200/80 animate-in slide-in-from-bottom-5 duration-200">
             {/* Grab bar */}

@@ -8,7 +8,6 @@ import { resetPrivateSession } from '../../src/web/lib/private-session';
 import { api } from '../../src/web/services/api';
 import { useScanStore, type ScanDraftItem } from '../../src/web/stores/useScanStore';
 
-vi.mock('../../src/web/components/common/TopBar', () => ({ TopBar: () => null }));
 vi.mock('../../src/web/lib/query-invalidation', () => ({
   invalidateInventoryDependents: vi.fn(),
   invalidateReplayedQueries: vi.fn(),
@@ -103,6 +102,25 @@ function confirmButton(): HTMLButtonElement {
   );
   expect(found, 'confirmation button').toBeTruthy();
   return found!;
+}
+
+function expectConfirmedReview(acceptedCount = 1) {
+  expect(container.querySelector('[role="status"]')?.textContent).toContain(
+    `Đã xác nhận ${acceptedCount} nguyên liệu`,
+  );
+  expect(container.querySelector('header')?.textContent).toContain('Bản quét đã xác nhận · Chỉ xem');
+  expect(container.textContent).toContain('Thông tin bản quét đã được lưu.');
+  expect(container.textContent).toContain('từ trang tủ lạnh');
+  expect(container.textContent).not.toContain('cần kiểm tra');
+  expect(container.textContent).not.toContain('Kiểm tra & chỉnh sửa trước khi xác nhận');
+  expect(container.textContent).not.toContain('Sửa tên, số lượng');
+  expect(container.textContent).not.toContain('từ chối từng dòng trước khi lưu');
+  expect(container.textContent).not.toContain('Xác nhận nguyên liệu');
+  expect(container.textContent).not.toContain('Thêm nguyên liệu AI còn thiếu');
+  for (const control of container.querySelectorAll('article input, article select, article button')) {
+    expect(control.matches(':disabled')).toBe(true);
+  }
+  expect(button('Xem tủ lạnh').disabled).toBe(false);
 }
 
 async function click(element: HTMLElement) {
@@ -214,7 +232,7 @@ describe('T13B ScanResultPage route, session, and confirmation hardening', () =>
     await mount('/scan/A/review');
     await advance(500);
     expect(container.textContent).toContain('A_CONFIRMED');
-    expect(confirmButton().disabled).toBe(true);
+    expectConfirmedReview();
 
     await click(button('Mở B'));
     await advance(500);
@@ -223,9 +241,8 @@ describe('T13B ScanResultPage route, session, and confirmation hardening', () =>
 
     await click(button('Mở A'));
     expect(container.textContent).toContain('A_CONFIRMED');
-    expect(container.textContent).toContain('Bản quét đã được xác nhận');
+    expectConfirmedReview();
     expect(reviewNameInput().closest('fieldset')?.disabled).toBe(true);
-    expect(confirmButton().disabled).toBe(true);
 
     await act(async () => {
       pendingB.resolve(json(scan('B', 'ready', [item('STALE_B_RESPONSE')])));
@@ -235,6 +252,34 @@ describe('T13B ScanResultPage route, session, and confirmation hardening', () =>
     expect(useScanStore.getState().scanId).toBe('A');
     expect(useScanStore.getState().reviewStatus).toBe('confirmed');
     expect(requested('/api/v1/scans/A/confirm', 'POST')).toHaveLength(0);
+  });
+
+  it('shows completed confirmed-review UX and opens the fridge without another mutation', async () => {
+    useScanStore.getState().setScanResults('B', [
+      item('ACCEPTED'), { ...item('REJECTED'), rejected: true, reviewState: 'REJECTED' },
+    ], 'confirmed');
+    await mount();
+    expectConfirmedReview();
+    expect(container.querySelectorAll('article input, article select')).toHaveLength(10);
+    expect(container.querySelector<HTMLButtonElement>('[aria-label="Từ chối dòng này"]')?.disabled).toBe(true);
+    expect(container.querySelector<HTMLButtonElement>('[aria-label="Khôi phục dòng này"]')?.disabled).toBe(true);
+    await act(async () => {
+      container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+    await click(button('Xem tủ lạnh'));
+    expect(container.textContent).toContain('FRIDGE_ROUTE');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it.each([false, true])('keeps zero-accepted confirmed scans terminal (rejected row: %s)', async (hasRejectedRow) => {
+    const items = hasRejectedRow ? [{ ...item('REJECTED'), rejected: true }] : [];
+    fetchMock.mockResolvedValueOnce(json(scan('B', 'confirmed', items)));
+    await mount();
+    await advance(500);
+    expectConfirmedReview(0);
+    expect(container.textContent).not.toContain('Đang chờ AI');
+    expect(requested('/api/v1/scans/B/confirm', 'POST')).toHaveLength(0);
   });
 
   it('clears stored review status on reset while preserving the default pending producer contract', () => {
@@ -397,8 +442,7 @@ describe('T13B ScanResultPage route, session, and confirmation hardening', () =>
     await mount('/scan/B/review');
     await advance(500);
     expect(container.textContent).toContain('B_CONFIRMED');
-    expect(container.textContent).toContain('Bản quét đã được xác nhận');
-    expect(confirmButton().disabled).toBe(true);
+    expectConfirmedReview();
 
     await act(async () => {
       root!.unmount();
@@ -520,7 +564,7 @@ describe('T13B ScanResultPage route, session, and confirmation hardening', () =>
       expect(container.textContent).toContain('AUTHORITATIVE_B');
       expect(container.textContent).not.toContain('PRIVATE_BACKEND_DETAIL');
       expect(container.textContent).toContain(expectedMessage);
-      expect(confirmButton().disabled).toBe(true);
+      expectConfirmedReview();
     },
   );
 
