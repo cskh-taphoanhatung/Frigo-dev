@@ -10,11 +10,20 @@ by this checkpoint. It is not final acceptance or certification.
 Git broker successfully published application-bearing WIP commit
 `a8cefd13505bc6b45dd11f45a6323539deb60f93` to the original successor branch without
 force. A subsequent fetch verified exact local/remote equality and unchanged main
-`d1b06732f8a80db4e77986df31ff28d9f04641fa`. No fallback branch was needed.
+`d1b06732f8a80db4e77986df31ff28d9f04641fa`.
 The unauthenticated numeric metadata endpoint still returns 404, so the numeric
 identity/owner attribution remains the previously verified value, not a fresh public
 metadata confirmation. This documentation-only follow-up records that recovery;
 its final published SHA/equality is in the safe-stop report.
+
+Appending documentation-only commit `fd7e0204a81b74d9c8e3e630353451e2bf3056c5`
+then hit a platform lease mismatch twice, even after a fresh fetch returned exactly
+the supplied expected head `a8cefd13505bc6b45dd11f45a6323539deb60f93`. Reported to
+the platform; no force or history rewrite was attempted. Following the owner's
+fallback instruction, the final checkpoint branch is
+`hoplite/megara-hyblaia-888f1514--t13b-b-ux-final-hardening--quota-wip`, created
+directly from that saved state. Application/test content remains identical to the
+first published WIP; only safe-stop documentation follows it.
 
 - Repository ID **1364064929**, owner/name **vn-2l/frigo-dev**, were verified using
   GitHub metadata at the start of Part B. Fresh safe-stop verification is blocked:
