@@ -1,5 +1,21 @@
 # Frigo task board
 
+## Current board — T13R-A safe stop, 2026-09-13T15:50:34Z
+
+- **T13R-A CHECKPOINTED, IMPLEMENTATION NOT STARTED.** Branch
+  `hoplite/oropos-eb2d4886--t13r-a-data-integrity-ownership` at audit commit
+  `b9735b4` (also remote on `hoplite/oropos-eb2d4886`, verified equal). Main
+  `d1b06732…` unchanged. Rejected freeze `7b7bb69…` remains **DO NOT RELEASE**.
+- All target findings **NOT STARTED**: P1-1 async evidence, P1-2 canonical rename,
+  P1-3 lot-bound draft, P1-4 receipt ownership, P2-A raw evidence completeness,
+  P2-B confirmed expiry round-trip. No 0032; 31 migrations unchanged.
+- `git diff --check` PASS; no code changed, so typecheck/scoped lint/tests are
+  intentionally not run. `.hoplite/settings.json` overlay preserved uncommitted.
+- Next: implement T13R-A findings one at a time with red/green regressions per
+  [T13R_A_REMEDIATION.md](inventory-truth/t13/T13R_A_REMEDIATION.md). T13R-B
+  blockers (Cloudflare confidence, conflict UX, Home estimates, opened-state
+  truth) remain deferred. No merge/deploy/remote D1/PayOS/T14/reconciliation.
+
 ## Current board — T13 independent review failed, 2026-09-13
 
 - **T13 BLOCKED — INDEPENDENT FINAL REVIEW FAILED.** Exact freeze

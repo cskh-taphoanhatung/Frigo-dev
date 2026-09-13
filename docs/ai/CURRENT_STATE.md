@@ -1,5 +1,23 @@
 # Frigo current state — T13 independent review failed
 
+## Current authoritative state — T13R-A safe stop, 2026-09-13T15:50:34Z
+
+**T13R-A SAFELY CHECKPOINTED BEFORE IMPLEMENTATION.** Repository
+`vn-co2/Frigo-dev`, ID **1368281478**. Independent audit `b9735b4` (docs-only,
+FAIL verdict) is now remote on `hoplite/oropos-eb2d4886` with verified local/remote
+equality; protected main and all rejected-freeze lineage are unchanged. Remediation
+branch `hoplite/oropos-eb2d4886--t13r-a-data-integrity-ownership` starts at the
+audit commit with an **empty non-doc delta** against the rejected freeze.
+
+No remediation code exists yet: all six target findings (P1-1..P1-4, P2-A, P2-B)
+are **NOT STARTED**; `NO_NEW_T13R_A_CODE_COMMIT=true`. Migrations remain 31 with
+0031 untouched and no 0032. Cheap checks executed: `git diff --check` PASS; no
+TypeScript/source file changed, so typecheck and scoped lint were correctly not
+run. The pre-existing `.hoplite/settings.json` overlay stays uncommitted by rule.
+Per-finding state, exact commands and resume point:
+[T13R_A_REMEDIATION.md](inventory-truth/t13/T13R_A_REMEDIATION.md). Do not claim
+T13 complete; next task is T13R-A implementation, then T13R-B blockers.
+
 ## Current authoritative state — independent T13 final review, 2026-09-13
 
 **T13 INDEPENDENT FINAL REVIEW — FAIL.** The exact application freeze

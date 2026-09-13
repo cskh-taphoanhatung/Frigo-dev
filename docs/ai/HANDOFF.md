@@ -1,5 +1,30 @@
 # Frigo AI Handoff — T13 remediation required after independent review
 
+## Current handoff — T13R-A safe stop, 2026-09-13T15:50:34Z
+
+Status: **T13R-A SAFELY CHECKPOINTED — READY FOR HANDOFF** (implementation not
+started). Repository `vn-co2/Frigo-dev`, ID **1368281478**. Branch
+`hoplite/oropos-eb2d4886--t13r-a-data-integrity-ownership`; starting/pre-stop SHA
+`b9735b441d93dfb7d7d409a47292974c8f2f1e52`. The audit commit is docs-only, descends
+from docs head `4fcbc96…`, is published remotely (`hoplite/oropos-eb2d4886`,
+`git ls-remote` equality verified), and is protected from amendment.
+
+Verified before any edit: empty non-doc delta from rejected freeze `7b7bb69…`;
+origin/main `d1b06732…` unchanged; migrations 31, 0031 untouched, no 0032.
+Finding status: P1-1/P1-2/P1-3/P1-4/P2-A/P2-B all **NOT STARTED**;
+`NO_NEW_T13R_A_CODE_COMMIT=true`. Executed: full identity gate and
+`git diff --check` PASS. Not run (nothing to test): typecheck, scoped lint,
+focused/full/D1/browser suites, migration replays, authority audit.
+
+Uncommitted preserved file: `.hoplite/settings.json` (pre-existing workspace
+overlay; prohibited from commit by safe-stop rules). Complete state, exact
+commands and resume point:
+[T13R_A_REMEDIATION.md](inventory-truth/t13/T13R_A_REMEDIATION.md).
+Safety: no freeze, no main merge, no deploy, no remote D1, no PayOS, no T14, no
+repository reconciliation. Next step: begin T13R-A implementation on this branch,
+starting with the P1-1/P2-A evidence schema decision, one red/green finding at a
+time; deferred T13R-B blockers stay open.
+
 ## Current handoff — independent final review failed, 2026-09-13
 
 Status: **T13 INDEPENDENT FINAL REVIEW — FAIL**. No remediation was performed.
