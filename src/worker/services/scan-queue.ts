@@ -2,6 +2,12 @@ import { AIRouter } from '@frigo/ai';
 import { findCanonicalIngredient, StandardUnit } from '@frigo/domain';
 import { Env } from '../types';
 
+// scan_items.confidence is NOT NULL with a historical 0.9 default and cannot
+// express "the provider reported none". Like the synchronous route, the queue
+// keeps that filler for legacy readers and records the provider's actual
+// confidence (or NULL) in ocr_confidence, the T13 truth column.
+const LEGACY_CONFIDENCE_FILLER = 0.9;
+
 export type ScanQueueMessage = {
   type: 'scan.process.v1';
   jobId?: string;
@@ -226,8 +232,8 @@ export async function processScanJob(env: Env, messageBody: unknown): Promise<vo
         return env.DB.prepare(
           `INSERT INTO scan_items
             (id, scan_id, raw_name, canonical_id, estimated_quantity, unit, confidence, category, storage,
-             unit_price_vnd, total_price_vnd)
-           SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ${fence.guard}`,
+             unit_price_vnd, total_price_vnd, ocr_raw_name, ocr_quantity, ocr_unit, ocr_confidence)
+           SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ${fence.guard}`,
         ).bind(
           `scan_item_${message.scanId}_${index}`,
           message.scanId,
@@ -235,11 +241,17 @@ export async function processScanJob(env: Env, messageBody: unknown): Promise<vo
           canonical?.id || providerCanonical?.id || null,
           item.estimated_quantity,
           item.unit as StandardUnit,
-          item.confidence,
+          item.confidence ?? LEGACY_CONFIDENCE_FILLER,
           canonical?.category || item.category || 'other',
           item.storage || 'fridge',
           item.unit_price_vnd ?? null,
           item.total_price_vnd ?? null,
+          // T13 raw evidence: exactly what the provider reported, kept apart
+          // from the reviewable working columns above.
+          item.raw_name,
+          item.estimated_quantity,
+          item.unit,
+          item.confidence ?? null,
           ...fence.bindings,
         );
       });
@@ -268,8 +280,9 @@ export async function processScanJob(env: Env, messageBody: unknown): Promise<vo
       const canonical = findCanonicalIngredient(item.raw_name);
       return env.DB.prepare(
         `INSERT INTO scan_items
-          (id, scan_id, raw_name, canonical_id, estimated_quantity, unit, confidence, category, storage)
-         SELECT ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ${fence.guard}`,
+          (id, scan_id, raw_name, canonical_id, estimated_quantity, unit, confidence, category, storage,
+           ocr_raw_name, ocr_quantity, ocr_unit, ocr_confidence)
+         SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ${fence.guard}`,
       ).bind(
         `scan_item_${message.scanId}_${index}`,
         message.scanId,
@@ -277,9 +290,13 @@ export async function processScanJob(env: Env, messageBody: unknown): Promise<vo
         canonical?.id || item.canonical_id || null,
         item.estimated_quantity,
         item.unit as StandardUnit,
-        item.confidence,
+        item.confidence ?? LEGACY_CONFIDENCE_FILLER,
         canonical?.category || item.category || 'other',
         item.storage || 'fridge',
+        item.raw_name,
+        item.estimated_quantity,
+        item.unit,
+        item.confidence ?? null,
         ...fence.bindings,
       );
       });
