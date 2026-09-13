@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { executeInventoryAdoption } from '../../packages/db/src/inventory-adoption-executor';
 import { backfillLegacyInventory } from '../../packages/db/src/inventory-truth';
+import type { InventoryScanEvidence } from '../../packages/domain/src/inventory-lot-commands';
 import { observationIdentity } from '../../packages/domain/src/inventory-observations';
 import { authMiddleware } from '../../src/worker/middleware/auth';
 import { inventoryRoutes } from '../../src/worker/routes/inventory';
@@ -9,7 +10,7 @@ import { inventoryTruthRoutes } from '../../src/worker/routes/inventory-truth';
 import { scanRoutes } from '../../src/worker/routes/scans';
 import type { AuthContext, Env } from '../../src/worker/types';
 import { signJwt } from '../../src/worker/utils/jwt';
-import { SqliteD1 } from '../helpers/sqlite-d1';
+import { createBarrier, SqliteD1 } from '../helpers/sqlite-d1';
 
 // T13 closed-loop integration: receipt/vision evidence -> review -> T10
 // observation -> T09 authority -> T11 read -> Inventory UX contracts, over
@@ -162,6 +163,458 @@ describe('T13 receipt provenance and purchase facts', () => {
     })).status).toBe(200);
 
     expect(lots()[0].source_type).toBe('SCAN');
+  });
+});
+
+describe('T13B-A receipt lot truth and authoritative correction evidence', () => {
+  function fullLots() {
+    return db.query<Record<string, unknown>>('SELECT * FROM inventory_lots ORDER BY id');
+  }
+
+  function snapshot() {
+    const tables = ['inventory_lots', 'inventory_items', 'inventory_commands', 'inventory_events',
+      'inventory_observations', 'inventory_reconciliation_decisions', 'inventory_adoption_receipts',
+      'scan_items', 'scans', 'households', 'storage_locations'];
+    return Object.fromEntries(tables.map((table) => [table,
+      db.query<Record<string, unknown>>(`SELECT * FROM ${table} ORDER BY id`)]));
+  }
+
+  function scanCommands(scanId: string) {
+    return db.query<{ id: string; command_type: string; fingerprint: string }>(
+      `SELECT id, command_type, fingerprint FROM inventory_commands
+       WHERE json_extract(fingerprint, '$.command.scanEvidence.scanId') = ? ORDER BY id`, scanId);
+  }
+
+  function expectEvidence(scanId: string, type: 'CREATE' | 'CORRECT', evidence: InventoryScanEvidence) {
+    const commands = scanCommands(scanId);
+    expect(commands).toHaveLength(1);
+    expect(commands[0].command_type).toBe(type);
+    expect(JSON.parse(commands[0].fingerprint).command.scanEvidence).toEqual(evidence);
+    const events = db.query<{ metadata: string }>(
+      'SELECT metadata FROM inventory_events WHERE command_id = ?', commands[0].id);
+    expect(events).toHaveLength(1);
+    const metadata = JSON.parse(events[0].metadata);
+    expect(metadata.fingerprint).toBe(commands[0].fingerprint);
+    expect(JSON.parse(metadata.fingerprint).command.scanEvidence).toEqual(evidence);
+    expect(metadata).not.toHaveProperty('scanEvidence');
+  }
+
+  async function manualTomatoes(unit = 'piece') {
+    expect((await request('POST', '/inventory', {
+      id: 't13b-manual', name: 'Cà chua', quantity: 3, unit, category: 'vegetable',
+      storage: 'pantry', expiryDate: '2026-10-01',
+    })).status).toBe(201);
+    const [lot] = fullLots();
+    expect(lot).toMatchObject({ source_type: 'MANUAL', source_id: null, purchased_at: null,
+      currency: null, amount_minor: null, minor_digits: null });
+    for (const command of db.query<{ fingerprint: string }>('SELECT fingerprint FROM inventory_commands')) {
+      expect(JSON.parse(command.fingerprint).command.scanEvidence).toBeUndefined();
+    }
+    for (const event of db.query<{ metadata: string | null }>('SELECT metadata FROM inventory_events')) {
+      const fingerprint = event.metadata === null ? undefined : JSON.parse(event.metadata)?.fingerprint;
+      expect(fingerprint ? JSON.parse(fingerprint).command.scanEvidence : undefined).toBeUndefined();
+    }
+    return lot;
+  }
+
+  function expectStorage(lot: Record<string, unknown>, type: 'FRIDGE' | 'FREEZER' | 'PANTRY') {
+    expect(db.query('SELECT type FROM storage_locations WHERE id = ?', lot.storage_location_id))
+      .toEqual([{ type }]);
+  }
+
+  const tomatoReview = { rawName: 'Cà chua', estimatedQuantity: 2, unit: 'piece',
+    storage: 'freezer', expiryDate: '2026-10-12' };
+
+  it('preserves the entire manual lot, creates a receipt purchase lot, and reads total 5 through T11', async () => {
+    await adopt();
+    const old = await manualTomatoes();
+    const oldCommands = db.query('SELECT * FROM inventory_commands ORDER BY id');
+    const oldEvents = db.query('SELECT * FROM inventory_events ORDER BY id');
+    seedScan({ scanId: 'purchase-b', scanType: 'receipt', purchaseDate: '2026-09-10',
+      lines: [{ id: 'purchase-b-line', rawName: 'Cà chua', quantity: 2, unit: 'piece', totalPriceVnd: 24000 }] });
+    const payload = { items: [{ id: 'purchase-b-line', ...tomatoReview }] };
+    expect((await request('POST', '/scans/purchase-b/confirm', payload)).status).toBe(200);
+
+    const result = fullLots();
+    expect(result).toHaveLength(2);
+    expect(result.find((lot) => lot.id === old.id)).toEqual(old);
+    const fresh = result.find((lot) => lot.id !== old.id)!;
+    expect(fresh).toMatchObject({ source_type: 'RECEIPT', source_id: 'purchase-b',
+      ingredient_id: old.ingredient_id, quantity_milli: 2000, canonical_unit: 'piece',
+      purchased_at: '2026-09-10', currency: 'VND', amount_minor: 24000, minor_digits: 0,
+      expiry_kind: 'KNOWN', expiry_at: '2026-10-12', estimated_expiry_at: null });
+    expectStorage(fresh, 'FREEZER');
+    expect(scanCommands('purchase-b').map((command) => command.command_type)).toEqual(['CREATE']);
+    expect(db.query('SELECT * FROM inventory_commands ORDER BY id')).toEqual(expect.arrayContaining(oldCommands));
+    expect(db.query('SELECT * FROM inventory_events ORDER BY id')).toEqual(expect.arrayContaining(oldEvents));
+    const summary = await request('GET', '/inventory/summary');
+    expect(summary.status).toBe(200);
+    expect(summary.json.activeCount).toBe(2);
+    expect(summary.json.items.reduce((total: number, item: { quantity: number }) => total + item.quantity, 0)).toBe(5);
+    const detail = await request('GET', `/inventory/lots/${fresh.id}`);
+    expect(detail.status).toBe(200);
+    expect(detail.json.lot).toMatchObject({ sourceType: 'RECEIPT', sourceId: 'purchase-b',
+      purchasedAt: '2026-09-10', quantity: 2, storage: 'freezer', expiryKind: 'KNOWN',
+      expiryAt: '2026-10-12', estimatedExpiryAt: null });
+
+    const committed = snapshot();
+    const replay = await request('POST', '/scans/purchase-b/confirm', payload);
+    expect(replay.status).toBe(200);
+    expect(replay.json.idempotentReplay).toBe(true);
+    expect(snapshot()).toEqual(committed);
+    expect(fullLots()).toHaveLength(2);
+  });
+
+  it('keeps receipt A and receipt B distinguishable without modifying any receipt A lot field', async () => {
+    await adopt();
+    seedScan({ scanId: 'purchase-a', scanType: 'receipt', purchaseDate: '2026-09-08',
+      lines: [{ id: 'purchase-a-line', rawName: 'Cà chua', quantity: 3, unit: 'piece', totalPriceVnd: 18000 }] });
+    expect((await request('POST', '/scans/purchase-a/confirm', {
+      items: [{ id: 'purchase-a-line', storage: 'pantry', expiryDate: '2026-10-01' }],
+    })).status).toBe(200);
+    const [first] = fullLots();
+    const firstAuthority = snapshot();
+    seedScan({ scanId: 'purchase-b', scanType: 'receipt', purchaseDate: '2026-09-10',
+      lines: [{ id: 'purchase-b-line', rawName: 'Cà chua', quantity: 2, unit: 'piece', totalPriceVnd: 24000 }] });
+    expect((await request('POST', '/scans/purchase-b/confirm', {
+      items: [{ id: 'purchase-b-line', ...tomatoReview, expiryEstimated: true }],
+    })).status).toBe(200);
+    expect(fullLots()).toHaveLength(2);
+    expect(fullLots().find((lot) => lot.id === first.id)).toEqual(first);
+    expect(first).toMatchObject({ source_type: 'RECEIPT', source_id: 'purchase-a', purchased_at: '2026-09-08',
+      currency: 'VND', amount_minor: 18000, minor_digits: 0, quantity_milli: 3000,
+      expiry_kind: 'KNOWN', expiry_at: '2026-10-01', estimated_expiry_at: null });
+    expectStorage(first, 'PANTRY');
+    const second = fullLots().find((lot) => lot.source_id === 'purchase-b')!;
+    expect(second).toMatchObject({ source_type: 'RECEIPT', purchased_at: '2026-09-10',
+      currency: 'VND', amount_minor: 24000, minor_digits: 0, quantity_milli: 2000,
+      ingredient_id: first.ingredient_id, expiry_kind: 'ESTIMATED', expiry_at: null,
+      estimated_expiry_at: '2026-10-12' });
+    expectStorage(second, 'FREEZER');
+    for (const table of ['inventory_commands', 'inventory_events', 'inventory_observations']) {
+      expect(snapshot()[table]).toEqual(expect.arrayContaining(firstAuthority[table]));
+    }
+  });
+
+  it('keeps duplicate same-ingredient receipt lines separate with individual price, storage and expiry', async () => {
+    await adopt();
+    seedScan({ scanId: 'duplicate-purchase', scanType: 'receipt', purchaseDate: '2026-09-10', lines: [
+      { id: 'duplicate-a', rawName: 'Cà chua', quantity: 2, unit: 'piece', totalPriceVnd: 12000 },
+      { id: 'duplicate-b', rawName: 'Cà chua', quantity: 3, unit: 'piece', unitPriceVnd: 9000 },
+    ] });
+    const payload = { items: [
+      { id: 'duplicate-a', storage: 'fridge', expiryDate: '2026-10-01' },
+      { id: 'duplicate-b', storage: 'freezer', expiryDate: '2026-10-12', expiryEstimated: true },
+    ] };
+    expect((await request('POST', '/scans/duplicate-purchase/confirm', payload)).status).toBe(200);
+    const result = fullLots().sort((a, b) => Number(a.quantity_milli) - Number(b.quantity_milli));
+    expect(result).toHaveLength(2);
+    expect(result[0].id).not.toBe(result[1].id);
+    expect(result[0].ingredient_id).not.toBeNull();
+    expect(result[1].ingredient_id).toBe(result[0].ingredient_id);
+    for (const lot of result) {
+      expect(lot).toMatchObject({ source_type: 'RECEIPT', source_id: 'duplicate-purchase',
+        purchased_at: '2026-09-10', currency: 'VND', minor_digits: 0, canonical_unit: 'piece' });
+    }
+    expect(result[0]).toMatchObject({ quantity_milli: 2000, amount_minor: 12000,
+      expiry_kind: 'KNOWN', expiry_at: '2026-10-01', estimated_expiry_at: null });
+    expectStorage(result[0], 'FRIDGE');
+    expect(result[1]).toMatchObject({ quantity_milli: 3000, amount_minor: 27000,
+      expiry_kind: 'ESTIMATED', expiry_at: null, estimated_expiry_at: '2026-10-12' });
+    expectStorage(result[1], 'FREEZER');
+    const commands = scanCommands('duplicate-purchase');
+    expect(commands.map((command) => command.command_type)).toEqual(['CREATE', 'CREATE']);
+    expect(commands.flatMap((command) => JSON.parse(command.fingerprint).command.scanEvidence.lines
+      .map((line: { scanItemId: string }) => line.scanItemId)).sort()).toEqual(['duplicate-a', 'duplicate-b']);
+    expect(db.query('SELECT source_ref FROM inventory_observations ORDER BY source_ref')).toEqual([
+      { source_ref: 'duplicate-purchase:duplicate-a' }, { source_ref: 'duplicate-purchase:duplicate-b' },
+    ]);
+    for (const receipt of commands) {
+      const command = JSON.parse(receipt.fingerprint).command;
+      const lot = result.find((candidate) => candidate.id === command.lotId)!;
+      const [line] = command.scanEvidence.lines as InventoryScanEvidence['lines'];
+      expect(line).toMatchObject({ corrected: false,
+        raw: { rawName: 'Cà chua', quantity: Number(lot.quantity_milli) / 1000, unit: 'piece' },
+        confirmed: { name: 'Cà chua', quantity: Number(lot.quantity_milli) / 1000, unit: 'piece',
+          storage: line.scanItemId === 'duplicate-a' ? 'fridge' : 'freezer',
+          expiryAt: lot.expiry_at, estimatedExpiryAt: lot.estimated_expiry_at, expiryKind: lot.expiry_kind } });
+      expect(command.purchasePrice).toEqual({ currency: 'VND', amountMinor: lot.amount_minor, minorDigits: 0 });
+      const events = db.query<{ metadata: string }>(
+        'SELECT metadata FROM inventory_events WHERE command_id = ?', receipt.id);
+      expect(events).toHaveLength(1);
+      expect(JSON.parse(JSON.parse(events[0].metadata).fingerprint).command.scanEvidence).toEqual(command.scanEvidence);
+    }
+    const committed = snapshot();
+    const replay = await request('POST', '/scans/duplicate-purchase/confirm', payload);
+    expect(replay.status).toBe(200);
+    expect(replay.json.idempotentReplay).toBe(true);
+    expect(snapshot()).toEqual(committed);
+  });
+
+  it('does not let an incompatible existing unit block a separate receipt lot', async () => {
+    await adopt();
+    const old = await manualTomatoes();
+    seedScan({ scanId: 'mass-purchase', scanType: 'receipt', lines: [
+      { id: 'mass-line', rawName: 'Cà chua', quantity: 2, unit: 'kg', totalPriceVnd: 40000 },
+    ] });
+    expect((await request('POST', '/scans/mass-purchase/confirm', { items: [{ id: 'mass-line' }] })).status).toBe(200);
+    expect(fullLots()).toHaveLength(2);
+    expect(fullLots().find((lot) => lot.id === old.id)).toEqual(old);
+    expect(fullLots().find((lot) => lot.id !== old.id)).toMatchObject({ source_type: 'RECEIPT',
+      source_id: 'mass-purchase', quantity_milli: 2000000, canonical_unit: 'g', amount_minor: 40000 });
+  });
+
+  it('retains grouped fridge CORRECT additions and records each correction without changing old provenance or facts', async () => {
+    await adopt();
+    const old = await manualTomatoes();
+    seedScan({ scanId: 'fridge-correct', scanType: 'fridge', purchaseDate: '2026-09-10', lines: [
+      { id: 'vision-a', rawName: 'tomto OCR', quantity: 250, unit: 'g', totalPriceVnd: 24000 },
+      { id: 'vision-b', rawName: 'tomat OCR', quantity: 100, unit: 'g', totalPriceVnd: 10000 },
+    ] });
+    const payload = { items: [{ id: 'vision-a', ...tomatoReview },
+      { id: 'vision-b', ...tomatoReview, estimatedQuantity: 1, storage: 'fridge', expiryEstimated: true }] };
+    expect((await request('POST', '/scans/fridge-correct/confirm', payload)).status).toBe(200);
+    const [updated] = fullLots();
+    expect(fullLots()).toHaveLength(1);
+    expect(updated.quantity_milli).toBe(6000);
+    expect(updated.version).toBe(Number(old.version) + 1);
+    // Fridge review is reconciliation, not a new purchase or an expiry/storage overwrite.
+    expect(updated).toEqual({ ...old, quantity_milli: 6000, version: Number(old.version) + 1,
+      legacy_version: Number(old.legacy_version) + 1, updated_at: updated.updated_at });
+    expectEvidence('fridge-correct', 'CORRECT', { scanId: 'fridge-correct', sourceType: 'SCAN', lines: [
+      { scanItemId: 'vision-a', raw: { rawName: 'tomto OCR', quantity: 250, unit: 'g' }, corrected: true,
+        confirmed: { name: 'Cà chua', quantity: 2, unit: 'piece', storage: 'freezer',
+          expiryAt: '2026-10-12', estimatedExpiryAt: null, expiryKind: 'KNOWN' } },
+      { scanItemId: 'vision-b', raw: { rawName: 'tomat OCR', quantity: 100, unit: 'g' }, corrected: true,
+        confirmed: { name: 'Cà chua', quantity: 1, unit: 'piece', storage: 'fridge',
+          expiryAt: null, estimatedExpiryAt: '2026-10-12', expiryKind: 'ESTIMATED' } },
+    ] });
+    expect(db.query('SELECT raw_name, quantity, unit FROM inventory_observations ORDER BY source_ref')).toEqual([
+      { raw_name: 'tomto OCR', quantity: 2, unit: 'piece' }, { raw_name: 'tomat OCR', quantity: 1, unit: 'piece' },
+    ]);
+    const committed = snapshot();
+    expect((await request('POST', '/scans/fridge-correct/confirm', payload)).json.idempotentReplay).toBe(true);
+    expect(snapshot()).toEqual(committed);
+  });
+
+  it.each(['receipt', 'fridge'] as const)('records raw → confirmed name/quantity/unit on %s CREATE and bounds only T10 raw_name', async (scanType) => {
+    await adopt();
+    const rawName = `  OCR ${'tomto '.repeat(40)}  `;
+    seedScan({ scanId: 'corrected-create', scanType, lines: [
+      { id: 'corrected-line', rawName, quantity: 250, unit: 'g' },
+    ] });
+    expect((await request('POST', '/scans/corrected-create/confirm', {
+      items: [{ id: 'corrected-line', ...tomatoReview }],
+    })).status).toBe(200);
+    expectEvidence('corrected-create', 'CREATE', { scanId: 'corrected-create',
+      sourceType: scanType === 'receipt' ? 'RECEIPT' : 'SCAN', lines: [
+        { scanItemId: 'corrected-line', raw: { rawName, quantity: 250, unit: 'g' }, corrected: true,
+          confirmed: { name: 'Cà chua', quantity: 2, unit: 'piece', storage: 'freezer',
+            expiryAt: '2026-10-12', estimatedExpiryAt: null, expiryKind: 'KNOWN' } },
+      ] });
+    expect(db.query('SELECT raw_name, quantity, unit, storage, expiry_date, expiry_kind FROM inventory_observations'))
+      .toEqual([{ raw_name: rawName.trim().slice(0, 200).trim(), quantity: 2, unit: 'piece',
+        storage: 'freezer', expiry_date: '2026-10-12', expiry_kind: 'KNOWN' }]);
+    expect(db.query('SELECT raw_name, estimated_quantity, unit, ocr_raw_name, ocr_quantity, ocr_unit FROM scan_items'))
+      .toEqual([{ raw_name: 'Cà chua', estimated_quantity: 2, unit: 'piece',
+        ocr_raw_name: rawName, ocr_quantity: 250, ocr_unit: 'g' }]);
+  });
+
+  it.each(['receipt', 'fridge'] as const)('never invents OCR evidence for absent raw fields or a manual %s review line', async (scanType) => {
+    await adopt();
+    seedScan({ scanId: 'absent-raw', scanType, lines: [
+      { id: 'legacy-line', rawName: 'Cà chua', quantity: 9, unit: 'kg' },
+    ] });
+    db.seed("UPDATE scan_items SET ocr_raw_name = NULL, ocr_quantity = NULL, ocr_unit = NULL WHERE id = 'legacy-line'");
+    expect((await request('POST', '/scans/absent-raw/confirm', { items: [
+      { id: 'legacy-line', ...tomatoReview, rawName: 'T13B unknown reviewed food' },
+      { rawName: 'T13B unknown manual food', estimatedQuantity: 1, unit: 'piece', storage: 'pantry', expiryDate: '2026-10-01' },
+    ] })).status).toBe(200);
+    const commands = scanCommands('absent-raw');
+    expect(commands).toHaveLength(2);
+    const evidence = commands.map((command) => JSON.parse(command.fingerprint).command.scanEvidence as InventoryScanEvidence);
+    expect(evidence.flatMap((entry) => entry.lines).map((line) => line.scanItemId))
+      .toEqual(expect.arrayContaining(['legacy-line', null]));
+    for (const [index, entry] of evidence.entries()) {
+      expect(entry).toMatchObject({ scanId: 'absent-raw', sourceType: scanType === 'receipt' ? 'RECEIPT' : 'SCAN' });
+      expect(entry.lines).toHaveLength(1);
+      expect(entry.lines[0]).toMatchObject({ raw: { rawName: null, quantity: null, unit: null }, corrected: false });
+      expect(entry.lines[0].confirmed.name).toBe(entry.lines[0].scanItemId === null
+        ? 'T13B unknown manual food' : 'T13B unknown reviewed food');
+      const events = db.query<{ metadata: string }>('SELECT metadata FROM inventory_events WHERE command_id = ?', commands[index].id);
+      expect(events).toHaveLength(1);
+      expect(JSON.parse(JSON.parse(events[0].metadata).fingerprint).command.scanEvidence).toEqual(entry);
+    }
+    expect(db.query('SELECT raw_name FROM inventory_observations')).toEqual([{ raw_name: null }, { raw_name: null }]);
+    const observations = db.query<{ ingredient_id: string | null; legacy_item_id: string | null }>(
+      'SELECT ingredient_id, legacy_item_id FROM inventory_observations');
+    for (const observation of observations) {
+      expect(observation.ingredient_id).toBeNull();
+      expect(observation.legacy_item_id).not.toBeNull();
+      expect(fullLots().some((lot) => lot.legacy_item_id === observation.legacy_item_id)).toBe(true);
+    }
+    expect(db.query('SELECT ocr_raw_name, ocr_quantity, ocr_unit FROM scan_items'))
+      .toEqual([{ ocr_raw_name: null, ocr_quantity: null, ocr_unit: null }]);
+  });
+
+  it('keeps absent OCR and manual-line evidence null when fridge review groups them into CORRECT', async () => {
+    await adopt();
+    const old = await manualTomatoes();
+    seedScan({ scanId: 'absent-correct', scanType: 'fridge', lines: [
+      { id: 'absent-line', rawName: 'Unretained prediction', quantity: 9, unit: 'kg' },
+    ] });
+    db.seed("UPDATE scan_items SET ocr_raw_name = NULL, ocr_quantity = NULL, ocr_unit = NULL WHERE id = 'absent-line'");
+    const payload = { items: [{ id: 'absent-line', ...tomatoReview },
+      { ...tomatoReview, estimatedQuantity: 1 }] };
+    expect((await request('POST', '/scans/absent-correct/confirm', payload)).status).toBe(200);
+    const [updated] = fullLots();
+    expect(fullLots()).toHaveLength(1);
+    expect(updated).toEqual({ ...old, quantity_milli: 6000, version: Number(old.version) + 1,
+      legacy_version: Number(old.legacy_version) + 1, updated_at: updated.updated_at });
+    expectEvidence('absent-correct', 'CORRECT', { scanId: 'absent-correct', sourceType: 'SCAN', lines: [
+      { scanItemId: 'absent-line', raw: { rawName: null, quantity: null, unit: null }, corrected: false,
+        confirmed: { name: 'Cà chua', quantity: 2, unit: 'piece', storage: 'freezer',
+          expiryAt: '2026-10-12', estimatedExpiryAt: null, expiryKind: 'KNOWN' } },
+      { scanItemId: null, raw: { rawName: null, quantity: null, unit: null }, corrected: false,
+        confirmed: { name: 'Cà chua', quantity: 1, unit: 'piece', storage: 'freezer',
+          expiryAt: '2026-10-12', estimatedExpiryAt: null, expiryKind: 'KNOWN' } },
+    ] });
+    expect(db.query('SELECT raw_name, quantity, unit, ingredient_id, legacy_item_id FROM inventory_observations ORDER BY quantity'))
+      .toEqual([{ raw_name: null, quantity: 1, unit: 'piece', ingredient_id: 'TOMATO', legacy_item_id: null },
+        { raw_name: null, quantity: 2, unit: 'piece', ingredient_id: 'TOMATO', legacy_item_id: null }]);
+    expect(db.query('SELECT ocr_raw_name, ocr_quantity, ocr_unit FROM scan_items'))
+      .toEqual([{ ocr_raw_name: null, ocr_quantity: null, ocr_unit: null }]);
+    const committed = snapshot();
+    const replay = await request('POST', '/scans/absent-correct/confirm', payload);
+    expect(replay.status).toBe(200);
+    expect(replay.json.idempotentReplay).toBe(true);
+    expect(snapshot()).toEqual(committed);
+  });
+
+  it.each(['receipt', 'fridge'] as const)('retries %s after a lost post-commit response without changing any committed facts or evidence', async (scanType) => {
+    await adopt();
+    await manualTomatoes();
+    seedScan({ scanId: 'lost-response', scanType, purchaseDate: '2026-09-10', lines: [
+      { id: 'lost-line', rawName: 'tomto OCR', quantity: 250, unit: 'g', totalPriceVnd: 24000 },
+    ] });
+    const payload = { items: [{ id: 'lost-line', ...tomatoReview }] };
+    let injected = false;
+    let committedAfterBatch: ReturnType<typeof snapshot> | undefined;
+    db.hooks.beforeBatch = (statements) => {
+      if (statements.some((statement) => /UPDATE scans SET status = 'confirmed'/.test(statement.sql))) {
+        db.hooks.afterBatch = () => {
+          expect(db.query('SELECT status FROM scans')).toEqual([{ status: 'confirmed' }]);
+          committedAfterBatch = snapshot();
+          injected = true;
+          db.hooks = {};
+          throw new Error('T13B-A lost response after SQLite COMMIT');
+        };
+      }
+    };
+    const lost = await request('POST', '/scans/lost-response/confirm', payload);
+    expect(injected).toBe(true);
+    // The route recovers a committed batch without rerunning the stock writes.
+    expect(lost.status).toBe(200);
+    expect(lost.json.idempotentReplay).toBe(true);
+    const committed = snapshot();
+    expect(committed).toEqual(committedAfterBatch);
+    expect(scanCommands('lost-response')).toHaveLength(1);
+    expect(committed.inventory_observations).toHaveLength(1);
+    expect(fullLots()).toHaveLength(scanType === 'receipt' ? 2 : 1);
+    const replay = await request('POST', '/scans/lost-response/confirm', payload);
+    expect(replay.status).toBe(200);
+    expect(replay.json.idempotentReplay).toBe(true);
+    expect(snapshot()).toEqual(committed);
+  });
+
+  it.each(['receipt', 'fridge'] as const)('fences concurrent %s confirmations at the actual commit barrier', async (scanType) => {
+    await adopt();
+    await manualTomatoes();
+    seedScan({ scanId: 'concurrent', scanType, lines: [
+      { id: 'concurrent-line', rawName: 'tomto OCR', quantity: 250, unit: 'g' },
+    ] });
+    const previousEvents = db.query('SELECT * FROM inventory_events ORDER BY id');
+    const payload = { items: [{ id: 'concurrent-line', ...tomatoReview }] };
+    const barrier = createBarrier(2);
+    db.hooks.beforeBatch = async (statements) => {
+      if (statements.some((statement) => /UPDATE scans SET status = 'confirmed'/.test(statement.sql))) {
+        await barrier.wait();
+      }
+    };
+    const results = await Promise.all([request('POST', '/scans/concurrent/confirm', payload),
+      request('POST', '/scans/concurrent/confirm', payload)]);
+    db.hooks = {};
+    expect(barrier.arrivals).toBe(2);
+    expect(results.map((result) => result.status)).toEqual([200, 200]);
+    expect(results.filter((result) => result.json.idempotentReplay === true)).toHaveLength(1);
+    expect(results.filter((result) => result.json.confirmedItemIds?.includes('concurrent-line'))).toHaveLength(1);
+    expect(results[0].json.items).toEqual(results[1].json.items);
+    expect(scanCommands('concurrent')).toHaveLength(1);
+    const events = db.query('SELECT * FROM inventory_events ORDER BY id');
+    expect(events).toHaveLength(previousEvents.length + 1);
+    expect(events).toEqual(expect.arrayContaining(previousEvents));
+    expect(db.query('SELECT id FROM inventory_observations')).toHaveLength(1);
+    expect(fullLots()).toHaveLength(scanType === 'receipt' ? 2 : 1);
+    expect(fullLots().reduce((total, lot) => total + Number(lot.quantity_milli), 0)).toBe(5000);
+    const committed = snapshot();
+    const replay = await request('POST', '/scans/concurrent/confirm', payload);
+    expect(replay.status).toBe(200);
+    expect(replay.json.idempotentReplay).toBe(true);
+    expect(snapshot()).toEqual(committed);
+  });
+
+  it.each(['receipt', 'fridge'] as const)('ignores altered already-confirmed %s input without changing lots, commands, events or observations', async (scanType) => {
+    await adopt();
+    await manualTomatoes();
+    seedScan({ scanId: 'altered', scanType, purchaseDate: '2026-09-10', lines: [
+      { id: 'altered-line', rawName: 'tomto OCR', quantity: 250, unit: 'g', totalPriceVnd: 24000 },
+    ] });
+    expect((await request('POST', '/scans/altered/confirm', {
+      items: [{ id: 'altered-line', ...tomatoReview }],
+    })).status).toBe(200);
+    const committed = snapshot();
+    const altered = await request('POST', '/scans/altered/confirm', { items: [
+      { id: 'altered-line', rawName: 'Sữa tươi', estimatedQuantity: 99, unit: 'l',
+        storage: 'pantry', expiryDate: '2026-12-31', expiryEstimated: true, sourceType: 'MANUAL' },
+      { rawName: 'Gừng', estimatedQuantity: 8, unit: 'piece' },
+    ] });
+    expect(altered.status).toBe(200);
+    expect(altered.json.idempotentReplay).toBe(true);
+    expect(snapshot()).toEqual(committed);
+  });
+
+  describe.each(['receipt', 'fridge'] as const)('%s atomic failure recovery', (scanType) => {
+    it.each(['stock', 'observation', 'status'] as const)('rolls back the entire confirmation when a later %s statement fails', async (failure) => {
+      await adopt();
+      await manualTomatoes();
+      seedScan({ scanId: 'atomic', scanType, purchaseDate: '2026-09-10', lines: [
+        { id: 'atomic-a', rawName: 'tomto OCR', quantity: 250, unit: 'g', totalPriceVnd: 24000 },
+        { id: 'atomic-b', rawName: 'carot OCR', quantity: 100, unit: 'g', totalPriceVnd: 12000 },
+      ] });
+      const payload = { items: [{ id: 'atomic-a', ...tomatoReview },
+        { id: 'atomic-b', rawName: 'Cà rốt', estimatedQuantity: 1, unit: 'piece',
+          storage: 'fridge', expiryDate: '2026-10-01' }] };
+      const before = snapshot();
+      const statement = failure === 'stock'
+        ? "BEFORE INSERT ON inventory_lots WHEN NEW.raw_name = 'Cà rốt' AND NEW.source_id = 'atomic'"
+        : failure === 'observation'
+          ? "BEFORE INSERT ON inventory_observations WHEN NEW.source_ref = 'atomic:atomic-b'"
+          : "BEFORE UPDATE OF status ON scans WHEN NEW.id = 'atomic' AND NEW.status = 'confirmed'";
+      db.seed(`CREATE TRIGGER t13b_atomic_failure ${statement}
+        BEGIN SELECT RAISE(ABORT, 'T13B-A injected late ${failure} failure'); END;`);
+      const failed = await request('POST', '/scans/atomic/confirm', payload);
+      expect(failed.status).toBe(500);
+      expect(failed.json.code).toBe('DATABASE_ERROR');
+      expect(snapshot()).toEqual(before);
+      expect(scanCommands('atomic')).toHaveLength(0);
+      db.seed('DROP TRIGGER t13b_atomic_failure');
+      expect((await request('POST', '/scans/atomic/confirm', payload)).status).toBe(200);
+      expect(scanCommands('atomic')).toHaveLength(2);
+      expect(db.query('SELECT id FROM inventory_observations')).toHaveLength(2);
+      expect(db.query('SELECT status FROM scans')).toEqual([{ status: 'confirmed' }]);
+      expect(fullLots()).toHaveLength(scanType === 'receipt' ? 3 : 2);
+      expect(fullLots().reduce((total, lot) => total + Number(lot.quantity_milli), 0)).toBe(6000);
+    });
   });
 });
 

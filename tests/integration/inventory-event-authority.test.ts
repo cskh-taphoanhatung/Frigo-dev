@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { executeInventoryLotCommand, type InventoryLotCommandResult } from '../../packages/db/src/inventory-lot-commands';
+import { executeInventoryLotCommand, readLotCommandReceipt, type InventoryLotCommandResult } from '../../packages/db/src/inventory-lot-commands';
+import { scanCorrectionLine } from '../../src/worker/utils/scan-evidence';
 import type { InventoryLotCommand } from '../../packages/domain/src/inventory-lot-commands';
 import { InventoryLotSchema, type InventoryLot } from '../../packages/domain/src/inventory-truth';
 import { SqliteD1, SqliteStatement, type SqliteStatementEvent } from '../helpers/sqlite-d1';
@@ -63,6 +64,86 @@ function stateBytes(db: SqliteD1): string {
   return JSON.stringify(['households', 'household_members', 'storage_locations', 'inventory_items',
     'inventory_lots', 'inventory_commands', 'inventory_events'].map((table) => db.query(`SELECT * FROM ${table} ORDER BY id`)));
 }
+
+describe('T13B-A correction provenance in the existing T09 fingerprint', () => {
+  function scanEvidence() {
+    return {
+      scanId: 'confirmed-scan', sourceType: 'SCAN' as const,
+      lines: [scanCorrectionLine('scan-line', { rawName: 'OCR eggs', quantity: 9, unit: 'piece' }, {
+        name: 'Eggs', quantity: 10, unit: 'piece', storage: 'fridge',
+        expiryAt: null, estimatedExpiryAt: null, expiryKind: 'UNKNOWN',
+      })],
+    };
+  }
+
+  it.each(['CREATE', 'CORRECT'] as const)('%s retains correction intent in immutable receipt/event authority and replays it', async (type) => {
+    const db = await database();
+    const evidence = scanEvidence();
+    const command = { ...input(type), scanEvidence: evidence };
+    const execution = await execute(db, 'scan-evidence', command);
+    const [receipt] = db.query<{ fingerprint: string }>(
+      'SELECT fingerprint FROM inventory_commands WHERE id = ?', execution.result.commandId);
+    const [event] = db.query<{ metadata: string }>(
+      'SELECT metadata FROM inventory_events WHERE command_id = ?', execution.result.commandId);
+    const metadata = JSON.parse(event.metadata);
+    expect(metadata.fingerprint).toBe(receipt.fingerprint);
+    expect(JSON.parse(receipt.fingerprint).command.scanEvidence).toEqual(evidence);
+    expect(metadata).not.toHaveProperty('scanEvidence');
+    const before = stateBytes(db);
+    expect(await readLotCommandReceipt(db, scope, 'scan-evidence')).toMatchObject({
+      command: { scanEvidence: evidence }, execution: { result: execution.result, replayed: true },
+    });
+    expect(await execute(db, 'scan-evidence', command)).toEqual({ result: execution.result, replayed: true });
+    const changed = structuredClone(evidence);
+    changed.lines[0].raw.rawName = 'different machine evidence';
+    await expect(execute(db, 'scan-evidence', { ...command, scanEvidence: changed }))
+      .rejects.toMatchObject({ code: 'IDEMPOTENCY_CONFLICT' });
+    expect(stateBytes(db)).toBe(before);
+    expect(() => db.execute('UPDATE inventory_events SET metadata = ? WHERE command_id = ?',
+      ['{}', execution.result.commandId])).toThrow();
+  });
+
+  it('rejects replay when event correction evidence differs from its command receipt', async () => {
+    const db = await database();
+    const execution = await execute(db, 'scan-evidence', { ...input('CREATE'), scanEvidence: scanEvidence() });
+    db.hooks.afterBatch = (results) => {
+      for (const result of results) for (const row of result.results ?? []) {
+        const event = row as { command_id?: string; metadata?: string };
+        if (event.command_id !== execution.result.commandId || !event.metadata) continue;
+        const metadata = JSON.parse(event.metadata);
+        const fingerprint = JSON.parse(metadata.fingerprint);
+        fingerprint.command.scanEvidence.lines[0].confirmed.name = 'forged review';
+        metadata.fingerprint = JSON.stringify(fingerprint);
+        event.metadata = JSON.stringify(metadata);
+      }
+    };
+    await expect(readLotCommandReceipt(db, scope, 'scan-evidence')).rejects.toMatchObject({ code: 'CORRUPT_RECEIPT' });
+  });
+
+  it('rejects binary/unknown evidence fields rather than retaining them as command authority', async () => {
+    const db = await database();
+    const before = stateBytes(db);
+    await expect(execute(db, 'scan-evidence', { ...input('CREATE'),
+      scanEvidence: { ...scanEvidence(), image: 'not-permitted' },
+    })).rejects.toMatchObject({ code: 'INVALID_COMMAND' });
+    expect(stateBytes(db)).toBe(before);
+  });
+
+  it.each(['expiry', 'source', 'scanId', 'lineLimit', 'byteLimit'] as const)(
+    'rejects inconsistent or unbounded %s evidence without stock effects', async (kind) => {
+      const db = await database();
+      const evidence = scanEvidence();
+      if (kind === 'expiry') evidence.lines[0].confirmed.expiryAt = '2026-09-20';
+      if (kind === 'scanId') evidence.scanId = 'another-scan';
+      if (kind === 'lineLimit') evidence.lines = Array.from({ length: 51 }, () => evidence.lines[0]);
+      if (kind === 'byteLimit') evidence.lines[0].raw.rawName = 'a'.repeat(65536);
+      const before = stateBytes(db);
+      await expect(execute(db, 'invalid-evidence', { ...input('CREATE'), scanEvidence: evidence,
+        ...(kind === 'source' ? { sourceType: 'RECEIPT' } : {}),
+      })).rejects.toMatchObject({ code: 'INVALID_COMMAND' });
+      expect(stateBytes(db)).toBe(before);
+    });
+});
 
 async function prepared(type: CommandType = 'USE') {
   const db = await database();

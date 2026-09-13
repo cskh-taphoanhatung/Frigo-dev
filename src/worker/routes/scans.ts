@@ -1,10 +1,10 @@
 import { Context, Hono } from 'hono';
 import { InventoryWriterAuthorityError, InventoryWriterSnapshotError, readInventoryAuthorityMode, readLegacyInventoryRevision, runLegacyInventoryBatch } from '../../../packages/db/src/inventory-writer-fence';
 import { composeInventoryLotCommands, readAdoptedLotSnapshot, type LotCommandSpec } from '../../../packages/db/src/inventory-lot-commands';
-import { LotCommandError } from '../../../packages/domain/src/inventory-lot-commands';
+import { LotCommandError, type InventoryScanEvidence } from '../../../packages/domain/src/inventory-lot-commands';
 import { inventoryAuthorityFailure } from '../utils/inventory-authority';
 import {
-  lotExpiryFromEvidence, rawScanEvidence, receiptLineFacts, scanProvenance,
+  lotExpiryFromEvidence, rawScanEvidence, receiptLineFacts, scanCorrectionLine, scanProvenance,
   type ExpiryBasis, type ScanProvenanceType,
 } from '../utils/scan-evidence';
 import { buildInventoryObservation, guardedObservationInsertStatement } from '../../../packages/db/src/inventory-observations';
@@ -78,6 +78,7 @@ async function confirmAdoptedScan(c: Context<{ Bindings: Env; Variables: { auth:
     updates: Map<string, { id: string; quantityDelta: number; unit: string }>;
     inserts: Array<{ id: string; quantity: number; unit: string; expiryDate: string; ingredientId: string | null; name: string; storage: string; expiryBasis: ExpiryBasis; lineIds: string[] }>;
     provenance: ScanProvenanceType;
+    evidenceByItemId: Map<string, InventoryScanEvidence>;
     purchase: { purchasedAt: string | null; purchasePriceFor: (lineIds: string[]) => { currency: 'VND'; amountMinor: number; minorDigits: 0 } | null };
     observations: Array<{ sourceRef: string; ingredientId: string | null; rawName: string | null;
       legacyItemId: string | null; quantity: number; unit: string; storage: 'fridge' | 'freezer' | 'pantry';
@@ -100,6 +101,7 @@ async function confirmAdoptedScan(c: Context<{ Bindings: Env; Variables: { auth:
           changes: { quantity: Number(row.quantity) + update.quantityDelta, unit: update.unit },
           reason: 'Xác nhận từ nhận diện thông minh',
           revive: mapped.lot.state !== 'ACTIVE',
+          scanEvidence: plan.evidenceByItemId.get(update.id),
         },
       });
     }
@@ -124,6 +126,7 @@ async function confirmAdoptedScan(c: Context<{ Bindings: Env; Variables: { auth:
           // Authoritative server-side provenance: receipts are RECEIPT, fridge
           // photos are SCAN. Never inferred from client-supplied text.
           sourceType: plan.provenance, sourceId: scanId,
+          scanEvidence: plan.evidenceByItemId.get(insert.id),
         },
       });
     }
@@ -185,6 +188,20 @@ async function confirmAdoptedScan(c: Context<{ Bindings: Env; Variables: { auth:
       inventoryCount: updatedList.length, items: updatedList, confirmedItemIds: plan.selectedIds,
     });
   } catch (error: any) {
+    // A committed twin can win after our READY read. Recover through the same
+    // status-based replay contract, never by retrying the stock writes.
+    try {
+      const committed = await db.prepare('SELECT status FROM scans WHERE id = ? AND household_id = ?')
+        .bind(scanId, auth.householdId).first();
+      if (committed?.status === 'confirmed') {
+        const updatedList = await fetchHouseholdInventoryFromDb(db, auth.householdId, kv,
+          { strict: true, actorId: auth.userId });
+        return c.json({ success: true, idempotentReplay: true,
+          message: 'Bản quét này đã được xác nhận trước đó', inventoryCount: updatedList.length, items: updatedList });
+      }
+    } catch (recoveryError) {
+      error = recoveryError;
+    }
     if (error instanceof LotCommandError) {
       const failure = inventoryAuthorityFailure(error);
       return c.json({ error: error.message, code: failure.code }, failure.status);
@@ -243,6 +260,9 @@ export interface PersistedScanItem {
   is_confirmed?: number | boolean | null;
   unit_price_vnd?: number | null;
   total_price_vnd?: number | null;
+  ocr_raw_name?: string | null;
+  ocr_quantity?: number | null;
+  ocr_unit?: string | null;
 }
 
 export interface ResolvedScanItem {
@@ -1066,6 +1086,8 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
     // Authoritative provenance comes from the server's own scan row.
     const provenance = scanProvenance(scan.scan_type);
     const persistedById = new Map(persistedItems.map((item) => [item.id, item]));
+    const adopted = await readInventoryAuthorityMode(db, auth.householdId) === 'native';
+    const separateReceiptLots = adopted && provenance === 'RECEIPT';
 
     type ResolvedGroup = {
       key: string;
@@ -1080,13 +1102,11 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
       };
     };
 
-    // Group rows that refer to the same canonical ingredient/name before
-    // querying inventory. D1 does not expose uncommitted batch inserts to the
-    // later SELECTs, so without grouping two tomatoes in one scan could create
-    // two inventory rows instead of one aggregated projection.
+    // Receipts prove new purchases: keep each line's lot and purchase facts.
+    // Fridge observations retain the existing grouped CORRECT semantics.
     const groups = new Map<string, ResolvedGroup>();
     for (const item of resolvedItems) {
-      const key = item.canonicalId
+      const key = separateReceiptLots ? `purchase:${groups.size}` : item.canonicalId
         ? `canonical:${item.canonicalId}`
         : `name:${item.name.toLocaleLowerCase()}`;
       const group = groups.get(key);
@@ -1122,6 +1142,8 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
 
     const updates = new Map<string, InventoryUpdate>();
     const inserts: InventoryInsert[] = [];
+    const evidenceByItemId = new Map<string, InventoryScanEvidence>();
+    const affectedItemIds = new Map<ResolvedScanItem, string>();
     const events: Array<{
       id: string;
       itemId: string;
@@ -1134,7 +1156,7 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
     let groupIndex = 0;
     for (const group of groups.values()) {
       const first = group.items[0];
-      const existingResult = await db
+      const existingResult = separateReceiptLots ? { results: [] } : await db
         .prepare(
           `SELECT id, quantity, unit, ingredient_id, name, expiry_date
            FROM inventory_items
@@ -1230,6 +1252,17 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
         });
       }
 
+      const evidence = evidenceByItemId.get(itemId) ?? { scanId: id, sourceType: provenance, lines: [] };
+      for (const item of group.items) {
+        affectedItemIds.set(item, itemId);
+        const persisted = item.sourceId ? persistedById.get(item.sourceId) : undefined;
+        evidence.lines.push(scanCorrectionLine(item.sourceId ?? null, rawScanEvidence(persisted ?? {}), {
+          name: item.name, quantity: item.quantity, unit: item.unit, storage: item.storage,
+          ...lotExpiryFromEvidence(item.expiryDate, item.expiryBasis),
+        }));
+      }
+      evidenceByItemId.set(itemId, evidence);
+
       group.items.forEach((item, itemIndex) => {
         const sourceKey = stableScanPart(item, itemIndex);
         events.push({
@@ -1305,10 +1338,10 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
     // Adopted households confirm through the lot authority: reviewed scan
     // values and the status transition commit in the same atomic batch as the
     // native commands, status update last.
-    if (await readInventoryAuthorityMode(db, auth.householdId) === 'native') {
+    if (adopted) {
       return confirmAdoptedScan(c, db, kv, auth, id, {
         selectedIds, batchStatements, updates, inserts,
-        provenance,
+        provenance, evidenceByItemId,
         purchase: {
           // Receipt facts are read from the server-side scan row, never from
           // the client payload, and stay null when the receipt lacked them.
@@ -1323,18 +1356,24 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
             return line ? receiptLineFacts(provenance, scan, line).purchasePrice : null;
           },
         },
-        observations: await Promise.all(resolvedItems.map(async (item, index) => ({
-          sourceRef: await scanObservationSourceRef(id, item.sourceId ?? item.clientId ?? `manual-${index}`),
-          ingredientId: item.canonicalId,
-          rawName: item.name.slice(0, 200),
-          legacyItemId: null,
-          quantity: item.quantity,
-          unit: item.unit,
-          storage: item.storage,
-          expiryDate: item.expiryDate ?? null,
-          expiryBasis: item.expiryBasis,
-          note: null,
-        }))),
+        observations: await Promise.all(resolvedItems.map(async (item, index) => {
+          // T10 rawName is machine evidence, not the reviewed identity.
+          const rawName = rawScanEvidence(item.sourceId ? persistedById.get(item.sourceId) ?? {} : {})
+            .rawName?.trim().slice(0, 200).trim() ?? null;
+          return {
+            sourceRef: await scanObservationSourceRef(id, item.sourceId ?? item.clientId ?? `manual-${index}`),
+            ingredientId: item.canonicalId,
+            rawName,
+            // Unmapped/manual lines without retained OCR still need a real subject.
+            legacyItemId: rawName === null && item.canonicalId === null ? affectedItemIds.get(item) ?? null : null,
+            quantity: item.quantity,
+            unit: item.unit,
+            storage: item.storage,
+            expiryDate: item.expiryDate ?? null,
+            expiryBasis: item.expiryBasis,
+            note: null,
+          };
+        })),
         readyGuard: { sql: readyScanPredicate, bindings: [id, auth.householdId] },
       });
     }

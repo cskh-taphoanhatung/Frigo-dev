@@ -38,6 +38,44 @@ const MutableFields = {
   lotId: LotFields.id,
   expectedVersion: LotFields.version,
 };
+// The existing receipt fingerprint (also in event metadata) retains this intent.
+const ScanEvidence = z.object({
+  scanId: LotFields.sourceId.unwrap(),
+  sourceType: z.enum(['RECEIPT', 'SCAN']),
+  lines: z.array(z.object({
+    scanItemId: LotFields.sourceId,
+    raw: z.object({
+      rawName: RawName.nullable(),
+      quantity: z.number().finite().positive().nullable(),
+      unit: RawName.nullable(),
+    }).strict(),
+    confirmed: z.object({
+      name: RawName,
+      quantity: z.number().finite().positive(),
+      unit: Unit,
+      storage: z.enum(['fridge', 'freezer', 'pantry']),
+      expiryAt: CalendarDate.nullable(),
+      estimatedExpiryAt: CalendarDate.nullable(),
+      expiryKind: z.enum(['KNOWN', 'ESTIMATED', 'UNKNOWN']),
+    }).strict(),
+    corrected: z.boolean(),
+  }).strict()).min(1).max(50),
+}).strict().superRefine((evidence, ctx) => {
+  evidence.lines.forEach(({ confirmed }, index) => {
+    const validExpiry = confirmed.expiryKind === 'UNKNOWN'
+      ? confirmed.expiryAt === null && confirmed.estimatedExpiryAt === null
+      : confirmed.expiryKind === 'ESTIMATED'
+        ? confirmed.expiryAt === null && confirmed.estimatedExpiryAt !== null
+        : confirmed.expiryAt !== null && confirmed.estimatedExpiryAt === null;
+    if (!validExpiry) ctx.addIssue({ code: z.ZodIssueCode.custom,
+      path: ['lines', index, 'confirmed', 'expiryKind'], message: 'Expiry evidence mismatch' });
+  });
+  if (new TextEncoder().encode(JSON.stringify(evidence)).length > 65536) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Scan evidence exceeds 64 KiB' });
+  }
+});
+export type InventoryScanEvidence = z.infer<typeof ScanEvidence>;
+
 const CorrectionChanges = z.object({
   quantity: z.number().finite().nonnegative().optional(),
   unit: Unit.optional(),
@@ -68,6 +106,7 @@ export const InventoryLotCommandSchema = z.discriminatedUnion('type', [
     purchasePrice: LotFields.purchasePrice.default(null),
     sourceType: z.enum(['MANUAL', 'SCAN', 'SHOPPING', 'RECEIPT']),
     sourceId: LotFields.sourceId.default(null),
+    scanEvidence: ScanEvidence.optional(),
   }).strict(),
   z.object({
     type: z.literal('USE'), ...MutableFields,
@@ -85,6 +124,7 @@ export const InventoryLotCommandSchema = z.discriminatedUnion('type', [
     reason: Reason,
     revive: z.boolean().default(false),
     terminalState: z.enum(['CONSUMED', 'DISCARDED']).optional(),
+    scanEvidence: ScanEvidence.optional(),
   }).strict(),
 ]).superRefine((command, ctx) => {
   const issue = (path: string[], message: string) => ctx.addIssue({ code: z.ZodIssueCode.custom, path, message });
@@ -94,6 +134,10 @@ export const InventoryLotCommandSchema = z.discriminatedUnion('type', [
     }
     if (command.sourceType !== 'MANUAL' && command.sourceId === null) {
       issue(['sourceId'], 'Source reference required');
+    }
+    if (command.scanEvidence && (command.scanEvidence.sourceType !== command.sourceType
+      || command.scanEvidence.scanId !== command.sourceId)) {
+      issue(['scanEvidence'], 'Scan evidence must match CREATE provenance');
     }
     const validExpiry = command.expiryKind === 'UNKNOWN'
       ? command.expiryAt === null && command.estimatedExpiryAt === null

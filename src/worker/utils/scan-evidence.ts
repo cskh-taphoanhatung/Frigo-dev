@@ -1,4 +1,5 @@
 import type { LotExpiryFields } from './inventory-authority';
+import type { InventoryScanEvidence } from '../../../packages/domain/src/inventory-lot-commands';
 
 // T13 receipt/vision truth mapping. Everything here converts EVIDENCE (OCR /
 // vision extraction plus the user's review) into the exact inputs the T09 lot
@@ -40,7 +41,11 @@ export function provenanceDataSource(sourceType: string): string {
  */
 export type ExpiryBasis = 'supplied' | 'inferred' | 'absent';
 
-export const UNKNOWN_EXPIRY: LotExpiryFields = {
+type ScanLotExpiryFields = Omit<LotExpiryFields, 'expiryKind'> & {
+  expiryKind: 'KNOWN' | 'ESTIMATED' | 'UNKNOWN';
+};
+
+export const UNKNOWN_EXPIRY: ScanLotExpiryFields = {
   expiryAt: null, estimatedExpiryAt: null, expiryKind: 'UNKNOWN',
 };
 
@@ -50,7 +55,7 @@ export const UNKNOWN_EXPIRY: LotExpiryFields = {
  * and can never silently become KNOWN authority.
  */
 export function lotExpiryFromEvidence(expiryDate: string | null | undefined,
-  basis: ExpiryBasis): LotExpiryFields {
+  basis: ExpiryBasis): ScanLotExpiryFields {
   if (basis === 'absent' || !expiryDate) return { ...UNKNOWN_EXPIRY };
   if (basis === 'inferred') {
     return { expiryAt: null, estimatedExpiryAt: expiryDate, expiryKind: 'ESTIMATED' };
@@ -163,4 +168,9 @@ export function correctionOf(raw: RawScanEvidence, confirmed: {
     || (raw.quantity !== null && raw.quantity !== confirmed.quantity)
     || (raw.unit !== null && raw.unit !== confirmed.unit);
   return { corrected, raw };
+}
+
+export function scanCorrectionLine(scanItemId: string | null, raw: RawScanEvidence,
+  confirmed: InventoryScanEvidence['lines'][number]['confirmed']): InventoryScanEvidence['lines'][number] {
+  return { scanItemId, ...correctionOf(raw, confirmed), confirmed };
 }
