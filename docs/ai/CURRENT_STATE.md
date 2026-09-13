@@ -1,6 +1,37 @@
-# Frigo current state — T13 independent review failed
+# Frigo current state — T13R-A complete, T13R-B pending
 
-## Current authoritative state — T13R-A safe stop, 2026-09-13T15:50:34Z
+## Current authoritative state — T13R-A application checkpoint, 2026-09-13
+
+**T13R-A COMPLETE — READY FOR T13R-B. NOT a final T13 freeze.** Repository
+`vn-co3/Frigo-dev` (renamed from `vn-co2`), ID **1368281478**. Branch
+`hoplite/oropos-eb2d4886--t13r-a-data-integrity-ownership`;
+**T13R_A_APPLICATION_CHECKPOINT=`fc0f9c56c53ae7b17f2d1fb4770a6bc231ebc027`**.
+Protected main `d1b06732…` unchanged. Rejected freeze `7b7bb69…` remains
+**DO NOT RELEASE** and is the comparison baseline.
+
+All six T13R-A findings are **FIXED** with permanent red→green regressions:
+P1-1 async raw evidence (`scan-queue.ts`), P2-A complete raw mapping evidence and
+P2-B reviewed-expiry round-trip (additive migration **0032**, sync+async writers,
+DTO, both review pages), P1-2 canonical identity preserved under free-form rename
+(`inventory.ts` PATCH), P1-3 lot-bound edit drafts (`IngredientDetailPage` keyed by
+route + owner check), P1-4 receipt review requires `next.id === receiptScanId`
+(`ReceiptReviewPage`). Migrations: **32**; 0001–0031 byte-identical; 0032 additive,
+no backfill. Authority audit: inventory writer and T11 reader sets identical to the
+freeze; UNKNOWN writers 0, UNKNOWN readers 0; no evidence column is stock authority.
+
+Gates at checkpoint: lint/typecheck/build PASS; **3423/137** full Vitest;
+**45/5** focused T13R-A; **92/5** real local D1 (workerd); **42/42** browser
+(14 cases × 360/390/430); migration smoke with populated 0031→0032 upgrade; fresh
+32-migration local D1 apply; legacy 0031→0032 populated upgrade on real local D1
+(0 fabricated rows, FK 0); schema gate PASS. Details, commands and per-finding
+tests: [T13R_A_REMEDIATION.md](inventory-truth/t13/T13R_A_REMEDIATION.md).
+
+T13R-B blockers remain OPEN (Cloudflare fridge confidence fabrication, inventory
+conflict/refetch UX, Home estimated-expiry qualifier, NULL opened-state truth).
+No merge/deploy/remote D1/PayOS/T14/repository reconciliation. `.hoplite/settings.json`
+overlay remains uncommitted by rule.
+
+## Historical — T13R-A safe stop, 2026-09-13T15:50:34Z (superseded)
 
 **T13R-A SAFELY CHECKPOINTED BEFORE IMPLEMENTATION.** Repository
 `vn-co2/Frigo-dev`, ID **1368281478**. Independent audit `b9735b4` (docs-only,

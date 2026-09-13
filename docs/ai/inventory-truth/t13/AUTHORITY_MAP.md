@@ -40,6 +40,13 @@ schema extension is introduced. Same-key changed evidence conflicts. Distinct
 receipt purchases stay distinct lots; manual 3 plus receipt 2 reads as total 5
 without rewriting the original lot.
 
+T13R-A (0032): `scan_items.ocr_canonical_id/ocr_category/ocr_storage` retain the
+ingested mapping and `reviewed_expiry_date/reviewed_expiry_kind` retain the
+reviewer's accepted expiry per line. These are **evidence columns only**, read by
+`src/worker/utils/scan-evidence.ts` → `scanItemDto()`; no inventory writer or T11
+reader consults them, so no evidence column becomes stock authority. The async
+queue writes the same evidence as the synchronous route.
+
 ## Reader classifications
 
 | Consumer / route | Classification and boundary | Permanent proof |

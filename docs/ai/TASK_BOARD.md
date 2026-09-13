@@ -1,6 +1,26 @@
 # Frigo task board
 
-## Current board — T13R-A safe stop, 2026-09-13T15:50:34Z
+## Current board — T13R-A complete, 2026-09-13
+
+- **T13R-A COMPLETE — READY FOR T13R-B.** Branch
+  `hoplite/oropos-eb2d4886--t13r-a-data-integrity-ownership`;
+  application checkpoint `fc0f9c5`; docs head follows. Main `d1b06732…`
+  unchanged. Rejected freeze `7b7bb69…` still **DO NOT RELEASE**. This is not a
+  final T13 freeze.
+- FIXED with red→green permanent tests: P1-1 async evidence, P1-2 canonical
+  rename, P1-3 lot-bound draft, P1-4 receipt ownership, P2-A raw evidence
+  completeness, P2-B confirmed expiry round-trip. New additive migration
+  `0032_scan_evidence_completeness.sql` (32 total; 0031 byte-identical).
+- Gates: lint/typecheck/build PASS; **3423/137** full; **45/5** focused T13R-A;
+  **92/5** real local D1; **42/42** browser; migration smoke, fresh + legacy
+  populated 0031→0032 local D1, schema gate PASS. Writer/reader authority sets
+  unchanged from the freeze.
+- Next: **T13R-B** — Cloudflare fridge confidence fabrication, inventory
+  conflict/refetch UX, Home estimated-expiry qualifier, NULL opened-state truth —
+  then a new application freeze and independent recertification. No merge/
+  deploy/remote D1/PayOS/T14/reconciliation.
+
+## Historical board — T13R-A safe stop, 2026-09-13T15:50:34Z (superseded)
 
 - **T13R-A CHECKPOINTED, IMPLEMENTATION NOT STARTED.** Branch
   `hoplite/oropos-eb2d4886--t13r-a-data-integrity-ownership` at audit commit

@@ -29,6 +29,7 @@ Evidence keys below name permanent tests, not substitute aggregate counts:
 | AT | `tests/unit/inventory-adoption.test.ts` + `tests/integration/inventory-adoption.test.ts`: certified adoption domain/route semantics |
 | PF / BT | `tests/integration/t13b-preview-fixtures.test.mjs` / `tests/integration/t13b-browser-tooling.test.mjs`: isolated controls, production 404/origin fences, actual reporter lifecycle privacy |
 | Browser | Cases A–I, U7 and reconciliation in the browser matrix below; real Chromium, real local app, synthetic data |
+| T13R-A | `tests/integration/t13r-a-async-evidence.test.ts` (P1-1 persisted async evidence), `tests/integration/t13r-a-evidence-completeness.test.ts` (P2-A/P2-B, 0032), `tests/integration/t13r-a-canonical-identity.test.ts` (P1-2), `tests/unit/t13r-a-lot-draft-ownership.test.tsx` (P1-3), `tests/unit/t13r-a-receipt-ownership.test.tsx` (P1-4), `tests/e2e/t13r-a-ownership.e2e.ts` (P1-3/P1-4 browser); see [T13R_A_REMEDIATION.md](T13R_A_REMEDIATION.md) |
 
 ## Original AC1–AC14 — all PASS
 

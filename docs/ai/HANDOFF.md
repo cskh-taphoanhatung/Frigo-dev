@@ -1,6 +1,65 @@
-# Frigo AI Handoff — T13 remediation required after independent review
+# Frigo AI Handoff — T13R-A complete, T13R-B next
 
-## Current handoff — T13R-A safe stop, 2026-09-13T15:50:34Z
+## Current handoff — T13R-A application checkpoint, 2026-09-13
+
+Task: T13R-A data-integrity & ownership remediation of the rejected T13 freeze.
+Status: **T13R-A COMPLETE — READY FOR T13R-B.** Not a final T13 freeze.
+Repository: `vn-co3/Frigo-dev` (owner renamed from `vn-co2`; ID **1368281478**
+verified). Branch `hoplite/oropos-eb2d4886--t13r-a-data-integrity-ownership`.
+Recovered this session from the mismatched local branch `hoplite/amisos-peiraieus-
+ab9b6c4c`/`hoplite/medma-164548ce` (HEAD `b9735b4`, a docs-only ancestor of the
+remote head) by `git switch --track`; no reset/rebase/cherry-pick/force-push.
+
+**T13R_A_APPLICATION_CHECKPOINT=`fc0f9c56c53ae7b17f2d1fb4770a6bc231ebc027`**
+(starting checkpoint `d589342cbcef9f80487a2c269bcf6133fe0e4415`). The docs-only
+commit following this handoff is `T13R_A_DOCS_HEAD`; its non-doc diff against the
+application checkpoint must be empty. Main `d1b06732f8a80db4e77986df31ff28d9f04641fa`
+unchanged. Rejected freeze `7b7bb695ee597a46cf4022a2c534e2fea374be5d` unchanged,
+**DO NOT RELEASE**.
+
+Implemented (one finding at a time, REPRODUCE → RED permanent test → minimal fix →
+GREEN → regression): **P1-1** async queue raw evidence + nullable confidence
+(`4d73365`); **P2-A/P2-B** additive migration `0032_scan_evidence_completeness.sql`
+(`ocr_canonical_id/category/storage`, `reviewed_expiry_date/kind` + fail-closed
+triggers), sync+async writers, `scanItemDto`, both review pages (`ac3c35e`);
+**P1-2** canonical identity preserved under free-form rename (`20bc14e`);
+**P1-3/P1-4** lot-keyed detail with draft-owner check and route-id-owned receipt
+review (`43e95ed`); test alignment (`bb19fc0`, `fc0f9c5`). Migrations **32**;
+0001–0031 byte-identical to the freeze; no backfill in 0032.
+
+Exact checks at the checkpoint: `pnpm lint` PASS; `pnpm typecheck` PASS;
+`pnpm build` PASS; `pnpm test` **3423/3423 in 137 files**; focused
+`tests/{integration,unit}/t13r-a-*` **45/45 in 5 files**; real local D1 (workerd)
+`*-d1.test.mjs` **92/92 in 5 files**; `bash scripts/migration-smoke.sh` ok (includes
+populated 0031→0032 upgrade over legacy pending/confirmed and T13 pending/confirmed/
+rejected rows, zero fabricated evidence); `wrangler d1 migrations apply frigo-db
+--local` fresh 32 ✅ and legacy freeze-tree 0001–0031 + seeded rows → 0032 ✅ with
+pre-existing columns byte-identical, all new columns SQL NULL, `foreign_key_check` 0;
+`pnpm schema:check:local` PASS on both; `CI=1 pnpm exec playwright test`
+**42 passed / 0 failed** (14 cases × 360/390/430, includes the new
+`tests/e2e/t13r-a-ownership.e2e.ts`); `git diff --check` PASS.
+
+Authority audit: inventory `INSERT/UPDATE inventory_items|inventory_lots` statement
+set and T11 reader call set are identical to the freeze; the 0032 columns are read
+only by `scan-evidence.ts` → `scanItemDto()`. UNKNOWN writers **0**, UNKNOWN readers
+**0**. T09 write and T11 read authority preserved.
+
+Not changed (T13R-B, still OPEN): Cloudflare fridge `vision()` confidence clamp,
+inventory conflict/refetch UX, Home estimated-expiry qualifier, `openedAt === null`
+→ "Chưa mở". PayOS, auth, production infra untouched. `.hoplite/settings.json`
+overlay kept uncommitted.
+
+Limitations: hosted CI was not consulted; all evidence is local. Browser evidence
+uses the repository's isolated synthetic harness (SCAN_QUEUE_MODE sync); the async
+path is proven by the real queue processor over real migrations in Vitest, not in
+the browser.
+
+Next action: **T13R-B** on a stacked branch from this checkpoint — fix the four
+deferred blockers only, red/green each, then new application freeze → independent
+recertification. No merge/deploy/remote D1/PayOS/T14/repository reconciliation.
+Full detail: [T13R_A_REMEDIATION.md](inventory-truth/t13/T13R_A_REMEDIATION.md).
+
+## Historical handoff — T13R-A safe stop, 2026-09-13T15:50:34Z (superseded)
 
 Status: **T13R-A SAFELY CHECKPOINTED — READY FOR HANDOFF** (implementation not
 started). Repository `vn-co2/Frigo-dev`, ID **1368281478**. Branch
