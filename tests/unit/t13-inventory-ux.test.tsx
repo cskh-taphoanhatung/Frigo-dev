@@ -74,6 +74,14 @@ describe('T13 provenance and unknown facts', () => {
     expect(presentConfidence(0.65).tone).toBe('medium');
     expect(presentConfidence(0.95).tone).toBe('high');
   });
+
+  it.each([
+    [undefined, 'Độ tin cậy: chưa rõ', 'unknown'], [null, 'Độ tin cậy: chưa rõ', 'unknown'], [Number.NaN, 'Độ tin cậy: chưa rõ', 'unknown'],
+    [0, 'Độ tin cậy thấp 0%', 'low'], [0.11, 'Độ tin cậy thấp 11%', 'low'], [0.5, 'Độ tin cậy 50%', 'medium'],
+    [0.9, 'Độ tin cậy 90%', 'high'], [1, 'Độ tin cậy 100%', 'high'],
+  ] as const)('T13R-B P2-1: presentConfidence(%s) renders the exact reported value with no floor or default', (value, label, tone) => {
+    expect(presentConfidence(value)).toEqual({ label, tone });
+  });
 });
 
 describe('T13 recoverable error presentation', () => {

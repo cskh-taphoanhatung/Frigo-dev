@@ -232,6 +232,44 @@ describe('T13 provider no-fabrication', () => {
     expect(result.items[0].total_price_vnd).toBe(85000);
   });
 
+  // T13R-B P2-1: the fridge vision() parser must report exactly what the model
+  // reported. The rejected freeze applied Math.min(1, Math.max(0.5, x || 0.9)),
+  // turning missing/null/0 into 0.9 and 0.11 into 0.5.
+  function cloudflareVision(items: Array<Record<string, unknown>>) {
+    return new CloudflareAIProvider({
+      run: async (_model: string, inputs: any) => {
+        if (inputs?.prompt === 'agree') return {};
+        return { response: JSON.stringify({ items }) };
+      },
+    }).vision({ imageBase64OrUrl: btoa('image-bytes'), mimeType: 'image/webp' });
+  }
+  const visionLine = (extra: Record<string, unknown>) => ({ raw_name: 'Cà chua', estimated_quantity: 2, unit: 'piece', ...extra });
+
+  it.each([
+    ['undefined', {}, undefined], ['null', { confidence: null }, undefined],
+    ['0', { confidence: 0 }, 0], ['0.11', { confidence: 0.11 }, 0.11], ['0.5', { confidence: 0.5 }, 0.5],
+    ['0.6', { confidence: 0.6 }, 0.6], ['0.9', { confidence: 0.9 }, 0.9], ['1', { confidence: 1 }, 1],
+    ['numeric string 0.11', { confidence: '0.11' }, 0.11],
+  ] as const)('P2-1: Cloudflare fridge vision reports confidence %s exactly, never floored or defaulted', async (_label, extra, expected) => {
+    const result = await cloudflareVision([visionLine(extra)]);
+    expect(result.items[0].confidence).toBe(expected);
+    if (expected === undefined) expect(result.items[0]).not.toHaveProperty('confidence', 0.9);
+  });
+
+  it.each([
+    ['1.5', 1.5], ['-0.2', -0.2], ['NaN string', 'not-a-number'], ['empty string', ''], ['object', { value: 0.9 }],
+  ] as const)('P2-1: an invalid Cloudflare fridge confidence (%s) becomes unknown, not a plausible number', async (_label, confidence) => {
+    const result = await cloudflareVision([visionLine({ confidence })]);
+    expect(result.items[0].confidence).toBeUndefined();
+  });
+
+  it('P2-1: a fridge vision item with unknown confidence still carries its real fields', async () => {
+    const result = await cloudflareVision([visionLine({ category: 'vegetable', storage: 'freezer' })]);
+    expect(result.items[0]).toMatchObject({ raw_name: 'Cà chua', estimated_quantity: 2, unit: 'piece',
+      canonical_id: 'TOMATO', category: 'vegetable', storage: 'freezer' });
+    expect(result.items[0].confidence).toBeUndefined();
+  });
+
   it('emits a mock purchase date the receipt truth mapper can actually accept', async () => {
     // Regression: the mock emitted a vi-VN locale string ("13/9/2026"), so a
     // date the fixture genuinely carried was dropped as unprovable in every

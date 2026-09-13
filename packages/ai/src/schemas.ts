@@ -15,7 +15,9 @@ export const DetectedIngredientSchema = z.object({
   raw_name: z.string().min(1, 'Tên nguyên liệu không được để trống'),
   estimated_quantity: z.number().positive('Số lượng phải lớn hơn 0'),
   unit: StandardUnitSchema,
-  confidence: z.number().min(0).max(1),
+  // T13R-B: like receipts, a fridge line whose provider reported no confidence
+  // is UNKNOWN. A required field forced every provider to invent one.
+  confidence: z.number().min(0).max(1).optional(),
   canonical_id: z.string().optional(),
   category: z.string().optional(),
   storage: z.enum(['fridge', 'freezer', 'pantry']).optional().default('fridge'),

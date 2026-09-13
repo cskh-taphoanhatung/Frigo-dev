@@ -152,7 +152,9 @@ Chỉ trả về một đối tượng JSON hợp lệ duy nhất theo mẫu sau
         raw_name: String(item.raw_name || 'Nguyên liệu'),
         estimated_quantity: Math.max(0.1, Number(item.estimated_quantity) || 1),
         unit: standardizeUnit(item.unit || canonical?.defaultUnit),
-        confidence: Math.min(1, Math.max(0.5, Number(item.confidence) || 0.9)),
+        // T13R-B P2-1: the model's own confidence, exactly, or unknown. The
+        // former floor/default (>= 0.5, missing -> 0.9) fabricated certainty.
+        confidence: optionalConfidence(item.confidence),
         canonical_id: canonical?.id,
         category: canonical?.category || item.category || 'other',
         storage: item.storage === 'freezer' || item.storage === 'pantry' ? item.storage : 'fridge',
