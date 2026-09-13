@@ -1,5 +1,24 @@
 # Frigo AI Handoff — isolated T09 development
 
+## Current handoff — confirmed UX checkpoint, 2026-09-13 12:40 UTC
+
+Task: finish T13B-B, not T14/integration/deployment.
+Status: **T13 NOT COMPLETE — BROWSER VERIFICATION BLOCKED**, owner stop rule applied.
+Identity: fresh verification of `vn-ca1/Frigo-dev`, ID 1368281478, historical redirect,
+guarded main, old WIP branch, 2334a6f -> c37a9b8 -> f845d04 ancestry/docs-only delta.
+Branch: `hoplite/kos-9d39545d--t13b-b-final-certification`, created at exact f845d04.
+Published WIP: `fd32aa8deaee7df454245591015780c59f909352`, not application freeze.
+Change: completed/read-only confirmed scan wording and `Xem tủ lạnh`; no confirmation
+CTA/manual addition. All persisted controls disabled and previous 23 regressions retained.
+Checks: 176/176 (9 files), hardening 26/26, operator 26/26, typecheck/scoped lint/diff PASS.
+Failure: one fresh supported-schema Preview attempt still requires a pre-discovered
+managed listener; reported platform fault. Only browser listeners exist, no isolated app.
+No unsupported workaround/settings commit. Browser/mobile and final gates remain unrun.
+Next: follow latest `inventory-truth/t13/T13B_B_WIP_HANDOFF.md`; unblock Preview,
+verify flows A–I and widths, measure actual current full suite (not 3177/124), close
+original AC/roadmap/source audit and independent diff review, then freeze/certify.
+No final application/docs SHA assigned; old WIP/main preserved; no merge/deploy/remote D1/PayOS.
+
 ## Current authoritative handoff — T13B-B hardened WIP, 2026-09-13
 
 Program: Inventory Truth Layer / T13B-B final hardening after recovery

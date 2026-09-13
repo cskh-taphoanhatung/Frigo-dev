@@ -1,5 +1,20 @@
 # Frigo task board
 
+## Current board — confirmed UX fixed; browser gate blocked, 2026-09-13 12:40 UTC
+
+- New branch: `hoplite/kos-9d39545d--t13b-b-final-certification`, exact f845d04 base.
+- Saved/published WIP: `fd32aa8deaee7df454245591015780c59f909352`; old WIP/main preserved.
+- Confirmed-review P3: completed wording, real read-only header/controls, no confirm
+  CTA/manual addition, working `Xem tủ lạnh` navigation; A/B/A terminal state retained.
+- PASS: 176/176 tests in 9 files (26 hardening), typecheck/scoped lint/diff check.
+- BLOCKED: one fresh Preview startup reproduced the platform promotion-schema error;
+  no supported existing server available. Owner's stop-before-freeze rule applied.
+- NOT RUN: browser/mobile flows, actual current full baseline, final AC/roadmap/source
+  audits, application freeze, detached full/D1/migration/schema certification, final docs.
+- NEXT: unblock Preview, complete all nine flows, measure current full runtime counts
+  (not obsolete 3177/124), then follow the freeze/certification gates in the WIP handoff.
+- **T13 NOT COMPLETE.** No settings commit, merge, deployment, remote D1 or PayOS change.
+
 ## T13B-B continuation — 2026-09-13, BLOCKED_FINAL_VERIFICATION
 
 - Repository transfer verified: `vn-ca1/Frigo-dev`, ID 1368281478; exact recovered

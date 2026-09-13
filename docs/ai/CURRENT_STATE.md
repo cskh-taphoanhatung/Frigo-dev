@@ -1,5 +1,23 @@
 # Frigo current state — isolated T09 development
 
+## Current authoritative state — confirmed-review UX WIP, 2026-09-13 12:40 UTC
+
+**T13 NOT COMPLETE — BROWSER VERIFICATION BLOCKED.** New continuation branch
+`hoplite/kos-9d39545d--t13b-b-final-certification` starts exactly at f845d04; prior
+WIP branch and guarded main are unchanged. Repository ID 1368281478 and canonical
+`vn-ca1/Frigo-dev`/historical redirect were freshly verified.
+Published application WIP: `fd32aa8deaee7df454245591015780c59f909352` (not freeze).
+Confirmed scans now show completed/read-only wording, hide manual addition and
+replace the confirm CTA with `Xem tủ lạnh`; terminal remount/privacy guards remain.
+PASS: **176 tests/9 files**, including **26 hardening** and **26 actual operator**
+tests; typecheck, scoped lint, diff check. All 31 migrations unchanged/no 0032.
+One fresh managed Preview attempt reproduced the mandatory-promotion platform
+error; no existing isolated server was available. Reported again; stopped before
+freeze per owner instruction. No browser/full-suite baseline/final certification
+was fabricated. Required next baseline is the actual current runtime count, **not**
+historical 3177/124. See the latest `inventory-truth/t13/T13B_B_WIP_HANDOFF.md`
+section for exact checks and resume gates. No settings commit/merge/deploy/remote D1/PayOS.
+
 ## Current authoritative state — T13B-B hardening WIP, 2026-09-13
 
 **T13 NOT COMPLETE — browser/final certification blocked.** Current repository is

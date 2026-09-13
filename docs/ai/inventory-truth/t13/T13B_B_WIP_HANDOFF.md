@@ -1,5 +1,102 @@
 # T13B-B — quota-safe WIP handoff
 
+## Authoritative confirmed-review UX checkpoint — 2026-09-13 12:40 UTC
+
+**T13 NOT COMPLETE — BROWSER VERIFICATION BLOCKED.** This section supersedes the
+continuation status below. The owner's final-certification packet explicitly says
+to stop before application freeze if no supported browser-capable preview works.
+The remaining confirmed-review P3 is fixed, tested and saved; it is not certified.
+
+### Exact starting point and new checkpoint
+
+- Fresh public metadata verified `vn-ca1/Frigo-dev`, repository ID **1368281478**;
+  historical `Tungjpstore/Frigo-dev` still resolves to the same canonical identity.
+- Trusted fetch verified main `d1b06732f8a80db4e77986df31ff28d9f04641fa` and prior
+  branch `hoplite/kos-9d39545d--t13b-b-final-hardening` at exact docs WIP
+  `f845d04bbd8555cdcc1f774379b11bba6e017475`.
+- Verified `2334a6f41cf68d42ae1eba7a30440b8fe324eb31` ->
+  `c37a9b8d7afc66507052bbc8f1e8a24fdc896e8d` -> `f845d04...` ancestry, and empty
+  non-docs delta from c37a9b8 to f845d04, before editing.
+- New branch `hoplite/kos-9d39545d--t13b-b-final-certification` was created directly
+  at f845d04; HEAD was verified equal before edits. The prior WIP branch is preserved.
+- **T13B_CONFIRMED_UX_WIP=fd32aa8deaee7df454245591015780c59f909352**.
+  Published normally, fetched back, and remote SHA verified. A docs-only WIP
+  follow-up records this handoff; neither is a final freeze or final docs HEAD.
+
+### Changed behavior and permanent tests
+
+Only `src/web/pages/ScanResultPage.tsx` and
+`tests/unit/t13b-fridge-hardening.test.tsx` changed in the application checkpoint.
+Confirmed, matching reviews now show `Đã xác nhận N nguyên liệu` (accepted lines,
+not rejected lines), a read-only header, and supporting text directing lot changes
+to the fridge. They no longer say `cần kiểm tra` or instruct edits on this screen.
+All persisted field/reject controls remain disabled, manual addition is hidden,
+and `Xem tủ lạnh` replaces the confirmation CTA and navigates without a mutation.
+The manual sheet cannot remain active outside an editable review. Empty and
+all-rejected confirmed scans also retain terminal wording and navigation.
+
+All 23 existing hardening cases remain; terminal-state assertions now require
+confirmation CTA **absence** instead of a disabled confirmation CTA, matching the
+requested behavior. They additionally assert completed wording, disabled fields/
+reject controls and A -> unresolved B -> A terminal restoration. Three new cases
+cover direct fridge navigation/no mutation and zero-accepted confirmed reviews.
+The suite now renders the real TopBar so stale header instructions cannot escape.
+
+Executed in order, all **PASS**:
+
+```sh
+pnpm typecheck
+pnpm exec vitest run tests/unit/t13b-fridge-hardening.test.tsx \
+  tests/unit/t13b-fridge-review.test.tsx tests/unit/t13b-receipt-review.test.tsx \
+  tests/unit/t13b-inventory-detail.test.tsx tests/integration/t13b-review-roundtrip.test.tsx \
+  tests/integration/inventory-adoption-operator.test.ts \
+  tests/integration/t13b-preview-fixtures.test.mjs \
+  tests/unit/scan-privacy.test.tsx tests/unit/client-session.test.ts
+pnpm exec eslint src/web/pages/ScanResultPage.tsx tests/unit/t13b-fridge-hardening.test.tsx
+git diff --check
+```
+
+**176/176 tests, 9/9 files**; hardening **26/26**, actual adoption executable **26/26**.
+No typecheck/test/lint failure occurred in this continuation. Prior 1122 backend and
+92 real-D1 results remain historical, not freshly executed certification evidence.
+31 migrations remain unchanged; no 0032. 0031 blob and SHA-256 remain the exact
+values recorded below. No store, service, backend, inventory authority or protected
+path was modified by this presentation-only fix; final authority audit is pending.
+
+### Fresh Preview retry and explicit stop
+
+Read the settings overlay and all three existing isolated preview/fixture scripts.
+Effective project run remains `node scripts/security-preview.mjs`. No settings or
+script repair was needed or committed. After all cheap checks passed, made one
+valid-schema startup attempt: `preview_start` with primary `preview`, 120 seconds,
+promotion `{name: "preview", port: 5173}`. It failed before starting the app:
+
+`Preview port must be a currently discovered HTTP listener owned by the managed preview run`
+
+The exposed schema still requires promotion, although normal startup is documented
+without it. No sentinel/unsupported retry loop was used. `sandbox_ports` found only
+agent-browser and Chrome listeners, no running isolated harness for the supported
+already-listening preview-reference path. The platform fault was reported again.
+No background shell server, production service or remote D1 was substituted.
+
+Per the owner's stop rule, no browser flows A–I, real 360/390/430 checks, current
+pre-freeze full suite, freeze, clean detached gates or final docs were claimed/run.
+**CURRENT_FULL_TEST_COUNT and CURRENT_FULL_FILE_COUNT are NOT ESTABLISHED.**
+The obsolete 3177/124 historical total must not be reused: after browser success,
+run the actual current full suite once, investigate results below approximately
+3335/131, record exact Vitest runtime counts, and require the detached certification
+to match that exact baseline. Do not manually count parameterized tests.
+
+Next: unblock supported managed Preview, reset/login/reseed synthetic data, verify
+all nine receipt/stock/fridge/route/session/expiry/conflict/confirmed/adoption flows
+at 360/390/430 where relevant, then complete original AC1–AC13 and material roadmap
+evidence, current authority audit and independent diff review from c31567e. Only
+after the measured full baseline and pre-freeze gates pass create a freeze and run
+all clean detached/full/D1/migration/schema gates. Final original matrix, roadmap
+closure, CORRECTED documentation cleanup and final docs HEAD remain pending; actual
+persisted lifecycle is PENDING/CONFIRMED/REJECTED. No final hosted-CI statement can
+refer to a freeze because no freeze exists. No merge/deploy/remote D1/PayOS change.
+
 ## Authoritative continuation checkpoint — 2026-09-13
 
 **T13 NOT COMPLETE.** The owner authorized continuation from the recovered WIP;
