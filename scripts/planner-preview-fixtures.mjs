@@ -1,5 +1,5 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
-import { seedT13ReviewEvidence } from './t13-preview-fixtures.mjs';
+import { seedT13ReviewEvidence, seedT13ScenarioEvidence, t13PreviewState } from './t13-preview-fixtures.mjs';
 
 export const PREVIEW_USER_ID = 'planner-preview-user';
 export const PREVIEW_HOUSEHOLD_ID = 'planner-preview-household';
@@ -105,7 +105,7 @@ export function issuePreviewSession(db) {
 const headers = { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff',
   'Content-Security-Policy': "default-src 'none'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'" };
 
-export function createPreviewControls({ getDatabase, resetDatabase }) {
+export function createPreviewControls({ getDatabase, resetDatabase, getOperatorRequests = () => [], seedReconciliation }) {
   return async function previewControls(request) {
     const url = new URL(request.url);
     if (!url.pathname.startsWith('/__preview')) return null;
@@ -149,11 +149,23 @@ export function createPreviewControls({ getDatabase, resetDatabase }) {
       return Response.json({ code: 'PREVIEW_ORIGIN_DENIED' }, { status: 403, headers });
     }
     if (request.method !== 'POST') return new Response(null, { status: 405, headers: { ...headers, Allow: 'POST' } });
+    if (url.pathname === '/__preview/t13-operator-requests') {
+      return Response.json({ requests: getOperatorRequests() }, { headers });
+    }
+    if (url.pathname === '/__preview/t13-reconciliation' && seedReconciliation) {
+      return Response.json(await seedReconciliation(), { headers });
+    }
     if (url.pathname === '/__preview/state') {
       return Response.json(previewFixtureState(getDatabase()), { headers });
     }
     if (url.pathname === '/__preview/t13-scans') {
       return Response.json(seedT13ReviewEvidence(getDatabase(), PREVIEW_HOUSEHOLD_ID, PREVIEW_USER_ID), { headers });
+    }
+    if (url.pathname === '/__preview/t13-scenarios') {
+      return Response.json(seedT13ScenarioEvidence(getDatabase(), PREVIEW_HOUSEHOLD_ID, PREVIEW_USER_ID), { headers });
+    }
+    if (url.pathname === '/__preview/t13-state') {
+      return Response.json(t13PreviewState(getDatabase(), PREVIEW_HOUSEHOLD_ID), { headers });
     }
     if (url.pathname === '/__preview/stale-inventory') {
       getDatabase().execute("UPDATE inventory_items SET quantity = quantity + 1, version = version + 1 WHERE id = 'preview-stock-chicken'");

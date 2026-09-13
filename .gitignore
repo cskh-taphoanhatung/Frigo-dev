@@ -8,3 +8,5 @@ dist/
 .artifacts/
 .hoplite/attachments/
 .hoplite/artifacts/
+test-results/
+playwright-report/
