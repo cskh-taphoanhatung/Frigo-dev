@@ -42,7 +42,10 @@ test('U7 edits existing lot name, compatible unit, category, storage and expiry 
   expect(after).toMatchObject({ name: 'Thịt gà đã kiểm tra', category: 'other', storage: 'freezer',
     expiryKind: 'KNOWN', expiryAt: '2030-12-31', estimatedExpiryAt: null,
     lotId: before.lotId, sourceType: before.sourceType, sourceId: before.sourceId,
+    // T13R-A P1-2: a free-form rename is a label; canonical identity survives.
+    ingredientId: before.ingredientId,
     quantityMilli: before.quantityMilli, canonicalUnit: before.canonicalUnit });
+  expect(after.ingredientId).toBe('CHICKEN_BREAST');
   expect(after.lotVersion).toBeGreaterThan(before.lotVersion);
   await page.getByRole('button', { name: /Sửa (hạn dùng & vị trí|thông tin nguyên liệu)/ }).click();
   await expect(page.getByLabel('Tên nguyên liệu', { exact: true })).toHaveValue(after.name);

@@ -827,7 +827,13 @@ inventoryRoutes.patch('/inventory/:id', async (c) => {
     const storage = body.storage !== undefined ? body.storage : existing.storage;
     const expiryDate = body.expiryDate !== undefined ? body.expiryDate : existing.expiry_date;
     const freshness = expiryDate ? computeFreshness(expiryDate, undefined, canonical?.defaultShelfLifeDays || 7) : existing.freshness;
-    const ingredientId = body.name !== undefined ? canonical?.id || null : existing.ingredient_id || canonical?.id || null;
+    // T13R-A P1-2: a free-form display name is a label, not a remap. Identity
+    // changes only when the new name itself resolves to a canonical
+    // ingredient (an explicit, recognisable remap); an unrecognised name
+    // keeps whatever identity the row already had, including "unmapped".
+    const ingredientId = body.name !== undefined
+      ? canonical?.id || existing.ingredient_id || null
+      : existing.ingredient_id || canonical?.id || null;
 
     if (await readInventoryAuthorityMode(db, auth.householdId) === 'native') {
       return adoptManualInventoryUpdate(c, db, kv, auth, {
