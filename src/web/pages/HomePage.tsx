@@ -8,6 +8,7 @@ import { InlineLoading, InlineError, SkeletonCard } from '../components/common/A
 import { api } from '../services/api';
 import { queryKeys } from '../lib/queryKeys';
 import { formatVndCompact, daysUntil } from '../lib/format';
+import { presentExpiry } from '../lib/inventory-truth';
 import { findTodayMeal } from '../lib/home-meal';
 import { getIngredientImage } from '../lib/ingredient-images';
 import { FRIGO_ASSETS } from '../lib/frigo-assets';
@@ -84,7 +85,7 @@ export const HomePage: React.FC = () => {
   // Real use-soon list: items that expire soonest, from live inventory.
   const useSoonItems = inventory
     .filter((i: any) => i.freshness === 'use_soon' || i.freshness === 'expiring')
-    .sort((a: any, b: any) => (daysUntil(a.expiryDate) ?? 99) - (daysUntil(b.expiryDate) ?? 99))
+    .sort((a: any, b: any) => (daysUntil(presentExpiry(a).date ?? undefined) ?? 99) - (daysUntil(presentExpiry(b).date ?? undefined) ?? 99))
     .slice(0, 8);
 
   const cuisinesList = [
@@ -308,7 +309,16 @@ export const HomePage: React.FC = () => {
           ) : (
             <div className="flex gap-2.5 overflow-x-auto no-scrollbar py-0.5">
               {useSoonItems.map((item: any) => {
-                const days = daysUntil(item.expiryDate);
+                // T13R-B P2-5: the shared presenter decides what the date IS.
+                // An ESTIMATED date is shown with an explicit estimate qualifier
+                // so it is never visually identical to a KNOWN countdown; an
+                // UNKNOWN date shows no countdown at all.
+                const expiry = presentExpiry(item);
+                const days = expiry.date === null ? null : daysUntil(expiry.date);
+                const label = expiry.tone === 'unknown' || days === null ? 'Chưa rõ hạn dùng'
+                  : expiry.tone === 'expired' ? (expiry.estimated ? 'Ước tính đã quá hạn' : '⏳ Đã quá hạn')
+                    : expiry.estimated ? (days <= 0 ? 'Ước tính hết hạn hôm nay' : `Ước tính còn ${days} ngày`)
+                      : (days <= 0 ? '⏳ Hôm nay' : `⏳ ${days} ngày`);
                 return (
                   <button
                     key={item.id}
@@ -328,8 +338,14 @@ export const HomePage: React.FC = () => {
                     <p className="font-heading font-bold text-xs text-slate-900 leading-tight">
                       {item.name}
                     </p>
-                    <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200 mt-1.5">
-                      ⏳ {days === null ? 'Dùng sớm' : days <= 0 ? 'Hôm nay' : `${days} ngày`}
+                    <span
+                      className={expiry.estimated
+                        ? 'text-[10px] font-bold text-sky-900 bg-sky-50 px-2.5 py-0.5 rounded-full border border-sky-200 mt-1.5'
+                        : 'text-[10px] font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200 mt-1.5'}
+                      data-testid="home-use-soon-expiry"
+                      data-expiry-kind={expiry.tone === 'unknown' ? 'UNKNOWN' : expiry.estimated ? 'ESTIMATED' : 'KNOWN'}
+                    >
+                      {label}
                     </span>
                   </button>
                 );

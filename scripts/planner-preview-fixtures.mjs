@@ -72,6 +72,15 @@ export function seedPlannerPreview(db) {
       ('preview-stock-chicken', '${PREVIEW_HOUSEHOLD_ID}', 'CHICKEN_BREAST', 'Ức gà', 300, 'g', 'meat', 'fridge', 1),
       ('preview-stock-tofu', '${PREVIEW_HOUSEHOLD_ID}', 'TOFU', 'Đậu phụ', 200, 'g', 'other', 'fridge', 1),
       ('preview-stock-egg', '${PREVIEW_HOUSEHOLD_ID}', 'CHICKEN_EGG', 'Trứng', 2, 'piece', 'egg', 'fridge', 1);
+    -- T13R-B presentation truth fixtures (legacy rows adopted by the browser
+    -- tests): a genuinely recorded opening instant, and an estimated expiry
+    -- two days out that Home must qualify as an estimate. The estimate row
+    -- carries expiry_kind/expiry_source so backfill maps it to ESTIMATED.
+    INSERT INTO inventory_items (id, household_id, ingredient_id, name, quantity, unit, category, storage, version, opened_at) VALUES
+      ('preview-stock-milk', '${PREVIEW_HOUSEHOLD_ID}', 'FRESH_MILK', 'Sữa tươi', 1, 'l', 'dairy', 'fridge', 1, '2026-09-11T08:30:00Z');
+    INSERT INTO inventory_items (id, household_id, ingredient_id, name, quantity, unit, category, storage, version, expiry_date, expiry_kind, expiry_source, freshness) VALUES
+      ('preview-stock-spinach', '${PREVIEW_HOUSEHOLD_ID}', 'WATER_SPINACH', 'Rau muống', 1, 'bunch', 'vegetable', 'fridge', 1,
+        date('now', '+2 days'), 'estimated', 'estimated', 'use_soon');
     COMMIT;`);
   } catch (error) {
     db.seed('ROLLBACK');
@@ -105,7 +114,7 @@ export function issuePreviewSession(db) {
 const headers = { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff',
   'Content-Security-Policy': "default-src 'none'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'" };
 
-export function createPreviewControls({ getDatabase, resetDatabase, getOperatorRequests = () => [], seedReconciliation }) {
+export function createPreviewControls({ getDatabase, resetDatabase, getOperatorRequests = () => [], seedReconciliation, setInventoryReadFailure }) {
   return async function previewControls(request) {
     const url = new URL(request.url);
     if (!url.pathname.startsWith('/__preview')) return null;
@@ -170,6 +179,17 @@ export function createPreviewControls({ getDatabase, resetDatabase, getOperatorR
     if (url.pathname === '/__preview/stale-inventory') {
       getDatabase().execute("UPDATE inventory_items SET quantity = quantity + 1, version = version + 1 WHERE id = 'preview-stock-chicken'");
       return Response.json({ changed: true }, { headers });
+    }
+    // T13R-B P2-4 browser case B: make authoritative inventory reads fail
+    // (synthetic 500) until restored, so the UI's conflict-refetch truth can
+    // be observed. Only GET reads fail; mutations are never affected.
+    if (url.pathname === '/__preview/t13r-b-fail-inventory-reads' && setInventoryReadFailure) {
+      setInventoryReadFailure(true);
+      return Response.json({ failing: true }, { headers });
+    }
+    if (url.pathname === '/__preview/t13r-b-restore-inventory-reads' && setInventoryReadFailure) {
+      setInventoryReadFailure(false);
+      return Response.json({ failing: false }, { headers });
     }
     if (!['/__preview/login', '/__preview/reset'].includes(url.pathname)) {
       return new Response(null, { status: 404, headers });

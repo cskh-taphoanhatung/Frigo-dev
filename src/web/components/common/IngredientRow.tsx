@@ -25,6 +25,7 @@ interface IngredientRowProps {
 }
 
 export const IngredientRow: React.FC<IngredientRowProps> = ({
+  id,
   name,
   quantity,
   unit,
@@ -46,6 +47,8 @@ export const IngredientRow: React.FC<IngredientRowProps> = ({
   return (
     <div
       onClick={onClick}
+      data-testid="inventory-row"
+      data-item-id={id}
       className="bg-white rounded-2xl p-3.5 flex items-center justify-between border border-slate-200/80 shadow-card hover:border-emerald-500/40 hover:shadow-elevated active:scale-[0.99] transition-all cursor-pointer"
     >
       <div className="flex items-center gap-3.5 min-w-0">

@@ -79,6 +79,18 @@ export function presentPurchaseDate(date?: string | null): string {
   return date ? date : 'Không rõ ngày mua';
 }
 
+/**
+ * Opening state (T13R-B P2-6). A NULL openedAt means no opening evidence was
+ * recorded; it does not prove the item is sealed, so it is never rendered as
+ * "Chưa mở". A recorded instant is shown as the opening date.
+ */
+export function presentOpenedState(openedAt?: string | null): string {
+  if (typeof openedAt !== 'string' || openedAt.length < 10 || Number.isNaN(Date.parse(openedAt))) {
+    return 'Chưa có thông tin';
+  }
+  return `Đã mở ${openedAt.slice(0, 10)}`;
+}
+
 /** Model confidence the provider did not report is unknown, not high. */
 export function presentConfidence(confidence?: number | null): {
   label: string; tone: 'unknown' | 'low' | 'medium' | 'high';
@@ -104,12 +116,14 @@ const DOMAIN_ERRORS: Record<string, DomainErrorPresentation> = {
     message: 'Tủ lạnh này chưa bật quản lý theo lô. Hãy bật trước khi dùng tính năng này.',
     refetch: false,
   },
+  // Conflict copy must not itself claim the reload succeeded; the caller
+  // appends the truthful outcome via presentRefetchOutcome().
   CONFLICT: {
-    message: 'Nguyên liệu vừa được cập nhật ở nơi khác. Đã tải lại trạng thái mới nhất, vui lòng thử lại.',
+    message: 'Nguyên liệu vừa được cập nhật ở nơi khác nên thay đổi của bạn chưa được lưu.',
     refetch: true,
   },
   STALE_SNAPSHOT: {
-    message: 'Thông tin đã thay đổi kể từ lúc bạn mở. Đã tải lại dữ liệu mới, vui lòng kiểm tra lại.',
+    message: 'Thông tin đã thay đổi kể từ lúc bạn mở nên thao tác chưa được thực hiện.',
     refetch: true,
   },
   ALREADY_DECIDED: {
@@ -125,7 +139,7 @@ const DOMAIN_ERRORS: Record<string, DomainErrorPresentation> = {
     refetch: true,
   },
   IDEMPOTENCY_CONFLICT: {
-    message: 'Yêu cầu này đã được dùng cho một thao tác khác. Vui lòng tải lại và thử lại.',
+    message: 'Yêu cầu này đã được dùng cho một thao tác khác nên chưa được thực hiện.',
     refetch: true,
   },
   NOT_ACTIONABLE: {
@@ -150,4 +164,18 @@ export function presentDomainError(code: string | null | undefined,
   fallback = 'Thao tác chưa thực hiện được. Vui lòng thử lại.'): DomainErrorPresentation {
   if (!code) return { message: fallback, refetch: false };
   return DOMAIN_ERRORS[code] ?? { message: fallback, refetch: false };
+}
+
+/**
+ * Truthful conflict recovery copy (T13R-B P2-4). The refresh claim is made
+ * only when the authoritative reload actually succeeded; a failed reload says
+ * so and asks for an explicit reload instead of pretending the screen is
+ * current. Neither branch ever implies the mutation was retried.
+ */
+export function presentRefetchOutcome(presentation: DomainErrorPresentation,
+  refetched: boolean | null): { message: string; refreshed: boolean } {
+  if (!presentation.refetch || refetched === null) return { message: presentation.message, refreshed: false };
+  return refetched
+    ? { message: `${presentation.message} Đã tải lại trạng thái mới nhất, vui lòng kiểm tra rồi thử lại.`, refreshed: true }
+    : { message: `${presentation.message} Chưa tải lại được trạng thái mới nhất — dữ liệu đang hiển thị có thể đã cũ. Vui lòng tải lại trước khi thử lại.`, refreshed: false };
 }

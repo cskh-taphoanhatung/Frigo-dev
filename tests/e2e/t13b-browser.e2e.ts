@@ -171,7 +171,8 @@ test('G real stale write shows safe CONFLICT, refetches authority and never retr
   const response = await conflict;
   expect(response.status()).toBe(409);
   expect((await response.json()).code).toBe('CONFLICT');
-  await expect(page.getByRole('alert')).toHaveText('Nguyên liệu vừa được cập nhật ở nơi khác. Đã tải lại trạng thái mới nhất, vui lòng thử lại.');
+  await expect(page.getByRole('alert')).toHaveText('Nguyên liệu vừa được cập nhật ở nơi khác nên thay đổi của bạn chưa được lưu. Đã tải lại trạng thái mới nhất, vui lòng kiểm tra rồi thử lại.');
+  await expect(page.getByRole('alert')).toHaveAttribute('data-refetch-state', 'ok');
   await expect.poll(() => reads.filter((path) => path.endsWith(`/lots/${id}`)).length).toBeGreaterThan(0);
   await expect(page.getByText('7 piece', { exact: false })).toBeVisible();
   await expect(page.getByRole('alert')).not.toContainText(/SQL|version|fingerprint|household|\{/);

@@ -10,7 +10,7 @@ import type { StandardUnit } from '@frigo/domain';
 import { clsx } from 'clsx';
 import { capturePrivateSession } from '../lib/private-session';
 import { invalidateInventoryDependents } from '../lib/query-invalidation';
-import { presentConfidence, presentDomainError, presentPrice, presentPurchaseDate } from '../lib/inventory-truth';
+import { presentConfidence, presentDomainError, presentPrice, presentPurchaseDate, presentRefetchOutcome } from '../lib/inventory-truth';
 import { ApiError } from '../services/http';
 
 interface ReceiptItemState {
@@ -221,7 +221,7 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
           return;
         }
       }
-      setSubmitError(presentation.message);
+      setSubmitError(presentRefetchOutcome(presentation, presentation.refetch ? true : null).message);
       setIsSubmitting(false);
     }
   };

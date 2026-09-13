@@ -8,8 +8,10 @@ import { InlineLoading, InlineError } from '../components/common/AsyncState';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
 import { Button } from '../components/common/Button';
 import { api } from '../services/api';
+import { ApiError } from '../services/http';
 import { queryKeys } from '../lib/queryKeys';
 import { invalidateInventoryDependents } from '../lib/query-invalidation';
+import { presentDomainError, presentRefetchOutcome } from '../lib/inventory-truth';
 import { Plus, Search, X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { StandardUnit } from '@frigo/domain';
@@ -22,6 +24,8 @@ export const InventoryPage: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<{ id: string; version: number } | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
+  // True while a conflict's authoritative reload has not succeeded (T13R-B P2-4).
+  const [refetchFailed, setRefetchFailed] = useState(false);
 
   // Form states
   const [name, setName] = useState('');
@@ -38,21 +42,45 @@ export const InventoryPage: React.FC = () => {
   const items = inventoryQuery.data ?? [];
   const loading = inventoryQuery.isPending;
 
+  // T13R-B P2-4: a conflict-class failure (CONFLICT / IDEMPOTENCY_CONFLICT /
+  // STALE_SNAPSHOT …) means the displayed stock is stale. The authoritative
+  // inventory is reloaded and the stale rows replaced; the copy claims a
+  // successful refresh only when the reload actually succeeded, and the
+  // mutation itself is never resubmitted automatically (retry: false).
+  const presentMutationFailure = async (error: unknown, fallback: string) => {
+    const code = error instanceof ApiError ? error.code : null;
+    const presentation = presentDomainError(code, fallback);
+    if (!presentation.refetch) {
+      setRefetchFailed(false);
+      setMutationError(presentation.message);
+      return;
+    }
+    setMutationError(presentation.message);
+    await invalidateInventoryDependents();
+    const reloaded = await inventoryQuery.refetch({ throwOnError: false });
+    const refreshed = reloaded.status === 'success';
+    setRefetchFailed(!refreshed);
+    setMutationError(presentRefetchOutcome(presentation, refreshed).message);
+  };
+
   const updateQty = useMutation({
+    retry: false,
     mutationFn: ({ id, newQty, version }: { id: string; newQty: number; version: number }) =>
       api.updateInventoryItem(id, { quantity: newQty }, version),
     onSuccess: invalidateInventoryDependents,
-    onError: () => setMutationError('Chưa cập nhật được số lượng. Vui lòng thử lại.'),
+    onError: (error: unknown) => presentMutationFailure(error, 'Chưa cập nhật được số lượng. Vui lòng thử lại.'),
   });
 
   const deleteItem = useMutation({
+    retry: false,
     mutationFn: ({ id, version }: { id: string; version: number }) =>
       api.deleteInventoryItem(id, version),
     onSuccess: invalidateInventoryDependents,
-    onError: () => setMutationError('Chưa xóa được nguyên liệu. Vui lòng thử lại.'),
+    onError: (error: unknown) => presentMutationFailure(error, 'Chưa xóa được nguyên liệu. Vui lòng thử lại.'),
   });
 
   const addItem = useMutation({
+    retry: false,
     mutationFn: (payload: any) => api.addInventoryItem(payload),
     onSuccess: () => {
       void invalidateInventoryDependents();
@@ -60,11 +88,12 @@ export const InventoryPage: React.FC = () => {
       setName('');
       setQuantity(1);
     },
-    onError: () => setMutationError('Chưa thêm được nguyên liệu. Vui lòng thử lại.'),
+    onError: (error: unknown) => presentMutationFailure(error, 'Chưa thêm được nguyên liệu. Vui lòng thử lại.'),
   });
 
   const handleUpdateQty = (id: string, currentQty: number, delta: number, version: number) => {
     setMutationError(null);
+    setRefetchFailed(false);
     updateQty.mutate({ id, newQty: Math.max(1, currentQty + delta), version });
   };
 
@@ -72,6 +101,7 @@ export const InventoryPage: React.FC = () => {
     e.preventDefault();
     if (!name.trim()) return;
     setMutationError(null);
+    setRefetchFailed(false);
     // T13: "Chưa rõ" means no expiry evidence exists. Sending a computed date
     // here would manufacture a dated fact the user never supplied.
     const expiryDate = expiryDays > 0
@@ -176,13 +206,24 @@ export const InventoryPage: React.FC = () => {
         {/* Inventory Item List */}
         <div className="space-y-2 pt-1">
           {mutationError && (
-            <p className="text-xs text-rose-600 font-medium px-1" role="alert">
-              {mutationError}
-            </p>
+            <div className="text-xs text-rose-600 font-medium px-1 space-y-1" role="alert"
+              data-refetch-state={refetchFailed ? 'failed' : 'ok'}>
+              <p>{mutationError}</p>
+              {refetchFailed && (
+                <button type="button" className="underline font-semibold tap-target" disabled={inventoryQuery.isFetching}
+                  onClick={async () => {
+                    // Explicit read-only reload; the failed mutation is never retried here.
+                    const reloaded = await inventoryQuery.refetch({ throwOnError: false });
+                    if (reloaded.status === 'success') { setRefetchFailed(false); setMutationError(null); }
+                  }}>
+                  {inventoryQuery.isFetching ? 'Đang tải lại…' : 'Tải lại tủ lạnh'}
+                </button>
+              )}
+            </div>
           )}
           {loading ? (
             <InlineLoading label="Đang tải tủ lạnh…" />
-          ) : inventoryQuery.isError ? (
+          ) : inventoryQuery.isError && inventoryQuery.data === undefined ? (
             <InlineError error={inventoryQuery.error} onRetry={() => inventoryQuery.refetch()} />
           ) : filteredItems.length === 0 ? (
             <EmptyState
@@ -378,6 +419,7 @@ export const InventoryPage: React.FC = () => {
         onConfirm={() => {
           if (pendingDelete) {
             setMutationError(null);
+            setRefetchFailed(false);
             deleteItem.mutate(pendingDelete);
           }
           setPendingDelete(null);

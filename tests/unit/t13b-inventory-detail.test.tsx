@@ -185,7 +185,11 @@ describe('T13B ingredient detail expiry truth', () => {
       expect(button('Lưu thay đổi').disabled).toBe(false);
     });
     expect(find('[role="alert"]').textContent).toContain('Đã tải lại trạng thái mới nhất');
+    expect(find('[role="alert"]').getAttribute('data-refetch-state')).toBe('ok');
     expect(container.textContent).not.toContain('secret');
+    // Stale stock replaced by the authoritative reload.
+    expect(container.textContent).toContain('5 g');
+    expect(container.textContent).toContain('Cà chua mới');
     expect(mocks.getLot).toHaveBeenCalledTimes(2);
     expect(mocks.update).toHaveBeenCalledTimes(1);
     expect(mocks.update).toHaveBeenNthCalledWith(1, 'projection-1', { expiryDate: '2026-10-01', expiryEstimated: false }, 7);
@@ -195,6 +199,69 @@ describe('T13B ingredient detail expiry truth', () => {
     expect(mocks.update).toHaveBeenNthCalledWith(2, 'projection-1', { expiryDate: '2026-10-01', expiryEstimated: false }, 8);
     expect(mocks.getLot).toHaveBeenCalledTimes(3);
     expect(mocks.invalidate).toHaveBeenCalledTimes(2);
+  });
+
+  // T13R-B P2-4: React Query swallows refetch errors, so a failed authoritative
+  // reload previously still produced "Đã tải lại trạng thái mới nhất".
+  it.each(['CONFLICT', 'IDEMPOTENCY_CONFLICT'])('%s with a FAILED authoritative reload never claims the latest state was loaded and offers an explicit reload', async (code) => {
+    await mount(lot({ quantity: 2 }));
+    await click('Sửa thông tin nguyên liệu');
+    await fillExpiry('2026-10-01');
+    mocks.update.mockRejectedValueOnce(new ApiError('http', `HTTP 409: {"code":"${code}","private":"secret"}`, 409));
+    mocks.getLot.mockRejectedValueOnce(new ApiError('http', 'HTTP 500: {"internal":"PRIVATE_REFRESH_FAILURE"}', 500));
+    await click('Lưu thay đổi');
+    await until(() => expect(find('[role="alert"]').getAttribute('data-refetch-state')).toBe('failed'));
+    const alert = find('[role="alert"]');
+    expect(alert.textContent).not.toContain('Đã tải lại trạng thái mới nhất');
+    expect(alert.textContent).toContain('Chưa tải lại được');
+    expect(alert.textContent).toContain('có thể đã cũ');
+    expect(alert.textContent).not.toContain('secret');
+    expect(alert.textContent).not.toContain('PRIVATE_REFRESH_FAILURE');
+    // Exactly one mutation; the failure never re-submits it.
+    expect(mocks.update).toHaveBeenCalledTimes(1);
+    expect(mocks.getLot).toHaveBeenCalledTimes(2);
+    // The stale quantity is still on screen and honestly flagged as possibly old.
+    expect(container.textContent).toContain('2 piece');
+    // Explicit read-only reload recovers without any mutation.
+    mocks.getLot.mockResolvedValue(lot({ version: 8, lotVersion: 8, quantity: 7 }));
+    await click('Tải lại trạng thái mới nhất');
+    await until(() => expect(container.querySelector('[role="alert"]')).toBeNull());
+    expect(container.textContent).toContain('7 piece');
+    expect(container.textContent).toContain('v8');
+    expect(mocks.update).toHaveBeenCalledTimes(1);
+    expect(mocks.getLot).toHaveBeenCalledTimes(3);
+  });
+
+  it('a generic 500 shows a safe message, no server detail, no refetch claim and no automatic retry', async () => {
+    client.setDefaultOptions({ mutations: { retry: 2, retryDelay: 0 } });
+    await mount();
+    await click('Sửa thông tin nguyên liệu');
+    await fillExpiry('2026-10-01');
+    mocks.update.mockRejectedValueOnce(new ApiError('http', 'HTTP 500: {"internal":"PRIVATE_SERVER_DETAIL","stack":"at db.ts:1"}', 500));
+    await click('Lưu thay đổi');
+    await until(() => expect(container.querySelector('[role="alert"]')).not.toBeNull());
+    const alert = find('[role="alert"]');
+    expect(alert.textContent).toBe('Chưa cập nhật được nguyên liệu. Vui lòng thử lại.');
+    expect(alert.textContent).not.toContain('PRIVATE_SERVER_DETAIL');
+    expect(alert.textContent).not.toContain('Đã tải lại');
+    expect(mocks.update).toHaveBeenCalledTimes(1);
+    expect(mocks.getLot).toHaveBeenCalledOnce();
+    expect(mocks.invalidate).not.toHaveBeenCalled();
+    // Draft retained for an explicit user retry.
+    expect(find<HTMLInputElement>('#lot-expiry-input').value).toBe('2026-10-01');
+  });
+});
+
+describe('T13R-B P2-6 opening-state truth', () => {
+  it('renders a NULL openedAt as no information, never as unopened', async () => {
+    await mount(lot({ openedAt: null }));
+    expect(find('[data-testid="lot-opened"]').textContent).toBe('Chưa có thông tin');
+    expect(container.textContent).not.toContain('Chưa mở');
+  });
+
+  it('renders a recorded opening instant as the opening date', async () => {
+    await mount(lot({ openedAt: '2026-09-11T08:30:00Z' }));
+    expect(find('[data-testid="lot-opened"]').textContent).toBe('Đã mở 2026-09-11');
   });
 });
 
@@ -286,7 +353,8 @@ describe('T13B U7 existing-lot metadata editing', () => {
       expect(button('Lưu thay đổi').disabled).toBe(false);
     });
     expect(find('[role="alert"]').textContent).toContain(code === 'CONFLICT'
-      ? 'Đã tải lại trạng thái mới nhất' : 'Yêu cầu này đã được dùng cho một thao tác khác');
+      ? 'Nguyên liệu vừa được cập nhật ở nơi khác' : 'Yêu cầu này đã được dùng cho một thao tác khác');
+    expect(find('[role="alert"]').textContent).toContain('Đã tải lại trạng thái mới nhất');
     expect(find<HTMLInputElement>('#lot-name-input').value).toBe('Cà chua đã kiểm tra');
     expect(mocks.update).toHaveBeenCalledExactlyOnceWith('projection-1', { name: 'Cà chua đã kiểm tra' }, 7);
     mocks.getLot.mockResolvedValue({ ...refreshed, name: 'Cà chua đã kiểm tra', version: 9, lotVersion: 9 });

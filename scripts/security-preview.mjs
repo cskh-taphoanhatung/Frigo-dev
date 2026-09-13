@@ -32,10 +32,16 @@ const env = { DB: db, CACHE: createPreviewCache(), ENVIRONMENT: 'development', A
   JWT_SECRET: 'isolated-local-preview-jwt-secret-no-production-use',
   OTP_HASH_SECRET: 'isolated-local-preview-otp-secret-no-production-use',
   AI_MOCK_MODE: 'true', SCAN_QUEUE_MODE: 'sync', MEAL_PLANNER_ENABLED: 'true' };
+// T13R-B browser case B: while armed, authoritative inventory GET reads fail
+// with a synthetic 500 (no private detail); mutations stay real and reads are
+// restored by control or reset.
+let failInventoryReads = false;
 const controls = createPreviewControls({ getDatabase: () => db, getOperatorRequests: () => operatorRequests,
   seedReconciliation: () => seedT13ReconciliationEvidence(db, PREVIEW_HOUSEHOLD_ID, PREVIEW_USER_ID, recordInventoryObservation),
+  setInventoryReadFailure: (failing) => { failInventoryReads = failing; },
   resetDatabase: () => {
   operatorRequests.length = 0;
+  failInventoryReads = false;
   const fresh = new SqliteD1();
   seedPlannerPreview(fresh);
   const previous = db;
@@ -60,9 +66,13 @@ const api = createHttpServer((req, res) => {
       method: req.method, headers: req.headers,
       body: ['GET', 'HEAD'].includes(req.method) ? undefined : Buffer.concat(body),
     });
-    const response = await controls(request) || await worker.fetch(request, { ...env, APP_URL: requestOrigin }, {
-      waitUntil(p) { p.catch(console.error); }, passThroughOnException() {},
-    });
+    const armedReadFailure = failInventoryReads && request.method === 'GET'
+      && /^\/api\/v1\/inventory(\/lots\/[^/]+)?$/.test(new URL(request.url).pathname);
+    const response = armedReadFailure
+      ? Response.json({ error: 'Isolated preview: synthetic read failure', code: 'PREVIEW_READ_FAILURE' }, { status: 500 })
+      : await controls(request) || await worker.fetch(request, { ...env, APP_URL: requestOrigin }, {
+        waitUntil(p) { p.catch(console.error); }, passThroughOnException() {},
+      });
     const pathname = new URL(request.url).pathname;
     if (['/api/v1/me', '/api/v1/inventory/adopt'].includes(pathname)) {
       operatorRequests.push({ method: request.method, path: pathname, status: response.status,

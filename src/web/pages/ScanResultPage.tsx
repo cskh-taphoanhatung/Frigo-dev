@@ -9,7 +9,7 @@ import { Plus, Trash2, CheckCircle2, X } from 'lucide-react';
 import { StandardUnit } from '@frigo/domain';
 import { capturePrivateSession } from '../lib/private-session';
 import { invalidateInventoryDependents } from '../lib/query-invalidation';
-import { presentConfidence, presentDomainError } from '../lib/inventory-truth';
+import { presentConfidence, presentDomainError, presentRefetchOutcome } from '../lib/inventory-truth';
 import { ApiError } from '../services/http';
 
 const UNITS: StandardUnit[] = ['piece', 'g', 'kg', 'ml', 'l', 'pack', 'bunch', 'slice'];
@@ -155,7 +155,7 @@ const ScanReview: React.FC<{ effectiveScanId: string }> = ({ effectiveScanId }) 
         }
       }
       if (!active()) return;
-      setConfirmError(presentation.message);
+      setConfirmError(presentRefetchOutcome(presentation, presentation.refetch ? true : null).message);
       if (!active()) return;
       setIsConfirming(false);
     }

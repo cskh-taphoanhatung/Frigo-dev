@@ -8,7 +8,7 @@ import { InlineLoading, InlineError } from '../components/common/AsyncState';
 import { api, ApiError } from '../services/api';
 import { queryKeys } from '../lib/queryKeys';
 import { invalidateInventoryDependents } from '../lib/query-invalidation';
-import { presentDomainError, presentExpiry, presentPurchaseDate, provenanceLabel } from '../lib/inventory-truth';
+import { presentDomainError, presentExpiry, presentOpenedState, presentPurchaseDate, presentRefetchOutcome, provenanceLabel } from '../lib/inventory-truth';
 import { ALL_RECIPES } from '@frigo/recipes';
 import { getIngredientImage } from '../lib/ingredient-images';
 import { Clock, ChefHat, Calendar, Layers, ArrowRight, PackageOpen, Receipt } from 'lucide-react';
@@ -53,6 +53,8 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
   const [draft, setDraft] = useState<EditDraft>(EMPTY_DRAFT);
   const [editBaseline, setEditBaseline] = useState<EditDraft>(EMPTY_DRAFT);
   const [draftOwner, setDraftOwner] = useState<DraftOwner | null>(null);
+  // True while the authoritative reload after a conflict has not succeeded.
+  const [refetchFailed, setRefetchFailed] = useState(false);
 
   // Adopted households read canonical lot truth; the legacy projection is
   // never the source for provenance or expiry semantics.
@@ -90,12 +92,21 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
     onError: async (error: unknown) => {
       const code = error instanceof ApiError ? error.code : null;
       const presentation = presentDomainError(code, 'Chưa cập nhật được nguyên liệu. Vui lòng thử lại.');
-      setActionError(presentation.message);
-      // A stale/conflict state is only recoverable after reloading authority.
-      if (presentation.refetch) {
-        await invalidateInventoryDependents();
-        await lotQuery.refetch();
+      if (!presentation.refetch) {
+        setActionError(presentation.message);
+        return;
       }
+      // T13R-B P2-4: a stale/conflict state is only recoverable after the
+      // authoritative lot is actually reloaded. React Query swallows refetch
+      // failures by default, so the outcome is checked explicitly and the
+      // copy never claims "latest state loaded" unless it is. The mutation is
+      // never resubmitted here; the user re-saves against the fresh version.
+      setActionError(presentation.message);
+      await invalidateInventoryDependents();
+      const reloaded = await lotQuery.refetch({ throwOnError: false });
+      const refreshed = reloaded.status === 'success';
+      setRefetchFailed(!refreshed);
+      setActionError(presentRefetchOutcome(presentation, refreshed).message);
     },
   });
 
@@ -135,6 +146,7 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
 
   const startEdit = () => {
     setActionError(null);
+    setRefetchFailed(false);
     const initialDraft = {
       name: item.name, unit: item.unit, category: item.category ?? 'other',
       storage: item.storage ?? 'fridge', expiryDate: expiry.date ?? '',
@@ -196,9 +208,20 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
         </div>
 
         {actionError && (
-          <p className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2 font-medium" role="alert">
-            {actionError}
-          </p>
+          <div className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2 font-medium space-y-2" role="alert"
+            data-refetch-state={refetchFailed ? 'failed' : 'ok'}>
+            <p>{actionError}</p>
+            {refetchFailed && (
+              <button type="button" className="underline font-semibold tap-target" disabled={lotQuery.isFetching}
+                onClick={async () => {
+                  // Explicit read-only reload; still no mutation retry.
+                  const reloaded = await lotQuery.refetch({ throwOnError: false });
+                  if (reloaded.status === 'success') { setRefetchFailed(false); setActionError(null); }
+                }}>
+                {lotQuery.isFetching ? 'Đang tải lại…' : 'Tải lại trạng thái mới nhất'}
+              </button>
+            )}
+          </div>
         )}
 
         <div className="grid grid-cols-2 gap-3">
@@ -237,8 +260,8 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
               </dd>
               <dt className="text-slate-500">Ngày mua</dt>
               <dd className="text-slate-900 font-semibold text-right">{presentPurchaseDate(lot.purchasedAt)}</dd>
-              <dt className="text-slate-500">Đã mở</dt>
-              <dd className="text-slate-900 font-semibold text-right">{lot.openedAt ? lot.openedAt.slice(0, 10) : 'Chưa mở'}</dd>
+              <dt className="text-slate-500">Trạng thái mở</dt>
+              <dd className="text-slate-900 font-semibold text-right" data-testid="lot-opened">{presentOpenedState(lot.openedAt)}</dd>
               <dt className="text-slate-500">Mã lô</dt>
               <dd className="text-slate-900 font-mono text-[10px] text-right break-all">{lot.lotId}</dd>
               <dt className="text-slate-500">Phiên bản lô</dt>

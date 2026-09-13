@@ -557,11 +557,11 @@ describe('T13B ScanResultPage route, session, and confirmation hardening', () =>
   it.each([
     [
       'CONFLICT',
-      'Nguyên liệu vừa được cập nhật ở nơi khác. Đã tải lại trạng thái mới nhất, vui lòng thử lại.',
+      'Nguyên liệu vừa được cập nhật ở nơi khác nên thay đổi của bạn chưa được lưu. Đã tải lại trạng thái mới nhất, vui lòng kiểm tra rồi thử lại.',
     ],
     [
       'IDEMPOTENCY_CONFLICT',
-      'Yêu cầu này đã được dùng cho một thao tác khác. Vui lòng tải lại và thử lại.',
+      'Yêu cầu này đã được dùng cho một thao tác khác nên chưa được thực hiện. Đã tải lại trạng thái mới nhất, vui lòng kiểm tra rồi thử lại.',
     ],
   ])(
     'reloads the authoritative scan after %s without repeating the POST',
