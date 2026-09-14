@@ -122,8 +122,8 @@ test('D/E ingredient detail renders NULL openedAt as no information and a record
   await expect(page.getByTestId('lot-opened')).toHaveText('Chưa có thông tin');
   await expect(page.getByText('Chưa mở', { exact: true })).toHaveCount(0);
 
-  const { lot: milk } = await getJson<{ lot: InventoryLotDetail }>(page, '/api/v1/inventory/lots/preview-stock-milk');
-  expect(milk.openedAt).toBe('2026-09-11T08:30:00Z');
-  await page.goto('/ingredients/preview-stock-milk');
+  const { lot: cheese } = await getJson<{ lot: InventoryLotDetail }>(page, '/api/v1/inventory/lots/preview-stock-cheese');
+  expect(cheese.openedAt).toBe('2026-09-11T08:30:00Z');
+  await page.goto('/ingredients/preview-stock-cheese');
   await expect(page.getByTestId('lot-opened')).toHaveText('Đã mở 2026-09-11');
 });

@@ -76,8 +76,11 @@ export function seedPlannerPreview(db) {
     -- tests): a genuinely recorded opening instant, and an estimated expiry
     -- two days out that Home must qualify as an estimate. The estimate row
     -- carries expiry_kind/expiry_source so backfill maps it to ESTIMATED.
+    -- The opened row must not share an ingredient/name with any seeded scan
+    -- review line (e.g. 'Sữa tươi'): fridge confirmation groups into an
+    -- existing lot by ingredient, which would silently change case C.
     INSERT INTO inventory_items (id, household_id, ingredient_id, name, quantity, unit, category, storage, version, opened_at) VALUES
-      ('preview-stock-milk', '${PREVIEW_HOUSEHOLD_ID}', 'FRESH_MILK', 'Sữa tươi', 1, 'l', 'dairy', 'fridge', 1, '2026-09-11T08:30:00Z');
+      ('preview-stock-cheese', '${PREVIEW_HOUSEHOLD_ID}', 'CHEDDAR_CHEESE', 'Phô mai', 200, 'g', 'dairy', 'fridge', 1, '2026-09-11T08:30:00Z');
     INSERT INTO inventory_items (id, household_id, ingredient_id, name, quantity, unit, category, storage, version, expiry_date, expiry_kind, expiry_source, freshness) VALUES
       ('preview-stock-spinach', '${PREVIEW_HOUSEHOLD_ID}', 'WATER_SPINACH', 'Rau muống', 1, 'bunch', 'vegetable', 'fridge', 1,
         date('now', '+2 days'), 'estimated', 'estimated', 'use_soon');
