@@ -1,3 +1,16 @@
+# Takosan brand branch board — 2026-09-14 (independent of T13 board below)
+
+- **TAKOSAN BRAND MIGRATION — application checkpoint `e37ee28` published** on
+  `hoplite/megara-hyblaia-6b723eb2` from base `897102b`. Not T13 remediation, not
+  T14. T13 freeze `32ddbb4` and main `d1b0673` unchanged.
+- Done: kit assets installed, PWA icons generated, brand contract, tokens,
+  typography, PWA/HTML metadata, SW cache bump, Landing/Onboarding/Auth/chrome/
+  empty+success states, copy rename, 9 branding tests. Gates: Vitest 3480/139,
+  browser 60/60, QA matrix clean.
+- Next: brand review of the checkpoint; on acceptance remove legacy
+  `public/frigo/{brand,app-icons,illustrations}`; maintainer decision on domain.
+  No merge/deploy/remote D1/PayOS.
+
 # Frigo task board
 
 ## Current board — T13R certified freeze, 2026-09-14

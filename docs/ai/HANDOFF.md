@@ -1,3 +1,26 @@
+# Takosan brand handoff — 2026-09-14 (independent of the T13 handoff below)
+
+Task: user-facing brand migration Frigo → Takosan from the supplied brand kit.
+Status: **TAKOSAN BRAND MIGRATION COMPLETE — READY FOR BRAND REVIEW.**
+Branch `hoplite/megara-hyblaia-6b723eb2` (Hoplite broker branch; preferred name
+`feat/takosan-brand-refresh` could not be published by the broker), base
+`TAKOSAN_BRAND_BASE=897102b6816c22af2e6a49f29662690e3e3206e0`,
+`TAKOSAN_BRAND_APPLICATION_CHECKPOINT=e37ee2808a50a7195dc90a2e7bb01be639aa186b`;
+the docs-only commit containing this section is `TAKOSAN_BRAND_DOCS_HEAD`.
+T13 freeze `32ddbb4`, `42e0037`, `897102b`, main `d1b0673` unchanged.
+
+Exact checks at `e37ee28`: `git diff --check` clean; `pnpm typecheck` PASS;
+`pnpm exec eslint src/web tests/unit/takosan-brand.test.tsx scripts/generate-takosan-icons.mjs`
+PASS; `pnpm build` PASS; `CI=1 pnpm test` **3480 passed / 139 files**;
+`CI=1 pnpm test:browser` **60 passed / 60** (4.0 m); Playwright brand QA matrix
+360/390/430 × landing/onboarding/auth/home/fridge/scan/planner/profile: 0 broken
+asset requests, 0 horizontal overflow. Failures: none.
+
+Next action: brand review of `e37ee28`; then optionally delete legacy Frigo brand
+assets under `public/frigo/{brand,app-icons,illustrations}`. Do not merge to main,
+deploy, touch remote D1 or PayOS. Full details in
+[docs/brand/TAKOSAN_MIGRATION.md](../brand/TAKOSAN_MIGRATION.md).
+
 # Frigo AI Handoff — T13R certified, ready for independent review #2
 
 ## Current handoff — T13R certified freeze, 2026-09-14

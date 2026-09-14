@@ -1,3 +1,22 @@
+# Takosan brand branch (independent descendant) — 2026-09-14
+
+## Brand branch state — NOT part of the T13 certification
+
+Out-of-band user-facing rebrand Frigo → Takosan on `hoplite/megara-hyblaia-6b723eb2`,
+created from exactly `TAKOSAN_BRAND_BASE=897102b6816c22af2e6a49f29662690e3e3206e0`
+(T13R published continuation). **TAKOSAN_BRAND_APPLICATION_CHECKPOINT=
+`e37ee2808a50a7195dc90a2e7bb01be639aa186b`** (published via broker). The T13
+freeze `32ddbb4…`, docs head `42e0037…`, continuation `897102b…` and main
+`d1b06732…` are unchanged; Review #2 still targets exact `32ddbb4`.
+
+Scope: brand assets (`public/takosan/`), `TAKOSAN_BRAND` contract, Takosan tokens
+with `--frigo-*` aliases, Nunito, index.html / manifest / sw (`takosan-pwa-v2`),
+Landing, Onboarding, Auth, chrome, empty/success states, visible copy. No diff in
+`src/worker/`, `packages/db/`, `migrations/`, deps, or technical identifiers.
+Checks at `e37ee28`: diff-check, typecheck, scoped lint, build PASS; Vitest
+**3480/139**; browser **60/60**; brand QA 360/390/430 0 broken assets, 0 overflow.
+Details: [docs/brand/TAKOSAN_MIGRATION.md](../brand/TAKOSAN_MIGRATION.md).
+
 # Frigo current state — T13R certified, ready for independent review #2
 
 ## Current authoritative state — T13R certified freeze, 2026-09-14
