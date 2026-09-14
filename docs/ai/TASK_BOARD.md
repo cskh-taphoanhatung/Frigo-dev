@@ -1,5 +1,17 @@
 # Frigo task board
 
+## Active integration work (2026-09-15)
+
+- Production + Qwen runtime + certified T13 + hardened Takosan consolidation:
+  **IN PROGRESS** on `integration/t13-takosan-qwen`.
+- Fixed base: `05423f2ad675006a4c7913e696f1979b3fcaae59`; bridge migration
+  range planned as production `0024`-`0033` while preserving production `0023`.
+- Current checkpoint: repository/source identity, common ancestry, divergence
+  classes, preservation matrix, and migration map recorded under
+  `docs/integration/`.
+- Next action: integrate Qwen lineage, then resolve T13/Takosan semantically and
+  run the local release-candidate matrix. Do not merge/deploy/apply remote D1.
+
 ## Completed release work
 
 - T01-T07: COMPLETE.

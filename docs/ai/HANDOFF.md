@@ -1,5 +1,24 @@
 # Frigo AI Handoff - final PR state reconciled
 
+## Active production integration handoff (2026-09-15)
+
+WORKING_BRANCH: `integration/t13-takosan-qwen`
+
+PRODUCTION_BASE: `05423f2ad675006a4c7913e696f1979b3fcaae59`
+
+COMMON_BASE: `d1b06732f8a80db4e77986df31ff28d9f04641fa`
+
+The current authorized task is a local/published integration candidate combining
+production, the Qwen runtime branch, certified T13, and hardened Takosan. Source
+IDs and SHAs are verified, production migration `0023_scan_request_fingerprint.sql`
+is immutable, and the T13 migration bridge is planned at `0024`-`0033`.
+`docs/integration/` is the current task packet. No candidate is designated yet.
+
+Next action: checkpoint the analysis, integrate Qwen, merge T13/Takosan with
+semantic conflict resolution, then run migration/static/full/browser gates.
+Production main, remote D1, deployment, production R2/KV/queue, PayOS, and T14
+remain untouched.
+
 ## Authoritative release
 
 AUTHORITATIVE REPOSITORY: `vn-2c/Frigo`

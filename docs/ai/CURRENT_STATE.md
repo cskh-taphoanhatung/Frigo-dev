@@ -1,5 +1,18 @@
 # Frigo current state - final PR metadata reconciled
 
+## Production integration candidate (2026-09-15)
+
+- Active branch: `integration/t13-takosan-qwen`, created from current production
+  `main` at `05423f2ad675006a4c7913e696f1979b3fcaae59`.
+- Production repository identity: `Tungjpstore/Frigo`, ID `1360256196`.
+- Development source identity: `vn-dlo/Frigo-dev`, ID `1368281478`.
+- Common ancestor with Takosan application `ff63edfb...`:
+  `d1b06732f8a80db4e77986df31ff28d9f04641fa`.
+- Integration analysis and migration bridge mapping are in `docs/integration/`.
+- Status: analysis checkpoint in progress; no candidate designation, merge,
+  deployment, remote migration, production resource mutation, PayOS change, or
+  T14 work has occurred.
+
 > This checkpoint retains the historical production receipt and separately tracks
 > the unreleased OCR recovery candidate dated 2026-09-12.
 
