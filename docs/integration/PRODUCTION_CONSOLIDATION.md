@@ -43,6 +43,28 @@ Takosan/T13 side changes 308 paths from `COMMON_BASE`. Nine paths overlap:
 
 ## Conflict-resolution rule
 
-Every overlapping application path must retain both intents. No bulk ours/theirs
-resolution is acceptable. The final table will record the exact resolution and
-test for each conflict after the merge is complete.
+Every overlapping application path retains both intents. No bulk ours/theirs
+resolution was used; the final resolution table follows.
+
+## Final resolution and preservation receipt — 2026-09-15
+
+The application candidate is `e34ed16777166407acf67b2c76d733d89c7d64ca`.
+The Qwen merge checkpoint is `9c78c1ac9c3927b110c3cd25176ac3f5ff004835`; the
+T13/Takosan merge checkpoint is `c50dc76fbbb2e1150ed7be5d9cfa7a6bb64d9dd7`.
+No unrelated-history merge or bulk ours/theirs resolution was used.
+
+| Path/group | Resolution | Proof |
+| --- | --- | --- |
+| `package.json` / lockfile | Semantic union of Qwen runtime, browser tooling, and direct `sharp@0.33.5`; frozen install passes | `pnpm install --frozen-lockfile`, build |
+| AI schemas/provider/quality | Preserve production typed provider/runtime behavior while accepting nullable T13 evidence; no confidence rewrite | Qwen/provider, quality, and queue evidence suites |
+| Scan route + queue | Production fingerprint/quota/fencing/R2 flow feeds T13 raw evidence and T09 commands/T10 observations; status commits last | `production-integration-scan-flow`, queue fencing/retry, T13 suites |
+| Camera/UI | Preserve production image preprocessing with Takosan styling and assets | Brand tests and browser `60/60` |
+| Migrations | Keep production `0023_scan_request_fingerprint.sql` byte-identical; add T13 `0024`-`0033` byte-copied bridge | Hash audit, bridge test, migration smoke |
+| State docs | Preserve historical records and add current integration authority sections | Candidate-to-docs diff is docs-only |
+
+Post-merge authority audit: `UNKNOWN INVENTORY WRITERS=0`,
+`UNKNOWN CANONICAL READERS=0`; T09 remains mutation authority and T11 remains
+canonical read authority. Household/receipt/lot ownership, private-session,
+Week compatibility, and queue tenancy remain covered. No PayOS/payment,
+billing, checkout, webhook, auth, secret, DNS, or production infrastructure
+behavior was intentionally changed.

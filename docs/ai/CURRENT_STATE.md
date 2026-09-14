@@ -1,3 +1,28 @@
+# Production integration candidate — 2026-09-15
+
+**PRODUCTION INTEGRATION CANDIDATE CERTIFIED LOCALLY — READY FOR INDEPENDENT
+INTEGRATION REVIEW.** Branch `integration/t13-takosan-qwen` starts at verified
+production `PRODUCTION_BASE=05423f2ad675006a4c7913e696f1979b3fcaae59` in
+`Tungjpstore/Frigo` (ID `1360256196`). Normal common ancestor with certified
+development is `d1b06732f8a80db4e77986df31ff28d9f04641fa`.
+`INTEGRATION_APPLICATION_CANDIDATE=e34ed16777166407acf67b2c76d733d89c7d64ca`.
+
+The candidate combines governed Qwen source `da41686b`, certified T13 freeze
+`32ddbb4` / review `9c3c3d3`, and hardened Takosan source `ff63edf`. Production
+`0023_scan_request_fingerprint.sql` is byte-identical; ten certified T13
+migrations are byte-copied at `0024`-`0033`. Pre-existing production migration
+changes `0`; bridge mismatches `0`; 33 unique contiguous migrations. The real
+queue path preserves missing/0/.11/.9 evidence, provenance and fingerprint into
+T13 confirmation; replay creates no duplicate T09 effects. T09/T11 remain the
+mutation/read authorities; unknown writers/readers `0/0`.
+
+Local gates: frozen install, lint, typecheck, migration smoke, build, diff check
+PASS; full Vitest `3628/3628` in 149 files; real local workerd/D1 `92/92` in five
+files; browser last and serial `60/60` at 360/390/430. P3-1 and P3-2 remain
+unchanged. **NO HOSTED GITHUB CI STATUS FOR INTEGRATION_APPLICATION_CANDIDATE**.
+No deploy, main merge, remote D1/R2/KV/queue mutation, PayOS/payment change,
+secret/DNS change, or T14. Full packet: `docs/integration/`.
+
 # Takosan brand branch (independent descendant) — 2026-09-14
 
 ## Brand branch state — NOT part of the T13 certification

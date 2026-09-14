@@ -1,3 +1,16 @@
+# Production integration candidate — COMPLETE LOCALLY (2026-09-15)
+
+- Application candidate: `e34ed16777166407acf67b2c76d733d89c7d64ca` on
+  `integration/t13-takosan-qwen`, based on production `05423f2`.
+- Qwen production runtime, certified T13 Inventory Truth, hardened Takosan, and
+  the additive byte-identical `0024`-`0033` migration bridge are integrated.
+- PASS: frozen install, lint, typecheck, migration smoke, build, full Vitest
+  `3628/3628` (149 files), real D1 `92/92` (5 files), browser `60/60`, migration
+  hashes/bridge provenance, and T09/T11 unknown writer/reader audit `0/0`.
+- P3-1/P3-2 deliberately preserved. Hosted exact-candidate CI is absent.
+- Next: docs-only checkpoint, normal branch publication/fetch verification, then
+  independent integration review. Do not merge/deploy/apply remote migrations.
+
 # Takosan brand branch board — 2026-09-14 (independent of T13 board below)
 
 - **TAKOSAN BRAND MIGRATION — application checkpoint `e37ee28` published** on
