@@ -41,6 +41,11 @@ authoritative. Candidate model access, provider licensing, exact-SHA CI, canary
 health and readiness must be verified before release. OCR output still requires
 human review/confirmation and does not create trusted retail offers.
 
+The initial 20-25 second timeout was insufficient for full-page receipt OCR: a
+production-sized Vietnamese receipt took about 51 seconds in a non-PII Qwen
+smoke. The candidate therefore uses a 60 second Qwen request timeout and a 75
+second Worker/queue guard, while retaining the existing 10 minute queue lease.
+
 **Alternatives considered:** Retrying every provider error, silently falling back
 to mock fixtures in production, or treating any syntactically valid OCR line as
 usable. Rejected because retries cannot fix permanent provider/configuration
@@ -570,3 +575,52 @@ utility delta, above-neutral aggregate fit, and an above-neutral fully qualified
 soft target covering the current meal. Empty future periods cannot justify it.
 This corrects the generated-only result contract before T05 integration; no persisted
 consumer, schema, allocation, scoring formula or search policy changes.
+
+## ADR-020 — Browser-side image normalization for OCR payloads
+
+**Status:** Proposed maintenance change, local-only on 2026-09-13.
+
+**Decision:** Normalize gallery images before upload using `createImageBitmap` and
+an in-memory canvas. Cap the longest side at 2,000 px, encode as JPEG at quality
+0.82, and only use the derivative when it is smaller than the source. Do not
+upscale small images, mutate the original file, persist image bytes, or log image
+content. If bitmap/canvas APIs are unavailable or fail, retain the existing
+`FileReader` path. Cancellation and private-session fencing apply across decode,
+compression and read stages.
+
+**Rationale:** The sample receipt is 1,086x1,448 PNG and approximately 2.1 MB;
+JPEG quality 0.82 produces approximately 382 KB (81.9% smaller) at the same
+dimensions, reducing request transfer/base64 and provider input overhead while
+retaining the text-bearing pixels. This complements, but does not replace, the
+server/provider timeout recovery already deployed.
+
+**Release boundary:** No production deployment, schema, storage, auth, payment
+or provider configuration change is implied. Promote only after browser/device
+OCR smoke confirms item recall and latency against the attached receipt.
+
+## ADR-021 — Task-based Qwen runtime and production model governance
+
+**Status:** Accepted 2026-09-13 (architecture maintenance branch)
+
+**Decision:** Add a single task-based runtime behind `AIRouter`. Feature and
+domain code submit a semantic task and compact input; the runtime resolves a
+logical Qwen role, applies per-task prompts and token ceilings, validates
+structured output, performs at most one repair and one policy-approved
+escalation, and emits non-PII usage/cost telemetry. Production composition sets
+`AI_QWEN_ONLY=true`, so legacy Groq, DeepSeek, GLM and native Cloudflare adapters
+are not constructed. Physical model IDs are configurable only through Worker
+role aliases (`AI_MODEL_*`). Reasoning and judge roles are explicit opt-ins and
+remain off for customer traffic by default.
+
+**Rationale:** A centralized policy prevents accidental expensive-model use,
+unbounded retries, provider drift and model names leaking into application
+services. Qwen remains the only production inference family while preserving
+legacy adapters for test/migration compatibility when Qwen-only mode is not
+requested.
+
+**Consequences:** OCR and fridge vision still return untrusted candidates. The
+quality gate, deterministic normalization, inventory fencing and reconciliation
+remain authoritative. Estimated pricing is operational telemetry, not billing
+truth. The rolling `qwen3.7-flash` alias is canary-only; promotion requires an
+offline golden-dataset comparison and an explicit configuration review. This
+branch changes no canonical `main` code and performs no deployment.

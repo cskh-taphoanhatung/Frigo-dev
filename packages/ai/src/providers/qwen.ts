@@ -1,4 +1,4 @@
-import { AIProvider, VisionScanParams } from '../types';
+import { AIProvider, AIProviderUsage, VisionScanParams } from '../types';
 import {
   ReceiptScanResult,
   ReceiptScanResultSchema,
@@ -15,10 +15,12 @@ import {
 } from '../errors';
 import { resolveProviderCanonical, normalizeOcrNumber } from '../normalization';
 import { findCanonicalIngredient } from '@frigo/domain';
+import { capabilitiesForPhysicalModel, type ModelCapabilities } from '../model-governance';
 
 const DEFAULT_BASE_URL = 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1';
 const DEFAULT_MODEL = 'qwen3.7-flash';
-const DEFAULT_REQUEST_TIMEOUT_MS = 20_000;
+// Vision extraction can legitimately take ~50s on a full-page receipt.
+const DEFAULT_REQUEST_TIMEOUT_MS = 60_000;
 
 type ChatMessageContent = string | Array<{
   type?: string;
@@ -29,7 +31,14 @@ type StandardUnit = 'g' | 'kg' | 'ml' | 'l' | 'piece' | 'pack' | 'bunch' | 'slic
 type QwenProviderOptions = {
   model?: string;
   requestTimeoutMs?: number;
+  capabilities?: ModelCapabilities;
 };
+
+export interface QwenCallOptions {
+  maxTokens?: number;
+  temperature?: number;
+  jsonMode?: boolean;
+}
 
 function recordValue(record: Record<string, unknown>, aliases: readonly string[]): unknown {
   for (const alias of aliases) {
@@ -250,12 +259,15 @@ export class QwenProvider implements AIProvider {
   private readonly baseUrl: string;
   private readonly model: string;
   private readonly requestTimeoutMs: number;
+  private readonly capabilities: ModelCapabilities;
+  private lastUsage: AIProviderUsage | undefined;
 
   constructor(
     apiKey: string,
     baseUrl = DEFAULT_BASE_URL,
     modelOrOptions: string | number | QwenProviderOptions = DEFAULT_MODEL,
     requestTimeoutMs = DEFAULT_REQUEST_TIMEOUT_MS,
+    capabilities?: ModelCapabilities,
   ) {
     if (!apiKey.trim()) throw new Error('Qwen API key is required');
     this.apiKey = apiKey;
@@ -265,16 +277,23 @@ export class QwenProvider implements AIProvider {
     if (typeof modelOrOptions === 'number') {
       this.model = DEFAULT_MODEL;
       this.requestTimeoutMs = Math.max(1_000, modelOrOptions);
+      this.capabilities = capabilities || capabilitiesForPhysicalModel(this.model);
     } else if (typeof modelOrOptions === 'string') {
       this.model = modelOrOptions.trim() || DEFAULT_MODEL;
       this.requestTimeoutMs = Math.max(1_000, requestTimeoutMs);
+      this.capabilities = capabilities || capabilitiesForPhysicalModel(this.model);
     } else {
       this.model = modelOrOptions.model?.trim() || DEFAULT_MODEL;
       this.requestTimeoutMs = Math.max(1_000, modelOrOptions.requestTimeoutMs ?? requestTimeoutMs);
+      this.capabilities = modelOrOptions.capabilities || capabilities || capabilitiesForPhysicalModel(this.model);
     }
   }
 
-  async vision(params: VisionScanParams): Promise<VisionScanResult> {
+  getLastUsage(): AIProviderUsage | undefined {
+    return this.lastUsage ? { ...this.lastUsage } : undefined;
+  }
+
+  async vision(params: VisionScanParams, options: QwenCallOptions = {}): Promise<VisionScanResult> {
     const prompt = params.promptOverride || `Bạn là chuyên gia nhận diện nguyên liệu thực phẩm trong tủ lạnh cho ứng dụng Frigo tại Việt Nam.
 Hãy phân tích bức ảnh và trả về DUY NHẤT một JSON object hợp lệ theo định dạng:
 {
@@ -289,7 +308,7 @@ Hãy phân tích bức ảnh và trả về DUY NHẤT một JSON object hợp l
 }
 Chỉ trả về JSON thuần, không thêm markdown code block thừa.`;
 
-    const parsed = await this.completeVision(prompt, params, 1024);
+    const parsed = await this.completeVision(prompt, params, options.maxTokens ?? 1024, options.temperature);
     let validated: VisionScanResult;
     try {
       validated = VisionScanResultSchema.parse(normalizeVisionPayload(parsed));
@@ -314,7 +333,7 @@ Chỉ trả về JSON thuần, không thêm markdown code block thừa.`;
     return validated;
   }
 
-  async receiptScan(params: VisionScanParams): Promise<ReceiptScanResult> {
+  async receiptScan(params: VisionScanParams, options: QwenCallOptions = {}): Promise<ReceiptScanResult> {
     const prompt = params.promptOverride || `Bạn là hệ thống OCR hóa đơn thực phẩm cho ứng dụng Frigo tại Việt Nam.
 Đọc ảnh hóa đơn và trả về DUY NHẤT một JSON object hợp lệ theo định dạng:
 {
@@ -334,7 +353,7 @@ Chỉ trả về JSON thuần, không thêm markdown code block thừa.`;
   ]
 }
 Bỏ qua dòng không phải thực phẩm và không tự bịa sản phẩm không nhìn thấy.`;
-    const parsed = await this.completeVision(prompt, params, 1_500);
+    const parsed = await this.completeVision(prompt, params, options.maxTokens ?? 1_500, options.temperature);
     let validated: ReceiptScanResult;
     try {
       validated = ReceiptScanResultSchema.parse(normalizeReceiptPayload(parsed));
@@ -362,6 +381,7 @@ Bỏ qua dòng không phải thực phẩm và không tự bịa sản phẩm kh
     messages: Array<{ role: 'system' | 'user' | 'assistant'; content: ChatMessageContent }>,
     options: { maxTokens?: number; jsonMode?: boolean; temperature?: number } = {},
   ): Promise<unknown> {
+    this.lastUsage = undefined;
     const controller = new AbortController();
     let timedOut = false;
     const timeout = setTimeout(() => {
@@ -380,10 +400,10 @@ Bỏ qua dòng không phải thực phẩm và không tự bịa sản phẩm kh
           model: this.model,
           messages,
           temperature: options.temperature ?? 0.1,
-          // Qwen3.7 can spend most of a short OCR request in reasoning. The
-          // structured extraction tasks deliberately use the fast path.
-          enable_thinking: false,
-          ...(options.jsonMode ? { response_format: { type: 'json_object' } } : {}),
+          ...(this.capabilities.supportsThinkingControl ? { enable_thinking: false } : {}),
+          ...(options.jsonMode && this.capabilities.supportsJsonResponseFormat
+            ? { response_format: { type: 'json_object' } }
+            : {}),
           ...(options.maxTokens === undefined ? {} : { max_tokens: options.maxTokens }),
         }),
       });
@@ -396,11 +416,32 @@ Bỏ qua dòng không phải thực phẩm và không tự bịa sản phẩm kh
         }>;
         output_text?: unknown;
         output?: unknown;
+        usage?: {
+          prompt_tokens?: unknown;
+          completion_tokens?: unknown;
+          input_tokens?: unknown;
+          output_tokens?: unknown;
+          prompt_tokens_details?: { cached_tokens?: unknown };
+          input_tokens_details?: { cached_tokens?: unknown };
+        };
       };
       try {
         data = await res.json() as typeof data;
       } catch (error) {
         throw createAIResponseError('Qwen', 'Qwen returned an invalid JSON envelope', this.model, error);
+      }
+      const usage = data.usage;
+      if (usage) {
+        const inputTokens = Number(usage.input_tokens ?? usage.prompt_tokens);
+        const outputTokens = Number(usage.output_tokens ?? usage.completion_tokens);
+        const cachedInputTokens = Number(
+          usage.input_tokens_details?.cached_tokens ?? usage.prompt_tokens_details?.cached_tokens,
+        );
+        this.lastUsage = {
+          inputTokens: Number.isFinite(inputTokens) && inputTokens >= 0 ? inputTokens : 0,
+          outputTokens: Number.isFinite(outputTokens) && outputTokens >= 0 ? outputTokens : 0,
+          ...(Number.isFinite(cachedInputTokens) && cachedInputTokens >= 0 ? { cachedInputTokens } : {}),
+        };
       }
       const choice = data.choices?.[0];
       const message = choice?.message;
@@ -432,7 +473,7 @@ Bỏ qua dòng không phải thực phẩm và không tự bịa sản phẩm kh
     }
   }
 
-  private async completeVision(prompt: string, params: VisionScanParams, maxTokens: number): Promise<unknown> {
+  private async completeVision(prompt: string, params: VisionScanParams, maxTokens: number, temperature?: number): Promise<unknown> {
     const rawContent = await this.complete([
       {
         role: 'user',
@@ -441,7 +482,7 @@ Bỏ qua dòng không phải thực phẩm và không tự bịa sản phẩm kh
           { type: 'image_url', image_url: { url: imageUrl(params) } },
         ],
       },
-    ], { maxTokens, jsonMode: true, temperature: 0.1 });
+    ], { maxTokens, jsonMode: true, temperature: temperature ?? 0.1 });
     const parsed = parseJsonValue(contentText(rawContent) || rawContent);
     if (parsed === null || parsed === undefined) {
       throw createAIResponseError('Qwen', 'Qwen returned empty or non-JSON response', this.model);
@@ -450,6 +491,7 @@ Bỏ qua dòng không phải thực phẩm và không tự bịa sản phẩm kh
   }
 
   async normalizeIngredient(rawName: string): Promise<{ canonicalId: string | null; confidence: number }> {
+    this.lastUsage = undefined;
     const canonical = findCanonicalIngredient(rawName);
     return {
       canonicalId: canonical?.id || null,
@@ -457,7 +499,7 @@ Bỏ qua dòng không phải thực phẩm và không tự bịa sản phẩm kh
     };
   }
 
-  async rankRecipes(recipeTitles: string[], userIngredients: string[] = []): Promise<string[]> {
+  async rankRecipes(recipeTitles: string[], userIngredients: string[] = [], options: QwenCallOptions = {}): Promise<string[]> {
     if (recipeTitles.length < 2) return recipeTitles;
 
     const prompt = `Bạn là AI Chef của Frigo Việt Nam. Người dùng có các nguyên liệu: ${userIngredients.join(', ') || 'không rõ'}.
@@ -469,7 +511,7 @@ Trả về JSON object duy nhất: {"ranked_titles":["Tên món 1","Tên món 2"
 
     const rawContent = await this.complete([
       { role: 'user', content: prompt },
-    ], { maxTokens: 1_024, jsonMode: true, temperature: 0.2 });
+    ], { maxTokens: options.maxTokens ?? 1_024, jsonMode: true, temperature: options.temperature ?? 0.2 });
     const parsed = parseJsonValue(contentText(rawContent) || rawContent);
     const candidates = Array.isArray(parsed)
       ? parsed
@@ -498,7 +540,7 @@ Trả về JSON object duy nhất: {"ranked_titles":["Tên món 1","Tên món 2"
     return [...ranked, ...recipeTitles.filter((title) => !ranked.includes(title))];
   }
 
-  async chat(prompt: string, context?: Record<string, unknown>): Promise<string> {
+  async chat(prompt: string, context?: Record<string, unknown>, options: QwenCallOptions = {}): Promise<string> {
     const userContent = context ? `${JSON.stringify(context)}\n\n${prompt}` : prompt;
     const rawContent = await this.complete([
       {
@@ -506,7 +548,11 @@ Trả về JSON object duy nhất: {"ranked_titles":["Tên món 1","Tên món 2"
         content: 'Bạn là trợ lý AI của ứng dụng Frigo Việt Nam. Trả lời ngắn gọn, chính xác và thân thiện.',
       },
       { role: 'user', content: userContent },
-    ], { maxTokens: 2_048, temperature: 0.2 });
+    ], {
+      maxTokens: options.maxTokens ?? 2_048,
+      temperature: options.temperature ?? 0.2,
+      jsonMode: options.jsonMode ?? false,
+    });
     const content = contentText(rawContent).trim();
     if (!content) throw createAIResponseError('Qwen', 'Qwen returned empty response', this.model);
     return content;

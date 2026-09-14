@@ -2,6 +2,7 @@ import { AIRouter } from '@frigo/ai';
 import { findCanonicalIngredient, findCanonicalIngredientById, StandardUnit } from '@frigo/domain';
 import { Env } from '../types';
 import { sha256Hex } from '../utils/session';
+import { aiConfigFromEnv, logAIUsage } from '../config/ai';
 
 export type ScanQueueMessage = {
   type: 'scan.process.v1';
@@ -21,7 +22,9 @@ export type QueueDecision = 'ack' | 'retry';
 
 // Keep a hung native/provider call from holding a queue lease indefinitely.
 // Provider-specific calls have their own shorter timeout where supported.
-export const SCAN_AI_TIMEOUT_MS = 25_000;
+// Leave enough wall-clock time for full-page receipt OCR while still bounding
+// a stuck provider call before the queue lease expires.
+export const SCAN_AI_TIMEOUT_MS = 75_000;
 
 export class ScanQueueError extends Error {
   constructor(
@@ -110,6 +113,10 @@ export function sanitizedScanErrorMessage(code: string): string {
     case 'INVALID_RESPONSE':
     case 'SCHEMA_VALIDATION':
       return 'Không nhận diện được dữ liệu đủ rõ từ ảnh.';
+    case 'AI_IMAGE_TOO_LARGE':
+      return 'Ảnh bản quét vượt quá giới hạn dung lượng cho phép.';
+    case 'UNSUPPORTED_REQUEST_OPTION':
+      return 'Dịch vụ nhận diện tạm thời không tương thích với model hiện tại.';
     case 'REQUEST_TIMEOUT':
     case 'AI_SCAN_TIMEOUT':
       return 'Dịch vụ nhận diện phản hồi quá lâu.';
@@ -118,6 +125,9 @@ export function sanitizedScanErrorMessage(code: string): string {
     case 'PERMISSION_DENIED':
     case 'LICENSE_REQUIRED':
     case 'AI_SCAN_UNAVAILABLE':
+    case 'AI_UNAVAILABLE':
+    case 'AI_ESCALATION_EXHAUSTED':
+    case 'AI_BUDGET_EXCEEDED':
       return 'Dịch vụ nhận diện đang tạm thời không khả dụng.';
     case 'NETWORK_ERROR':
     case 'RATE_LIMITED':
@@ -251,28 +261,7 @@ async function verifyScanRequestIdentity(
 }
 
 function getRouter(env: Env): AIRouter {
-  const cloudflareVisionFallback = env.CLOUDFLARE_VISION_FALLBACK === undefined
-    ? undefined
-    : env.CLOUDFLARE_VISION_FALLBACK === 'true';
-  return new AIRouter({
-    aiMockMode: env.AI_MOCK_MODE === 'true',
-    aiBinding: env.AI,
-    qwenApiKey: env.QWEN_API_KEY,
-    qwenBaseUrl: env.QWEN_BASE_URL,
-    qwenModel: env.QWEN_MODEL,
-    groqApiKey: env.GROQ_API_KEY,
-    groqBaseUrl: env.GROQ_BASE_URL,
-    groqVisionModel: env.GROQ_VISION_MODEL,
-    groqFallbackEnabled: env.GROQ_FALLBACK_ENABLED === 'true',
-    cloudflareVisionFallback,
-    zaiApiKey: env.ZAI_API_KEY,
-    zaiBaseUrl: env.ZAI_BASE_URL,
-    glmFallbackEnabled: env.GLM_FALLBACK_ENABLED === 'true',
-    deepseekApiKey: env.DEEPSEEK_API_KEY,
-    deepseekBaseUrl: env.DEEPSEEK_BASE_URL,
-    deepseekFallbackEnabled: env.DEEPSEEK_FALLBACK_ENABLED === 'true',
-    silentFallback: true,
-  });
+  return new AIRouter(aiConfigFromEnv(env), logAIUsage);
 }
 
 async function loadImage(env: Env, message: ScanQueueMessage): Promise<{ data: string; mimeType: string }> {

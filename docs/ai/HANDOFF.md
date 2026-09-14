@@ -233,6 +233,19 @@ Production deployment: COMPLETE - readiness commit matches `d1b06732...`
 Planner rollout: NOT STARTED. `PLUS_GRANT_SECRET` remains intentionally absent
 and is reported as a warning; no secret values were read or changed.
 
+## OCR image optimization candidate (2026-09-13)
+
+`src/web/lib/private-image.ts` contains an uncommitted client-side optimization:
+gallery images are decoded in memory, constrained to a 2,000 px longest side and
+encoded as JPEG quality 0.82 only when smaller than the source. Small images are
+not upscaled; originals are never mutated or stored; cancellation/session fencing
+and a FileReader fallback are preserved. The attached receipt measured 2,116,353
+bytes as PNG versus 382,334 bytes after a local quality-0.82 conversion (81.9%
+reduction, same dimensions). Focused privacy/image tests pass 11/11. The
+implementation is committed locally at `ba3d872eea2d677e38f94adb8355f493c4c45852`
+but is not deployed; browser/device OCR recall and latency smoke is still
+required before release.
+
 ## PR #8 authoritative metadata
 
 PR #8 METADATA:
@@ -275,3 +288,123 @@ Do not touch PayOS/payment or use a down-migration. Rollback remains code-only t
 reserve D1 restore/export for an incident. Configure the GitHub `production`
 environment, `PRODUCTION_URL` and Cloudflare secrets before the next guarded
 release, and schedule the tested React Router major upgrade separately.
+
+## Qwen runtime governance candidate (current task)
+
+WORKING_BRANCH: `feat/qwen-ai-runtime-cost-router`
+
+BASE_SHA: `05423f2ad675006a4c7913e696f1979b3fcaae59`
+
+CANONICAL_MAIN_CHANGED: **NO**
+
+PRODUCTION_DEPLOYED: **NO CHANGE / NOT AUTHORIZED**
+
+The branch adds a fetch-compatible `QwenTaskRuntime` behind `AIRouter`. Tasks
+resolve to logical roles (`QWEN_FAST`, `QWEN_FAST_CANARY`, `QWEN_MULTIMODAL`,
+`QWEN_OCR`, `QWEN_REASONING`, `QWEN_JUDGE`) in one governance table. Physical
+model IDs are supplied only by `AI_MODEL_*` configuration. Normal text uses the
+pinned `qwen3.7-flash-2026-07-15`; OCR uses `qwen-vl-ocr`; multimodal work uses
+`qwen3.8-flash`; reasoning and judge are disabled unless explicitly enabled.
+
+The runtime enforces per-task input/output budgets, a per-operation call/token
+ceiling, one repair plus one policy-approved escalation, Zod structured-output
+validation, scan quality gates and cost metadata. `AIUsageLedger` aggregates
+task/model calls, tokens, costs, failures, retries, escalation and latency;
+Worker logs include only non-PII metadata. `AI_QWEN_ONLY=true` prevents legacy
+Groq, DeepSeek, GLM and native Cloudflare providers from being constructed.
+
+Inventory safety is unchanged: AI returns observation/candidate data only. The
+existing normalization, validation, review, reconciliation, fencing and
+idempotent inventory command remain the sole authority for mutations.
+
+Final T08-T12 Inventory Truth end-to-end certification is still pending the
+later unification with the separate `frigo-dev` lineage. This candidate does
+not import that code or migrations; it only proves that Qwen runtime/provider
+modules have no direct authoritative inventory mutation path.
+
+Offline evaluation assets are `tests/fixtures/ai-golden.json`,
+`tests/unit/ai-golden-dataset.test.ts` and `scripts/ai-eval.mjs`; run
+`pnpm ai:eval -- --dry-run`. The command makes no live provider call and no CI
+test requires an Alibaba credential.
+
+Verification recorded for this checkpoint:
+
+- Application checkpoint: `21c442d`.
+- `pnpm check`: PASS — 1,606 tests / 95 files; lint, typecheck, migration replay
+  and production build all PASS. Remote D1 schema and Week parity checks were
+  skipped because no release flags were supplied.
+- `pnpm ai:eval -- --dry-run`: PASS; fixture-only report, no Alibaba/Qwen call.
+- `git diff --check`: PASS after the documentation edits.
+- Focused command (`pnpm vitest run tests/unit/ai-runtime-governance.test.ts
+  tests/unit/ai-router.test.ts tests/unit/qwen-provider.test.ts
+  tests/unit/config-validation.test.ts tests/unit/meal-planning-explanation.test.ts
+  tests/unit/scan-privacy.test.tsx tests/integration/scan-queue-retry-policy.test.ts
+  tests/integration/scan-async-canary.test.ts`): **119 tests / 8 files PASS**;
+  queue/idempotency regression coverage remains green.
+- `pnpm audit --prod`: FAIL (2 moderate `react-router` advisories; patched
+  upstream at `>=7.18.0`). This pre-existing dependency follow-up is outside
+  the Qwen runtime scope; no package upgrade was made in this checkpoint.
+- Secret scan, protected-path scan and provider/model search were clean. No
+  PayOS/payment, unrelated auth, remote migration, merge or deployment action
+  was performed.
+- Local `main` is a separate divergent ref (`f6a48a1`); canonical source for
+  this candidate is `github-frigo/main` at `05423f2`, and no local ref was
+  changed.
+- Final review found no concrete runtime defect requiring a code fix. Readiness
+  already probes the additive scan columns from migration `0023`, and the
+  deployment documentation correctly scopes the native `AI` binding to the
+  explicit `CLOUDFLARE_VISION_FALLBACK=true` path.
+- Publication checkpoint: `feat/qwen-ai-runtime-cost-router` is now published
+  on `github-frigo` by a normal non-force push; `git ls-remote` verified the
+  remote branch SHA matches the local candidate and canonical `main` remains
+  `05423f2`. GitHub emitted only the repository-relocation notice to
+  `Tungjpstore/Frigo`; no merge, deployment, remote migration or production
+  change has occurred.
+
+Next action after publication: request code review or a separately authorized
+Qwen benchmark, then promote a pinned alias only through the documented
+golden-dataset process. Do not merge, migrate remotely or deploy from this
+branch.
+
+## Qwen pre-unification hardening checkpoint (2026-09-13)
+
+Implementation is complete on `feat/qwen-ai-runtime-cost-router` and remains
+ahead of canonical `github-frigo/main` at `05423f2` without changing `main` or
+production. The final changes are:
+
+The verified application publication commit is
+`f8468eaa7d7fed3cbcf5ac7e780eca07ad3d71e4`; the docs checkpoint containing
+this handoff is intentionally a subsequent normal commit.
+The final pre-documentation branch head, including the scheduler-failure
+regression test, is `a145ef5`.
+
+- `qwen-vl-ocr` capability metadata disables unsupported provider structured
+  output and thinking controls while preserving prompt JSON, application parsing,
+  normalization, Zod validation and scan quality gates. The rolling alias is
+  explicitly `pinned=false`; no unverified snapshot was invented.
+- Pricing defaults now reflect Singapore low-context planning values and carry
+  `estimate-2026-09-sg-low-context` (judge remains a documented planning
+  estimate). Usage remains estimated, not Alibaba invoice truth.
+- `AI_MAX_IMAGE_BYTES` and `AI_MAX_OCR_IMAGE_BYTES` default to 5 MiB and are
+  bounded to 64 KiB-20 MiB. Raw/data-URL base64 is checked by decoded-byte
+  estimate before any Qwen provider call; remote URLs remain upstream-limited.
+- Shadow canary is lifecycle-safe: `backgroundExecutor` schedules the reserved
+  promise through Worker `executionCtx.waitUntil`; hosts without an executor
+  skip shadow. The default canary percentage remains zero, and scheduler
+  invocation failures are isolated from successful primary responses.
+
+Verification completed 2026-09-13:
+
+- Focused command: **134 tests / 8 files PASS**.
+- `pnpm check`: **1,623 tests / 95 files PASS**; lint, typecheck, migration
+  replay and production build PASS.
+- `pnpm ai:eval -- --dry-run`: PASS, six fixture cases, no live request.
+- `git diff --check`: PASS.
+- `pnpm audit --prod`: FAIL with two known moderate React Router advisories;
+  patched upstream at `>=7.18.0`, upgrade intentionally deferred.
+
+No live Qwen benchmark, production deploy, remote migration, secret change,
+merge, PayOS/payment modification or T08-T12 Inventory Truth import occurred.
+Queue/HTTP compatibility and inventory mutation boundaries remain intact. The
+next action is to verify the final normal push SHA with `git ls-remote`, obtain
+code review, and only then consider a separately authorized benchmark/release.

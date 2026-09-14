@@ -70,6 +70,16 @@ Production reconciliation: COMPLETE - schema/code/health/traffic verified.
 Production DB migration: COMPLETE - exact ledger `0001` through `0023`.
 Production deployment: COMPLETE - version `df7225c9-6f20-4206-9f16-573de6a69c43`.
 Planner rollout: NOT STARTED.
+
+## OCR image optimization maintenance (2026-09-13)
+
+- Browser preprocessing candidate: **IMPLEMENTED LOCALLY, NOT DEPLOYED**.
+- Scope: in-memory resize cap (2,000 px), JPEG quality 0.82, smaller-output
+  guard, cancellation/session fencing and FileReader fallback.
+- Evidence: 11/11 focused privacy/image tests pass; sample receipt conversion
+  measured 81.9% smaller at unchanged 1,086x1,448 dimensions.
+- Gate: run browser/device OCR recall and latency smoke before committing or
+  promoting; do not alter PayOS, schema or provider secrets.
 OCR recovery status: COMPLETE - DEPLOYED AND VERIFIED.
 Next task: monitor OCR quality/latency and schedule the separate React Router upgrade.
 
@@ -147,3 +157,79 @@ has not changed remote D1, production secrets or Worker traffic.
 Candidate commits `ec87aec` and `56968ba` were merged through PR #17. Local and
 hosted validation, live Qwen smoke, migration, deployment and readiness receipts
 are complete; continue monitoring OCR quality and latency.
+
+## Qwen-only runtime / cost governance candidate (2026-09-13)
+
+| Area | Status | Evidence / next action |
+| --- | --- | --- |
+| Task taxonomy and logical role routing | IMPLEMENTED LOCALLY | `packages/ai/src/model-governance.ts`, `task-runtime.ts`; routing coverage is included in the full 1,606-test gate |
+| Qwen-only Worker composition | IMPLEMENTED LOCALLY | scan HTTP, queue and explanation use shared config; production vars set `AI_QWEN_ONLY=true`; legacy adapters are not constructed on this path |
+| Budgets, structured validation and escalation | IMPLEMENTED LOCALLY | bounded attempts/calls/tokens, Zod parse, quality gate, repair and model-capability fallback tests pass |
+| Cost/usage telemetry | IMPLEMENTED LOCALLY | `AIUsageLedger`, non-PII Worker usage logs, provider usage parsing, and shadow budget reservation |
+| Golden fixtures / offline harness | IMPLEMENTED LOCALLY | `tests/fixtures/ai-golden.json`; `pnpm ai:eval -- --dry-run` PASS with no live request |
+| Local application checkpoint | `21c442d` | `pnpm check` PASS: 1,606 tests / 95 files, lint/typecheck/migrations/build PASS |
+| Dependency audit | FOLLOW-UP REQUIRED | `pnpm audit --prod` reports two moderate `react-router` advisories; test the separate `>=7.18.0` upgrade |
+| Production deployment | NOT AUTHORIZED | Do not deploy; obtain review, benchmark and hosted CI evidence first |
+
+The candidate branch is based on canonical main SHA
+`05423f2ad675006a4c7913e696f1979b3fcaae59`; canonical main and production
+remain untouched. Reasoning and judge roles are disabled by default, and the
+rolling `qwen3.7-flash` alias is canary-only.
+
+## Qwen candidate recertification and publication checkpoint (2026-09-13)
+
+- Review result: **NO CONCRETE CODE DEFECT FOUND**. Retry ownership is bounded
+  by `QwenTaskRuntime`; operation token/call budgets are cumulative; production
+  Qwen-only composition fails closed; structured output, quality gates,
+  telemetry and Worker AbortSignal handling remain intact. Legacy providers are
+  retained only for explicit compatibility paths.
+- Focused command: `pnpm vitest run tests/unit/ai-runtime-governance.test.ts tests/unit/ai-router.test.ts tests/unit/qwen-provider.test.ts tests/unit/config-validation.test.ts tests/unit/meal-planning-explanation.test.ts tests/unit/scan-privacy.test.tsx tests/integration/scan-queue-retry-policy.test.ts tests/integration/scan-async-canary.test.ts` - **119 tests / 8 files PASS**.
+- Full command: `pnpm check` - **1,606 tests / 95 files PASS**; lint,
+  typecheck, migration replay and production build PASS. Remote D1 schema and
+  Week parity checks were intentionally skipped without release flags.
+- Offline command: `pnpm ai:eval -- --dry-run` - PASS; six fixture cases,
+  no live Alibaba/Qwen request. `git diff --check` - PASS.
+- Audit command: `pnpm audit --prod` - FAIL with two pre-existing moderate
+  `react-router` advisories, patched upstream at `>=7.18.0`; no dependency
+  upgrade is in this candidate.
+- Documentation updated in `docs/ai/CURRENT_STATE.md`,
+  `docs/ai/HANDOFF.md` and `docs/ai/QWEN_RUNTIME.md` to state the pending
+  post-unification T08-T12 Inventory Truth recertification and the unchanged
+  production boundary. Local `main` remains `f6a48a1`; canonical main remains
+  `github-frigo/main` at `05423f2`.
+- Publication status: **PUBLISHED FOR REVIEW** to `github-frigo` with a normal
+  non-force push; `git ls-remote` verified the published branch SHA matches the
+  local candidate, and canonical `main` remains unchanged at `05423f2`.
+  GitHub reported the repository relocation notice to `Tungjpstore/Frigo`, but
+  the push completed successfully. Next action is code review or a separately
+  authorized benchmark. Do not merge, deploy, migrate remotely or alter
+  production.
+
+## Qwen pre-unification hardening checkpoint (2026-09-13)
+
+- Application implementation/publication SHA: `f8468eaa7d7fed3cbcf5ac7e780eca07ad3d71e4`;
+  remote branch verification passed before this documentation checkpoint.
+- Final pre-documentation branch head (including the scheduler-failure
+  regression test) is `a145ef5`; this documentation checkpoint follows it.
+- **OCR capability:** centralized model capabilities prevent unsupported
+  `response_format`/`enable_thinking` on rolling `qwen-vl-ocr`; OCR remains
+  prompt-JSON plus application parsing, normalization, Zod and quality gates.
+- **Pricing:** Singapore low-context estimates are versioned
+  `estimate-2026-09-sg-low-context`; judge pricing is retained only as a
+  planning estimate. `estimatedCostUsd` remains non-authoritative.
+- **Image guard:** decoded raw base64/data URL payloads are rejected before
+  provider calls at 5 MiB defaults (`AI_MAX_IMAGE_BYTES` and
+  `AI_MAX_OCR_IMAGE_BYTES`, bounded 64 KiB-20 MiB). Remote URLs remain an
+  upstream storage/upload responsibility.
+- **Shadow lifecycle:** `backgroundExecutor` is optional and Worker HTTP routes
+  pass `executionCtx.waitUntil`; queue processing safely skips shadow without an
+  executor. Shadow remains off by default and retains budget reservation;
+  scheduler invocation failures cannot fail the primary response.
+- **Evidence:** focused **134/134 tests across 8 files PASS**; full
+  `pnpm check` **1,623 tests / 95 files PASS** with lint/typecheck/migrations/
+  build green; offline AI eval and diff check pass. `pnpm audit --prod` still
+  reports the two known moderate React Router advisories.
+- **Boundary:** canonical `main` and production are unchanged; no live Qwen
+  benchmark, deploy, remote migration, secret update, PayOS/payment change or
+  T08-T12 import. T08-T12 remains pending U01/U02. After normal publication,
+  verify the branch SHA and request review before any release action.

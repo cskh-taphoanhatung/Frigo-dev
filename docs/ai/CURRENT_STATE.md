@@ -225,3 +225,99 @@ deployment above; rollback is code-only to a schema-compatible SHA.
 The deployed receipt is anchored to main SHA
 `d1b06732f8a80db4e77986df31ff28d9f04641fa`; the pre-cleanup main head is
 `41d2de6bc76331322cc63e8038432b0b02f60da1`.
+
+## OCR image payload optimization (2026-09-13)
+
+- Local candidate `src/web/lib/private-image.ts` now decodes gallery images in
+  memory, caps the longest side at 2,000 px, and emits JPEG quality `0.82` only
+  when the derivative is smaller; small images are never upscaled.
+- The original `File` is not modified or persisted. Private-session fencing and
+  cancellation cover the async bitmap/canvas path; unsupported browsers fall
+  back to the existing `FileReader` data URL flow.
+- The attached 1,086x1,448 receipt measured 2,116,353 bytes as PNG. A local
+  JPEG quality-0.82 conversion measured 382,334 bytes (81.9% reduction) without
+  changing pixel dimensions. Provider OCR recall has not yet been re-run on the
+  browser-generated derivative.
+- Regression coverage: `tests/unit/scan-privacy.test.tsx` now has 11 passing
+  tests, including resize, no-upscale and cancellation cases.
+- Status: **COMMITTED LOCALLY / NOT DEPLOYED** at `ba3d872eea2d677e38f94adb8355f493c4c45852`.
+  Next action is device/browser OCR smoke with the attached receipt, then open
+  the release review for promotion.
+
+## Qwen runtime governance candidate (2026-09-13)
+
+- Working branch: `feat/qwen-ai-runtime-cost-router`.
+- Base SHA: `05423f2ad675006a4c7913e696f1979b3fcaae59` (`github-frigo/main`).
+  Canonical `main` is unchanged; no production deployment is authorized.
+- Application checkpoint: `21c442d` (`feat(ai): add governed qwen task runtime`).
+  Documentation remains a separate local checkpoint after this implementation.
+- Added `QwenTaskRuntime`, model-role governance, versioned prompt registry,
+  centralized pricing, bounded budgets/escalation, structured validation and
+  isolate-safe usage telemetry. Production Worker composition now explicitly
+  builds this path with `AI_QWEN_ONLY=true` and the role aliases in
+  `wrangler.jsonc`.
+- Scan HTTP, scan queue and meal explanation constructors share the same
+  server-side AI config helper. Legacy non-Qwen adapters remain only for
+  compatibility when Qwen-only mode is not selected; they are not constructed
+  by the production path.
+- Inventory boundary is intentionally limited to this repository: the final
+  T08-T12 Inventory Truth AI-to-observation-to-reconciliation certification is
+  pending later unification with `frigo-dev`; no code or migrations were
+  imported from that lineage.
+- Offline golden fixtures and `pnpm ai:eval -- --dry-run` were added. No live
+  Alibaba request is made by tests or CI. Optional shadow traffic is disabled
+  by default and now reserves its call/token budget before launching.
+- Final local verification: `pnpm check` PASS with 1,606 tests / 95 files,
+  lint, typecheck, migration replay and production build all PASS. The check
+  intentionally skipped remote D1 schema and Week parity because no release
+  flag was supplied. `pnpm ai:eval -- --dry-run` and `git diff --check` PASS.
+- Focused recertification command covered Qwen runtime/provider, router,
+  configuration, explanation, image privacy and scan queue paths: **119 tests /
+  8 files PASS**. No concrete runtime defect was found during the final review;
+  readiness already probes the additive scan columns from migration `0023`.
+- `pnpm audit --prod` remains a known non-blocking follow-up: two moderate
+  `react-router` advisories are fixed upstream at `>=7.18.0`; this task did not
+  change dependencies.
+- Candidate publication is complete: `feat/qwen-ai-runtime-cost-router` was
+  pushed normally to `github-frigo`, and `git ls-remote` verified the remote
+  SHA against the local candidate. Canonical `main` remains unchanged at
+  `05423f2`; no merge, remote migration or deployment occurred. Next action is
+  code review or a separately authorized Qwen benchmark.
+
+## Qwen pre-unification hardening (2026-09-13)
+
+- Application implementation/publication SHA: `f8468eaa7d7fed3cbcf5ac7e780eca07ad3d71e4`.
+- Final pre-documentation branch head (including the scheduler-failure
+  regression test) is `a145ef5`; the docs checkpoint is a subsequent commit.
+- The normal push was verified against `github-frigo/feat/qwen-ai-runtime-cost-router`
+  at that SHA; this documentation checkpoint is a subsequent local commit.
+- OCR capability metadata is centralized in `packages/ai/src/model-governance.ts`.
+  `qwen-vl-ocr` is treated as a rolling alias (`pinned=false`), omits both
+  provider `response_format` and `enable_thinking`, and continues application
+  JSON parsing, normalization, Zod validation and quality gates. Supported
+  Qwen multimodal models retain provider JSON mode.
+- Singapore low-context estimates are now versioned as
+  `estimate-2026-09-sg-low-context` for the fast/multimodal/OCR/reasoning tiers;
+  judge remains an explicitly documented planning estimate. Cost telemetry is
+  still estimated and reconstructable from model, token counts, cache counts and
+  pricing version.
+- Vision payloads are rejected before provider inference using decoded base64/data
+  URL byte estimates. Defaults are 5 MiB for `AI_MAX_IMAGE_BYTES` and
+  `AI_MAX_OCR_IMAGE_BYTES`, bounded to 64 KiB-20 MiB; remote URLs remain unknown
+  at this layer and rely on upstream storage/upload limits.
+- Shadow canary remains `AI_SHADOW_CANARY_PERCENT=0` by default. When enabled,
+  it reserves call/token budget and is scheduled only through the optional
+  `backgroundExecutor` (`ExecutionContext.waitUntil` in HTTP routes); queue and
+  other hosts without an executor skip shadow safely. Scheduler invocation
+  failures are isolated so the primary response remains successful.
+- Focused regression command: **134 tests / 8 files PASS**. Full `pnpm check`:
+  **1,623 tests / 95 files PASS**, lint/typecheck/migration replay/build PASS.
+  `pnpm ai:eval -- --dry-run` and `git diff --check` PASS. `pnpm audit --prod`
+  remains FAIL with the two pre-existing moderate React Router advisories
+  (patched upstream at `>=7.18.0`); no dependency upgrade was made.
+- No live Qwen benchmark, production deploy, remote migration, secret change,
+  merge, or PayOS/payment change was performed. T08-T12 Inventory Truth work
+  remains pending U01/U02 and is not imported here.
+- Branch publication target remains `feat/qwen-ai-runtime-cost-router`; verify
+  the final commit SHA with `git ls-remote` after the normal push. Next action:
+  code review, then a separately authorized benchmark/release decision.
