@@ -51,9 +51,9 @@ function revision(db: SqliteD1, owner = household): number {
 }
 
 describe('T09 additive schema and immutable command evidence', () => {
-  it('upgrades populated 0024 through 0025 and 0026 without rewriting retained evidence or historical stock', async () => {
+  it('upgrades populated 0025 through 0026 and 0027 without rewriting retained evidence or historical stock', async () => {
     const db = database(false);
-    for (const file of readdirSync('migrations').filter((name) => /^\d+.*\.sql$/.test(name) && name < '0025').sort()) {
+    for (const file of readdirSync('migrations').filter((name) => /^\d+.*\.sql$/.test(name) && name < '0026').sort()) {
       db.seed(readFileSync(`migrations/${file}`, 'utf8'));
     }
     db.seed(readFileSync('migrations/0029_inventory_adoption_authority.sql', 'utf8'));
@@ -93,7 +93,7 @@ describe('T09 additive schema and immutable command evidence', () => {
 
   it('upgrades populated T08 without altering historical rows or activating snapshots', async () => {
     const db = database(false);
-    for (const file of readdirSync('migrations').filter((name) => /^\d+.*\.sql$/.test(name) && name < '0024').sort()) {
+    for (const file of readdirSync('migrations').filter((name) => /^\d+.*\.sql$/.test(name) && name < '0025').sort()) {
       db.seed(readFileSync(`migrations/${file}`, 'utf8'));
     }
     db.seed(readFileSync('migrations/0029_inventory_adoption_authority.sql', 'utf8'));

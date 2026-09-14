@@ -20,7 +20,8 @@ describe('T13B isolated browser evidence fixtures', () => {
     for (const name of ['t13-scans', 't13-scenarios', 't13-state', 't13-operator-requests', 't13-reconciliation']) {
       const response = await fetchWorker(new Request(`https://example.test/__preview/${name}`, { method: 'POST' }),
         { ENVIRONMENT: 'production', APP_URL: 'https://example.test',
-          DB: {}, CACHE: {}, AI: {}, SCAN_QUEUE: {}, SCAN_QUEUE_MODE: 'async',
+          DB: {}, CACHE: {}, AI: {}, IMAGES: {}, SCAN_QUEUE: {}, SCAN_QUEUE_MODE: 'async',
+          QWEN_API_KEY: 'isolated-test-qwen-key',
           JWT_SECRET: 'isolated-test-signing-secret'.repeat(2), OTP_HASH_SECRET: 'isolated-test-otp-secret',
           TURNSTILE_SITE_KEY: 'isolated-test-site', TURNSTILE_SECRET_KEY: 'isolated-test-key' });
       expect(response.status).toBe(404);

@@ -31,7 +31,10 @@ export function todayLocalIso(now = new Date()): string {
 /** Days until an ISO date, floored at 0; null when the date is missing/invalid. */
 export function daysUntil(dateIso?: string): number | null {
   if (!dateIso) return null;
-  const target = new Date(dateIso).getTime();
+  const calendarDate = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateIso);
+  const target = calendarDate
+    ? new Date(Number(calendarDate[1]), Number(calendarDate[2]) - 1, Number(calendarDate[3])).getTime()
+    : new Date(dateIso).getTime();
   if (!Number.isFinite(target)) return null;
   const diff = Math.ceil((target - Date.now()) / (24 * 60 * 60 * 1000));
   return Math.max(0, diff);

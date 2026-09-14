@@ -1,10 +1,13 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
 const appVersion = process.env.npm_package_version || '0.1.0';
 const buildCommit = process.env.GIT_COMMIT || process.env.VITE_GIT_COMMIT || 'local';
 const buildTimestamp = process.env.BUILD_TIMESTAMP || new Date().toISOString();
+const testExecArgv = Number(process.versions.node.split('.')[0]) >= 25
+  ? ['--no-experimental-webstorage']
+  : [];
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -45,6 +48,12 @@ export default defineConfig({
           'vendor-icons': ['lucide-react'],
         },
       },
+    },
+  },
+  test: {
+    poolOptions: {
+      threads: { execArgv: testExecArgv },
+      forks: { execArgv: testExecArgv },
     },
   },
 });

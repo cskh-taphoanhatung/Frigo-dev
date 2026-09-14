@@ -18,7 +18,10 @@ vi.mock('../../src/web/stores/useWeekStore', () => ({
   useWeekStore: (selector: (state: { currentPlan: null }) => unknown) => selector({ currentPlan: null }),
 }));
 vi.mock('../../src/web/lib/ingredient-images', () => ({ getIngredientImage: () => '/ingredient.png' }));
-vi.mock('../../src/web/lib/private-session', () => ({ capturePrivateSession: () => () => true }));
+vi.mock('../../src/web/lib/private-session', () => ({
+  capturePrivateSession: () => () => true,
+  onPrivateSessionReset: () => () => {},
+}));
 vi.mock('../../src/web/lib/query-invalidation', () => ({ invalidateInventoryDependents: vi.fn() }));
 
 function flushEffects(): Promise<void> {

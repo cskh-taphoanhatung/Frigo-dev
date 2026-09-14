@@ -286,7 +286,12 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
             <div className="flex items-center gap-2 shrink-0">
               {isPending && (
                 <button className="underline font-semibold" onClick={() => { setPollError(null); setRetryIndex((value) => value + 1); }}>
-                  Kiểm tra lại
+                  Thử tải lại
+                </button>
+              )}
+              {!isPending && !isReady && pollError === MISMATCH_MESSAGE && (
+                <button className="underline font-semibold" onClick={() => setRetryIndex((value) => value + 1)}>
+                  Thử tải lại
                 </button>
               )}
               {!isPending && !isReady && (
