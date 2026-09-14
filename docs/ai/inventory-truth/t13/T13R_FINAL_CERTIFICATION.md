@@ -19,7 +19,7 @@ authorized next step is **INDEPENDENT T13 FINAL REVIEW #2** of the exact freeze.
 | Starting docs head (`hoplite/medma-164548ce`) | `83248df4f97d2110527a69e92a3ebe162aa71492` |
 | Certification branch (this thread's broker-authorized branch) | `hoplite/delos-f0bb1d04` |
 | **T13R_APPLICATION_FREEZE** | **`32ddbb4f2bb636fdcf201e9ca99c4689d3655477`** |
-| T13R_DOCS_HEAD | recorded by the parent handoff after the docs commit exists (a document cannot contain its own hash) |
+| **T13R_DOCS_HEAD** | **`42e0037f92104fd5dc3c89c633d91f67fa892724`** (this certification's docs-only commit; freeze→docs explicit application-path diff EMPTY, 12 documentation paths only). The publication receipt below is a later docs-only commit. |
 
 ### Why the freeze is `32ddbb4`, not `7e68e3b`
 
@@ -214,6 +214,22 @@ T13 is the local clean-detached gate set above.
   `writers-*/readers-*`, `playwright-full.log`, `porcelain.txt`) and the earlier
   `bd2f5f3` detached run in `/tmp/t13r-detached-logs-bd2f5f3/` (54/54, 3471/138).
 - Drivers: `/tmp/t13r-tools/detached-cert-v2.sh`, `/tmp/t13r-tools/focused-suites.sh`.
+
+## Publication receipt
+
+- `T13R_DOCS_HEAD=42e0037f92104fd5dc3c89c633d91f67fa892724` published through the
+  trusted broker to **`hoplite/delos-f0bb1d04`** and fetch-verified:
+  `LOCAL_HEAD == origin/hoplite/delos-f0bb1d04 == 42e0037` at publication time.
+  `git merge-base --is-ancestor 32ddbb4 42e0037` PASS; explicit application-path
+  diff `32ddbb4..42e0037` EMPTY; complete diff = `TASK_BOARD.md` + 11 `docs/ai/**`.
+- `origin/main == d1b06732f8a80db4e77986df31ff28d9f04641fa` after publication.
+- `hoplite/medma-164548ce` (the branch named in the certification packet) remains
+  at `83248df…`: the broker treats it as this thread's configured base branch and
+  refuses to publish to it, so `hoplite/delos-f0bb1d04` is the authorized
+  continuation. `83248df` is a strict ancestor of the freeze and docs head; a
+  maintainer can advance it by pure fast-forward
+  (`git push origin 42e0037…:hoplite/medma-164548ce`, no rewrite). No force push
+  was used anywhere.
 
 ## Safety
 

@@ -33,8 +33,12 @@ Retained failure: first full browser run on the `7e68e3b` tree was 3 failed/51
 passed (fixture collision, fixed by `bd2f5f3`). **NO HOSTED GITHUB CI STATUS FOR
 T13R_APPLICATION_FREEZE.** Record: [T13R_FINAL_CERTIFICATION.md](inventory-truth/t13/T13R_FINAL_CERTIFICATION.md).
 
-Only next step: **INDEPENDENT T13 FINAL REVIEW #2**. No merge/deploy/remote D1/
-PayOS/T14/repository reconciliation. `.hoplite/settings.json` overlay uncommitted.
+**T13R_DOCS_HEAD=`42e0037f92104fd5dc3c89c633d91f67fa892724`** is remote on
+`hoplite/delos-f0bb1d04` (local == remote verified; freeze→docs application-path
+diff EMPTY). `hoplite/medma-164548ce` remains at `83248df…` (broker base-branch
+restriction; pure fast-forward ancestor). Only next step: **INDEPENDENT T13 FINAL
+REVIEW #2**. No merge/deploy/remote D1/PayOS/T14/repository reconciliation.
+`.hoplite/settings.json` overlay uncommitted.
 
 ## Historical — T13R-A application checkpoint, 2026-09-13 (superseded)
 

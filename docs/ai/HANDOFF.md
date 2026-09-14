@@ -68,6 +68,15 @@ Vitest, not in the browser. `.hoplite/settings.json` overlay remains uncommitted
 Safety: main merged NO; production modified/deployed NO; remote D1 NO; PayOS NO;
 T14 NO; repository reconciliation NO.
 
+Publication (verified by brokered fetch after publishing): **T13R_DOCS_HEAD =
+`42e0037f92104fd5dc3c89c633d91f67fa892724`** is remote on `hoplite/delos-f0bb1d04`
+(`LOCAL_HEAD == REMOTE_HEAD`); freeze `32ddbb4` is its ancestor and the explicit
+application-path diff `32ddbb4..42e0037` is EMPTY. `origin/main` remains
+`d1b06732…`. `hoplite/medma-164548ce` stays at `83248df…` because the broker
+refuses to publish to this thread's configured base branch; it is a strict
+fast-forward ancestor and a maintainer may advance it without any rewrite. The
+commit recording this paragraph is a later docs-only receipt on the same branch.
+
 Next action: **INDEPENDENT T13 FINAL REVIEW #2** of exact freeze `32ddbb4` and its
 docs-only head. Nothing else is authorized.
 
