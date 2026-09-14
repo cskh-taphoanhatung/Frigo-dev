@@ -1,3 +1,21 @@
+# Takosan brand hardening — 2026-09-14 (independent descendant, NOT T13)
+
+**TAKOSAN_BRAND_HARDENED_APPLICATION=`ff63edfbde2857769d466b232d96b432c67f02d2`**
+on `hoplite/megara-hyblaia-6b723eb2` (previous app checkpoint `e37ee28`, docs head
+`d3d2446`). Independent brand review findings closed: P2-BRAND-1 palette (0
+residual `emerald-*`/legacy hex in `src/web`, `tailwind.config.js`, `index.html`;
+CameraViewfinder/planner/week cards on Takosan tokens; shadows re-tinted to
+rgb(46,125,91)), P2-BRAND-2 generator (`sharp@0.33.5` exact direct devDependency,
+`pnpm brand:icons`, regenerated outputs byte-identical), P3 absolute `og:image`,
+P3 full `pnpm lint` PASS. Legacy `public/frigo/*` assets, `frigo_*`/`X-Frigo-*`/
+`@frigo/*` identifiers, `/api/health` `app: 'Frigo'` and domain
+`frigo.tungjpstore.net` intentionally unchanged. No diff in `src/worker/`,
+`packages/db/`, `migrations/`, `wrangler.jsonc`. Gates at `ff63edfb`: diff-check,
+typecheck, full lint, build PASS; brand tests 16/16; Vitest **3487/139**; browser
+**60/60**; QA 360/390/430 0 broken assets / 0 overflow. T13 freeze `32ddbb4`,
+`42e0037`, `897102b` and main `d1b0673` unchanged; Review #2 still targets `32ddbb4`.
+Details: [docs/brand/TAKOSAN_MIGRATION.md](../brand/TAKOSAN_MIGRATION.md).
+
 # Takosan brand branch (independent descendant) — 2026-09-14
 
 ## Brand branch state — NOT part of the T13 certification

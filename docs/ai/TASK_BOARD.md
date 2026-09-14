@@ -1,3 +1,13 @@
+# Takosan brand hardening board — 2026-09-14
+
+- **TAKOSAN BRAND HARDENING COMPLETE — hardened checkpoint `ff63edfb` published**
+  on `hoplite/megara-hyblaia-6b723eb2` (after `e37ee28` app / `d3d2446` docs).
+  P2-BRAND-1 CLOSED, P2-BRAND-2 CLOSED, P3 OG CLOSED, full lint PASS. Gates:
+  Vitest 3487/139, browser 60/60, QA matrix clean. T13 freeze and main unchanged.
+- Next: final brand review of `ff63edfb`. Later, separate task: legacy
+  `public/frigo/{brand,app-icons,illustrations}` cleanup and maintainer domain /
+  `/api/health` identifier decision. No merge/deploy/remote D1/PayOS/T14.
+
 # Takosan brand branch board — 2026-09-14 (independent of T13 board below)
 
 - **TAKOSAN BRAND MIGRATION — application checkpoint `e37ee28` published** on

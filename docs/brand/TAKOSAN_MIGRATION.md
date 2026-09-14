@@ -11,8 +11,10 @@ Review #2 must still review exact freeze `32ddbb4`.
 | Repository ID | 1368281478 (`vn-blo/Frigo-dev`) |
 | Brand branch | `hoplite/megara-hyblaia-6b723eb2` (Hoplite broker-authorized name; `feat/takosan-brand-refresh` was the preferred name but the broker only publishes the thread branch) |
 | TAKOSAN_BRAND_BASE | `897102b6816c22af2e6a49f29662690e3e3206e0` |
-| TAKOSAN_BRAND_APPLICATION_CHECKPOINT | `e37ee2808a50a7195dc90a2e7bb01be639aa186b` |
-| TAKOSAN_BRAND_DOCS_HEAD | the docs-only commit that adds this file |
+| TAKOSAN_BRAND_APPLICATION_CHECKPOINT (initial) | `e37ee2808a50a7195dc90a2e7bb01be639aa186b` |
+| TAKOSAN_BRAND_DOCS_HEAD (initial) | `d3d24462648199831086705b0451f103e593def7` |
+| **TAKOSAN_BRAND_HARDENED_APPLICATION** | `ff63edfbde2857769d466b232d96b432c67f02d2` — current brand application authority |
+| TAKOSAN_BRAND_HARDENED_DOCS | the docs-only commit that adds the hardening section below |
 | Protected main | `d1b06732f8a80db4e77986df31ff28d9f04641fa` (unchanged) |
 
 ## Source of truth
@@ -39,11 +41,13 @@ public/takosan/ui-icons/   home, fridge, scan, recipe, meal-plan, calendar, shop
 ```
 
 PNG icons are derived deterministically from the kit's 1024px
-`takosan-app-icon-light.png` by `scripts/generate-takosan-icons.mjs` (sharp,
-lanczos3). The maskable icon composites the kit adaptive background + foreground
-so the mascot stays inside the 80 % safe area. The OpenGraph card rasterizes the
-kit horizontal-lockup SVG onto a 1200×630 cream canvas. Re-run with
-`NODE_PATH=node_modules/.pnpm/sharp@0.33.5/node_modules node scripts/generate-takosan-icons.mjs <kit-dir>`.
+`takosan-app-icon-light.png` by `scripts/generate-takosan-icons.mjs` (`sharp`
+0.33.5, a direct exact devDependency, lanczos3). The maskable icon composites
+the kit adaptive background + foreground so the mascot stays inside the 80 %
+safe area. The OpenGraph card rasterizes the kit horizontal-lockup SVG onto a
+1200×630 cream canvas. Re-run with `pnpm brand:icons <kit-dir>` (or
+`node scripts/generate-takosan-icons.mjs <kit-dir>`); regeneration is
+byte-stable (verified twice against the committed files).
 
 `public/frigo/ingredients` and `public/frigo/recipes` are content, not brand, and
 were not moved. `public/frigo/{brand,app-icons,illustrations}` remain on disk
@@ -65,12 +69,16 @@ the migration is accepted.
   `--color-surface`. `frigo-tokens.css` now imports it and keeps every
   `--frigo-*` name as a compatibility alias (do not delete until proven).
 - `tailwind.config.js` — `takosan.{coral,green,navy,cream,mint,yellow}` colours
-  and Nunito for `heading`/`body`/`sans`. The legacy `frigo.*` palette is kept.
+  (with derived `green.hover/deep`, `mint.hover/deep`, `cream.deep/line/shade`,
+  `coral.deep/soft` shades) and Nunito for `heading`/`body`/`sans`. The legacy
+  `frigo.*` names are kept but now resolve to Takosan values, and
+  `shadow-float` / `shadow-glow` derive from Takosan green `rgb(46, 125, 91)`.
 
 ## Surfaces changed
 
 index.html (title, description, favicon SVG + PNG, apple-touch-icon 180,
-theme-color `#2E7D5B`, OG title/description/image, Nunito), `manifest.json`
+theme-color `#2E7D5B`, OG title/description, absolute
+`og:image=https://frigo.tungjpstore.net/takosan/brand/takosan-og.png`, Nunito), `manifest.json`
 (name/short_name Takosan, icons, theme/background), `sw.js` (`takosan-pwa-v2`,
 Takosan precache, `/takosan/` cache-first; old caches are evicted on activate by
 the existing non-destructive `keys().filter` logic), Landing, Onboarding (splash
@@ -127,12 +135,45 @@ selectors are untouched.
   360/390/430): **60 passed / 60** in 4.0 min — all T13B / T13R-A / T13R-B
   truth, ownership, conflict and presentation cases hold on the Takosan shell.
 
+## Hardening pass — `ff63edfb` (closes independent brand review findings)
+
+Review result on `e37ee28`: P0 0, P1 0, brand-blocking P2 2, P3 2. All closed:
+
+| Finding | Resolution |
+| --- | --- |
+| **P2-BRAND-1** incomplete canonical palette migration | Every runtime `emerald-*` / legacy Frigo hex occurrence under `src/web` (243 lines across 42 files at `d3d2446`) was classified and migrated. `bg-emerald-600/700` → `bg-takosan-green` (hover → `takosan-green-hover`), `bg-emerald-50/100/200` → `takosan-mint` / `-hover` / `-deep`, `text-emerald-600/700` → `text-takosan-green`, `text-emerald-800/900/950` and any green text on a mint surface → `text-takosan-green-deep` (AA contrast), `border-emerald-100/200` → `border-takosan-mint-deep`, `focus:*` / `ring` / `accent` / `fill` → `takosan-green`, light emerald on dark cards (`text-emerald-100/300/400`) → `text-takosan-mint` or `text-white/90`. CameraViewfinder: corners green, laser coral (`shadow 0 0 8px rgba(255,123,107,.85)`), shutter glow `rgba(46,125,91,.45)`, soft states mint; no lifecycle/OCR/routing/selector change. Shadows `float`/`glow` re-tinted to `rgba(46,125,91,…)`. **Residual after pass: 0 `emerald-*`, 0 legacy hex in `src/web`, `tailwind.config.js`, `index.html`** (guarded by a unit test). Intentional non-green semantics left as-is: rose/red danger, amber warning, slate neutral, Google logo colours, `bg-slate-900` toasts. |
+| **P2-BRAND-2** generator used transitive `sharp` | `pnpm add -D --save-exact sharp@0.33.5`; `import sharp from 'sharp'`; masters validated; `pnpm brand:icons` script. Regenerated all 13 outputs twice → SHA-256 identical to the committed `e37ee28` assets (determinism PASS, no drift). Lockfile: only intended `sharp` importer entry plus pnpm 10.26.0 normalising `optional: true` for now-direct deps and dropping `libc:` markers it no longer receives from the abbreviated registry metadata (pnpm/pnpm#9871; re-serialising the untouched `HEAD` lockfile with `pnpm install --lockfile-only` produces the same drop, so it is tooling normalisation, not a resolution change). `pnpm install --frozen-lockfile` PASS. |
+| **P3** relative `og:image` | Absolute `https://frigo.tungjpstore.net/takosan/brand/takosan-og.png`; `og:url` unchanged; domain remains the temporary Frigo host by maintainer instruction. |
+| **P3** full lint not run | `pnpm lint` (full `eslint .`) PASS. |
+
+Also fixed during the pass: a `tailwind.config.js` brace regression introduced
+while re-pointing the `frigo.*` palette was caught by `pnpm build` and by the new
+test that imports the config directly.
+
+Intentionally retained: `public/frigo/{brand,app-icons,illustrations}`,
+`public/frigo/{ingredients,recipes}`, `/assets/frigo-logo.svg`, all `frigo_*`
+localStorage keys, `X-Frigo-*` headers, `@frigo/*` aliases, `/api/health`
+`app: 'Frigo'`, domain `frigo.tungjpstore.net`. T13 freeze `32ddbb4` unchanged.
+
+Checks at `ff63edfb`: `git diff --check` clean; `pnpm typecheck` PASS;
+**`pnpm lint` (full) PASS**; `pnpm build` PASS (built CSS contains no
+`#059669`/`#0f3d2e`/`#22c55e`/`rgba(5,150,105)`); brand tests **16/16**;
+`CI=1 pnpm test` **3487 passed / 139 files**; `CI=1 pnpm test:browser` **60
+passed / 60** (serial, chromium 360/390/430, 5.5 min); brand QA matrix
+360/390/430 × landing/onboarding/auth/home/fridge/scan/planner/profile: **0
+broken asset requests, 0 horizontal overflow**; scan viewfinder, planner and
+week cards render the Takosan palette (screenshots private, not committed).
+
 ## Follow-ups (not done here)
 
 - Remove `public/frigo/{brand,app-icons,illustrations}` and `public/assets/
   frigo-logo.svg` once brand review accepts the migration.
 - Replace the remaining Lucide `Camera`/`Sparkles` in secondary surfaces with
   kit icons only where it reinforces brand; keep generic system icons.
+- `pnpm-lock.yaml` `libc:` markers: pnpm 10.26 re-serialisation drops them for
+  every platform-specific optional package; harmless on glibc/musl selection
+  (pnpm ≥ 11.6 infers platform fields) but worth re-adding via a newer pnpm
+  when the toolchain is next bumped.
 - Dark-background lockup is used on the Splash; a dedicated dark theme is out of
   scope.
 - Real replacement domain and any `/api/health` `app` rename need an explicit

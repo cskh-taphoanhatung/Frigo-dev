@@ -1,3 +1,26 @@
+# Takosan brand hardening handoff — 2026-09-14
+
+Task: final hardening pass on the Takosan brand migration (palette consistency,
+reproducible icon tooling, OG/PWA polish). Status: **TAKOSAN BRAND HARDENING
+COMPLETE — READY FOR FINAL BRAND REVIEW.** Branch `hoplite/megara-hyblaia-6b723eb2`;
+starting docs head `d3d2446`; previous app checkpoint `e37ee28`;
+**TAKOSAN_BRAND_HARDENED_APPLICATION=`ff63edfbde2857769d466b232d96b432c67f02d2`**;
+the docs-only commit containing this section is `TAKOSAN_BRAND_HARDENED_DOCS`.
+
+Exact checks at `ff63edfb`: `git diff --check` clean; `pnpm typecheck` PASS;
+`pnpm lint` (full `eslint .`) PASS; `pnpm build` PASS; brand tests
+`tests/unit/takosan-brand.test.tsx` 16/16; `CI=1 pnpm test` **3487 passed /
+139 files**; `CI=1 pnpm test:browser` **60 passed / 60** (5.5 m, run after
+Vitest, never concurrently); Playwright brand QA 360/390/430 × 8 routes: 0
+broken asset requests, 0 horizontal overflow. Generator determinism: two
+regenerations SHA-256-identical to committed assets. Failures: none. One
+regression caught and fixed before commit (missing brace in `tailwind.config.js`
+surfaced by `pnpm build`; now also covered by a test that imports the config).
+
+Next action: final brand review of `ff63edfb`. Do not merge to main, deploy,
+touch remote D1 or PayOS, start T14 or reconciliation. Details in
+[docs/brand/TAKOSAN_MIGRATION.md](../brand/TAKOSAN_MIGRATION.md).
+
 # Takosan brand handoff — 2026-09-14 (independent of the T13 handoff below)
 
 Task: user-facing brand migration Frigo → Takosan from the supplied brand kit.
