@@ -68,6 +68,15 @@ describe('AI Router & Schema Verification', () => {
     })).toThrow(`${AI_SCAN_NO_USABLE_ITEMS}`);
   });
 
+  it('preserves missing confidence as unknown instead of fabricating or rejecting it', () => {
+    const result = applyVisionScanQualityGate({
+      items: [{ raw_name: 'Cà chua', estimated_quantity: 2, unit: 'piece', storage: 'fridge' }],
+    });
+    expect(result.items).toEqual([
+      { raw_name: 'Cà chua', estimated_quantity: 2, unit: 'piece', storage: 'fridge' },
+    ]);
+  });
+
   it('rejects receipt results containing only placeholder lines', () => {
     expect(() => applyReceiptScanQualityGate({
       merchant_name: 'Siêu thị',

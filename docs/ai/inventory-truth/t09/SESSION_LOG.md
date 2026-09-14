@@ -1,0 +1,277 @@
+# T09 session log (append-only)
+
+## 2026-09-11 — final FEFO v2 backfill compatibility
+
+Verified startup safety on `hoplite/himera-6d3eda84` (successor at exact docs HEAD
+8552fe5337245f2ac8349933c02946bf7d9dcc8f): df73bc0/e796f69/2742738/9bf9ac0 ancestors, main d1b06732f8a80db4e77986df31ff28d9f04641fa unchanged,
+29 ahead/0 behind, settings overlay preserved uncommitted. Audited the full FEFO v2
+authority chain and proved four equal-ID dependencies: the TS admission guard and
+replay's `legacyItemId === after.id` in `inventory-lot-commands.ts`, the lot CAS
+default binding, and 0027's receipt (`l.id IS NOT l.legacy_item_id`, strict prestate
+parity) and event (`l.id = l.legacy_item_id`) triggers. Wrote the 13-test permanent
+matrix first and reproduced the P1 on the pre-fix tree (all DRIFT_DETECTED at
+prepareInventoryFefoCommand:818, zero mutation). Proved TS-only insufficient, then
+added additive 0029 (authoritative adoption-mapping checks + exact kg/l prestate
+parity) and the minimal executor fix. First 0029 draft nested the checks inline and
+real local D1 aborted every receipt insert with `Expression tree is too large
+(maximum depth 100)`; restructured the checks as separate shallow trigger statements
+and bisected the failure through the D1 worker before publish. Flipped the previous
+fail-closed admission test to the fixed success path; extended schema tests (0029
+upgrade replay preserves 0027 objects; captured synthetic batch accepted only with
+adoption evidence), migration smoke (now replays 0028+0029), the D1 schema gate
+(requires 0029) and two real local-D1 workerd tests. Focused 1,237/15 (59.52s);
+full 2,926/108 (118.20s); D1 44/44; lint/typecheck/build/29-migration smoke/local
+schema/diff PASS. Application `bf391c5fdcdd9e9c2f2257db515815e082cb4381` published/fetched with equality, then a
+clean detached worktree at that exact SHA repeated every gate (2,926/108 in 119.10s,
+44 D1, empty git status). NO GITHUB CI STATUS. Bounded caller audit: no HTTP route
+invokes v2 FEFO; adopted cooking already uses synthetic-compatible v1 commands.
+Remaining P0/P1: NONE. Verdict: READY FOR FINAL MAIN MERGE REVIEW; no main merge,
+deployment, remote D1, PayOS or T10 performed.
+
+## 2026-09-11 — receipt-backed backfill compatibility
+
+Verified f06289b docs HEAD, e796f69/2742738/9bf9ac0 ancestors, unchanged main d1b0673,
+27 ahead/0 behind, settings hash preserved. Added permanent real-adoption regressions
+before source fix; both paths failed with 500 DRIFT_DETECTED. Proved FK/immutable
+mapping and exact adoption effects are authority, and v1 SQL already supports both IDs.
+Fixed parity admission plus CAS/event/replay/composition equal-ID assumptions in one
+application file. No migration/adoption executor/route changes. Scoped shared-caller
+check preserves the v2 FEFO SQL restriction and records it as the remaining P1.
+Application df73bc035c2938b6fd082c57f6bca89a82d8e443 published/fetched, then clean
+detached full verification PASS. 619 focused/nine files; 2,910 full/107; 42 D1;
+all lint/typecheck/build/migration/schema gates PASS. Independent scoped 179/four PASS.
+One full attempt discovered the prior ignored diagnostic as an executable test;
+archived it as text, retaining its bytes and replacing its role with 43 permanent
+regressions. No test configuration/coverage was weakened. Exact chronology and
+clean runtimes: FINAL_PATCH_VERIFICATION.md. Status NOT READY FOR MAIN; next step
+is separately authorized v2 FEFO compatibility/schema work. No merge/deploy/T10.
+
+## 2026-09-11 — final targeted PATCH parity fix
+
+Started at verified `6999b64aff0786827637b0a85f2de28c196ca288`, 25 ahead/0 behind
+unchanged `d1b0673` main in vn-2e/frigo-dev. Required ancestors and preserved
+settings hash passed. Both reported defects reproduced before source edits:
+changed storage replayed 200; category-only PATCH left category/version unchanged.
+Published/fetched application `e796f695bdb4228853992cdedc4e3cecf3437adb` implements
+full presence-sensitive intent and immutable response evidence plus atomic metadata
+parity. 515 focused/six files, 2,865 full/106, 40 isolated local-D1 and all
+static/build/schema/migration gates passed. Full clean-source receipt and exact
+commands/failures: `FINAL_PATCH_VERIFICATION.md`.
+Bounded fixture setup also reproduced an inherited backfilled-lot equal-ID mapping
+refusal (500 DRIFT_DETECTED); no unrelated adoption/migration fix attempted.
+Recommendation is NOT READY FOR MAIN pending that separate P1, not a renewed
+whole-T09 review. No protected path or external workspace overlay change.
+
+## 2026-09-11 — independent review follow-up
+
+Verified remote `vn-2e/frigo-dev`, branch `hoplite/kydonia-2785bb72`, HEAD
+`999fab5`, main `d1b0673`, 23 ahead / 0 behind, with `aa44d2a` and `9bf9ac0` as
+ancestors. The pre-existing `.hoplite/settings.json` overlay remained unmodified and
+excluded. Reproduced/fixed adopted PATCH response-loss replay and published
+`27427383d61930ea1b67ccbc1d69bb1cc069f931`; exact/altered/new-key behavior has a
+regression test. Full 2,838-test suite, lint/typecheck/build and migration smoke PASS.
+
+## 2026-09-11 — GLM 5.3 flash completes T09F/T09G/T09H
+
+Started from the published safety checkpoint `aa43e069edbff7843e9eb7532ff386b27be96a17`
+on `hoplite/kos-2a686759` (verified: branch/HEAD/ancestry/21-ahead-0-behind). Read the
+full authority packet before editing. Implemented atomic adoption (0028 receipts +
+executor), writer admission for every inventory mutation, functional adapters for
+manual/scan/shopping/cook, and the G matrix. 2,837 tests / 105 files PASS (155s), 38 isolated real local-D1 tests, lint, typecheck, build, 28-migration smoke and local D1 schema gate PASS.
+Publication to the configured base was refused by the platform (read-only base);
+the thread's own successor branch **hoplite/kydonia-2785bb72** published the
+application checkpoint `9bf9ac0fe7b5e0d39615f39ae5cc30f84569af2f` and fetched equality PASS — the same successor
+pattern this transfer authority documents. Docs-only freeze commit follows; the
+docs SHA is recorded in REVIEW_INDEX/CONTINUATION, never self-contained.
+
+## 2026-09-11 — canonical transfer recovery and F safety checkpoint
+
+Verified `vn-2d/frigo-dev`, fetched all enumerated branches/tag, proved consecutive
+main→T08→A–E→interrupted F ancestry and exact required heads; fsck PASS. Main
+d1b0673 unchanged; interrupted continuation 66858c5 was 18 ahead / 0 behind.
+The prior continuation is read-only; one existing successor `hoplite/kos-2a686759`
+started exactly at 66858c5. Initial settings overlay preserved in named stash;
+baseline 2,685 tests and all static/build/migration gates PASS.
+
+Recovery docs 2b138cc were published/fetched before implementation. Application
+aa43e069edbff7843e9eb7532ff386b27be96a17 now publishes pure adoption preparation,
+legacy mapped-authority fences, scan/shopping snapshot fences, and robust scan/
+shopping retry recovery. Final 1,347 focused / 2,808 full tests and all static/
+build/local migration gates PASS, including 38 actual D1 tests. Two scoped review
+P2 findings corrected and re-reviewed. Separate fetched-source clean tree: 1,347
+tests and typecheck PASS. Full command/failure chronology: VERIFICATION.md.
+
+F remains active. Next: atomic adoption receipt/marker, functional adapters,
+retained scan intent/result, then G/H. No freeze or final review readiness. Main,
+prior continuation, frozen D, production/staging, remote D1 and PayOS untouched.
+
+## 2026-09-10 — initial publication and review packet
+
+Repository identity initially blocked: prompt said Tungjpstore/frigo-dev; origin
+was vn-2b/frigo-dev. User explicitly confirmed vn-2b/frigo-dev. No remote rewrite.
+Started on authorized hoplite/euhesperides-d77023a5 at exact fetched T08
+8f8788c1a0c9e486657751ef3875a5baa5334dec. Published this SHA before implementation;
+broker fetch and shell equality PASS. Main anchor d1b0673; no main writes.
+
+Pre-existing `.hoplite/settings.json` overlay preserved, not committed or lost:
+named local stash 839a8dc67df59945c9ea0f19937f7bdff5b1df7b. It is workspace-only,
+not part of T09. Versioned setup reinstated without modifying tracked config;
+manual execution succeeded after managed setup tool claim failed.
+
+T09A audit in progress; initial packet and lifecycle policy checkpoint created.
+No T09 application changes or fresh test claims. Exact next action: complete the
+writer and D1 atomicity audit, run T08 focused baseline, commit/publish T09A before
+implementing command contracts. Phase checkpoints require targeted tests, docs,
+diff check, commit/publish/fetch and local/remote SHA equality.
+
+LEGACY_FRIGO_MAIN_SHA_OBSERVED=UNAVAILABLE (repository-bound tool authority).
+Production deltas intentionally not reconciled. Legacy Frigo, development main,
+production/staging, remote D1 and PayOS untouched. T10 not started.
+
+## T09A — audit/lifecycle checkpoint
+
+Initial packet e56f163 published and fetched. Fresh T08 baseline 130/130 PASS.
+Audit found six live backend writers, offline scan fallback and guest transfer;
+no live auth demo stock seed or separate scan-correction route. Full map includes
+non-live helpers/fixtures/jobs. DEC-008 fixes lifecycle before implementation.
+D1 transaction design must force CAS misses to abort inside batch; full candidate
+snapshot must fence FEFO phantoms. See MIGRATION_NOTES for actual docs/mechanism.
+T09A complete after this docs checkpoint is published. Next: T09B pure command
+contracts/tests; no persistence implementation before that phase checkpoint.
+
+## T09B — verified command contracts
+
+T09A c212ded published/fetched before implementation. Added six pure command
+contracts/planners and 202 unit tests; combined T08/T09 332/332 PASS, targeted
+eslint and typecheck PASS. Parent reviewed domain source and reran combined tests.
+T08 schemas/backfill remain unchanged. DEC-009 records the audited additive
+persistence design before T09C. No routes or live writers changed yet.
+Next: publish/fetch T09B checkpoint, then implement T09C atomic repository/schema
+with narrow receipts/mapping/revision fence. T09 is IN_PROGRESS, not review-ready.
+LEGACY_FRIGO_MAIN_SHA_OBSERVED remains UNAVAILABLE; no legacy/main/production action.
+
+## T09C — native atomic repository and schema checkpoint
+
+Started from published/fetched 5d10bc5. Added internal native executor and additive
+0024 schema. Authenticated membership is checked before replay and inside mutation
+batch; whole-household revision fences stale snapshots, and lot/projection CAS
+guards abort the batch. Stored receipt/result, exact projection and immutable
+event commit together. Native CREATE/USE/DISCARD/OPEN/MOVE/CORRECT implemented;
+no HTTP exposure, FEFO, historical adoption or legacy-writer cutover.
+
+Parent review corrected terminal legacy freshness (zero -> out_of_stock; nonterminal
+unchanged-expiry commands preserve prior status). It also added a household-wide
+ADOPTION_REQUIRED gate so native activation cannot strand legacy-only stock behind
+the post-activation backfill guard. Tests retain no-effect assertions while updating
+error precedence to this deliberate gate. T08 historical backfill is unchanged.
+
+Runtime issue: D1 rejected full integrity_check with SQLITE_AUTH. Supported D1
+quick_check/FK checks now run alongside unchanged full SQLite integrity checks.
+Initial schema-proof D1 data was preserved under ignored .hoplite/artifacts/t09/
+before a fresh final-schema local replay. No remote DB operation occurred.
+
+Targeted/native/runtime and full-suite evidence is in VERIFICATION.md. Next essential
+milestone: commit/publish/fetch C, then T09D authority hardening and T09E FEFO before
+T09F adoption/writer integration. T09 remains IN_PROGRESS, not independent-review-ready.
+
+## T09C publication receipt
+
+13133b3aad214f2dbe7bdfb0c6ad9a70483d32de committed, published and fetched.
+Final C gates: 507 focused; full 1,994 / 93 files; lint/typecheck/build;
+24-migration replay/populated upgrade/local schema; diff checks PASS. Fresh
+fetched-source detached worktree also passed 507 tests and was left clean after
+removing its dependency-only symlink. Main d1b0673 and T08 8f8788c unchanged.
+No remaining C verification failure. Full T09 still awaits D–H; do not confuse
+this native-core code checkpoint with final application freeze or readiness.
+
+## T09D implementation and final local gates
+
+Resumed at published C 13133b3, reviewed pending documentation, committed/published/
+fetched cc3121d9ec9a11f0b0ed0cbbe3ad8199083ce144 and proved local/remote equality
+before D edits. Canonical repository and all exclusion boundaries retained.
+
+D adds strict historical replay validation, additive 0025 event binding and 0026
+written-poststate coupling. Review reproduced three evidence-integrity gaps;
+all are fixed and covered by negative tests plus valid controls. 0025 was already
+locally applied when the paired-evidence gap was found, so 0026 is additive.
+No applied schema, historical event or retained receipt was rewritten by migration.
+
+Final parent-executed gates: 1,031 focused / 8 files; 2,518 full / 95 files;
+lint/typecheck/build; 26-migration replay, populated upgrade, local D1 apply/schema;
+diff/protected-path checks PASS. Exact commands, timestamps, intermediate gates and
+corrected findings are in VERIFICATION.md. Only docs changed after these final gates.
+Next: publish/fetch/verify this D checkpoint and run fetched-source focused/typecheck
+proof. E FEFO is the next implementation phase, followed by F writer integration;
+G/H and final T09 readiness remain pending. No T10 or protected-surface changes.
+
+## T09D publication receipt
+
+b036b257a8ad775dd6f1a445dcfdcce38a6babf1 committed/published/fetched; exact
+local/origin equality PASS. Authorized main and T08 fetches remain d1b0673 and
+8f8788c respectively. Separate fetched-source worktree passed 1,031 tests / 8
+files and both TypeScript projects, then verified clean after dependency symlink
+removal. Full verification is in VERIFICATION.md. This following docs-only
+checkpoint finalizes the milestone handoff. T09 stays IN_PROGRESS, next T09E;
+no unresolved D check failure, no PR/deployment/main/remote D1/PayOS operation.
+
+## 2026-09-11 — writable continuation recovery
+
+Fresh remote T09D base 811f7e8463303e010199741d66f88ab8a817212d verified via broker
+and provider evidence in green-1a/frigo-dev. Application remains b036b25; only
+published documentation follows it. Initial base publication was denied because
+Hoplite protects its configured base. User then explicitly authorized generated
+successor hoplite/orchemenos-e002591e. Switched to that already-existing branch
+at exact base HEAD; merge-base equality PASS. No history rewrite or base push.
+Pre-existing settings overlay preserved in named stash; CONTINUATION.md records it.
+Frozen install, 835+196 focused tests (all eight intended files) and typecheck PASS.
+No application change. Publish/fetch this docs-only checkpoint before E source;
+subsequent receipt will record its exact SHA. Main/legacy/remote D1/PayOS untouched.
+
+## 2026-09-11 — T09E local multi-effect FEFO checkpoint
+
+Successor docs 8bf32ed4e41ed3341215c6376e0c13ef13043616 published/fetched before
+source work; exact frozen-base ancestry retained. E adds pure deterministic FEFO
+USE, bounded 1–32-effect atomic persistence, v2 receipt/event replay and additive
+0027; historical v1 predicates and 0023–0026 remain unchanged. Snapshot/JSON limits
+and exact unit support are recorded in DEC-011. No adoption or live writer exposure.
+
+Fixed real D1 expression-depth failure, SQL NULL/missing JSON fail-open and review
+P1 fingerprint-mode/result-envelope classification before payload comparison.
+Valid historical v1 collisions remain conflicts. Post-replay-fix completed logs:
+1,170 focused / 11 files, 2,657 full / 98 files, lint/typecheck/build/migration smoke
+PASS; fresh isolated local D1 27-migration apply and schema gate PASS. A later
+ordered/renumbered receipt finding added an intended-result completion fence and
+one schema regression: 131 focused / 3 files PASS. Earlier full totals do not
+cover this later change; final regates/review and publication remain pending.
+
+Docs-only follow-up inspected logs and current implementation, updated handoffs,
+and reran read-only isolated D1 schema plus diff/0023–0026 immutability/ancestry
+checks. No source edits or commits by the docs agent; existing parent changes,
+including DEC-011 and the initial manifest audit, preserved. Exact commands and
+counts: VERIFICATION.md. E has no published application SHA yet. Next: finalize
+E gates/review, commit/publish/fetch successor and prove equality before F.
+F–H not complete; no application freeze, review-readiness, UI/browser, main,
+legacy production, deployment, remote D1, PayOS or T10 claim.
+
+## 2026-09-11 — E published; F guest safety verified
+
+Final E review/gates supersede the intermediate pending statuses above. E code
+`9bd1e6bc000cd2e94121469babb1a5eb63a5047f` published/fetched; local/remote equality
+and exact frozen-D ancestry PASS. Tests: 1,172 focused / 2,659 full, all static/
+build/local migration gates PASS. Separate fetched-source worktree 1,172 focused
+and typecheck PASS, then dependency symlink and temporary worktree removed.
+
+F first bounded change removes unsafe guest ownership transfer and false migration
+success. Explicit valid-OTP 409 preflight is independent of stock state, so no
+adoption/preflight race can reach the deleted writer. No OTP consumption, account
+activation/session cookie, lot/event/receipt/location/shopping move or business
+cache copy occurs. Existing rate-limit accounting and invalid-OTP defenses remain.
+Guest/auth/outbox focused 143 / 5 PASS; full 2,685 / 99 PASS; lint/typecheck/build/
+27-migration smoke/diff PASS. Exact commands and one corrected test-contract
+failure are in VERIFICATION.md. JWT expectations retained; renamed obsolete
+unit-test labels are not a substitute for the 25 real route proofs.
+
+F is not complete: explicit adoption plus manual/scan/shopping/cook adapters and
+all-writer fences remain required, followed by G races and H freeze/review packet.
+No main/frozen-base/legacy/production/remote D1/PayOS change or T10 work. Next:
+publish verified F safety checkpoint; continue `F_ADOPTION_PLAN.md`.

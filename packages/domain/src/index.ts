@@ -583,3 +583,5 @@ export * from './week';
 export * from './foundation';
 export * from './meal-planning-api';
 export * from './meal-shopping-api';
+// T11 canonical inventory read model
+export * from './inventory-read-authority';

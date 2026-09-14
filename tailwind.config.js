@@ -7,38 +7,50 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Takosan locked palette (design-tokens/brand-tokens.json v1.1.0) plus a few
+        // derived shades for hover/depth/borders so runtime UI never falls back to emerald.
+        takosan: {
+          coral: { DEFAULT: "#FF7B6B", deep: "#E8624F", soft: "#FFE6E1" },
+          green: { DEFAULT: "#2E7D5B", hover: "#26694C", deep: "#1F563E" },
+          navy: "#1F2937",
+          cream: { DEFAULT: "#FFF8F3", deep: "#FFF1E8", line: "#F3E4DA", shade: "#F6EEE8" },
+          mint: { DEFAULT: "#DFF4E6", hover: "#CFEDDA", deep: "#BFE3CC" },
+          yellow: "#FFC857",
+        },
+        // Legacy Frigo palette names kept as aliases onto Takosan values (no runtime
+        // utility uses them today; retained so stray legacy classes cannot re-introduce emerald).
         frigo: {
           green: {
-            DEFAULT: "#059669",
-            50: "#ECFDF5",
-            100: "#D1FAE5",
-            200: "#A7F3D0",
-            300: "#6EE7B7",
-            400: "#34D399",
-            500: "#10B981",
-            600: "#059669",
-            700: "#047857",
-            800: "#065F46",
-            900: "#064E3B",
+            DEFAULT: "#2E7D5B",
+            50: "#DFF4E6",
+            100: "#CFEDDA",
+            200: "#BFE3CC",
+            300: "#8FCBA8",
+            400: "#5FA985",
+            500: "#3E8F6B",
+            600: "#2E7D5B",
+            700: "#26694C",
+            800: "#1F563E",
+            900: "#17422F",
           },
           deep: {
-            DEFAULT: "#0F3D2E",
-            light: "#164E3D",
-            dark: "#0A281E",
+            DEFAULT: "#1F563E",
+            light: "#26694C",
+            dark: "#17422F",
           },
           forest: {
-            DEFAULT: "#0F3D2E",
-            light: "#164E3D",
-            dark: "#0A281E",
+            DEFAULT: "#1F563E",
+            light: "#26694C",
+            dark: "#17422F",
           },
           mint: {
-            DEFAULT: "#E6F4EA",
-            light: "#F0FDF4",
-            dark: "#C7E8D2",
+            DEFAULT: "#DFF4E6",
+            light: "#EEF9F2",
+            dark: "#BFE3CC",
           },
           cream: {
-            DEFAULT: "#F8FAF9",
-            warm: "#F5F5F4",
+            DEFAULT: "#FFF8F3",
+            warm: "#FFF1E8",
           },
           surface: "#FFFFFF",
           border: "#E2E8F0",
@@ -53,8 +65,9 @@ export default {
         },
       },
       fontFamily: {
-        heading: ["Plus Jakarta Sans", "Poppins", "system-ui", "sans-serif"],
-        body: ["Inter", "system-ui", "sans-serif"],
+        heading: ["Nunito", "system-ui", "sans-serif"],
+        body: ["Nunito", "system-ui", "sans-serif"],
+        sans: ["Nunito", "system-ui", "sans-serif"],
       },
       borderRadius: {
         "lg": "10px",
@@ -78,8 +91,9 @@ export default {
         "soft": "0 2px 10px -1px rgba(15, 23, 42, 0.05)",
         "card": "0 1px 3px rgba(15, 23, 42, 0.04), 0 4px 12px -2px rgba(15, 23, 42, 0.05)",
         "elevated": "0 10px 25px -4px rgba(15, 23, 42, 0.08), 0 4px 10px -4px rgba(15, 23, 42, 0.04)",
-        "float": "0 8px 20px -3px rgba(5, 150, 105, 0.22), 0 3px 6px -2px rgba(5, 150, 105, 0.12)",
-        "glow": "0 0 0 4px rgba(16, 185, 129, 0.15), 0 8px 20px -3px rgba(5, 150, 105, 0.35)",
+        // Brand-tinted shadows derive from Takosan green rgb(46, 125, 91).
+        "float": "0 8px 20px -3px rgba(46, 125, 91, 0.22), 0 3px 6px -2px rgba(46, 125, 91, 0.12)",
+        "glow": "0 0 0 4px rgba(46, 125, 91, 0.15), 0 8px 20px -3px rgba(46, 125, 91, 0.30)",
       }
     },
   },

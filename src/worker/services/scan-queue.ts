@@ -4,6 +4,12 @@ import { Env } from '../types';
 import { sha256Hex } from '../utils/session';
 import { aiConfigFromEnv, logAIUsage } from '../config/ai';
 
+// scan_items.confidence is NOT NULL with a historical 0.9 default and cannot
+// express "the provider reported none". Like the synchronous route, the queue
+// keeps that filler for legacy readers and records the provider's actual
+// confidence (or NULL) in ocr_confidence, the T13 truth column.
+const LEGACY_CONFIDENCE_FILLER = 0.9;
+
 export type ScanQueueMessage = {
   type: 'scan.process.v1';
   jobId?: string;
@@ -420,23 +426,36 @@ export async function processScanJob(env: Env, messageBody: unknown): Promise<vo
       const statements = receipt.items.map((item, index) => {
         const canonical = findCanonicalIngredient(item.raw_name);
         const providerCanonical = item.canonical_id ? findCanonicalIngredientById(item.canonical_id) : null;
+        const canonicalId = canonical?.id || providerCanonical?.id || null;
+        const category = canonical?.category || item.category || 'other';
+        const storage = item.storage || 'fridge';
         return env.DB.prepare(
           `INSERT INTO scan_items
             (id, scan_id, raw_name, canonical_id, estimated_quantity, unit, confidence, category, storage,
-             unit_price_vnd, total_price_vnd)
-           SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ${fence.guard}`,
+             unit_price_vnd, total_price_vnd, ocr_raw_name, ocr_quantity, ocr_unit, ocr_confidence,
+             ocr_canonical_id, ocr_category, ocr_storage)
+           SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ${fence.guard}`,
         ).bind(
           `scan_item_${message.scanId}_${index}`,
           message.scanId,
           item.raw_name,
-          canonical?.id || providerCanonical?.id || null,
+          canonicalId,
           item.estimated_quantity,
           item.unit as StandardUnit,
-          item.confidence,
-          canonical?.category || item.category || 'other',
-          item.storage || 'fridge',
+          item.confidence ?? LEGACY_CONFIDENCE_FILLER,
+          category,
+          storage,
           item.unit_price_vnd ?? null,
           item.total_price_vnd ?? null,
+          // T13 raw evidence: exactly what the provider reported, kept apart
+          // from the reviewable working columns above.
+          item.raw_name,
+          item.estimated_quantity,
+          item.unit,
+          item.confidence ?? null,
+          canonicalId,
+          category,
+          storage,
           ...fence.bindings,
         );
       });
@@ -466,20 +485,31 @@ export async function processScanJob(env: Env, messageBody: unknown): Promise<vo
         const providerCanonical = item.canonical_id
           ? findCanonicalIngredientById(item.canonical_id)
           : null;
+        const canonicalId = canonical?.id || providerCanonical?.id || null;
+        const category = canonical?.category || providerCanonical?.category || item.category || 'other';
+        const storage = item.storage || 'fridge';
         return env.DB.prepare(
-        `INSERT INTO scan_items
-          (id, scan_id, raw_name, canonical_id, estimated_quantity, unit, confidence, category, storage)
-         SELECT ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ${fence.guard}`,
+          `INSERT INTO scan_items
+            (id, scan_id, raw_name, canonical_id, estimated_quantity, unit, confidence, category, storage,
+             ocr_raw_name, ocr_quantity, ocr_unit, ocr_confidence, ocr_canonical_id, ocr_category, ocr_storage)
+           SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ${fence.guard}`,
         ).bind(
           `scan_item_${message.scanId}_${index}`,
           message.scanId,
           item.raw_name,
-          canonical?.id || providerCanonical?.id || null,
+          canonicalId,
           item.estimated_quantity,
           item.unit as StandardUnit,
-          item.confidence,
-          canonical?.category || providerCanonical?.category || item.category || 'other',
-          item.storage || 'fridge',
+          item.confidence ?? LEGACY_CONFIDENCE_FILLER,
+          category,
+          storage,
+          item.raw_name,
+          item.estimated_quantity,
+          item.unit,
+          item.confidence ?? null,
+          canonicalId,
+          category,
+          storage,
           ...fence.bindings,
         );
       });

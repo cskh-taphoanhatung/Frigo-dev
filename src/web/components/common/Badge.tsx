@@ -14,12 +14,12 @@ export const Badge: React.FC<BadgeProps> = ({ status, children, variant, classNa
   const effectiveVariant = variant || status || 'neutral';
 
   const styles = {
-    fresh: 'bg-emerald-50 text-emerald-800 border-emerald-200/80 font-semibold',
+    fresh: 'bg-takosan-mint text-takosan-green-deep border-takosan-mint-deep/80 font-semibold',
     use_soon: 'bg-amber-50 text-amber-900 border-amber-200/80 font-semibold',
     expiring: 'bg-rose-50 text-rose-800 border-rose-200/80 font-semibold',
     out_of_stock: 'bg-slate-100 text-slate-600 border-slate-200 font-medium',
     cuisine: 'bg-slate-50 text-slate-700 border-slate-200 font-medium',
-    match: 'bg-emerald-600 text-white font-semibold shadow-xs',
+    match: 'bg-takosan-green text-white font-semibold shadow-xs',
     neutral: 'bg-slate-100 text-slate-700 border-slate-200 font-medium',
   };
 

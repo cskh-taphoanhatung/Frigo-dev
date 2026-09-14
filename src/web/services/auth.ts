@@ -5,6 +5,14 @@ import {
   guardPrivateSession, handleUnauthorized,
 } from './http';
 
+// DEC-012: the server refuses guest→account inventory transfer before consuming
+// the OTP; the same code stays valid for a retry without the transfer field.
+export const INVENTORY_TRANSFER_DEFERRED = 'INVENTORY_TRANSFER_DEFERRED';
+
+export function isInventoryTransferDeferred(err: unknown): boolean {
+  return err instanceof ApiError && err.status === 409 && err.code === INVENTORY_TRANSFER_DEFERRED;
+}
+
 export const authApi = {
   logout: async (): Promise<void> => {
     const response = await fetch(`${BASE_URL}/auth/logout`, {
@@ -33,7 +41,7 @@ export const authApi = {
       return {
         user: {
           id: getUserId(),
-          displayName: 'Bạn mới của Frigo',
+          displayName: 'Bạn mới của Takosan',
           isGuest: true,
           household: { id: getHouseholdId(), name: 'Tủ lạnh nhà tôi' },
           subscription: null,

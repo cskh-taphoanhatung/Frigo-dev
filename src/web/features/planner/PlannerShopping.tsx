@@ -35,7 +35,7 @@ export function PlannerShopping({ plan, model, locale }: { plan: MealPlanDto; mo
     }), (result) => client.setQueryData(key, result));
   }
   return <>
-    <Card><h2 className="font-heading font-bold text-xl flex items-center gap-2"><ShoppingBag className="text-emerald-800" />{t.shopping}</h2><p className="text-sm text-slate-600 mt-2 leading-relaxed">{t.shoppingIntro}</p>
+    <Card><h2 className="font-heading font-bold text-xl flex items-center gap-2"><ShoppingBag className="text-takosan-green-deep" />{t.shopping}</h2><p className="text-sm text-slate-600 mt-2 leading-relaxed">{t.shoppingIntro}</p>
       <form onSubmit={submit} className="space-y-4 mt-5"><fieldset disabled={!!model.busy || !fresh} className="space-y-4 disabled:opacity-60">
         <div className="grid grid-cols-[100px_1fr] gap-3"><label className="text-sm font-semibold">{t.currency}<select value={currency} onChange={(e) => setCurrency(e.target.value as MoneyDto['currency'])} className={plannerInputClass}>{['VND', 'JPY', 'USD', 'EUR'].map((value) => <option key={value}>{value}</option>)}</select></label><label className="text-sm font-semibold">{t.budget}<input inputMode="decimal" value={budget} maxLength={100} onChange={(e) => setBudget(e.target.value)} className={plannerInputClass} placeholder="—" /></label></div>
         <label className="block text-sm font-semibold">{t.budgetMode}<select value={mode} onChange={(e) => setMode(e.target.value as typeof mode)} className={plannerInputClass}><option value="hard">{t.hard}</option><option value="soft">{t.soft}</option></select></label>
@@ -43,10 +43,10 @@ export function PlannerShopping({ plan, model, locale }: { plan: MealPlanDto; mo
         {invalid && <p role="alert" className="text-sm text-rose-700">{t.budgetInvalid}</p>}
         <Button fullWidth type="submit" disabled={!fresh} isLoading={!!model.busy}>{t.optimize}</Button>
       </form>
-      {model.busy === 'shopping' && <p role="status" className="text-sm mt-3 text-emerald-800">{t.optimizing}</p>}
+      {model.busy === 'shopping' && <p role="status" className="text-sm mt-3 text-takosan-green-deep">{t.optimizing}</p>}
     </Card>
     {response && <ShoppingResult key={response.result.id} response={response} locale={locale} />}
-    {!fresh && <Link className="inline-flex min-h-11 items-center underline text-sm text-emerald-800" to={`/planner/${plan.id}`}>{t.back}</Link>}
+    {!fresh && <Link className="inline-flex min-h-11 items-center underline text-sm text-takosan-green-deep" to={`/planner/${plan.id}`}>{t.back}</Link>}
   </>;
 }
 
@@ -56,14 +56,14 @@ export function ShoppingResult({ response, locale }: { response: Shopping; local
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const complete = result.cost.status === 'known' && result.cost.totalCost !== null && result.shoppingCompleteness === 'complete';
   return <div className="space-y-5" data-testid="shopping-result">
-    <section className="rounded-2xl bg-[#0F3D2E] text-white p-5 sm:p-6 space-y-3" aria-label={t.knownTotal}>
-      <h2 className="text-sm text-emerald-100">{complete ? t.completeTotal : t.knownTotal}</h2>
+    <section className="rounded-2xl bg-takosan-green text-white p-5 sm:p-6 space-y-3" aria-label={t.knownTotal}>
+      <h2 className="text-sm text-white/90">{complete ? t.completeTotal : t.knownTotal}</h2>
       {result.cost.status === 'unknown' ? <p className="font-semibold text-lg leading-snug">{t.priceUnavailable}</p> : <p className="text-3xl font-heading font-bold break-all">{formatMoney(complete ? result.cost.totalCost : result.cost.knownCost, locale)}</p>}
       {result.cost.unknownCostItemCount > 0 && <p className="text-sm text-amber-100">{result.cost.unknownCostItemCount} {t.unknownPrices}</p>}
       <p className="text-sm font-semibold border-t border-white/20 pt-3" data-testid="budget-status">{budgetStatusLabel(result.budget.status, locale)}</p>
       <p className="text-sm" data-testid="shopping-status">{shoppingStatusLabel(result.shoppingStatus, locale)}</p>
       {result.budget.status === 'over_budget' && <p className="text-sm">{t.gap}: {formatMoney(result.budget.selectedKnownGap, locale)}</p>}
-      {!result.optimization.exhaustive && <p className="text-xs text-emerald-100">{t.bestKnown}</p>}
+      {!result.optimization.exhaustive && <p className="text-xs text-white/90">{t.bestKnown}</p>}
     </section>
     {response.catalogStatus === 'reviewed_catalog_unavailable' && <p className="text-sm bg-amber-50 rounded-xl p-4 text-amber-950">{t.noPrices}</p>}
     {result.shoppingCompleteness !== 'complete' && <p className="text-sm bg-amber-50 rounded-xl p-4 text-amber-950">{t.shoppingPartial}</p>}
@@ -72,7 +72,7 @@ export function ShoppingResult({ response, locale }: { response: Shopping; local
         const line = result.purchaseLines.find((item) => item.requirementId === requirement.id);
         const unresolved = result.unresolvedRequirements.find((item) => item.requirementId === requirement.id);
         return <Card key={requirement.id}>
-          <label className="flex gap-3 items-start cursor-pointer min-h-11"><input type="checkbox" className="mt-1 w-5 h-5 accent-emerald-700 shrink-0" checked={checked.has(requirement.id)} onChange={(e) => setChecked((prior) => { const next = new Set(prior); if (e.target.checked) next.add(requirement.id); else next.delete(requirement.id); return next; })} />
+          <label className="flex gap-3 items-start cursor-pointer min-h-11"><input type="checkbox" className="mt-1 w-5 h-5 accent-takosan-green shrink-0" checked={checked.has(requirement.id)} onChange={(e) => setChecked((prior) => { const next = new Set(prior); if (e.target.checked) next.add(requirement.id); else next.delete(requirement.id); return next; })} />
             <span className="min-w-0"><span className="font-semibold text-sm">{ingredientLabel(requirement.ingredientId, locale)}</span>{requirement.optional && <span className="block text-xs text-slate-500">{t.optional}</span>}<span className="block text-sm mt-1">{t.required}: {formatQuantity(requirement.required, locale)}</span></span>
           </label>
           {requirement.status === 'unresolved' && <p className="text-sm text-amber-900 mt-2">{t.unresolved}</p>}

@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { TAKOSAN_BRAND } from '../lib/takosan-brand';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/useAuthStore';
 import { api } from '../services/api';
+import { isInventoryTransferDeferred } from '../services/auth';
 import { capturePrivateSession } from '../lib/private-session';
 import { Button } from '../components/common/Button';
 import { TurnstileWidget } from '../components/common/TurnstileWidget';
@@ -38,6 +40,9 @@ export const AuthPage: React.FC = () => {
   // reset code was requested so the user can still enter it and set a password.
   const [forgotOtpRequested, setForgotOtpRequested] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
+  // DEC-012: guest data transfer was refused by the server; the guest session
+  // stays intact until the user explicitly continues without a transfer.
+  const [transferDeferred, setTransferDeferred] = useState(false);
 
   // SEC-6: Turnstile bot protection (inactive when server has no site key)
   const [turnstileSiteKey, setTurnstileSiteKey] = useState<string | null>(null);
@@ -148,6 +153,7 @@ export const AuthPage: React.FC = () => {
       if (err?.message?.includes('chưa kích hoạt OTP') || err?.requireOtp) {
         setOtpPurpose('register');
         if (err.devOtp) setDevOtp(err.devOtp);
+        setTransferDeferred(false);
         setMode('otp_verify');
         setResendCountdown(60);
       } else {
@@ -180,6 +186,7 @@ export const AuthPage: React.FC = () => {
       if (res.success) {
         if (res.devOtp) setDevOtp(res.devOtp);
         setOtpPurpose('register');
+        setTransferDeferred(false);
         setMode('otp_verify');
         setResendCountdown(60);
         setSuccessMessage('Mã OTP đã được gửi đến email của bạn!');
@@ -228,10 +235,12 @@ export const AuthPage: React.FC = () => {
     }
   };
 
-  // Handle OTP Submit
-  const handleVerifyOtp = async (e: React.FormEvent) => {
+  // Verify the entered OTP. `transferGuestData` asks the server to move the
+  // current guest household into the new account; the server may refuse that
+  // (DEC-012) without consuming the OTP, in which case the guest session is left
+  // untouched and the user decides whether to continue without a transfer.
+  const submitOtpVerification = async (transferGuestData: boolean) => {
     const isCurrent = capturePrivateSession();
-    e.preventDefault();
     const code = otpDigits.join('');
     if (code.length < 6) {
       setErrorMessage('Vui lòng nhập đủ 6 chữ số mã OTP');
@@ -246,12 +255,13 @@ export const AuthPage: React.FC = () => {
       // is actually in a guest session (server validates the hh_guest_ prefix).
       const authState = useAuthStore.getState();
       const guestHouseholdId =
-        otpPurpose === 'register' && authState.isGuest && authState.householdId.startsWith('hh_guest_')
+        transferGuestData && otpPurpose === 'register' && authState.isGuest && authState.householdId.startsWith('hh_guest_')
           ? authState.householdId
           : null;
       const res = await api.verifyOtp(email, code, otpPurpose, guestHouseholdId);
       if (!isCurrent()) return;
       if (res.success) {
+        setTransferDeferred(false);
         if (otpPurpose === 'register') {
           if (res.user) {
             setAuthSession({
@@ -271,10 +281,27 @@ export const AuthPage: React.FC = () => {
         }
       }
     } catch (err: any) {
+      if (transferGuestData && isInventoryTransferDeferred(err)) {
+        // Not an OTP failure: the code is still valid and nothing was changed.
+        if (isCurrent()) setTransferDeferred(true);
+        return;
+      }
       setErrorMessage(err?.message || 'Mã OTP không đúng hoặc đã hết hạn');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Handle OTP Submit
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await submitOtpVerification(true);
+  };
+
+  // Explicit user choice after a deferred transfer: keep the guest data where it
+  // is and finish creating the separate account with the same OTP.
+  const handleContinueWithoutTransfer = async () => {
+    await submitOtpVerification(false);
   };
 
   // Resend OTP
@@ -287,6 +314,7 @@ export const AuthPage: React.FC = () => {
       if (res.success) {
         if (res.devOtp) setDevOtp(res.devOtp);
         setResendCountdown(60);
+        setTransferDeferred(false);
         setSuccessMessage(res.message);
       }
     } catch (err: any) {
@@ -400,7 +428,7 @@ export const AuthPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] px-6 py-8 flex flex-col justify-between text-slate-900 animate-fade-in">
+    <div className="min-h-screen bg-takosan-cream px-6 py-8 flex flex-col justify-between text-takosan-navy animate-fade-in">
       <div>
         {/* Top bar back button */}
         <div className="flex items-center justify-between">
@@ -412,6 +440,7 @@ export const AuthPage: React.FC = () => {
                 setSuccessMessage(null);
                 setDevOtp(null);
                 setForgotOtpRequested(false);
+                setTransferDeferred(false);
                 setOtpDigits(['', '', '', '', '', '']);
               } else {
                 navigate(-1);
@@ -433,7 +462,7 @@ export const AuthPage: React.FC = () => {
                 setErrorMessage(error instanceof Error ? error.message : 'Không thể khởi tạo phiên khách. Vui lòng thử lại.');
               }
             }}
-            className="text-xs font-semibold text-slate-500 hover:text-emerald-700 tap-target transition-colors"
+            className="text-xs font-semibold text-slate-500 hover:text-takosan-green tap-target transition-colors"
           >
             Bỏ qua & Dùng thử ➔
           </button>
@@ -441,16 +470,16 @@ export const AuthPage: React.FC = () => {
 
         {/* Brand Header */}
         <div className="mt-6 text-center">
-          <img src="/frigo/brand/logo-primary.png" alt="Frigo Logo" className="h-9 mx-auto mb-3 object-contain" />
+          <img src={TAKOSAN_BRAND.logos.horizontal} alt="Takosan" className="h-11 mx-auto mb-3 object-contain" />
           <h2 className="font-heading font-bold text-xl text-slate-900 tracking-tight">
-            {mode === 'login' && 'Đăng nhập vào Frigo'}
-            {mode === 'register' && 'Tạo tài khoản Frigo'}
+            {mode === 'login' && 'Đăng nhập vào Takosan'}
+            {mode === 'register' && 'Tạo tài khoản Takosan'}
             {mode === 'otp_verify' && 'Xác thực mã OTP'}
             {mode === 'forgot_password' && 'Quên mật khẩu'}
           </h2>
           <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto leading-relaxed">
             {mode === 'login' && 'Đồng bộ tủ lạnh, thực đơn tuần và gợi ý món ăn mọi lúc mọi nơi'}
-            {mode === 'register' && 'Gia nhập Frigo để quản lý thực phẩm thông minh và giảm lãng phí'}
+            {mode === 'register' && 'Gia nhập Takosan để quản lý thực phẩm thông minh và giảm lãng phí'}
             {mode === 'otp_verify' && `Nhập 6 số mã OTP đã gửi tới ${email}`}
             {mode === 'forgot_password' && 'Nhập email để nhận mã OTP khôi phục mật khẩu'}
           </p>
@@ -494,8 +523,8 @@ export const AuthPage: React.FC = () => {
           </div>
         )}
         {successMessage && (
-          <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs flex items-center gap-2 animate-in fade-in">
-            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+          <div className="mt-4 p-3 bg-takosan-mint border border-takosan-mint-deep text-takosan-green-deep rounded-xl text-xs flex items-center gap-2 animate-in fade-in">
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-takosan-green" />
             <span>{successMessage}</span>
           </div>
         )}
@@ -507,16 +536,16 @@ export const AuthPage: React.FC = () => {
               const digits = devOtp.split('');
               setOtpDigits(digits);
             }}
-            className="mt-3 p-3 bg-emerald-50 border border-emerald-200/80 rounded-xl text-xs flex items-center justify-between cursor-pointer hover:bg-emerald-100/70 transition-all shadow-xs"
+            className="mt-3 p-3 bg-takosan-mint border border-takosan-mint-deep/80 rounded-xl text-xs flex items-center justify-between cursor-pointer hover:bg-takosan-mint-hover/70 transition-all shadow-xs"
           >
-            <div className="flex items-center gap-2 text-emerald-950">
-              <Sparkles className="w-4 h-4 text-emerald-700" />
+            <div className="flex items-center gap-2 text-takosan-green-deep">
+              <Sparkles className="w-4 h-4 text-takosan-green" />
               <div>
                 <span className="font-medium">Mã OTP Thử nghiệm: </span>
-                <span className="font-heading font-bold text-sm tracking-widest text-emerald-800">{devOtp}</span>
+                <span className="font-heading font-bold text-sm tracking-widest text-takosan-green-deep">{devOtp}</span>
               </div>
             </div>
-            <span className="text-[10px] font-semibold text-emerald-700 bg-white px-2 py-0.5 rounded-md border border-emerald-200">
+            <span className="text-[10px] font-semibold text-takosan-green bg-white px-2 py-0.5 rounded-md border border-takosan-mint-deep">
               Tự điền
             </span>
           </div>
@@ -564,7 +593,7 @@ export const AuthPage: React.FC = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="ban@example.com"
-                    className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200/80 focus:border-emerald-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600/20 text-sm font-medium text-slate-900 shadow-xs"
+                    className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 text-sm font-medium text-slate-900 shadow-xs"
                   />
                 </div>
               </div>
@@ -582,7 +611,7 @@ export const AuthPage: React.FC = () => {
                       setForgotOtpRequested(false);
                       setOtpDigits(['', '', '', '', '', '']);
                     }}
-                    className="text-xs font-semibold text-emerald-700 hover:underline"
+                    className="text-xs font-semibold text-takosan-green hover:underline"
                   >
                     Quên mật khẩu?
                   </button>
@@ -595,7 +624,7 @@ export const AuthPage: React.FC = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full h-11 pl-10 pr-10 bg-white border border-slate-200/80 focus:border-emerald-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600/20 text-sm font-medium text-slate-900 shadow-xs"
+                    className="w-full h-11 pl-10 pr-10 bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 text-sm font-medium text-slate-900 shadow-xs"
                   />
                   <button
                     type="button"
@@ -629,7 +658,7 @@ export const AuthPage: React.FC = () => {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Nguyễn Văn A"
-                    className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200/80 focus:border-emerald-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600/20 text-sm font-medium text-slate-900 shadow-xs"
+                    className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 text-sm font-medium text-slate-900 shadow-xs"
                   />
                 </div>
               </div>
@@ -644,7 +673,7 @@ export const AuthPage: React.FC = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="ban@example.com"
-                    className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200/80 focus:border-emerald-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600/20 text-sm font-medium text-slate-900 shadow-xs"
+                    className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 text-sm font-medium text-slate-900 shadow-xs"
                   />
                 </div>
               </div>
@@ -659,7 +688,7 @@ export const AuthPage: React.FC = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full h-11 pl-10 pr-10 bg-white border border-slate-200/80 focus:border-emerald-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600/20 text-sm font-medium text-slate-900 shadow-xs"
+                    className="w-full h-11 pl-10 pr-10 bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 text-sm font-medium text-slate-900 shadow-xs"
                   />
                   <button
                     type="button"
@@ -695,14 +724,34 @@ export const AuthPage: React.FC = () => {
                     value={digit}
                     onChange={(e) => handleOtpChange(idx, e.target.value)}
                     onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                    className="w-11 h-13 text-center font-heading font-bold text-xl bg-white border border-slate-200/80 focus:border-emerald-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600/20 transition-all text-slate-900 shadow-xs"
+                    className="w-11 h-13 text-center font-heading font-bold text-xl bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 transition-all text-slate-900 shadow-xs"
                   />
                 ))}
               </div>
 
-              <Button fullWidth size="lg" type="submit" isLoading={isLoading}>
-                Xác thực & Hoàn tất
-              </Button>
+              {transferDeferred && otpPurpose === 'register' ? (
+                <div
+                  role="status"
+                  data-testid="transfer-deferred"
+                  className="p-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl text-xs space-y-3 animate-in fade-in"
+                >
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
+                    <p className="leading-relaxed">
+                      Hiện Takosan chưa thể chuyển dữ liệu trong tủ khách sang tài khoản mới một cách an toàn.
+                      Bạn vẫn có thể tiếp tục tạo tài khoản: dữ liệu của phiên khách được giữ riêng trên
+                      hộ khách, không bị xóa và không được chuyển sang tài khoản mới.
+                    </p>
+                  </div>
+                  <Button fullWidth size="lg" type="button" isLoading={isLoading} onClick={handleContinueWithoutTransfer}>
+                    Tiếp tục không chuyển dữ liệu khách
+                  </Button>
+                </div>
+              ) : (
+                <Button fullWidth size="lg" type="submit" isLoading={isLoading}>
+                  Xác thực & Hoàn tất
+                </Button>
+              )}
 
               <div className="flex items-center justify-between text-xs pt-2">
                 <span className="text-slate-500">Chưa nhận được mã?</span>
@@ -710,7 +759,7 @@ export const AuthPage: React.FC = () => {
                   type="button"
                   disabled={resendCountdown > 0 || isLoading}
                   onClick={handleResendOtp}
-                  className="font-semibold text-emerald-700 disabled:opacity-40 hover:underline flex items-center gap-1 tap-target cursor-pointer"
+                  className="font-semibold text-takosan-green disabled:opacity-40 hover:underline flex items-center gap-1 tap-target cursor-pointer"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                   <span>{resendCountdown > 0 ? `Gửi lại sau (${resendCountdown}s)` : 'Gửi lại mã OTP'}</span>
@@ -736,7 +785,7 @@ export const AuthPage: React.FC = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="ban@example.com"
-                      className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200/80 focus:border-emerald-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600/20 text-sm font-medium text-slate-900 shadow-xs"
+                      className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 text-sm font-medium text-slate-900 shadow-xs"
                     />
                   </div>
                 </div>
@@ -763,7 +812,7 @@ export const AuthPage: React.FC = () => {
                         value={digit}
                         onChange={(e) => handleOtpChange(idx, e.target.value)}
                         onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                        className="w-11 h-13 text-center font-heading font-bold text-xl bg-white border border-slate-200/80 focus:border-emerald-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600/20 transition-all text-slate-900 shadow-xs"
+                        className="w-11 h-13 text-center font-heading font-bold text-xl bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 transition-all text-slate-900 shadow-xs"
                       />
                     ))}
                   </div>
@@ -779,7 +828,7 @@ export const AuthPage: React.FC = () => {
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="Nhập mật khẩu mới"
-                      className="w-full h-11 pl-10 pr-10 bg-white border border-slate-200/80 focus:border-emerald-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600/20 text-sm font-medium text-slate-900 shadow-xs"
+                      className="w-full h-11 pl-10 pr-10 bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 text-sm font-medium text-slate-900 shadow-xs"
                     />
                     <button
                       type="button"
@@ -817,7 +866,7 @@ export const AuthPage: React.FC = () => {
       {/* Footer Security Badge */}
       <div className="text-center pt-8">
         <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500">
-          <ShieldCheck className="w-4 h-4 text-emerald-600" />
+          <ShieldCheck className="w-4 h-4 text-takosan-green" />
           <span>Bảo mật dữ liệu thực phẩm & Tôn trọng quyền riêng tư</span>
         </div>
       </div>

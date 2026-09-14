@@ -25,7 +25,17 @@ required_migrations(name) AS (
     ('0020_t01_foundation_hardening.sql'),
     ('0021_recipe_personalization.sql'),
     ('0022_generated_meal_plans.sql'),
-    ('0023_scan_request_fingerprint.sql')
+    ('0023_scan_request_fingerprint.sql'),
+    ('0024_inventory_truth_foundation.sql'),
+    ('0025_inventory_lot_commands.sql'),
+    ('0026_inventory_event_authority.sql'),
+    ('0027_inventory_event_poststate.sql'),
+    ('0028_inventory_fefo_authority.sql'),
+    ('0029_inventory_adoption_authority.sql'),
+    ('0030_inventory_fefo_backfill_compatibility.sql'),
+    ('0031_inventory_observation_reconciliation.sql'),
+    ('0032_scan_evidence_retention.sql'),
+    ('0033_scan_evidence_completeness.sql')
 ),
 required_tables(name) AS (
   VALUES
@@ -33,6 +43,11 @@ required_tables(name) AS (
     ('households'),
     ('inventory_items'),
     ('inventory_events'),
+    ('inventory_commands'),
+    ('inventory_lots'),
+    ('storage_locations'),
+    ('inventory_observations'),
+    ('inventory_reconciliation_decisions'),
     ('scans'),
     ('meal_plans'),
     ('shopping_import_commands'),
@@ -63,6 +78,14 @@ required_tables(name) AS (
 required_columns(table_name, column_name) AS (
   VALUES
     ('inventory_items', 'version'),
+    ('households', 'inventory_version'),
+    ('inventory_events', 'command_id'),
+    ('inventory_lots', 'legacy_item_id'),
+    ('inventory_lots', 'quantity_milli'),
+    ('inventory_lots', 'canonical_unit'),
+    ('inventory_lots', 'storage_location_id'),
+    ('inventory_lots', 'source_id'),
+    ('inventory_lots', 'version'),
     ('inventory_items', 'opened_at'),
     ('inventory_items', 'expiry_kind'),
     ('inventory_items', 'expiry_source'),
@@ -117,10 +140,65 @@ required_columns(table_name, column_name) AS (
     ,('scan_items', 'total_price_vnd')
     ,('scans', 'request_fingerprint')
     ,('scans', 'image_mime_type')
+    -- T13 bridge (0032): raw OCR/vision evidence retained separately from the
+    -- reviewable values, plus the explicit per-line review lifecycle.
+    ,('scan_items', 'ocr_raw_name')
+    ,('scan_items', 'ocr_quantity')
+    ,('scan_items', 'ocr_unit')
+    ,('scan_items', 'ocr_confidence')
+    ,('scan_items', 'review_state')
+    -- T13R-A bridge (0033): complete raw mapping evidence and reviewed expiry.
+    ,('scan_items', 'ocr_canonical_id')
+    ,('scan_items', 'ocr_category')
+    ,('scan_items', 'ocr_storage')
+    ,('scan_items', 'reviewed_expiry_date')
+    ,('scan_items', 'reviewed_expiry_kind')
 ),
 required_triggers(name) AS (
   VALUES
     ('trg_meal_plans_household_immutable'),
+    -- T13 (0031): CONFIRMED review state and is_confirmed must stay one fact.
+    ('trg_scan_items_review_state_insert'),
+    ('trg_scan_items_review_state_update'),
+    -- T13R-A (0032): reviewed expiry kind/date pairing is fail-closed.
+    ('trg_scan_items_reviewed_expiry_insert'),
+    ('trg_scan_items_reviewed_expiry_update'),
+    ('trg_inventory_commands_immutable_update'),
+    ('trg_inventory_commands_immutable_insert'),
+    ('trg_inventory_commands_immutable_delete'),
+    ('trg_inventory_lots_live_insert'),
+    ('trg_inventory_lots_no_live_replace'),
+    ('trg_inventory_lots_backfill_after_live'),
+    ('trg_inventory_lots_live_update'),
+    ('trg_inventory_lots_live_delete'),
+    ('trg_inventory_items_projection_owner'),
+    ('trg_inventory_items_projection_replace'),
+    ('trg_inventory_events_command_insert'),
+    ('trg_inventory_events_command_authority_insert'),
+    ('trg_inventory_events_command_poststate_insert'),
+    ('trg_inventory_commands_fefo_authority_insert'),
+    ('trg_inventory_commands_fefo_envelope_insert'),
+    ('trg_inventory_events_command_fefo_authority_insert'),
+    ('trg_inventory_observations_immutable_update'),
+    ('trg_inventory_observations_immutable_delete'),
+    ('trg_inventory_observations_lot_household_insert'),
+    ('trg_inventory_observations_lot_household_update'),
+    ('trg_inventory_observations_projection_household_insert'),
+    ('trg_inventory_reconciliation_decisions_observation_guard'),
+    ('trg_inventory_reconciliation_decisions_immutable_update'),
+    ('trg_inventory_reconciliation_decisions_immutable_delete'),
+    ('trg_inventory_events_command_update'),
+    ('trg_inventory_events_command_replace'),
+    ('trg_inventory_events_command_delete'),
+    ('trg_inventory_items_revision_insert'),
+    ('trg_inventory_items_revision_update'),
+    ('trg_inventory_items_revision_delete'),
+    ('trg_inventory_lots_revision_insert'),
+    ('trg_inventory_lots_revision_update'),
+    ('trg_inventory_lots_revision_delete'),
+    ('trg_storage_locations_revision_insert'),
+    ('trg_storage_locations_revision_update'),
+    ('trg_storage_locations_revision_delete'),
     ('trg_ingredients_canonical_id_insert'),
     ('trg_ingredients_canonical_id_update'),
     ('trg_recipe_nutrition_version_insert'),

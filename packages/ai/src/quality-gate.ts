@@ -85,8 +85,12 @@ export class AIScanQualityError extends AIProviderError {
   }
 }
 
-function usable<T extends { raw_name: string; confidence: number }>(item: T): boolean {
-  return !isGenericScanLabel(item.raw_name) && Number.isFinite(item.confidence) && item.confidence >= AI_SCAN_MIN_CONFIDENCE;
+function usable<T extends { raw_name: string; confidence?: number }>(item: T): boolean {
+  if (isGenericScanLabel(item.raw_name)) return false;
+  // Missing confidence is truthful unknown evidence. The gate may reject a
+  // reported low value, but must not invent a replacement for an absent one.
+  return item.confidence === undefined
+    || (Number.isFinite(item.confidence) && item.confidence >= AI_SCAN_MIN_CONFIDENCE);
 }
 
 function receiptDuplicateKey(item: ReceiptScanResult['items'][number]): string {

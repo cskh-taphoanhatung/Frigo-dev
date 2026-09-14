@@ -25,7 +25,7 @@ export const WeekSettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] pb-24 max-w-md mx-auto">
+    <div className="min-h-screen bg-takosan-cream pb-24 max-w-md mx-auto">
       <TopBar showBack title="Cài đặt thực đơn tuần" />
 
       <div className="px-4 pt-4 max-w-md mx-auto space-y-5">
@@ -42,7 +42,7 @@ export const WeekSettingsPage: React.FC = () => {
                 onClick={() => setBudget(b)}
                 className={`p-3 rounded-xl border text-xs font-semibold transition-all tap-target active:scale-[0.98] ${
                   budget === b
-                    ? 'bg-[#0F3D2E] text-white shadow-xs border-[#0F3D2E]'
+                    ? 'bg-takosan-green text-white shadow-xs border-takosan-green'
                     : 'bg-white text-slate-800 border-slate-200/80 hover:border-slate-300'
                 }`}
               >
@@ -70,12 +70,12 @@ export const WeekSettingsPage: React.FC = () => {
                 onClick={() => setFrequency(f.id as any)}
                 className={`w-full p-3.5 rounded-xl border text-left text-xs font-semibold transition-all flex items-center justify-between tap-target active:scale-[0.99] ${
                   frequency === f.id
-                    ? 'bg-white border-emerald-600 ring-1 ring-emerald-600 text-slate-900 shadow-xs'
+                    ? 'bg-white border-takosan-green ring-1 ring-takosan-green text-slate-900 shadow-xs'
                     : 'bg-white border-slate-200/80 text-slate-700 hover:border-slate-300'
                 }`}
               >
                 <span>{f.label}</span>
-                {frequency === f.id && <Check className="w-4 h-4 text-emerald-600 stroke-[2.5]" />}
+                {frequency === f.id && <Check className="w-4 h-4 text-takosan-green stroke-[2.5]" />}
               </button>
             ))}
           </div>

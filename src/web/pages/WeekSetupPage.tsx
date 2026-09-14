@@ -96,7 +96,7 @@ export const WeekSetupPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] pb-28">
+    <div className="min-h-screen bg-takosan-cream pb-28">
       <TopBar
         showBack
         onBack={handleBack}
@@ -108,7 +108,7 @@ export const WeekSetupPage: React.FC = () => {
         {/* Step Progress Bar */}
         <div className="w-full bg-slate-200/80 h-1.5 rounded-full overflow-hidden">
           <div
-            className="bg-emerald-600 h-full transition-all duration-300 rounded-full"
+            className="bg-takosan-green h-full transition-all duration-300 rounded-full"
             style={{ width: `${(currentStep / 5) * 100}%` }}
           />
         </div>
@@ -117,11 +117,11 @@ export const WeekSetupPage: React.FC = () => {
         {currentStep === 1 && (
           <div className="space-y-4 animate-in fade-in duration-200">
             <div>
-              <span className="text-[11px] font-semibold uppercase px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200/60">
+              <span className="text-[11px] font-semibold uppercase px-2.5 py-0.5 rounded-md bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep/60">
                 Bước 1 / 5
               </span>
               <h2 className="font-heading font-bold text-xl text-slate-900 mt-2">
-                Bạn muốn Frigo lên kế hoạch cho những bữa nào?
+                Bạn muốn Takosan lên kế hoạch cho những bữa nào?
               </h2>
               <p className="text-xs text-slate-500 mt-1">
                 Chọn tần suất bữa ăn gia đình bạn cần nấu tại nhà
@@ -155,7 +155,7 @@ export const WeekSetupPage: React.FC = () => {
                   className={clsx(
                     'p-4 rounded-xl border cursor-pointer transition-all active:scale-[0.99] flex items-center justify-between',
                     mealPreset === opt.id
-                      ? 'bg-white border-emerald-600 shadow-xs ring-1 ring-emerald-600'
+                      ? 'bg-white border-takosan-green shadow-xs ring-1 ring-takosan-green'
                       : 'bg-white border-slate-200/80 hover:border-slate-300'
                   )}
                 >
@@ -175,7 +175,7 @@ export const WeekSetupPage: React.FC = () => {
                     className={clsx(
                       'w-5 h-5 rounded-full flex items-center justify-center border shrink-0',
                       mealPreset === opt.id
-                        ? 'bg-emerald-600 border-emerald-600 text-white'
+                        ? 'bg-takosan-green border-takosan-green text-white'
                         : 'border-slate-300'
                     )}
                   >
@@ -191,14 +191,14 @@ export const WeekSetupPage: React.FC = () => {
         {currentStep === 2 && (
           <div className="space-y-4 animate-in fade-in duration-200">
             <div>
-              <span className="text-[11px] font-semibold uppercase px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200/60">
+              <span className="text-[11px] font-semibold uppercase px-2.5 py-0.5 rounded-md bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep/60">
                 Bước 2 / 5
               </span>
               <h2 className="font-heading font-bold text-xl text-slate-900 mt-2">
                 Ngân sách thực phẩm tuần này
               </h2>
               <p className="text-xs text-slate-500 mt-1">
-                Frigo sẽ tối ưu mua nguyên liệu vừa vặn trong hạn mức
+                Takosan sẽ tối ưu mua nguyên liệu vừa vặn trong hạn mức
               </p>
             </div>
 
@@ -220,7 +220,7 @@ export const WeekSetupPage: React.FC = () => {
                   className={clsx(
                     'p-3.5 rounded-xl border text-sm font-heading font-semibold transition-all tap-target active:scale-[0.98]',
                     !isUnlimitedBudget && budgetVnd === p.value
-                      ? 'bg-[#0F3D2E] text-white shadow-xs border-[#0F3D2E]'
+                      ? 'bg-takosan-green text-white shadow-xs border-takosan-green'
                       : 'bg-white text-slate-800 border-slate-200/80 hover:border-slate-300'
                   )}
                 >
@@ -239,7 +239,7 @@ export const WeekSetupPage: React.FC = () => {
               className={clsx(
                 'p-4 rounded-xl border cursor-pointer transition-all flex items-center justify-between',
                 isUnlimitedBudget
-                  ? 'bg-white border-emerald-600 ring-1 ring-emerald-600 shadow-xs'
+                  ? 'bg-white border-takosan-green ring-1 ring-takosan-green shadow-xs'
                   : 'bg-white border-slate-200/80 hover:border-slate-300'
               )}
             >
@@ -256,7 +256,7 @@ export const WeekSetupPage: React.FC = () => {
                 className={clsx(
                   'w-5 h-5 rounded-full flex items-center justify-center border shrink-0',
                   isUnlimitedBudget
-                    ? 'bg-emerald-600 border-emerald-600 text-white'
+                    ? 'bg-takosan-green border-takosan-green text-white'
                     : 'border-slate-300'
                 )}
               >
@@ -271,7 +271,7 @@ export const WeekSetupPage: React.FC = () => {
           <div className="space-y-4 animate-in fade-in duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-[11px] font-semibold uppercase px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200/60">
+                <span className="text-[11px] font-semibold uppercase px-2.5 py-0.5 rounded-md bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep/60">
                   Bước 3 / 5
                 </span>
                 <h2 className="font-heading font-bold text-xl text-slate-900 mt-2">
@@ -282,7 +282,7 @@ export const WeekSetupPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setSkipDetailedSchedule(!skipDetailedSchedule)}
-                className="text-xs font-semibold text-emerald-700 hover:underline"
+                className="text-xs font-semibold text-takosan-green hover:underline"
               >
                 {skipDetailedSchedule ? 'Cấu hình chi tiết' : 'Nấu cả tuần'}
               </button>
@@ -316,7 +316,7 @@ export const WeekSetupPage: React.FC = () => {
                           className={clsx(
                             'px-2.5 py-1 rounded-lg text-xs font-semibold transition-all tap-target',
                             daySchedules[idx] === t.id
-                              ? 'bg-[#0F3D2E] text-white shadow-xs'
+                              ? 'bg-takosan-green text-white shadow-xs'
                               : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                           )}
                         >
@@ -330,7 +330,7 @@ export const WeekSetupPage: React.FC = () => {
             ) : (
               <div className="p-6 bg-white rounded-xl border border-slate-200/80 text-center">
                 <p className="text-xs text-slate-500">
-                  Frigo sẽ lên kế hoạch nấu ăn cho tất cả các ngày trong tuần.
+                  Takosan sẽ lên kế hoạch nấu ăn cho tất cả các ngày trong tuần.
                 </p>
               </div>
             )}
@@ -341,7 +341,7 @@ export const WeekSetupPage: React.FC = () => {
         {currentStep === 4 && (
           <div className="space-y-4 animate-in fade-in duration-200">
             <div>
-              <span className="text-[11px] font-semibold uppercase px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200/60">
+              <span className="text-[11px] font-semibold uppercase px-2.5 py-0.5 rounded-md bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep/60">
                 Bước 4 / 5
               </span>
               <h2 className="font-heading font-bold text-xl text-slate-900 mt-2">
@@ -362,7 +362,7 @@ export const WeekSetupPage: React.FC = () => {
                     className={clsx(
                       'p-3.5 rounded-xl border cursor-pointer transition-all flex flex-col justify-between h-24 select-none active:scale-[0.98]',
                       isSelected
-                        ? 'bg-white border-emerald-600 shadow-xs ring-1 ring-emerald-600'
+                        ? 'bg-white border-takosan-green shadow-xs ring-1 ring-takosan-green'
                         : 'bg-white border-slate-200/80 hover:border-slate-300'
                     )}
                   >
@@ -372,7 +372,7 @@ export const WeekSetupPage: React.FC = () => {
                         className={clsx(
                           'w-4 h-4 rounded-full flex items-center justify-center border',
                           isSelected
-                            ? 'bg-emerald-600 border-emerald-600 text-white'
+                            ? 'bg-takosan-green border-takosan-green text-white'
                             : 'border-slate-300'
                         )}
                       >
@@ -393,14 +393,14 @@ export const WeekSetupPage: React.FC = () => {
         {currentStep === 5 && (
           <div className="space-y-4 animate-in fade-in duration-200">
             <div>
-              <span className="text-[11px] font-semibold uppercase px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200/60">
+              <span className="text-[11px] font-semibold uppercase px-2.5 py-0.5 rounded-md bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep/60">
                 Bước 5 / 5
               </span>
               <h2 className="font-heading font-bold text-xl text-slate-900 mt-2">
                 Bạn muốn đi chợ mấy lần?
               </h2>
               <p className="text-xs text-slate-500 mt-1">
-                Giúp Frigo sắp xếp nguyên liệu dễ hỏng và tính toán chuyến mua sắm
+                Giúp Takosan sắp xếp nguyên liệu dễ hỏng và tính toán chuyến mua sắm
               </p>
             </div>
 
@@ -433,7 +433,7 @@ export const WeekSetupPage: React.FC = () => {
                   className={clsx(
                     'p-4 rounded-xl border cursor-pointer transition-all active:scale-[0.99] flex items-center justify-between',
                     frequency === opt.id
-                      ? 'bg-white border-emerald-600 shadow-xs ring-1 ring-emerald-600'
+                      ? 'bg-white border-takosan-green shadow-xs ring-1 ring-takosan-green'
                       : 'bg-white border-slate-200/80 hover:border-slate-300'
                   )}
                 >
@@ -448,7 +448,7 @@ export const WeekSetupPage: React.FC = () => {
                     className={clsx(
                       'w-5 h-5 rounded-full flex items-center justify-center border shrink-0',
                       frequency === opt.id
-                        ? 'bg-emerald-600 border-emerald-600 text-white'
+                        ? 'bg-takosan-green border-takosan-green text-white'
                         : 'border-slate-300'
                     )}
                   >

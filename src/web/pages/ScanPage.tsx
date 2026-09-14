@@ -123,7 +123,7 @@ export const ScanPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0F3D2E] text-white flex flex-col justify-between p-4 relative overflow-hidden select-none">
+    <div className="min-h-screen bg-takosan-navy text-white flex flex-col justify-between p-4 relative overflow-hidden select-none">
       {/* Top Header */}
       <div className="flex items-center justify-between z-10 pt-2">
         <button
@@ -149,7 +149,7 @@ export const ScanPage: React.FC = () => {
               className={clsx(
                 'px-3.5 py-1.5 rounded-lg text-xs font-heading font-semibold transition-all relative tap-target',
                 activeTab === tab.id
-                  ? 'bg-emerald-600 text-white shadow-xs'
+                  ? 'bg-takosan-green text-white shadow-xs'
                   : 'text-slate-300 hover:text-white'
               )}
             >
@@ -184,8 +184,8 @@ export const ScanPage: React.FC = () => {
           {isProcessing && (
             <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-30 rounded-2xl animate-in fade-in duration-300">
               <div className="relative mb-4">
-                <div className="animate-spin w-14 h-14 border-2 border-emerald-500 border-t-transparent rounded-full" />
-                <Sparkles className="w-6 h-6 text-emerald-300 absolute inset-0 m-auto animate-pulse" />
+                <div className="animate-spin w-14 h-14 border-2 border-takosan-mint border-t-transparent rounded-full" />
+                <Sparkles className="w-6 h-6 text-takosan-coral absolute inset-0 m-auto animate-pulse" />
               </div>
               <h4 className="font-heading font-bold text-base text-white">{statusText}</h4>
               <p className="text-xs text-slate-300 mt-1">Đang phân tích cấu trúc nguyên liệu...</p>

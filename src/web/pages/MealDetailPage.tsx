@@ -30,7 +30,7 @@ export const MealDetailPage: React.FC = () => {
 
   if (planQuery.isError || !currentPlan) {
     return (
-      <div className="min-h-screen bg-[#F8FAF9] pb-24">
+      <div className="min-h-screen bg-takosan-cream pb-24">
         <TopBar showBack title="Chi tiết món ăn" />
         <div className="p-4">
           {planQuery.isError ? (
@@ -59,12 +59,12 @@ export const MealDetailPage: React.FC = () => {
 
   if (!targetSlot || !targetSlot.recipe) {
     return (
-      <div className="min-h-screen bg-[#F8FAF9] pb-24">
+      <div className="min-h-screen bg-takosan-cream pb-24">
         <TopBar showBack title="Chi tiết món ăn" />
         <div className="p-6 text-center text-xs text-slate-500 font-medium">
           Không tìm thấy thông tin món ăn này.
           <button
-            className="mt-4 px-4 py-2 rounded-xl bg-emerald-600 text-white font-bold"
+            className="mt-4 px-4 py-2 rounded-xl bg-takosan-green text-white font-bold"
             onClick={() => navigate(-1)}
           >
             Quay lại
@@ -77,7 +77,7 @@ export const MealDetailPage: React.FC = () => {
   const recipe = targetSlot.recipe;
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] pb-32 max-w-md mx-auto">
+    <div className="min-h-screen bg-takosan-cream pb-32 max-w-md mx-auto">
       <TopBar
         showBack
         title={targetSlot.recipe.title}
@@ -101,7 +101,7 @@ export const MealDetailPage: React.FC = () => {
                 {recipe.cuisine === 'vietnamese' ? 'Việt Nam' : recipe.cuisine}
               </span>
               {recipe.nutrition?.calories != null && (
-                <span className="text-[10px] font-heading font-semibold px-2 py-0.5 rounded-full bg-emerald-600 text-white shadow-xs">
+                <span className="text-[10px] font-heading font-semibold px-2 py-0.5 rounded-full bg-takosan-green text-white shadow-xs">
                   {recipe.nutrition.calories} cal/phần
                 </span>
               )}
@@ -116,11 +116,11 @@ export const MealDetailPage: React.FC = () => {
 
             <div className="flex items-center gap-4 text-xs mt-1 text-slate-200">
               <span className="flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-emerald-400" />
+                <Clock className="w-3.5 h-3.5 text-takosan-mint" />
                 <span>{recipe.cookTimeMinutes} phút</span>
               </span>
               <span className="flex items-center gap-1">
-                <Users className="w-3.5 h-3.5 text-emerald-400" />
+                <Users className="w-3.5 h-3.5 text-takosan-mint" />
                 <span>{targetSlot.servings} người ăn</span>
               </span>
             </div>
@@ -156,7 +156,7 @@ export const MealDetailPage: React.FC = () => {
               className={clsx(
                 'flex-1 py-2 rounded-lg text-xs font-heading font-bold transition-all tap-target',
                 activeTab === tab.id
-                  ? 'bg-white text-[#0F3D2E] shadow-xs'
+                  ? 'bg-white text-takosan-green shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               )}
             >
@@ -172,7 +172,7 @@ export const MealDetailPage: React.FC = () => {
               <h3 className="font-heading font-bold text-sm text-slate-900">
                 Nguyên liệu ({targetSlot.ingredients.length} món)
               </h3>
-              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/60">
+              <span className="text-xs font-bold text-takosan-green-deep bg-takosan-mint px-2.5 py-0.5 rounded-full border border-takosan-mint-deep/60">
                 Có sẵn {targetSlot.availabilityPercent}%
               </span>
             </div>
@@ -216,7 +216,7 @@ export const MealDetailPage: React.FC = () => {
                           </span>
                         </div>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200/60">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-takosan-green-deep bg-takosan-mint px-2.5 py-0.5 rounded-md border border-takosan-mint-deep/60">
                           <Check className="w-3.5 h-3.5 stroke-[3]" /> Có sẵn
                         </span>
                       )}
@@ -237,7 +237,7 @@ export const MealDetailPage: React.FC = () => {
             <div className="space-y-3">
               {recipe.steps?.map((step: any, idx: number) => (
                 <div key={idx} className="flex gap-3">
-                  <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-full bg-takosan-mint text-takosan-green-deep font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
                     {idx + 1}
                   </div>
                   <div className="flex-1 text-xs text-slate-700 leading-relaxed">
@@ -298,15 +298,15 @@ export const MealDetailPage: React.FC = () => {
       <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto p-4 bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-30 flex gap-3 shadow-lg">
         <button
           onClick={() => openSwap(mealId!)}
-          className="flex-1 py-3.5 px-4 rounded-2xl bg-white border-2 border-[#22C55E] text-[#0F3D2E] font-heading font-bold text-sm hover:bg-emerald-50 active:scale-98 transition-all flex items-center justify-center gap-1.5"
+          className="flex-1 py-3.5 px-4 rounded-2xl bg-white border-2 border-takosan-green text-takosan-green-deep font-heading font-bold text-sm hover:bg-takosan-mint active:scale-98 transition-all flex items-center justify-center gap-1.5"
         >
-          <ArrowRightLeft className="w-4 h-4 text-emerald-600" />
+          <ArrowRightLeft className="w-4 h-4 text-takosan-green" />
           <span>Đổi món</span>
         </button>
 
         <button
           onClick={() => navigate(`/cook/${recipe.slug}`)}
-          className="flex-1 py-3.5 px-4 rounded-2xl bg-[#22C55E] hover:bg-[#1ea750] text-white font-heading font-bold text-sm shadow-md active:scale-98 transition-all flex items-center justify-center gap-2"
+          className="flex-1 py-3.5 px-4 rounded-2xl bg-takosan-green hover:bg-takosan-green-hover text-white font-heading font-bold text-sm shadow-md active:scale-98 transition-all flex items-center justify-center gap-2"
         >
           <ChefHat className="w-5 h-5" />
           <span>Bắt đầu nấu</span>

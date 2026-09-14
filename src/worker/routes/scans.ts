@@ -1,4 +1,15 @@
 import { Context, Hono } from 'hono';
+import { InventoryWriterAuthorityError, InventoryWriterSnapshotError, readInventoryAuthorityMode, readLegacyInventoryRevision, runLegacyInventoryBatch } from '../../../packages/db/src/inventory-writer-fence';
+import { composeInventoryLotCommands, readAdoptedLotSnapshot, type LotCommandSpec } from '../../../packages/db/src/inventory-lot-commands';
+import { LotCommandError, type InventoryScanEvidence } from '../../../packages/domain/src/inventory-lot-commands';
+import { inventoryAuthorityFailure } from '../utils/inventory-authority';
+import {
+  lotExpiryFromEvidence, rawEvidenceAbsent, rawScanEvidence, receiptLineFacts, reviewedScanExpiry,
+  scanCorrectionLine, scanProvenance,
+  type ExpiryBasis, type ScanProvenanceType,
+} from '../utils/scan-evidence';
+import { buildInventoryObservation, guardedObservationInsertStatement } from '../../../packages/db/src/inventory-observations';
+import { ObservationError } from '../../../packages/domain/src/inventory-observations';
 import { Env, AuthContext } from '../types';
 import { AIRouter } from '@frigo/ai';
 import { SQL } from '@frigo/db';
@@ -42,6 +53,194 @@ function scanFailureCode(error: unknown): string {
   if (/\b429\b|rate limit/i.test(message)) return 'RATE_LIMITED';
   if (/\b5\d\d\b|upstream|service unavailable/i.test(message)) return 'UPSTREAM_ERROR';
   return 'AI_SCAN_UNAVAILABLE';
+}
+
+// scan_items.confidence is NOT NULL with a historical 0.9 default, so it
+// cannot represent "the provider reported no confidence". T13 keeps writing it
+// for legacy readers but treats ocr_confidence (nullable) as the truth.
+const LEGACY_CONFIDENCE_FILLER = 0.9;
+
+// T09 bounds a lot-command client key at 200 characters. A receipt scan id is
+// itself a 64-char digest and the generated lot id embeds it, so the composed
+// key `scan-confirm:<scanId>:<lotId>:<suffix>` overflowed that bound and the
+// authority rejected the whole confirmation with INVALID_COMMAND. The key must
+// stay DETERMINISTIC (replay identity depends on it), so an over-long key is
+// collapsed into a stable digest of itself rather than truncated — truncation
+// could make two different lots share one key and therefore one command.
+const MAX_LOT_CLIENT_KEY = 200;
+
+async function scanCommandKey(scanId: string, itemId: string, suffix: 'create' | 'correct'): Promise<string> {
+  const key = `scan-confirm:${scanId}:${itemId}:${suffix}`;
+  if (key.length <= MAX_LOT_CLIENT_KEY) return key;
+  const digest = await sha256Hex(key);
+  return `scan-confirm:${digest}:${suffix}`;
+}
+
+// Observation source refs are bounded at 200 characters by the T10 contract
+// and carry observation identity, so they are collapsed the same way: a stable
+// digest instead of a truncation that could collide two different lines.
+const MAX_OBSERVATION_SOURCE_REF = 200;
+
+export async function scanObservationSourceRef(scanId: string, lineId: string): Promise<string> {
+  const ref = `${scanId}:${lineId}`;
+  if (ref.length <= MAX_OBSERVATION_SOURCE_REF) return ref;
+  return `${scanId.slice(0, 80)}:${await sha256Hex(ref)}`;
+}
+
+// Adopted-household scan confirmation: one atomic batch of canonical lot
+// commands plus the reviewed draft writes, the T10 evidence observations and
+// the completion-last status flip. Receipts are keyed per scan item so a
+// response-loss retry replays the same confirmation identity instead of
+// double-adding stock.
+//
+// T13 authority chain: OCR/vision evidence -> user review -> T10 observation
+// -> T09 command -> lots. The observation is evidence, never a second writer:
+// it is a plain INSERT into inventory_observations guarded by the same READY
+// predicate as every other statement in the batch, so evidence and stock
+// commit together or not at all.
+async function confirmAdoptedScan(c: Context<{ Bindings: Env; Variables: { auth: AuthContext } }>, db: any,
+  kv: any, auth: AuthContext, scanId: string, plan: {
+    selectedIds: string[];
+    batchStatements: any[];
+    updates: Map<string, { id: string; quantityDelta: number; unit: string }>;
+    inserts: Array<{ id: string; quantity: number; unit: string; expiryDate: string; ingredientId: string | null; name: string; storage: string; expiryBasis: ExpiryBasis; lineIds: string[] }>;
+    provenance: ScanProvenanceType;
+    evidenceByItemId: Map<string, InventoryScanEvidence>;
+    purchase: { purchasedAt: string | null; purchasePriceFor: (lineIds: string[]) => { currency: 'VND'; amountMinor: number; minorDigits: 0 } | null };
+    observations: Array<{ sourceRef: string; ingredientId: string | null; rawName: string | null;
+      legacyItemId: string | null; quantity: number; unit: string; storage: 'fridge' | 'freezer' | 'pantry';
+      expiryDate: string | null; expiryBasis: ExpiryBasis; note: string | null }>;
+    readyGuard: { sql: string; bindings: unknown[] };
+  }) {
+  const scope = { householdId: auth.householdId, actorId: auth.userId };
+  try {
+    const snapshot = await readAdoptedLotSnapshot(db, scope);
+    const now = new Date().toISOString();
+    const specs: LotCommandSpec[] = [];
+    for (const update of plan.updates.values()) {
+      const mapped = snapshot.lots.find((entry) => entry.legacyItemId === update.id);
+      const row = snapshot.legacyRows.find((candidate) => candidate.id === update.id);
+      if (!mapped || !row) throw new LotCommandError('ADOPTION_REQUIRED');
+      specs.push({
+        clientKey: await scanCommandKey(scanId, update.id, 'correct'),
+        input: {
+          type: 'CORRECT', lotId: mapped.lot.id, expectedVersion: mapped.lot.version,
+          changes: { quantity: Number(row.quantity) + update.quantityDelta, unit: update.unit },
+          reason: 'Xác nhận từ nhận diện thông minh',
+          revive: mapped.lot.state !== 'ACTIVE',
+          scanEvidence: plan.evidenceByItemId.get(update.id),
+        },
+      });
+    }
+    for (const insert of plan.inserts) {
+      const location = snapshot.locations.find((entry) => entry.isDefault
+        && entry.type.toLowerCase() === insert.storage);
+      if (!location) throw new LotCommandError('DRIFT_DETECTED');
+      // Expiry truth: a user-supplied date is KNOWN; an inferred shelf-life
+      // date is ESTIMATED; no basis is UNKNOWN. Never silently upgraded.
+      const expiry = lotExpiryFromEvidence(insert.expiryDate, insert.expiryBasis);
+      specs.push({
+        clientKey: await scanCommandKey(scanId, insert.id, 'create'),
+        input: {
+          type: 'CREATE', lotId: insert.id, ingredientId: insert.ingredientId, rawName: insert.name,
+          quantity: insert.quantity, unit: insert.unit, storageLocationId: location.id,
+          expiryAt: expiry.expiryAt, estimatedExpiryAt: expiry.estimatedExpiryAt,
+          expiryKind: expiry.expiryKind,
+          // Real receipt facts only; absent facts stay null rather than
+          // becoming 0₫ or "purchased today".
+          purchasedAt: plan.purchase.purchasedAt, openedAt: null,
+          purchasePrice: plan.purchase.purchasePriceFor(insert.lineIds),
+          // Authoritative server-side provenance: receipts are RECEIPT, fridge
+          // photos are SCAN. Never inferred from client-supplied text.
+          sourceType: plan.provenance, sourceId: scanId,
+          scanEvidence: plan.evidenceByItemId.get(insert.id),
+        },
+      });
+    }
+    const composed = await composeInventoryLotCommands(db, scope, specs, now);
+    const observationStatements = plan.observations.map((observation) => {
+      const expiry = lotExpiryFromEvidence(observation.expiryDate, observation.expiryBasis);
+      const expiryClaim = expiry.expiryKind === 'KNOWN'
+        ? { expiryDate: expiry.expiryAt, expiryKind: 'KNOWN' as const }
+        : expiry.expiryKind === 'ESTIMATED'
+          ? { expiryDate: expiry.estimatedExpiryAt, expiryKind: 'ESTIMATED' as const }
+          : { expiryDate: null, expiryKind: null };
+      const built = buildInventoryObservation(scope, {
+        sourceType: plan.provenance,
+        sourceRef: observation.sourceRef,
+        observedAt: now,
+        ingredientId: observation.ingredientId,
+        rawName: observation.rawName,
+        lotId: null,
+        legacyItemId: observation.legacyItemId,
+        // The user reviewed and confirmed these values in the review UI; an
+        // inferred expiry keeps the claim ESTIMATED instead.
+        evidence: expiry.expiryKind === 'ESTIMATED' ? 'ESTIMATED' : 'CONFIRMED',
+        note: observation.note,
+        claim: {
+          quantity: observation.quantity, unit: observation.unit as any,
+          quantityMilli: null, canonicalUnit: null,
+          storage: observation.storage, openedAt: null, ...expiryClaim,
+        },
+      }, snapshot.inventoryVersion, now);
+      return guardedObservationInsertStatement(db, built, plan.readyGuard.sql, plan.readyGuard.bindings);
+    });
+    const statusStatement = db
+      .prepare(
+        `UPDATE scans SET status = 'confirmed', updated_at = datetime('now')
+         WHERE id = ? AND household_id = ? AND status = 'ready'`
+      )
+      .bind(scanId, auth.householdId);
+    const results = await db.batch([...composed.statements, ...plan.batchStatements,
+      ...observationStatements, statusStatement]);
+    const statusResult = results[results.length - 1] as any;
+    if (statusResult?.meta?.changes !== 1) {
+      const committed = await db
+        .prepare('SELECT status FROM scans WHERE id = ? AND household_id = ?')
+        .bind(scanId, auth.householdId)
+        .first();
+      if ((committed as any)?.status === 'confirmed') {
+        const updatedList = await fetchHouseholdInventoryFromDb(db, auth.householdId, kv, { strict: true, actorId: auth.userId });
+        return c.json({
+          success: true, idempotentReplay: true, message: 'Bản quét này đã được xác nhận trước đó',
+          inventoryCount: updatedList.length, items: updatedList,
+        });
+      }
+      throw new Error('Scan confirmation state transition did not commit');
+    }
+    if (kv) await kv.delete(`inv_${auth.householdId}`).catch(() => {});
+    const updatedList = await fetchHouseholdInventoryFromDb(db, auth.householdId, kv, { strict: true, actorId: auth.userId });
+    return c.json({
+      success: true, message: 'Đã cập nhật nguyên liệu vào tủ lạnh thành công',
+      inventoryCount: updatedList.length, items: updatedList, confirmedItemIds: plan.selectedIds,
+    });
+  } catch (error: any) {
+    // A committed twin can win after our READY read. Recover through the same
+    // status-based replay contract, never by retrying the stock writes.
+    try {
+      const committed = await db.prepare('SELECT status FROM scans WHERE id = ? AND household_id = ?')
+        .bind(scanId, auth.householdId).first();
+      if (committed?.status === 'confirmed') {
+        const updatedList = await fetchHouseholdInventoryFromDb(db, auth.householdId, kv,
+          { strict: true, actorId: auth.userId });
+        return c.json({ success: true, idempotentReplay: true,
+          message: 'Bản quét này đã được xác nhận trước đó', inventoryCount: updatedList.length, items: updatedList });
+      }
+    } catch (recoveryError) {
+      error = recoveryError;
+    }
+    if (error instanceof LotCommandError) {
+      const failure = inventoryAuthorityFailure(error);
+      return c.json({ error: error.message, code: failure.code }, failure.status);
+    }
+    if (error instanceof ObservationError) {
+      // Evidence that cannot be represented must not silently vanish while the
+      // stock command commits; the whole confirmation fails closed instead.
+      return c.json({ error: 'Không thể ghi nhận bằng chứng từ bản quét', code: 'INVALID_OBSERVATION' }, 422);
+    }
+    console.error('Adopted scan confirmation failed:', error);
+    return c.json({ error: 'Lỗi xác nhận đưa nguyên liệu vào tủ lạnh', code: 'DATABASE_ERROR' }, 500);
+  }
 }
 
 function assertBatchSucceeded(results: any[] | undefined): void {
@@ -88,6 +287,12 @@ export interface PersistedScanItem {
   is_confirmed?: number | boolean | null;
   unit_price_vnd?: number | null;
   total_price_vnd?: number | null;
+  ocr_raw_name?: string | null;
+  ocr_quantity?: number | null;
+  ocr_unit?: string | null;
+  ocr_canonical_id?: string | null;
+  ocr_category?: string | null;
+  ocr_storage?: string | null;
 }
 
 export interface ResolvedScanItem {
@@ -102,6 +307,10 @@ export interface ResolvedScanItem {
   category: string;
   storage: 'fridge' | 'freezer' | 'pantry';
   expiryDate?: string;
+  /** How the confirmed expiry was established; decides KNOWN vs ESTIMATED. */
+  expiryBasis: ExpiryBasis;
+  /** The reviewer explicitly rejected this line; it must not become stock. */
+  rejected: boolean;
   isManual: boolean;
 }
 
@@ -281,6 +490,13 @@ export function resolveScanConfirmationItems(
       category,
       storage: normalizeStorage(submitted?.storage ?? persisted?.storage),
       expiryDate: submitted?.expiryDate,
+      // A date the reviewer picked is a supplied fact; a day-chip estimate is
+      // explicitly flagged by the client and stays ESTIMATED. Absence is
+      // absence — the caller never turns it into a KNOWN date.
+      expiryBasis: submitted?.expiryDate
+        ? (submitted?.expiryEstimated === true ? 'inferred' : 'supplied')
+        : 'absent',
+      rejected: submitted?.rejected === true,
       isManual,
     };
   });
@@ -300,10 +516,59 @@ function hashScanPart(value: string): string {
 function stableScanPart(item: ResolvedScanItem, index: number): string {
   const source = item.sourceId || item.clientId;
   if (source) {
-    const safe = source.replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 80);
-    if (safe) return safe;
+    const safe = source.replace(/[^A-Za-z0-9_-]/g, '_');
+    // Truncation must not destroy identity. A real receipt scan id is a
+    // 64-char digest, so `receipt_item_<scanId>_<n>` exceeds 80 characters and
+    // every line of one receipt used to truncate to the SAME id — the lots
+    // then collided and the confirmation failed with LOT_EXISTS. Keep a
+    // deterministic, collision-resistant suffix instead of a blind prefix.
+    if (safe.length <= 80) return safe;
+    return `${safe.slice(0, 60)}_${hashScanPart(safe)}`;
   }
   return `manual_${index}_${hashScanPart(`${item.name}|${item.quantity}|${item.unit}`)}`;
+}
+
+/**
+ * Review DTO for one scan line. Surfaces what is actually known: the retained
+ * raw extraction, the model's own confidence (null when it reported none — the
+ * UI must show "unknown", never a fabricated high score), and the explicit
+ * review lifecycle including rejection.
+ */
+export function scanItemDto(row: any, scanId: string) {
+  const raw = rawScanEvidence(row);
+  const reviewState = row.review_state === 'CONFIRMED' || row.review_state === 'REJECTED'
+    ? row.review_state : 'PENDING';
+  // T13R-A P2-B: the expiry the reviewer accepted, exposed only for a
+  // CONFIRMED line and in the exact shape the review UI submits, so a
+  // reopened review hydrates KNOWN/ESTIMATED/UNKNOWN faithfully.
+  const reviewedExpiry = reviewState === 'CONFIRMED' ? reviewedScanExpiry(row) : null;
+  return {
+    id: row.id,
+    scanId: row.scan_id ?? scanId,
+    rawName: row.raw_name,
+    canonicalId: row.canonical_id,
+    estimatedQuantity: row.estimated_quantity,
+    unit: row.unit,
+    // Truthful confidence: undefined when the provider reported none.
+    confidence: row.ocr_confidence == null ? undefined : Number(row.ocr_confidence),
+    category: row.category,
+    storage: row.storage,
+    isConfirmed: Boolean(row.is_confirmed),
+    reviewState,
+    unitPriceVnd: row.unit_price_vnd == null ? undefined : Number(row.unit_price_vnd),
+    totalPriceVnd: row.total_price_vnd == null ? undefined : Number(row.total_price_vnd),
+    ...(reviewedExpiry ?? {}),
+    // Raw extraction kept separable from the confirmed value so a correction
+    // can still be explained after the fact.
+    rawEvidence: rawEvidenceAbsent(raw) ? undefined : {
+      rawName: raw.rawName ?? undefined,
+      estimatedQuantity: raw.quantity ?? undefined,
+      unit: raw.unit ?? undefined,
+      canonicalId: raw.canonicalId ?? undefined,
+      category: raw.category ?? undefined,
+      storage: raw.storage ?? undefined,
+    },
+  };
 }
 
 // Enforce multi-tenancy on all scan routes
@@ -565,12 +830,7 @@ async function recoverScan(
     createdAt: row?.created_at,
     merchantName: row?.merchant_name, invoiceNumber: row?.invoice_number,
     purchaseDate: row?.purchase_date, totalAmountVnd: row?.total_amount_vnd,
-    items: (items.results || []).map((item: any) => ({
-      id: item.id, scanId, rawName: item.raw_name, canonicalId: item.canonical_id,
-      estimatedQuantity: item.estimated_quantity, unit: item.unit, confidence: item.confidence,
-      category: item.category, storage: item.storage, isConfirmed: Boolean(item.is_confirmed),
-      unitPriceVnd: item.unit_price_vnd, totalPriceVnd: item.total_price_vnd,
-    })),
+    items: (items.results || []).map((item: any) => scanItemDto(item, scanId)),
   };
   return c.json({ success: true, idempotentReplay: true, scan, ...(scanType === 'receipt' ? { receipt: scan } : {}) },
     ['pending', 'processing'].includes(scan.status) ? 202 : 200);
@@ -767,7 +1027,18 @@ scanRoutes.post('/scans/fridge', async (c) => {
             item.canonicalId,
             item.estimatedQuantity,
             item.unit,
-            item.confidence,
+            // The legacy NOT NULL column keeps its historical filler; the
+            // ocr_* columns carry what the model actually reported.
+            item.confidence ?? LEGACY_CONFIDENCE_FILLER,
+            item.category,
+            item.storage,
+            item.rawName,
+            item.estimatedQuantity,
+            item.unit,
+            item.confidence ?? null,
+            // T13R-A: the ingested mapping, retained before any review can
+            // rewrite the working canonical_id/category/storage.
+            item.canonicalId,
             item.category,
             item.storage
           )
@@ -991,11 +1262,18 @@ scanRoutes.post('/scans/receipt', async (c) => {
             item.canonicalId,
             item.estimatedQuantity,
             item.unit,
-            item.confidence,
+            item.confidence ?? LEGACY_CONFIDENCE_FILLER,
             item.category,
             item.storage,
             item.unitPriceVnd ?? null,
             item.totalPriceVnd ?? null,
+            item.rawName,
+            item.estimatedQuantity,
+            item.unit,
+            item.confidence ?? null,
+            item.canonicalId,
+            item.category,
+            item.storage,
           )
       );
     }
@@ -1045,20 +1323,7 @@ scanRoutes.get('/scans/:id', async (c) => {
         .bind(id)
         .first<{ error_code: string | null; attempts: number; max_attempts: number }>(),
     ]);
-    const items = (itemsRes.results || []).map((row: any) => ({
-      id: row.id,
-      scanId: row.scan_id,
-      rawName: row.raw_name,
-      canonicalId: row.canonical_id,
-      estimatedQuantity: row.estimated_quantity,
-      unit: row.unit,
-      confidence: row.confidence,
-      category: row.category,
-      storage: row.storage,
-      isConfirmed: Boolean(row.is_confirmed),
-      unitPriceVnd: row.unit_price_vnd == null ? undefined : Number(row.unit_price_vnd),
-      totalPriceVnd: row.total_price_vnd == null ? undefined : Number(row.total_price_vnd),
-    }));
+    const items = (itemsRes.results || []).map((row: any) => scanItemDto(row, scan.id));
 
     return c.json({
       scan: {
@@ -1115,7 +1380,7 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
   try {
     // SEC-05 FIX: Verify that the scan belongs to this household
     const scan = await db
-      .prepare('SELECT id, status FROM scans WHERE id = ? AND household_id = ?')
+      .prepare('SELECT id, status, scan_type, purchase_date FROM scans WHERE id = ? AND household_id = ?')
       .bind(id, auth.householdId)
       .first<any>();
 
@@ -1124,7 +1389,7 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
     }
 
     if (scan.status === 'confirmed') {
-      const updatedList = await fetchHouseholdInventoryFromDb(db, auth.householdId, kv, { strict: true });
+      const updatedList = await fetchHouseholdInventoryFromDb(db, auth.householdId, kv, { strict: true, actorId: auth.userId });
       return c.json({
         success: true,
         idempotentReplay: true,
@@ -1145,13 +1410,24 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
     // ensures an AI row from another scan cannot be smuggled into this command.
     const scanItemsResult = await db
       .prepare(
-        `SELECT id, raw_name, canonical_id, estimated_quantity, unit, category, storage, is_confirmed
+        `SELECT id, raw_name, canonical_id, estimated_quantity, unit, category, storage, is_confirmed,
+                unit_price_vnd, total_price_vnd, ocr_raw_name, ocr_quantity, ocr_unit, ocr_confidence,
+                ocr_canonical_id, ocr_category, ocr_storage
          FROM scan_items WHERE scan_id = ?`
       )
       .bind(id)
       .all();
     const persistedItems = (scanItemsResult.results || []) as PersistedScanItem[];
-    const resolvedItems = resolveScanConfirmationItems(persistedItems, confirmedItems);
+    const allResolvedItems = resolveScanConfirmationItems(persistedItems, confirmedItems);
+    // T13: an explicitly rejected line is durable review evidence, not stock.
+    // It is recorded as REJECTED below and never reaches the lot authority.
+    const rejectedItems = allResolvedItems.filter((item) => item.rejected);
+    const resolvedItems = allResolvedItems.filter((item) => !item.rejected);
+    // Authoritative provenance comes from the server's own scan row.
+    const provenance = scanProvenance(scan.scan_type);
+    const persistedById = new Map(persistedItems.map((item) => [item.id, item]));
+    const adopted = await readInventoryAuthorityMode(db, auth.householdId) === 'native';
+    const separateReceiptLots = adopted && provenance === 'RECEIPT';
 
     type ResolvedGroup = {
       key: string;
@@ -1166,13 +1442,11 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
       };
     };
 
-    // Group rows that refer to the same canonical ingredient/name before
-    // querying inventory. D1 does not expose uncommitted batch inserts to the
-    // later SELECTs, so without grouping two tomatoes in one scan could create
-    // two inventory rows instead of one aggregated projection.
+    // Receipts prove new purchases: keep each line's lot and purchase facts.
+    // Fridge observations retain the existing grouped CORRECT semantics.
     const groups = new Map<string, ResolvedGroup>();
     for (const item of resolvedItems) {
-      const key = item.canonicalId
+      const key = separateReceiptLots ? `purchase:${groups.size}` : item.canonicalId
         ? `canonical:${item.canonicalId}`
         : `name:${item.name.toLocaleLowerCase()}`;
       const group = groups.get(key);
@@ -1201,10 +1475,15 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
       name: string;
       category: string;
       storage: 'fridge' | 'freezer' | 'pantry';
+      expiryBasis: ExpiryBasis;
+      /** scan_item ids that fed this lot; used to attribute receipt prices. */
+      lineIds: string[];
     };
 
     const updates = new Map<string, InventoryUpdate>();
     const inserts: InventoryInsert[] = [];
+    const evidenceByItemId = new Map<string, InventoryScanEvidence>();
+    const affectedItemIds = new Map<ResolvedScanItem, string>();
     const events: Array<{
       id: string;
       itemId: string;
@@ -1213,10 +1492,11 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
       metadata: string;
     }> = [];
 
+    const inventoryRevision = await readLegacyInventoryRevision(db, auth.householdId);
     let groupIndex = 0;
     for (const group of groups.values()) {
       const first = group.items[0];
-      const existingResult = await db
+      const existingResult = separateReceiptLots ? { results: [] } : await db
         .prepare(
           `SELECT id, quantity, unit, ingredient_id, name, expiry_date
            FROM inventory_items
@@ -1269,6 +1549,12 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
       const expiryDate = [...submittedExpiries, ...(existingExpiry ? [existingExpiry] : [])]
         .sort()[0] || new Date(Date.now() + shelfLife * 86400000).toISOString().split('T')[0];
       const freshness = computeFreshness(expiryDate, undefined, shelfLife);
+      // T13 expiry truth. The winning date decides the evidence class: a
+      // reviewer-supplied date is KNOWN; a day-chip estimate or the default
+      // shelf-life fallback is ESTIMATED. The pre-T13 code wrote every one of
+      // these as KNOWN, which manufactured dated facts out of a guess.
+      const expiryBasis: ExpiryBasis = group.items.some((item) => item.expiryDate === expiryDate
+        && item.expiryBasis === 'supplied') ? 'supplied' : 'inferred';
 
       let itemId: string;
       if (existing) {
@@ -1301,8 +1587,21 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
           name: first.name,
           category: first.category,
           storage: first.storage,
+          expiryBasis,
+          lineIds: group.items.map((item) => item.sourceId).filter((value): value is string => Boolean(value)),
         });
       }
+
+      const evidence = evidenceByItemId.get(itemId) ?? { scanId: id, sourceType: provenance, lines: [] };
+      for (const item of group.items) {
+        affectedItemIds.set(item, itemId);
+        const persisted = item.sourceId ? persistedById.get(item.sourceId) : undefined;
+        evidence.lines.push(scanCorrectionLine(item.sourceId ?? null, rawScanEvidence(persisted ?? {}), {
+          name: item.name, quantity: item.quantity, unit: item.unit, storage: item.storage,
+          ...lotExpiryFromEvidence(item.expiryDate, item.expiryBasis),
+        }));
+      }
+      evidenceByItemId.set(itemId, evidence);
 
       group.items.forEach((item, itemIndex) => {
         const sourceKey = stableScanPart(item, itemIndex);
@@ -1337,12 +1636,17 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
       // a later GET of the scan reflects exactly what was imported. Omitted
       // predictions remain unconfirmed and retain their original AI values.
       for (const item of selectedItems) {
+        // T13R-A P2-B: record the expiry the reviewer accepted for THIS line
+        // (KNOWN / ESTIMATED / UNKNOWN) so a reopened review reports the
+        // review, not an absence re-derived from stock.
+        const reviewed = lotExpiryFromEvidence(item.expiryDate, item.expiryBasis);
         batchStatements.push(
           db
             .prepare(
               `UPDATE scan_items
                SET raw_name = ?, canonical_id = ?, estimated_quantity = ?, unit = ?,
-                   category = ?, storage = ?, is_confirmed = 1
+                   category = ?, storage = ?, is_confirmed = 1, review_state = 'CONFIRMED',
+                   reviewed_expiry_date = ?, reviewed_expiry_kind = ?
                WHERE id = ? AND scan_id = ? AND ${readyScanPredicate}`
             )
             .bind(
@@ -1352,6 +1656,8 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
               item.unit,
               item.category,
               item.storage,
+              reviewed.expiryAt ?? reviewed.estimatedExpiryAt ?? null,
+              reviewed.expiryKind,
               item.sourceId,
               id,
               id,
@@ -1359,6 +1665,64 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
             )
         );
       }
+    }
+
+    // T13: an explicitly rejected line is recorded as durable review evidence.
+    // Modelling rejection as "the line vanished from the request" would leave
+    // it indistinguishable from a not-yet-reviewed line forever.
+    for (const rejected of rejectedItems) {
+      if (!rejected.sourceId) continue;
+      batchStatements.push(
+        db
+          .prepare(
+            `UPDATE scan_items SET review_state = 'REJECTED', is_confirmed = 0
+             WHERE id = ? AND scan_id = ? AND is_confirmed = 0 AND ${readyScanPredicate}`
+          )
+          .bind(rejected.sourceId, id, id, auth.householdId)
+      );
+    }
+
+    // Adopted households confirm through the lot authority: reviewed scan
+    // values and the status transition commit in the same atomic batch as the
+    // native commands, status update last.
+    if (adopted) {
+      return confirmAdoptedScan(c, db, kv, auth, id, {
+        selectedIds, batchStatements, updates, inserts,
+        provenance, evidenceByItemId,
+        purchase: {
+          // Receipt facts are read from the server-side scan row, never from
+          // the client payload, and stay null when the receipt lacked them.
+          purchasedAt: provenance === 'RECEIPT'
+            ? receiptLineFacts(provenance, scan, {}).purchasedAt : null,
+          purchasePriceFor: (lineIds: string[]) => {
+            if (provenance !== 'RECEIPT') return null;
+            // Only attribute a price when exactly one receipt line feeds the
+            // lot; a merged lot has no single provable line price.
+            if (lineIds.length !== 1) return null;
+            const line = persistedById.get(lineIds[0]);
+            return line ? receiptLineFacts(provenance, scan, line).purchasePrice : null;
+          },
+        },
+        observations: await Promise.all(resolvedItems.map(async (item, index) => {
+          // T10 rawName is machine evidence, not the reviewed identity.
+          const rawName = rawScanEvidence(item.sourceId ? persistedById.get(item.sourceId) ?? {} : {})
+            .rawName?.trim().slice(0, 200).trim() ?? null;
+          return {
+            sourceRef: await scanObservationSourceRef(id, item.sourceId ?? item.clientId ?? `manual-${index}`),
+            ingredientId: item.canonicalId,
+            rawName,
+            // Unmapped/manual lines without retained OCR still need a real subject.
+            legacyItemId: rawName === null && item.canonicalId === null ? affectedItemIds.get(item) ?? null : null,
+            quantity: item.quantity,
+            unit: item.unit,
+            storage: item.storage,
+            expiryDate: item.expiryDate ?? null,
+            expiryBasis: item.expiryBasis,
+            note: null,
+          };
+        })),
+        readyGuard: { sql: readyScanPredicate, bindings: [id, auth.householdId] },
+      });
     }
 
     for (const update of updates.values()) {
@@ -1448,16 +1812,17 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
 
     // D1 batch executes the state transition, projection, and audit events as
     // one transaction. A failed event insert therefore rolls back the status.
-    const batchResults = await db.batch(batchStatements);
+    const batchResults = await runLegacyInventoryBatch(db, auth.householdId, batchStatements, inventoryRevision,
+      { sql: readyScanPredicate, bindings: [id, auth.householdId] });
     assertBatchSucceeded(batchResults);
     const statusResult = batchResults?.[batchResults.length - 1] as any;
     if (statusResult?.meta?.changes !== 1) {
       const committed = await db
         .prepare('SELECT status FROM scans WHERE id = ? AND household_id = ?')
         .bind(id, auth.householdId)
-        .first<{ status: string }>();
-      if (committed?.status === 'confirmed') {
-        const updatedList = await fetchHouseholdInventoryFromDb(db, auth.householdId, kv, { strict: true });
+        .first();
+      if ((committed as any)?.status === 'confirmed') {
+        const updatedList = await fetchHouseholdInventoryFromDb(db, auth.householdId, kv, { strict: true, actorId: auth.userId });
         return c.json({
           success: true,
           idempotentReplay: true,
@@ -1474,7 +1839,7 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
     }
 
     // Fetch fresh updated inventory from D1
-    const updatedList = await fetchHouseholdInventoryFromDb(db, auth.householdId, kv, { strict: true });
+    const updatedList = await fetchHouseholdInventoryFromDb(db, auth.householdId, kv, { strict: true, actorId: auth.userId });
 
     return c.json({
       success: true,
@@ -1497,9 +1862,9 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
       const committed = await db
         .prepare('SELECT status FROM scans WHERE id = ? AND household_id = ?')
         .bind(id, auth.householdId)
-        .first<{ status: string }>();
-      if (committed?.status === 'confirmed') {
-        const updatedList = await fetchHouseholdInventoryFromDb(db, auth.householdId, kv, { strict: true });
+        .first();
+      if ((committed as any)?.status === 'confirmed') {
+        const updatedList = await fetchHouseholdInventoryFromDb(db, auth.householdId, kv, { strict: true, actorId: auth.userId });
         return c.json({
           success: true,
           idempotentReplay: true,
@@ -1510,6 +1875,9 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
       }
     } catch {
       // Fall through to the database error response.
+    }
+    if (err instanceof InventoryWriterAuthorityError || err instanceof InventoryWriterSnapshotError) {
+      return c.json({ error: err.message, code: err.code }, 409);
     }
     console.error('D1 confirmScan items insert failed:', err);
     return c.json({ error: 'Lỗi xác nhận đưa nguyên liệu vào tủ lạnh', code: 'DATABASE_ERROR' }, 500);

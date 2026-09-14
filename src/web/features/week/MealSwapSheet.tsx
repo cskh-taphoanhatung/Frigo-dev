@@ -38,7 +38,7 @@ export const MealSwapSheet: React.FC = () => {
         {/* Header */}
         <div className="px-5 pb-3.5 border-b border-slate-100 flex items-center justify-between">
           <div>
-            <div className="flex items-center gap-1 text-xs font-semibold text-emerald-700">
+            <div className="flex items-center gap-1 text-xs font-semibold text-takosan-green">
               <ArrowRightLeft className="w-3.5 h-3.5" />
               <span>Đổi món khác</span>
             </div>
@@ -61,7 +61,7 @@ export const MealSwapSheet: React.FC = () => {
           {error && <InlineError message={error} onRetry={() => openSwap(swapSlotId)} />}
           {isLoadingAlternatives ? (
             <div className="py-12 text-center">
-              <div className="animate-spin w-7 h-7 border-2 border-emerald-600 border-t-transparent rounded-full mx-auto mb-2" />
+              <div className="animate-spin w-7 h-7 border-2 border-takosan-green border-t-transparent rounded-full mx-auto mb-2" />
               <p className="text-xs text-slate-500 font-medium">
                 Đang tìm các món thay thế tối ưu tủ lạnh...
               </p>
@@ -81,7 +81,7 @@ export const MealSwapSheet: React.FC = () => {
               return (
                 <div
                   key={alt.recipe.id}
-                  className="bg-white rounded-xl p-3 border border-slate-200/80 shadow-xs flex items-center justify-between gap-3 hover:border-emerald-500/40 transition-all"
+                  className="bg-white rounded-xl p-3 border border-slate-200/80 shadow-xs flex items-center justify-between gap-3 hover:border-takosan-green/40 transition-all"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <img
@@ -92,7 +92,7 @@ export const MealSwapSheet: React.FC = () => {
 
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5 mb-0.5">
-                        <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60">
+                        <span className="text-[10px] font-semibold text-takosan-green-deep bg-takosan-mint px-1.5 py-0.5 rounded border border-takosan-mint-deep/60">
                           Khớp {alt.matchPercent}%
                         </span>
                         {alt.badges.map((b) => (
@@ -114,7 +114,7 @@ export const MealSwapSheet: React.FC = () => {
                         <span
                           className={clsx(
                             'font-semibold',
-                            alt.budgetDeltaVnd <= 0 ? 'text-emerald-700' : 'text-amber-700'
+                            alt.budgetDeltaVnd <= 0 ? 'text-takosan-green' : 'text-amber-700'
                           )}
                         >
                           Chi phí: {formatDelta(alt.budgetDeltaVnd)}
@@ -131,7 +131,7 @@ export const MealSwapSheet: React.FC = () => {
                   <button
                     disabled={isLoading}
                     onClick={() => executeSwap(alt.recipe.id)}
-                    className="px-3.5 py-2 rounded-lg bg-[#0F3D2E] hover:bg-emerald-800 text-white font-semibold text-xs transition-all active:scale-[0.98] shrink-0 tap-target flex items-center gap-1 shadow-xs"
+                    className="px-3.5 py-2 rounded-lg bg-takosan-green hover:bg-takosan-green-hover text-white font-semibold text-xs transition-all active:scale-[0.98] shrink-0 tap-target flex items-center gap-1 shadow-xs"
                     aria-label={`Chọn món ${alt.recipe.title}`}
                   >
                     <Check className="w-3.5 h-3.5" />

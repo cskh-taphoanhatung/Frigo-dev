@@ -24,7 +24,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ matchResult, onClick, co
     return (
       <div
         onClick={onClick}
-        className="bg-white rounded-2xl overflow-hidden border border-slate-200/80 shadow-card hover:border-emerald-500/50 hover:shadow-elevated active:scale-[0.97] transition-all cursor-pointer flex flex-col w-48 shrink-0"
+        className="bg-white rounded-2xl overflow-hidden border border-slate-200/80 shadow-card hover:border-takosan-green/50 hover:shadow-elevated active:scale-[0.97] transition-all cursor-pointer flex flex-col w-48 shrink-0"
       >
         <div className="relative w-full h-32 overflow-hidden bg-slate-100">
           <img
@@ -40,14 +40,14 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ matchResult, onClick, co
           <span
             className={`absolute top-2 left-2 px-2.5 py-1 rounded-full text-[11px] font-heading font-bold text-white shadow-sm ${
               matchPercentage >= 80
-                ? 'bg-gradient-to-r from-emerald-600 to-[#22C55E]'
+                ? 'bg-takosan-green'
                 : 'bg-slate-900/80 backdrop-blur-sm'
             }`}
           >
             {cuisineFlags[recipe.cuisine] || '🌍'} {matchPercentage}%
           </span>
           {canCookWithoutBuying && (
-            <span className="absolute top-2 right-2 w-6 h-6 rounded-full bg-emerald-500 shadow-sm flex items-center justify-center">
+            <span className="absolute top-2 right-2 w-6 h-6 rounded-full bg-takosan-green shadow-sm flex items-center justify-center">
               <CheckCircle className="w-4 h-4 text-white" />
             </span>
           )}
@@ -59,11 +59,11 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ matchResult, onClick, co
           </h4>
           <div className="flex items-center justify-between text-[11px] text-slate-600">
             <span className="flex items-center gap-1 font-semibold">
-              <Clock className="w-3.5 h-3.5 text-emerald-600" />
+              <Clock className="w-3.5 h-3.5 text-takosan-green" />
               {recipe.cookTimeMinutes}p
             </span>
             {canCookWithoutBuying ? (
-              <span className="text-emerald-700 font-heading font-bold">Đủ 100%</span>
+              <span className="text-takosan-green font-heading font-bold">Đủ 100%</span>
             ) : (
               <span className="text-amber-800 font-bold">Thiếu {missingRequiredIngredients.length}</span>
             )}
@@ -76,7 +76,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ matchResult, onClick, co
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-2xl p-3.5 flex gap-4 items-center border border-slate-200/80 shadow-card hover:border-emerald-500/50 hover:shadow-elevated active:scale-[0.99] transition-all cursor-pointer"
+      className="bg-white rounded-2xl p-3.5 flex gap-4 items-center border border-slate-200/80 shadow-card hover:border-takosan-green/50 hover:shadow-elevated active:scale-[0.99] transition-all cursor-pointer"
     >
       <div className="relative w-[104px] h-[104px] rounded-xl overflow-hidden shrink-0 bg-slate-100 shadow-xs">
         <img
@@ -96,15 +96,15 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ matchResult, onClick, co
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
           {canCookWithoutBuying ? (
-            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/80 flex items-center gap-1">
-              <CheckCircle className="w-3.5 h-3.5 text-emerald-600" /> Đủ 100%
+            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep/80 flex items-center gap-1">
+              <CheckCircle className="w-3.5 h-3.5 text-takosan-green" /> Đủ 100%
             </span>
           ) : (
             <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-900 border border-amber-200/80">
               Thiếu {missingRequiredIngredients.length} món
             </span>
           )}
-          <span className="inline-flex items-center gap-1 text-[11px] font-heading font-extrabold text-emerald-700">
+          <span className="inline-flex items-center gap-1 text-[11px] font-heading font-extrabold text-takosan-green">
             <Flame className="w-3.5 h-3.5 text-orange-500" />
             Khớp {matchPercentage}%
           </span>
@@ -120,7 +120,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ matchResult, onClick, co
 
         <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-100 text-xs">
           <span className="flex items-center gap-1 text-slate-600 font-semibold">
-            <Clock className="w-4 h-4 text-emerald-600" />
+            <Clock className="w-4 h-4 text-takosan-green" />
             <span>{recipe.cookTimeMinutes} phút</span>
           </span>
           {recipe.nutrition && (

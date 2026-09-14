@@ -5,7 +5,7 @@ import { ApiError } from '../../services/api';
 /** Compact inline loading spinner for widget-level fetches. */
 export const InlineLoading: React.FC<{ label?: string }> = ({ label = 'Đang tải…' }) => (
   <div className="text-center py-8" role="status" aria-live="polite">
-    <div className="animate-spin w-7 h-7 border-2 border-emerald-600 border-t-transparent rounded-full mx-auto mb-2 motion-reduce:animate-none" />
+    <div className="animate-spin w-7 h-7 border-2 border-takosan-green border-t-transparent rounded-full mx-auto mb-2 motion-reduce:animate-none" />
     <p className="text-xs text-slate-500 font-medium">{label}</p>
   </div>
 );
@@ -41,7 +41,7 @@ export const InlineError: React.FC<{
       {onRetry && (
         <button
           onClick={onRetry}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200/80 text-xs font-heading font-bold hover:bg-emerald-100 active:scale-95 transition-all tap-target"
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep/80 text-xs font-heading font-bold hover:bg-takosan-mint-hover active:scale-95 transition-all tap-target"
         >
           <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
           Thử lại

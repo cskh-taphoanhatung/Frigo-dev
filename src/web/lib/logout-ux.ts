@@ -14,7 +14,7 @@ export function logoutPromptCopy(pendingCount: number): LogoutPromptCopy {
   }
 
   return {
-    description: 'Frigo sẽ xóa dữ liệu riêng tư khỏi thiết bị này trước khi yêu cầu máy chủ thu hồi phiên. Nếu máy chủ chưa xác nhận, bạn cần kết nối mạng và thử lại.',
+    description: 'Takosan sẽ xóa dữ liệu riêng tư khỏi thiết bị này trước khi yêu cầu máy chủ thu hồi phiên. Nếu máy chủ chưa xác nhận, bạn cần kết nối mạng và thử lại.',
     confirmText: 'Đăng xuất',
     cancelText: 'Hủy',
   };
