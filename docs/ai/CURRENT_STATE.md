@@ -1,7 +1,39 @@
 # Production integration candidate — 2026-09-15
 
-**PRODUCTION INTEGRATION CANDIDATE CERTIFIED LOCALLY — READY FOR INDEPENDENT
-INTEGRATION REVIEW.** Branch `integration/t13-takosan-qwen` starts at verified
+## Current remediation state
+
+**INDEPENDENT-REVIEW BLOCKERS FIXED AND COMMITTED.** The working branch remains
+`integration/t13-takosan-qwen`; remediation candidate is `5f6853d` on base HEAD
+`231d1e7`.
+The reviewed candidate `e34ed16777166407acf67b2c76d733d89c7d64ca` is
+superseded and must not be merged as-is.
+
+Protected payment UI is restored byte-identically to production base
+`05423f2`; brand assertions exclude those protected surfaces. The Qwen scan
+regression now exercises real router/runtime/provider composition and mocks only
+synthetic DashScope HTTP before queue persistence and T13 confirmation.
+Missing/0/.11/.9 confidence remains exact evidence; low confidence is retained
+for review, while generic labels are rejected. Runtime escalation preserves a
+concrete prior error when the next role is disabled. Certified T13 DEC-012 auth
+deferral is intentionally retained and documented as an auth difference from
+production.
+
+Exact fresh checks: focused `41/41`; broader affected matrix initially `300/302`
+because two brand assertions included payment, then brand `16/16`; full Vitest
+`3630/3630` in 149 files; `pnpm lint`, `pnpm typecheck`,
+`pnpm check:migrations`, `pnpm build`, `git diff --check` PASS; browser `60/60`
+at 360/390/430 PASS. No remote or production mutation occurred. Next action:
+final review of immutable SHA `5f6853d`.
+Two intermediate typecheck attempts exposed an over-generic then invalid
+`fetch` spy annotation; `MockInstance<typeof globalThis.fetch>` fixed it and the
+final typecheck plus focused `57/57` rerun passed.
+
+Access preflight: `Tungjpstore` has production `ADMIN` and Frigo-dev `WRITE`;
+repository IDs/default heads remain verified, with no branch protection or
+rulesets reported. Local `origin` points to `Tungjpstore/yaji`, so it is not a
+safe implicit publication target for this integration branch.
+
+**HISTORICAL PRE-REVIEW CERTIFICATION — SUPERSEDED BY REMEDIATION ABOVE.** Branch `integration/t13-takosan-qwen` starts at verified
 production `PRODUCTION_BASE=05423f2ad675006a4c7913e696f1979b3fcaae59` in
 `Tungjpstore/Frigo` (ID `1360256196`). Normal common ancestor with certified
 development is `d1b06732f8a80db4e77986df31ff28d9f04641fa`.
@@ -16,11 +48,11 @@ queue path preserves missing/0/.11/.9 evidence, provenance and fingerprint into
 T13 confirmation; replay creates no duplicate T09 effects. T09/T11 remain the
 mutation/read authorities; unknown writers/readers `0/0`.
 
-Local gates: frozen install, lint, typecheck, migration smoke, build, diff check
+Historical candidate gates: frozen install, lint, typecheck, migration smoke, build, diff check
 PASS; full Vitest `3628/3628` in 149 files; real local workerd/D1 `92/92` in five
 files; browser last and serial `60/60` at 360/390/430. P3-1 and P3-2 remain
 unchanged. **NO HOSTED GITHUB CI STATUS FOR INTEGRATION_APPLICATION_CANDIDATE**.
-No deploy, main merge, remote D1/R2/KV/queue mutation, PayOS/payment change,
+No deploy, main merge, remote D1/R2/KV/queue mutation, PayOS backend change,
 secret/DNS change, or T14. Full packet: `docs/integration/`.
 
 # Takosan brand branch (independent descendant) — 2026-09-14

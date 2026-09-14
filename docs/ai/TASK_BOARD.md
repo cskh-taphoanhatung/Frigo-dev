@@ -1,15 +1,25 @@
-# Production integration candidate — COMPLETE LOCALLY (2026-09-15)
+# Production integration remediation — COMMITTED LOCALLY (2026-09-15)
 
-- Application candidate: `e34ed16777166407acf67b2c76d733d89c7d64ca` on
-  `integration/t13-takosan-qwen`, based on production `05423f2`.
+- Reviewed candidate `e34ed16777166407acf67b2c76d733d89c7d64ca` is
+  superseded. Remediation commit is `5f6853d` on top of `231d1e7`.
 - Qwen production runtime, certified T13 Inventory Truth, hardened Takosan, and
   the additive byte-identical `0024`-`0033` migration bridge are integrated.
-- PASS: frozen install, lint, typecheck, migration smoke, build, full Vitest
-  `3628/3628` (149 files), real D1 `92/92` (5 files), browser `60/60`, migration
-  hashes/bridge provenance, and T09/T11 unknown writer/reader audit `0/0`.
+- Fixed: protected payment UI restored to production base; real Qwen runtime is
+  composed in the queue integration test; truthful missing/0/.11/.9 confidence;
+  prior typed runtime error retained; brand tests exclude payment scope.
+- Intentional auth difference: certified T13 DEC-012 guest transfer deferral.
+- PASS: focused `41/41`; brand `16/16`; full Vitest `3630/3630` (149 files),
+  lint, typecheck, migration smoke, build, diff check and browser `60/60`.
+- Retained failure evidence: affected matrix first ran `300/302`; both failures
+  were over-broad brand assertions against the protected payment files.
+- Two intermediate typechecks rejected incorrect `fetch` spy annotations; the
+  final typed `MockInstance` form passes typecheck and focused `57/57`.
+- Access READY: production `ADMIN`, Frigo-dev `WRITE`, both heads unchanged;
+  local `origin` is unrelated `Tungjpstore/yaji`, so publish only to an explicit
+  verified production target if separately authorized.
 - P3-1/P3-2 deliberately preserved. Hosted exact-candidate CI is absent.
-- Next: docs-only checkpoint, normal branch publication/fetch verification, then
-  independent integration review. Do not merge/deploy/apply remote migrations.
+- Next: independently review immutable remediation SHA `5f6853d`. Do not
+  merge/deploy/apply remote migrations.
 
 # Takosan brand branch board — 2026-09-14 (independent of T13 board below)
 

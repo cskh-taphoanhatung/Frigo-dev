@@ -1,6 +1,40 @@
 # Integration handoff
 
-Status: **HISTORICAL ANALYSIS CHECKPOINT — SUPERSEDED BY FINAL HANDOFF BELOW**.
+## Independent-review remediation handoff — 2026-09-15
+
+Status: **FIXES COMPLETE AND LOCAL GATES GREEN**.
+
+The old candidate `e34ed16777166407acf67b2c76d733d89c7d64ca` failed
+independent review. Remediation is committed as `5f6853d` on top of branch HEAD
+`231d1e7`; the immutable application candidate is now `5f6853d`.
+
+- Protected `VietQRModal.tsx` and `PlusPaywallPage.tsx` are restored exactly to
+  `PRODUCTION_BASE`; payment diff to base is empty.
+- The production scan integration test no longer mocks `@frigo/ai`; it uses real
+  Qwen routing/runtime and mocks only DashScope HTTP through queue persistence
+  and T13 confirmation.
+- Missing, `0`, `.11` and `.9` confidence is retained truthfully. Low confidence
+  remains reviewable draft evidence; generic labels remain unusable.
+- Disabled escalation preserves the previous typed provider/validation failure.
+- Brand enforcement excludes the protected payment surfaces. Auth intentionally
+  retains T13 DEC-012 `INVENTORY_TRANSFER_DEFERRED` behavior.
+
+Checks: focused `41/41`; affected matrix first ran `300/302` with two expected
+brand-scope failures, then brand `16/16`; full Vitest `3630/3630` in 149 files;
+lint, typecheck, migration smoke, build and diff check PASS; browser `60/60`
+serial at 360/390/430 PASS. No deploy, merge, push or remote resource mutation.
+Two intermediate typechecks rejected incorrect spy annotations; the final
+`MockInstance<typeof globalThis.fetch>` form and focused `57/57` rerun pass.
+
+Access: current GitHub identity `Tungjpstore` is `ADMIN` on production and
+`WRITE` on Frigo-dev. Both default heads are unchanged and both repos allow the
+configured merge methods with no protection/rulesets returned. The local
+`origin` is unrelated (`Tungjpstore/yaji`), so any later authorized publication
+must target the verified production repository explicitly.
+
+Next: perform another independent review against immutable SHA `5f6853d`.
+
+Status: **HISTORICAL ANALYSIS CHECKPOINT — SUPERSEDED BY THE REMEDIATION HANDOFF ABOVE**.
 
 - Repository identity and both source repositories are verified by numeric ID.
 - `PRODUCTION_BASE=05423f2ad675006a4c7913e696f1979b3fcaae59`.
@@ -15,8 +49,7 @@ Historical next action completed by the final application handoff below.
 
 ## Final application handoff — 2026-09-15
 
-Status: **PRODUCTION INTEGRATION CANDIDATE CERTIFIED LOCALLY — READY FOR
-INDEPENDENT INTEGRATION REVIEW**.
+Status: **HISTORICAL CANDIDATE — FAILED INDEPENDENT REVIEW AND SUPERSEDED**.
 
 ```text
 WORKING_BRANCH=integration/t13-takosan-qwen

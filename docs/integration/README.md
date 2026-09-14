@@ -1,5 +1,41 @@
 # Production integration candidate
 
+## Independent-review remediation — 2026-09-15
+
+Status: **REMEDIATED AND VALIDATED LOCALLY**.
+
+The reviewed application candidate `e34ed16777166407acf67b2c76d733d89c7d64ca`
+is superseded by remediation commit `5f6853d` on top of `231d1e7`. Protected payment
+UI is restored byte-for-byte to `PRODUCTION_BASE`; its candidate-to-base diff is
+empty. The Takosan brand tests now explicitly exclude those protected payment
+surfaces instead of requiring payment edits.
+
+The production integration scan regression now composes the real `AIRouter`,
+`QwenTaskRuntime`, Qwen provider, queue consumer, migrated SQLite persistence and
+T13 confirmation. Only synthetic DashScope HTTP is mocked. Missing, `0`, `.11`
+and `.9` confidence survive without fabrication; low-confidence usable labels
+remain reviewable evidence, while generic labels are rejected. Runtime
+escalation also preserves the concrete preceding provider/validation error when
+a later role is disabled.
+
+The only intentional auth behavior difference from production remains certified
+T13 DEC-012: guest inventory transfer is safely deferred with
+`INVENTORY_TRANSFER_DEFERRED`; it is not a payment or unrelated auth rewrite.
+
+Fresh remediation checks: focused scan/runtime/router `41/41`; broader affected
+matrix `300/302` initially failed only the two over-broad brand assertions, then
+brand `16/16` passed after scoping; full Vitest `3630/3630` in 149 files; lint,
+typecheck, migration smoke, build and `git diff --check` pass; browser `60/60`
+passes serially at 360/390/430. No deploy, push, merge or remote mutation occurred.
+
+Access preflight is sufficient for a future controlled publication/merge:
+GitHub account `Tungjpstore` has `ADMIN` on `Tungjpstore/Frigo` and `WRITE` on
+`vn-dlo/Frigo-dev`; both repositories are active and their default heads remain
+`05423f2` and `d1b0673`. Neither repository reports branch protection or active
+rulesets. Local safety caveat: `origin` points to `Tungjpstore/yaji`; use the
+explicit production repository/verified production remote, never a blind
+`git push origin`, if publication is later authorized.
+
 This packet records the semantic integration of the current production line,
 the production Qwen runtime candidate, certified T13 Inventory Truth, and the
 hardened Takosan application. It is an integration-review artifact only.
@@ -40,8 +76,8 @@ and `HANDOFF.md` for the final evidence.
 
 ## Final certification — 2026-09-15
 
-Status: **PRODUCTION INTEGRATION CANDIDATE CERTIFIED LOCALLY — READY FOR
-INDEPENDENT INTEGRATION REVIEW**.
+Status: **HISTORICAL CERTIFICATION OF THE REVIEWED CANDIDATE; SUPERSEDED BY THE
+REMEDIATION SECTION ABOVE**.
 
 | Field | Value |
 | --- | --- |
@@ -59,13 +95,15 @@ Production `main` remains at `PRODUCTION_BASE`. The candidate preserves the
 Qwen runtime, T13 evidence/authority chain, Takosan shell, and immutable
 production migration `0023`; T13 migrations are byte-identical at `0024`-`0033`.
 
-Local gates are green: frozen install, lint, typecheck, migration smoke, build,
-full Vitest `3628/3628` (149 files), real local D1 `92/92` (5 files), and browser
+Historical candidate gates were green: frozen install, lint, typecheck,
+migration smoke, build, full Vitest `3628/3628` (149 files), real local D1
+`92/92` (5 files), and browser
 `60/60` (serial, widths 360/390/430). Production migration changes `0`, bridge
 blob mismatches `0`, and unknown inventory writers/readers `0/0`.
 
-P3-1 and P3-2 remain intentionally unchanged. No deployment, main merge, remote
-D1/R2/KV/queue mutation, PayOS/payment change, secret/DNS change, or T14 work
-occurred.
+P3-1 and P3-2 remain intentionally unchanged. The remediation restores protected
+payment UI to production base and retains DEC-012 auth deferral. No deployment,
+main merge, remote D1/R2/KV/queue mutation, PayOS backend change, secret/DNS
+change, or T14 work occurred.
 
 **NO HOSTED GITHUB CI STATUS FOR INTEGRATION_APPLICATION_CANDIDATE**

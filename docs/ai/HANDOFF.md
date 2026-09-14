@@ -1,7 +1,6 @@
 # Production integration handoff — 2026-09-15
 
-Status: **PRODUCTION INTEGRATION CANDIDATE CERTIFIED LOCALLY — READY FOR
-INDEPENDENT INTEGRATION REVIEW**.
+Status: **INDEPENDENT-REVIEW REMEDIATION COMPLETE AND COMMITTED LOCALLY**.
 
 `WORKING_BRANCH=integration/t13-takosan-qwen`
 
@@ -9,22 +8,43 @@ INDEPENDENT INTEGRATION REVIEW**.
 
 `COMMON_BASE=d1b06732f8a80db4e77986df31ff28d9f04641fa`
 
-`INTEGRATION_APPLICATION_CANDIDATE=e34ed16777166407acf67b2c76d733d89c7d64ca`
+`REVIEWED_CANDIDATE_SUPERSEDED=e34ed16777166407acf67b2c76d733d89c7d64ca`
+
+`REMEDIATION_BASE_HEAD=231d1e76e0320133e047624eea2be546ff779bd6`
+
+`REMEDIATION_COMMIT=5f6853d`
 
 `INTEGRATION_DOCS_HEAD=c14116e3f979f90ca42ec21187c1aa55d319185b`
 
-The candidate integrates production Qwen `da41686b`, certified T13 `32ddbb4`
+The integration line combines production Qwen `da41686b`, certified T13 `32ddbb4`
 (review `9c3c3d3`), hardened Takosan `ff63edf`, and byte-identical T13 migrations
 renumbered to `0024`-`0033`. Production migration changes `0`, bridge mismatches
 `0`, unknown inventory writers/readers `0/0`. Frozen install, lint, typecheck,
 migration smoke, build, full Vitest `3628/3628` (149), real local D1 `92/92` (5),
-and browser `60/60` (360/390/430, serial, last) pass. P3-1/P3-2 remain unchanged.
+and browser `60/60` (360/390/430, serial, last) historically passed before
+review. The remediation restores protected payment UI to production base,
+replaces the mocked-router integration proof with real Qwen runtime composition,
+retains exact missing/0/.11/.9 evidence, preserves concrete runtime errors, and
+scopes Takosan tests away from payment. Auth intentionally retains certified
+T13 DEC-012 guest-transfer deferral. P3-1/P3-2 remain unchanged.
+
+Fresh remediation receipt: focused `41/41`; affected matrix first `300/302`
+(two brand assertions incorrectly included payment), corrected brand `16/16`;
+full Vitest `3630/3630` in 149 files; lint, typecheck, migration smoke, build and
+diff check PASS; browser `60/60` at 360/390/430 PASS.
+Two intermediate typecheck attempts failed on incorrect `fetch` spy annotation
+forms; the final `MockInstance<typeof globalThis.fetch>` annotation passes, as
+does the post-fix focused `57/57` run.
+
+Access preflight is READY: current GitHub account has `ADMIN` on
+`Tungjpstore/Frigo` and `WRITE` on `vn-dlo/Frigo-dev`; default heads remain
+`05423f2`/`d1b0673`, and neither repo reports protection/rulesets. Local
+`origin=Tungjpstore/yaji`, so do not use an implicit `git push origin`.
 
 **NO HOSTED GITHUB CI STATUS FOR INTEGRATION_APPLICATION_CANDIDATE**.
 
-Next: record the docs-only checkpoint, push only this integration branch without
-force, fetch-verify local equals remote and production main remains `05423f2`,
-then await independent review. No PR, merge, deploy, remote migration/resource
+Next: independently review immutable remediation SHA `5f6853d`. No PR, push,
+merge, deploy, remote migration/resource
 mutation, PayOS/payment work, secret/DNS change, or T14. Exact evidence and
 retained setup failures are in `docs/integration/`.
 

@@ -38,7 +38,7 @@ Takosan/T13 side changes 308 paths from `COMMON_BASE`. Nine paths overlap:
 | R2 image flow | scan route/queue image keys | Compatible T13 route | Preserve production object-reference path | Scan async/R2 tests |
 | Request fingerprint | production migration `0023`, scans route | T13 confirmation flow | Preserve unchanged migration and fingerprint fields | Migration hash audit and confirmation regression |
 | Quota/idempotency | scan quota services and route | T09 command receipts | Preserve both fences; no duplicate T09 effects | Replay regression |
-| Quality gate | production AI normalization/quality gate | T13 raw evidence | Reject/classify without rewriting confidence | Missing/0/.11/.9 tests |
+| Quality gate | production AI normalization/quality gate | T13 raw evidence | Reject generic labels; retain reviewable confidence evidence without rewriting it | Missing/0/.11/.9 tests |
 | Readiness/config | Worker config/health/scripts | Additional schema requirements | Extend additively | Config and schema gate tests |
 
 ## Conflict-resolution rule
@@ -51,14 +51,16 @@ resolution was used; the final resolution table follows.
 The application candidate is `e34ed16777166407acf67b2c76d733d89c7d64ca`.
 The Qwen merge checkpoint is `9c78c1ac9c3927b110c3cd25176ac3f5ff004835`; the
 T13/Takosan merge checkpoint is `c50dc76fbbb2e1150ed7be5d9cfa7a6bb64d9dd7`.
-No unrelated-history merge or bulk ours/theirs resolution was used.
+No unrelated-history merge or bulk ours/theirs resolution was used. Independent
+review later superseded this candidate with remediation commit `5f6853d` on
+`231d1e7`.
 
 | Path/group | Resolution | Proof |
 | --- | --- | --- |
 | `package.json` / lockfile | Semantic union of Qwen runtime, browser tooling, and direct `sharp@0.33.5`; frozen install passes | `pnpm install --frozen-lockfile`, build |
-| AI schemas/provider/quality | Preserve production typed provider/runtime behavior while accepting nullable T13 evidence; no confidence rewrite | Qwen/provider, quality, and queue evidence suites |
+| AI schemas/provider/quality | Preserve typed provider/runtime errors while accepting nullable and low-confidence T13 evidence; generic labels remain rejected and confidence is never rewritten | Qwen/provider, quality, and real queue evidence suites |
 | Scan route + queue | Production fingerprint/quota/fencing/R2 flow feeds T13 raw evidence and T09 commands/T10 observations; status commits last | `production-integration-scan-flow`, queue fencing/retry, T13 suites |
-| Camera/UI | Preserve production image preprocessing with Takosan styling and assets | Brand tests and browser `60/60` |
+| Camera/UI | Preserve production image preprocessing with Takosan styling and assets; restore protected payment UI to production base and exclude it from brand-enforcement tests | Brand tests, zero payment diff to base, browser `60/60` |
 | Migrations | Keep production `0023_scan_request_fingerprint.sql` byte-identical; add T13 `0024`-`0033` byte-copied bridge | Hash audit, bridge test, migration smoke |
 | State docs | Preserve historical records and add current integration authority sections | Candidate-to-docs diff is docs-only |
 
@@ -66,5 +68,6 @@ Post-merge authority audit: `UNKNOWN INVENTORY WRITERS=0`,
 `UNKNOWN CANONICAL READERS=0`; T09 remains mutation authority and T11 remains
 canonical read authority. Household/receipt/lot ownership, private-session,
 Week compatibility, and queue tenancy remain covered. No PayOS/payment,
-billing, checkout, webhook, auth, secret, DNS, or production infrastructure
-behavior was intentionally changed.
+billing, checkout, webhook, secret, DNS, or production infrastructure behavior
+is changed by the remediation. Auth intentionally retains certified T13 DEC-012
+guest-transfer deferral rather than production's unsafe best-effort transfer.
