@@ -120,7 +120,7 @@ export const NotificationsPage: React.FC = () => {
     {
       key: 'promoUpdates' as const,
       label: 'Khuyến mãi & cập nhật',
-      desc: 'Thông tin tính năng mới và ưu đãi từ Frigo Plus',
+      desc: 'Thông tin tính năng mới và ưu đãi từ Takosan Plus',
       icon: Sparkles,
     },
     {
@@ -138,7 +138,7 @@ export const NotificationsPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] pb-16 max-w-md mx-auto">
+    <div className="min-h-screen bg-takosan-cream pb-16 max-w-md mx-auto">
       <TopBar showBack title="Thông báo" subtitle="Nhắc nhở từ tủ lạnh của bạn" />
 
       <div className="px-4 pt-4 space-y-5 animate-fade-in">
@@ -155,7 +155,7 @@ export const NotificationsPage: React.FC = () => {
             <div className="bg-white rounded-2xl border border-slate-200/80 p-5 text-center">
               <Bell className="w-6 h-6 text-slate-300 mx-auto mb-1.5" aria-hidden="true" />
               <p className="text-xs text-slate-600 font-medium">
-                Chưa có thông báo mới. Frigo sẽ nhắc khi có nguyên liệu cần dùng sớm.
+                Chưa có thông báo mới. Takosan sẽ nhắc khi có nguyên liệu cần dùng sớm.
               </p>
             </div>
           ) : (
@@ -164,7 +164,7 @@ export const NotificationsPage: React.FC = () => {
                 const Icon = TYPE_ICONS[n.type] || Bell;
                 return (
                   <div key={n.id} className="p-4 flex items-start gap-3.5">
-                    <div className="w-9 h-9 rounded-xl bg-[#DDF7E3] text-[#0F3D2E] flex items-center justify-center shrink-0">
+                    <div className="w-9 h-9 rounded-xl bg-takosan-mint text-takosan-green flex items-center justify-center shrink-0">
                       <Icon className="w-5 h-5" aria-hidden="true" />
                     </div>
                     <div className="min-w-0">
@@ -204,7 +204,7 @@ export const NotificationsPage: React.FC = () => {
                     <div
                       className={clsx(
                         'w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors',
-                        isChecked ? 'bg-[#DDF7E3] text-[#0F3D2E]' : 'bg-slate-100 text-slate-400'
+                        isChecked ? 'bg-takosan-mint text-takosan-green' : 'bg-slate-100 text-slate-400'
                       )}
                     >
                       <Icon className="w-5 h-5" aria-hidden="true" />
@@ -223,7 +223,7 @@ export const NotificationsPage: React.FC = () => {
                   <div
                     className={clsx(
                       'w-12 h-6.5 rounded-full p-0.5 transition-colors duration-200 ease-in-out shrink-0 relative flex items-center',
-                      isChecked ? 'bg-[#22C55E]' : 'bg-slate-300'
+                      isChecked ? 'bg-takosan-green' : 'bg-slate-300'
                     )}
                     aria-hidden="true"
                   >

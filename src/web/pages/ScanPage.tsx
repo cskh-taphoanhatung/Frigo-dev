@@ -108,7 +108,7 @@ export const ScanPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0F3D2E] text-white flex flex-col justify-between p-4 relative overflow-hidden select-none">
+    <div className="min-h-screen bg-takosan-navy text-white flex flex-col justify-between p-4 relative overflow-hidden select-none">
       {/* Top Header */}
       <div className="flex items-center justify-between z-10 pt-2">
         <button

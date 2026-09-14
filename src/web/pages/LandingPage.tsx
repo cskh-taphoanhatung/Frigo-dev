@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/useAuthStore';
 import { Button } from '../components/common/Button';
-import { FRIGO_ASSETS } from '../lib/frigo-assets';
-import { Camera, ChefHat, ArrowRight } from 'lucide-react';
+import { TAKOSAN_BRAND } from '../lib/takosan-brand';
+import { TakosanIcon } from '../components/common/TakosanIcon';
+import { ArrowRight } from 'lucide-react';
 
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -25,39 +26,42 @@ export const LandingPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] flex flex-col justify-between px-6 py-10 relative overflow-hidden max-w-md mx-auto">
+    <div
+      data-testid="landing-page"
+      className="min-h-screen bg-takosan-cream flex flex-col justify-between px-6 py-10 relative overflow-hidden max-w-md mx-auto"
+    >
       {/* Brand Header */}
       <div className="relative z-10 text-center pt-4">
-        <div className="flex justify-center mb-3">
+        <div className="flex justify-center mb-4">
           <img
-            src={FRIGO_ASSETS.brand.logoPrimary}
-            alt="Frigo Logo"
-            className="h-12 w-auto object-contain"
+            src={TAKOSAN_BRAND.logos.horizontal}
+            alt="Takosan"
+            className="h-14 w-auto object-contain"
+            data-testid="landing-logo"
           />
         </div>
-        <p className="font-heading font-bold text-xl text-slate-900 mb-1">
-          Mở tủ lạnh. Biết ngay hôm nay ăn gì.
-        </p>
+        <p className="font-heading font-extrabold text-xl text-takosan-navy mb-1">{TAKOSAN_BRAND.tagline}</p>
         <p className="text-xs text-slate-600 max-w-xs mx-auto leading-relaxed">
-          Quản lý thực phẩm thông minh, giảm lãng phí và gợi ý món ngon chuẩn xác cùng AI.
+          Trợ lý bếp thân thiện: quản lý thực phẩm, giảm lãng phí và gợi ý món ngon chuẩn xác cùng AI.
         </p>
       </div>
 
-      {/* Hero Illustration */}
+      {/* Hero: mascot with fridge */}
       <div className="relative z-10 my-6">
-        <div className="relative rounded-2xl overflow-hidden shadow-xs border border-slate-200/80 bg-white p-6 text-center">
-          <div className="w-44 h-44 mx-auto mb-3 overflow-hidden flex items-center justify-center">
+        <div className="relative rounded-3xl overflow-hidden border border-[#F3E4DA] bg-white p-6 text-center shadow-xs">
+          <div className="absolute inset-x-0 top-0 h-28 bg-takosan-mint/60 rounded-b-[48px]" aria-hidden="true" />
+          <div className="relative w-44 h-44 mx-auto mb-3 flex items-center justify-center">
             <img
-              src={FRIGO_ASSETS.illustrations['scan-fridge']}
-              alt="Scan Fridge"
+              src={TAKOSAN_BRAND.mascot.fridge}
+              alt="Takosan cầm tủ lạnh"
               className="w-full h-full object-contain"
+              width={176}
+              height={176}
             />
           </div>
-          <h3 className="font-heading font-bold text-base text-slate-900">
-            Nhận diện nguyên liệu tức thì
-          </h3>
+          <h3 className="font-heading font-bold text-base text-takosan-navy">Nhận diện nguyên liệu tức thì</h3>
           <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
-            Chỉ cần 1 bức ảnh chụp tủ lạnh, Frigo sẽ phân loại và tính toán món ăn tối ưu ngay cho bạn.
+            Chỉ cần 1 bức ảnh chụp tủ lạnh, Takosan sẽ phân loại và tính toán món ăn tối ưu ngay cho bạn.
           </p>
         </div>
       </div>
@@ -70,9 +74,9 @@ export const LandingPage: React.FC = () => {
           size="lg"
           onClick={() => startGuest('/scan')}
           isLoading={isStarting}
-          className="flex items-center justify-center gap-2 text-base"
+          className="flex items-center justify-center gap-2 text-base rounded-2xl"
         >
-          <Camera className="w-5 h-5" />
+          <TakosanIcon name="camera" className="w-5 h-5" strokeWidth={2} />
           <span>Chụp thử tủ lạnh ngay</span>
         </Button>
 
@@ -82,9 +86,9 @@ export const LandingPage: React.FC = () => {
           variant="secondary"
           onClick={() => startGuest('/onboarding')}
           disabled={isStarting}
-          className="flex items-center justify-center gap-2"
+          className="flex items-center justify-center gap-2 rounded-2xl"
         >
-          <ChefHat className="w-5 h-5 text-emerald-700" />
+          <TakosanIcon name="chef" className="w-5 h-5" strokeWidth={2} />
           <span>Bắt đầu trải nghiệm (Khách)</span>
           <ArrowRight className="w-4 h-4 ml-1" />
         </Button>
@@ -92,7 +96,7 @@ export const LandingPage: React.FC = () => {
         <div className="text-center pt-2">
           <button
             onClick={() => navigate('/auth')}
-            className="text-xs text-slate-600 hover:text-emerald-700 underline underline-offset-4 transition-colors"
+            className="text-xs text-slate-600 hover:text-takosan-green underline underline-offset-4 transition-colors"
           >
             Đã có tài khoản? Đăng nhập tại đây
           </button>

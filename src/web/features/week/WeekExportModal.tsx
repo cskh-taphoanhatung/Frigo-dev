@@ -41,7 +41,7 @@ export const WeekExportModal: React.FC<WeekExportModalProps> = ({
     });
 
     lines.push('--------------------------------');
-    lines.push('Lên bởi Frigo Week — Ăn đủ. Mua đủ. Dùng hết.');
+    lines.push('Lên bởi Takosan Week — Ăn đủ. Mua đủ. Dùng hết.');
     return lines.join('\n');
   };
 
@@ -79,7 +79,7 @@ export const WeekExportModal: React.FC<WeekExportModalProps> = ({
     });
 
     lines.push('\n--------------------------------');
-    lines.push('Tạo bởi Frigo — frigo.tungjpstore.net');
+    lines.push('Tạo bởi Takosan — frigo.tungjpstore.net');
     return lines.join('\n');
   };
 
@@ -101,7 +101,7 @@ export const WeekExportModal: React.FC<WeekExportModalProps> = ({
     const text = `${generateMenuText()}\n\n${generateShoppingText()}`;
     if (navigator.share) {
       navigator.share({
-        title: 'Thực đơn & Danh sách đi chợ tuần Frigo',
+        title: 'Thực đơn & Danh sách đi chợ tuần Takosan',
         text,
       }).catch(() => {});
     } else {
@@ -113,7 +113,7 @@ export const WeekExportModal: React.FC<WeekExportModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm animate-in fade-in duration-200 text-slate-900">
       <div className="bg-white w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl border border-slate-200/80 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="p-4 bg-[#0F3D2E] text-white flex items-center justify-between">
+        <div className="p-4 bg-takosan-green text-white flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white">
               <Share2 className="w-4 h-4" />

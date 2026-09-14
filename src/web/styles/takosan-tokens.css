@@ -1,0 +1,29 @@
+/* Takosan design tokens — mirrors design-tokens/brand-tokens.json v1.1.0. */
+:root {
+  --takosan-coral: #FF7B6B;
+  --takosan-green: #2E7D5B;
+  --takosan-navy: #1F2937;
+  --takosan-cream: #FFF8F3;
+  --takosan-mint: #DFF4E6;
+  --takosan-yellow: #FFC857;
+
+  --takosan-green-hover: #26694C;
+  --takosan-green-active: #1F563E;
+  --takosan-coral-soft: #FFE6E1;
+  --takosan-cream-deep: #FFF1E8;
+
+  --color-action-primary: var(--takosan-green);
+  --color-on-action-primary: #FFFFFF;
+  --color-action-accent: var(--takosan-coral);
+  --color-on-action-accent: var(--takosan-navy);
+  --color-text-primary: var(--takosan-navy);
+  --color-surface: var(--takosan-cream);
+  --color-success: var(--takosan-green);
+
+  --takosan-radius-sm: 10px;
+  --takosan-radius-md: 16px;
+  --takosan-radius-lg: 24px;
+  --takosan-radius-xl: 32px;
+
+  --takosan-font-ui: 'Nunito', system-ui, sans-serif;
+}

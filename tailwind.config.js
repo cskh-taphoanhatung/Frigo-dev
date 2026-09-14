@@ -7,6 +7,14 @@ export default {
   theme: {
     extend: {
       colors: {
+        takosan: {
+          coral: "#FF7B6B",
+          green: "#2E7D5B",
+          navy: "#1F2937",
+          cream: "#FFF8F3",
+          mint: "#DFF4E6",
+          yellow: "#FFC857",
+        },
         frigo: {
           green: {
             DEFAULT: "#059669",
@@ -53,8 +61,9 @@ export default {
         },
       },
       fontFamily: {
-        heading: ["Plus Jakarta Sans", "Poppins", "system-ui", "sans-serif"],
-        body: ["Inter", "system-ui", "sans-serif"],
+        heading: ["Nunito", "system-ui", "sans-serif"],
+        body: ["Nunito", "system-ui", "sans-serif"],
+        sans: ["Nunito", "system-ui", "sans-serif"],
       },
       borderRadius: {
         "lg": "10px",

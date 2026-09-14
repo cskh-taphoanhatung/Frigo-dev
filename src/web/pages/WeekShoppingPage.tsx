@@ -9,7 +9,7 @@ import { getIngredientImage } from '../lib/ingredient-images';
 import { capturePrivateSession } from '../lib/private-session';
 import { queryKeys } from '../lib/queryKeys';
 import { api } from '../services/api';
-import { FRIGO_ASSETS } from '../lib/frigo-assets';
+import { TAKOSAN_BRAND } from '../lib/takosan-brand';
 import { mapCategoryToShoppingSection, type AggregatedShoppingItem } from '@frigo/domain';
 import { ArrowRight, Refrigerator, Check } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -49,7 +49,7 @@ export const WeekShoppingPage: React.FC = () => {
 
   if (planQuery.isError || !currentPlan) {
     return (
-      <div className="min-h-screen bg-[#F8FAF9] pb-24">
+      <div className="min-h-screen bg-takosan-cream pb-24">
         <TopBar showBack title="Danh sách đi chợ" />
         <div className="p-4">
           {planQuery.isError ? (
@@ -106,7 +106,7 @@ export const WeekShoppingPage: React.FC = () => {
   // 6.3 HOÀN TẤT ĐI CHỢ
   if (shoppingMode === 'complete' && completedShopping) {
     return (
-      <div className="min-h-screen bg-[#FFFDF6] flex flex-col justify-between p-6 max-w-md mx-auto animate-fade-in">
+      <div className="min-h-screen bg-takosan-cream flex flex-col justify-between p-6 max-w-md mx-auto animate-fade-in">
         <div className="text-center pt-8 space-y-2">
           <h2 className="font-heading font-extrabold text-2xl text-slate-900 tracking-tight">
             Tuyệt vời! 🎉
@@ -120,8 +120,8 @@ export const WeekShoppingPage: React.FC = () => {
         <div className="my-auto py-6 text-center">
           <div className="w-52 h-52 mx-auto flex items-center justify-center">
             <img
-              src={FRIGO_ASSETS.illustrations['shopping-ready']}
-              alt="Complete"
+              src={TAKOSAN_BRAND.mascot.celebrate}
+              alt="Takosan ăn mừng"
               className="w-full h-full object-contain animate-bounce-slow"
             />
           </div>
@@ -160,7 +160,7 @@ export const WeekShoppingPage: React.FC = () => {
             fullWidth
             size="lg"
             onClick={() => navigate('/fridge')}
-            className="bg-[#22C55E] hover:bg-[#1ea750] text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md flex items-center justify-center gap-2"
+            className="bg-takosan-green hover:bg-[#26694C] text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md flex items-center justify-center gap-2"
           >
             <Refrigerator className="w-5 h-5" />
             <span>Xem tủ lạnh</span>
@@ -182,7 +182,7 @@ export const WeekShoppingPage: React.FC = () => {
 
   // 6.1 (LIST) & 6.2 (ACTIVE SHOPPING MODE)
   return (
-    <div className="min-h-screen bg-[#F8FAF9] pb-32 max-w-md mx-auto">
+    <div className="min-h-screen bg-takosan-cream pb-32 max-w-md mx-auto">
       <TopBar
         showBack
         title={shoppingMode === 'active' ? 'Đang đi chợ' : 'Danh sách đi chợ'}
@@ -207,7 +207,7 @@ export const WeekShoppingPage: React.FC = () => {
 
             <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
               <div
-                className="bg-[#22C55E] h-full transition-all duration-300 rounded-full"
+                className="bg-takosan-green h-full transition-all duration-300 rounded-full"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
@@ -237,7 +237,7 @@ export const WeekShoppingPage: React.FC = () => {
             className={clsx(
               'px-3.5 py-1.5 rounded-full text-xs font-heading font-semibold whitespace-nowrap transition-all tap-target',
               selectedSection === 'all'
-                ? 'bg-[#0F3D2E] text-white shadow-xs'
+                ? 'bg-takosan-green text-white shadow-xs'
                 : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'
             )}
           >
@@ -251,7 +251,7 @@ export const WeekShoppingPage: React.FC = () => {
               className={clsx(
                 'px-3.5 py-1.5 rounded-full text-xs font-heading font-semibold whitespace-nowrap transition-all tap-target',
                 selectedSection === sec
-                  ? 'bg-[#0F3D2E] text-white shadow-xs'
+                  ? 'bg-takosan-green text-white shadow-xs'
                   : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'
               )}
             >
@@ -286,7 +286,7 @@ export const WeekShoppingPage: React.FC = () => {
                     className={clsx(
                       'w-5 h-5 rounded-lg flex items-center justify-center transition-all border shrink-0',
                       isChecked
-                        ? 'bg-[#22C55E] border-[#22C55E] text-white'
+                        ? 'bg-takosan-green border-takosan-green text-white'
                         : 'border-slate-300 bg-white'
                     )}
                   >
@@ -342,7 +342,7 @@ export const WeekShoppingPage: React.FC = () => {
             fullWidth
             size="lg"
             onClick={() => setShoppingMode('active')}
-            className="bg-[#22C55E] hover:bg-[#1ea750] text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md"
+            className="bg-takosan-green hover:bg-[#26694C] text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md"
           >
             Bắt đầu đi chợ
           </Button>
@@ -353,7 +353,7 @@ export const WeekShoppingPage: React.FC = () => {
             onClick={handleFinishShopping}
             isLoading={isSubmitting}
             disabled={checkedCount === 0}
-            className="bg-[#22C55E] hover:bg-[#1ea750] text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md flex items-center justify-center gap-2"
+            className="bg-takosan-green hover:bg-[#26694C] text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md flex items-center justify-center gap-2"
           >
             <span>Hoàn tất đi chợ</span>
             <ArrowRight className="w-5 h-5" />

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FRIGO_ASSETS } from '../../lib/frigo-assets';
+import { TAKOSAN_BRAND } from '../../lib/takosan-brand';
 import { useAuthStore } from '../../stores/useAuthStore';
 import { Bell, User, ArrowLeft, Settings } from 'lucide-react';
 
@@ -18,7 +18,7 @@ export const TopBar: React.FC<TopBarProps> = ({ showBack = false, title, subtitl
   const isProfilePage = location.pathname === '/profile';
 
   return (
-    <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md px-4 py-3 border-b border-slate-200/80 transition-colors shadow-xs">
+    <header className="sticky top-0 z-30 bg-takosan-cream/95 backdrop-blur-md px-4 py-3 border-b border-[#F3E4DA] transition-colors shadow-xs">
       <div className="flex items-center justify-between">
         {showBack ? (
           <div className="flex items-center gap-2.5">
@@ -43,7 +43,7 @@ export const TopBar: React.FC<TopBarProps> = ({ showBack = false, title, subtitl
           </div>
         ) : (
           <div className="flex items-center gap-2 cursor-pointer active:opacity-80 transition-opacity" onClick={() => navigate('/')}>
-            <img src={FRIGO_ASSETS.brand.logoPrimary} alt="Frigo" className="h-7 w-auto object-contain" />
+            <img src={TAKOSAN_BRAND.logos.horizontal} alt="Takosan" className="h-8 w-auto object-contain" />
           </div>
         )}
 
@@ -67,7 +67,7 @@ export const TopBar: React.FC<TopBarProps> = ({ showBack = false, title, subtitl
           ) : (
             <button
               onClick={() => navigate('/profile')}
-              className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200/80 hover:bg-emerald-100 active:scale-95 transition-all flex items-center justify-center overflow-hidden"
+              className="w-9 h-9 rounded-xl bg-takosan-mint text-takosan-green border border-[#BFE3CC] hover:bg-[#CFEDDA] active:scale-95 transition-all flex items-center justify-center overflow-hidden"
               aria-label="Tài khoản cá nhân"
             >
               {avatarUrl ? (

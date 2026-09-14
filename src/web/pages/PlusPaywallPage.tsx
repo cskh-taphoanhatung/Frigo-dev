@@ -42,17 +42,17 @@ export const PlusPaywallPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] pb-12 max-w-md mx-auto">
-      <TopBar showBack title="Nâng cấp Frigo Plus" />
+    <div className="min-h-screen bg-takosan-cream pb-12 max-w-md mx-auto">
+      <TopBar showBack title="Nâng cấp Takosan Plus" />
 
       <div className="px-4 pt-3 space-y-5">
         {/* Support Art Hero Card */}
-        <div className="bg-gradient-to-br from-[#0F3D2E] via-[#144F3C] to-[#0A2A1F] text-white rounded-2xl p-5 shadow-card flex items-center justify-between gap-3 overflow-hidden border border-emerald-800/40">
+        <div className="bg-gradient-to-br from-takosan-navy via-[#2A3648] to-takosan-navy text-white rounded-2xl p-5 shadow-card flex items-center justify-between gap-3 overflow-hidden border border-white/10">
           <div className="space-y-1 max-w-[200px]">
             <div className="flex items-center gap-1.5 mb-1">
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              <span className="text-[10px] font-semibold text-amber-300 uppercase tracking-wider">
-                Frigo Plus
+              <Sparkles className="w-4 h-4 text-takosan-yellow" />
+              <span className="text-[10px] font-semibold text-takosan-yellow uppercase tracking-wider">
+                Takosan Plus
               </span>
             </div>
             <h2 className="font-heading font-bold text-xl leading-tight text-white">
@@ -68,7 +68,7 @@ export const PlusPaywallPage: React.FC = () => {
           <div className="w-24 h-24 shrink-0 overflow-hidden flex items-center justify-center">
             <img
               src={FRIGO_ASSETS.illustrations['frigo-plus']}
-              alt="Frigo Plus"
+              alt="Takosan Plus"
               className="w-full h-full object-contain"
             />
           </div>
@@ -111,7 +111,7 @@ export const PlusPaywallPage: React.FC = () => {
           {[
             'Không giới hạn số lượng nguyên liệu trong tủ lạnh',
             'Không giới hạn lượt quét AI tủ lạnh & hóa đơn siêu thị OCR',
-            'Trọn bộ Frigo Week Planner lập thực đơn tuần tự động',
+            'Trọn bộ Takosan Week Planner lập thực đơn tuần tự động',
             'AI Voice Sous Chef trợ lý nấu ăn rảnh tay thông minh',
             'Đầy đủ 6 nền ẩm thực (Việt, Hàn, Nhật, Trung, Thái, Ý)',
             'Gợi ý công thức nâng cao bởi DeepSeek AI Chef',

@@ -40,7 +40,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ matchResult, onClick, co
           <span
             className={`absolute top-2 left-2 px-2.5 py-1 rounded-full text-[11px] font-heading font-bold text-white shadow-sm ${
               matchPercentage >= 80
-                ? 'bg-gradient-to-r from-emerald-600 to-[#22C55E]'
+                ? 'bg-takosan-green'
                 : 'bg-slate-900/80 backdrop-blur-sm'
             }`}
           >

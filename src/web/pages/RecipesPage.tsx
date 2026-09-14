@@ -89,7 +89,7 @@ export const RecipesPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] pb-12">
+    <div className="min-h-screen bg-takosan-cream pb-12">
       <TopBar />
 
       <div className="px-4 pt-3 space-y-3.5 animate-fade-in">
@@ -139,7 +139,7 @@ export const RecipesPage: React.FC = () => {
                   className={clsx(
                     'px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all flex items-center gap-1.5 tap-target cursor-pointer border shadow-xs',
                     isActive
-                      ? 'bg-[#0F3D2E] text-white border-[#0F3D2E] font-semibold shadow-sm'
+                      ? 'bg-takosan-green text-white border-takosan-green font-semibold shadow-sm'
                       : 'bg-white text-slate-700 border-slate-200/80 hover:bg-slate-50 hover:border-slate-300'
                   )}
                 >
@@ -158,7 +158,7 @@ export const RecipesPage: React.FC = () => {
             className={clsx(
               'px-3 py-1.5 rounded-full text-xs font-heading font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 tap-target shadow-xs cursor-pointer',
               noBuyOnly
-                ? 'bg-[#0F3D2E] text-white border border-[#0F3D2E]'
+                ? 'bg-takosan-green text-white border border-takosan-green'
                 : 'bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50'
             )}
           >
@@ -171,7 +171,7 @@ export const RecipesPage: React.FC = () => {
             className={clsx(
               'px-3 py-1.5 rounded-full text-xs font-heading font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 tap-target shadow-xs cursor-pointer',
               under20MinsOnly
-                ? 'bg-[#0F3D2E] text-white border border-[#0F3D2E]'
+                ? 'bg-takosan-green text-white border border-takosan-green'
                 : 'bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50'
             )}
           >

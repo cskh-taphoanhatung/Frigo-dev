@@ -7,7 +7,7 @@
   body {
     background-color: var(--frigo-cream);
     color: var(--frigo-text-main);
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: var(--takosan-font-ui);
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior-y: none;
   }
@@ -18,8 +18,8 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Plus Jakarta Sans', 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
-    letter-spacing: -0.025em;
+    font-family: var(--takosan-font-ui);
+    letter-spacing: -0.02em;
     color: var(--frigo-text-main);
     font-weight: 700;
   }

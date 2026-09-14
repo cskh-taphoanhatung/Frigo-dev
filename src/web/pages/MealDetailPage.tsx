@@ -30,7 +30,7 @@ export const MealDetailPage: React.FC = () => {
 
   if (planQuery.isError || !currentPlan) {
     return (
-      <div className="min-h-screen bg-[#F8FAF9] pb-24">
+      <div className="min-h-screen bg-takosan-cream pb-24">
         <TopBar showBack title="Chi tiết món ăn" />
         <div className="p-4">
           {planQuery.isError ? (
@@ -59,7 +59,7 @@ export const MealDetailPage: React.FC = () => {
 
   if (!targetSlot || !targetSlot.recipe) {
     return (
-      <div className="min-h-screen bg-[#F8FAF9] pb-24">
+      <div className="min-h-screen bg-takosan-cream pb-24">
         <TopBar showBack title="Chi tiết món ăn" />
         <div className="p-6 text-center text-xs text-slate-500 font-medium">
           Không tìm thấy thông tin món ăn này.
@@ -77,7 +77,7 @@ export const MealDetailPage: React.FC = () => {
   const recipe = targetSlot.recipe;
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] pb-32 max-w-md mx-auto">
+    <div className="min-h-screen bg-takosan-cream pb-32 max-w-md mx-auto">
       <TopBar
         showBack
         title={targetSlot.recipe.title}
@@ -156,7 +156,7 @@ export const MealDetailPage: React.FC = () => {
               className={clsx(
                 'flex-1 py-2 rounded-lg text-xs font-heading font-bold transition-all tap-target',
                 activeTab === tab.id
-                  ? 'bg-white text-[#0F3D2E] shadow-xs'
+                  ? 'bg-white text-takosan-green shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               )}
             >
@@ -298,7 +298,7 @@ export const MealDetailPage: React.FC = () => {
       <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto p-4 bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-30 flex gap-3 shadow-lg">
         <button
           onClick={() => openSwap(mealId!)}
-          className="flex-1 py-3.5 px-4 rounded-2xl bg-white border-2 border-[#22C55E] text-[#0F3D2E] font-heading font-bold text-sm hover:bg-emerald-50 active:scale-98 transition-all flex items-center justify-center gap-1.5"
+          className="flex-1 py-3.5 px-4 rounded-2xl bg-white border-2 border-takosan-green text-takosan-green font-heading font-bold text-sm hover:bg-emerald-50 active:scale-98 transition-all flex items-center justify-center gap-1.5"
         >
           <ArrowRightLeft className="w-4 h-4 text-emerald-600" />
           <span>Đổi món</span>
@@ -306,7 +306,7 @@ export const MealDetailPage: React.FC = () => {
 
         <button
           onClick={() => navigate(`/cook/${recipe.slug}`)}
-          className="flex-1 py-3.5 px-4 rounded-2xl bg-[#22C55E] hover:bg-[#1ea750] text-white font-heading font-bold text-sm shadow-md active:scale-98 transition-all flex items-center justify-center gap-2"
+          className="flex-1 py-3.5 px-4 rounded-2xl bg-takosan-green hover:bg-[#26694C] text-white font-heading font-bold text-sm shadow-md active:scale-98 transition-all flex items-center justify-center gap-2"
         >
           <ChefHat className="w-5 h-5" />
           <span>Bắt đầu nấu</span>

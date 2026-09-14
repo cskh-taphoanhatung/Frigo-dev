@@ -131,7 +131,7 @@ export const MealSwapSheet: React.FC = () => {
                   <button
                     disabled={isLoading}
                     onClick={() => executeSwap(alt.recipe.id)}
-                    className="px-3.5 py-2 rounded-lg bg-[#0F3D2E] hover:bg-emerald-800 text-white font-semibold text-xs transition-all active:scale-[0.98] shrink-0 tap-target flex items-center gap-1 shadow-xs"
+                    className="px-3.5 py-2 rounded-lg bg-takosan-green hover:bg-[#26694C] text-white font-semibold text-xs transition-all active:scale-[0.98] shrink-0 tap-target flex items-center gap-1 shadow-xs"
                     aria-label={`Chọn món ${alt.recipe.title}`}
                   >
                     <Check className="w-3.5 h-3.5" />

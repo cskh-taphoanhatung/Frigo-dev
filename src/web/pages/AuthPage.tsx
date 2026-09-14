@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { TAKOSAN_BRAND } from '../lib/takosan-brand';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/useAuthStore';
 import { api } from '../services/api';
@@ -427,7 +428,7 @@ export const AuthPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] px-6 py-8 flex flex-col justify-between text-slate-900 animate-fade-in">
+    <div className="min-h-screen bg-takosan-cream px-6 py-8 flex flex-col justify-between text-takosan-navy animate-fade-in">
       <div>
         {/* Top bar back button */}
         <div className="flex items-center justify-between">
@@ -461,7 +462,7 @@ export const AuthPage: React.FC = () => {
                 setErrorMessage(error instanceof Error ? error.message : 'Không thể khởi tạo phiên khách. Vui lòng thử lại.');
               }
             }}
-            className="text-xs font-semibold text-slate-500 hover:text-emerald-700 tap-target transition-colors"
+            className="text-xs font-semibold text-slate-500 hover:text-takosan-green tap-target transition-colors"
           >
             Bỏ qua & Dùng thử ➔
           </button>
@@ -469,16 +470,16 @@ export const AuthPage: React.FC = () => {
 
         {/* Brand Header */}
         <div className="mt-6 text-center">
-          <img src="/frigo/brand/logo-primary.png" alt="Frigo Logo" className="h-9 mx-auto mb-3 object-contain" />
+          <img src={TAKOSAN_BRAND.logos.horizontal} alt="Takosan" className="h-11 mx-auto mb-3 object-contain" />
           <h2 className="font-heading font-bold text-xl text-slate-900 tracking-tight">
-            {mode === 'login' && 'Đăng nhập vào Frigo'}
-            {mode === 'register' && 'Tạo tài khoản Frigo'}
+            {mode === 'login' && 'Đăng nhập vào Takosan'}
+            {mode === 'register' && 'Tạo tài khoản Takosan'}
             {mode === 'otp_verify' && 'Xác thực mã OTP'}
             {mode === 'forgot_password' && 'Quên mật khẩu'}
           </h2>
           <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto leading-relaxed">
             {mode === 'login' && 'Đồng bộ tủ lạnh, thực đơn tuần và gợi ý món ăn mọi lúc mọi nơi'}
-            {mode === 'register' && 'Gia nhập Frigo để quản lý thực phẩm thông minh và giảm lãng phí'}
+            {mode === 'register' && 'Gia nhập Takosan để quản lý thực phẩm thông minh và giảm lãng phí'}
             {mode === 'otp_verify' && `Nhập 6 số mã OTP đã gửi tới ${email}`}
             {mode === 'forgot_password' && 'Nhập email để nhận mã OTP khôi phục mật khẩu'}
           </p>
@@ -538,13 +539,13 @@ export const AuthPage: React.FC = () => {
             className="mt-3 p-3 bg-emerald-50 border border-emerald-200/80 rounded-xl text-xs flex items-center justify-between cursor-pointer hover:bg-emerald-100/70 transition-all shadow-xs"
           >
             <div className="flex items-center gap-2 text-emerald-950">
-              <Sparkles className="w-4 h-4 text-emerald-700" />
+              <Sparkles className="w-4 h-4 text-takosan-green" />
               <div>
                 <span className="font-medium">Mã OTP Thử nghiệm: </span>
                 <span className="font-heading font-bold text-sm tracking-widest text-emerald-800">{devOtp}</span>
               </div>
             </div>
-            <span className="text-[10px] font-semibold text-emerald-700 bg-white px-2 py-0.5 rounded-md border border-emerald-200">
+            <span className="text-[10px] font-semibold text-takosan-green bg-white px-2 py-0.5 rounded-md border border-emerald-200">
               Tự điền
             </span>
           </div>
@@ -592,7 +593,7 @@ export const AuthPage: React.FC = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="ban@example.com"
-                    className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200/80 focus:border-emerald-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600/20 text-sm font-medium text-slate-900 shadow-xs"
+                    className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 text-sm font-medium text-slate-900 shadow-xs"
                   />
                 </div>
               </div>
@@ -610,7 +611,7 @@ export const AuthPage: React.FC = () => {
                       setForgotOtpRequested(false);
                       setOtpDigits(['', '', '', '', '', '']);
                     }}
-                    className="text-xs font-semibold text-emerald-700 hover:underline"
+                    className="text-xs font-semibold text-takosan-green hover:underline"
                   >
                     Quên mật khẩu?
                   </button>
@@ -623,7 +624,7 @@ export const AuthPage: React.FC = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full h-11 pl-10 pr-10 bg-white border border-slate-200/80 focus:border-emerald-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600/20 text-sm font-medium text-slate-900 shadow-xs"
+                    className="w-full h-11 pl-10 pr-10 bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 text-sm font-medium text-slate-900 shadow-xs"
                   />
                   <button
                     type="button"
@@ -657,7 +658,7 @@ export const AuthPage: React.FC = () => {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Nguyễn Văn A"
-                    className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200/80 focus:border-emerald-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600/20 text-sm font-medium text-slate-900 shadow-xs"
+                    className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 text-sm font-medium text-slate-900 shadow-xs"
                   />
                 </div>
               </div>
@@ -672,7 +673,7 @@ export const AuthPage: React.FC = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="ban@example.com"
-                    className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200/80 focus:border-emerald-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600/20 text-sm font-medium text-slate-900 shadow-xs"
+                    className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 text-sm font-medium text-slate-900 shadow-xs"
                   />
                 </div>
               </div>
@@ -687,7 +688,7 @@ export const AuthPage: React.FC = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full h-11 pl-10 pr-10 bg-white border border-slate-200/80 focus:border-emerald-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600/20 text-sm font-medium text-slate-900 shadow-xs"
+                    className="w-full h-11 pl-10 pr-10 bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 text-sm font-medium text-slate-900 shadow-xs"
                   />
                   <button
                     type="button"
@@ -723,7 +724,7 @@ export const AuthPage: React.FC = () => {
                     value={digit}
                     onChange={(e) => handleOtpChange(idx, e.target.value)}
                     onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                    className="w-11 h-13 text-center font-heading font-bold text-xl bg-white border border-slate-200/80 focus:border-emerald-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600/20 transition-all text-slate-900 shadow-xs"
+                    className="w-11 h-13 text-center font-heading font-bold text-xl bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 transition-all text-slate-900 shadow-xs"
                   />
                 ))}
               </div>
@@ -737,7 +738,7 @@ export const AuthPage: React.FC = () => {
                   <div className="flex items-start gap-2">
                     <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
                     <p className="leading-relaxed">
-                      Hiện Frigo chưa thể chuyển dữ liệu trong tủ khách sang tài khoản mới một cách an toàn.
+                      Hiện Takosan chưa thể chuyển dữ liệu trong tủ khách sang tài khoản mới một cách an toàn.
                       Bạn vẫn có thể tiếp tục tạo tài khoản: dữ liệu của phiên khách được giữ riêng trên
                       hộ khách, không bị xóa và không được chuyển sang tài khoản mới.
                     </p>
@@ -758,7 +759,7 @@ export const AuthPage: React.FC = () => {
                   type="button"
                   disabled={resendCountdown > 0 || isLoading}
                   onClick={handleResendOtp}
-                  className="font-semibold text-emerald-700 disabled:opacity-40 hover:underline flex items-center gap-1 tap-target cursor-pointer"
+                  className="font-semibold text-takosan-green disabled:opacity-40 hover:underline flex items-center gap-1 tap-target cursor-pointer"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                   <span>{resendCountdown > 0 ? `Gửi lại sau (${resendCountdown}s)` : 'Gửi lại mã OTP'}</span>
@@ -784,7 +785,7 @@ export const AuthPage: React.FC = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="ban@example.com"
-                      className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200/80 focus:border-emerald-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600/20 text-sm font-medium text-slate-900 shadow-xs"
+                      className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 text-sm font-medium text-slate-900 shadow-xs"
                     />
                   </div>
                 </div>
@@ -811,7 +812,7 @@ export const AuthPage: React.FC = () => {
                         value={digit}
                         onChange={(e) => handleOtpChange(idx, e.target.value)}
                         onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                        className="w-11 h-13 text-center font-heading font-bold text-xl bg-white border border-slate-200/80 focus:border-emerald-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600/20 transition-all text-slate-900 shadow-xs"
+                        className="w-11 h-13 text-center font-heading font-bold text-xl bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 transition-all text-slate-900 shadow-xs"
                       />
                     ))}
                   </div>
@@ -827,7 +828,7 @@ export const AuthPage: React.FC = () => {
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="Nhập mật khẩu mới"
-                      className="w-full h-11 pl-10 pr-10 bg-white border border-slate-200/80 focus:border-emerald-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600/20 text-sm font-medium text-slate-900 shadow-xs"
+                      className="w-full h-11 pl-10 pr-10 bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 text-sm font-medium text-slate-900 shadow-xs"
                     />
                     <button
                       type="button"

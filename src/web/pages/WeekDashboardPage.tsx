@@ -51,7 +51,7 @@ export const WeekDashboardPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#F8FAF9] pb-24">
+      <div className="min-h-screen bg-takosan-cream pb-24">
         <TopBar title="Thực đơn tuần" />
         <div className="py-20 text-center">
           <div className="animate-spin w-8 h-8 border-2 border-emerald-600 border-t-transparent rounded-full mx-auto mb-3" />
@@ -63,7 +63,7 @@ export const WeekDashboardPage: React.FC = () => {
 
   if (planQuery.isError) {
     return (
-      <div className="min-h-screen bg-[#F8FAF9] pb-24">
+      <div className="min-h-screen bg-takosan-cream pb-24">
         <TopBar title="Thực đơn tuần" />
         <div className="p-4"><InlineError error={planQuery.error} onRetry={() => planQuery.refetch()} /></div>
       </div>
@@ -72,13 +72,13 @@ export const WeekDashboardPage: React.FC = () => {
 
   if (!currentPlan) {
     return (
-      <div className="min-h-screen bg-[#F8FAF9] pb-24">
+      <div className="min-h-screen bg-takosan-cream pb-24">
         <TopBar title="Thực đơn tuần" />
         <div className="px-4 pt-10 text-center space-y-4">
           <EmptyState
             type="no-recipes"
             title="Chưa có thực đơn tuần"
-            description="Frigo sẽ dựa vào thực phẩm trong tủ lạnh, khẩu vị gia đình và ngân sách để lên thực đơn tối ưu cho cả tuần."
+            description="Takosan sẽ dựa vào thực phẩm trong tủ lạnh, khẩu vị gia đình và ngân sách để lên thực đơn tối ưu cho cả tuần."
             actionText="Lên thực đơn tuần ngay"
             onAction={() => navigate('/week/setup')}
           />
@@ -88,7 +88,7 @@ export const WeekDashboardPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] pb-28">
+    <div className="min-h-screen bg-takosan-cream pb-28">
       <TopBar title="Thực đơn tuần" subtitle={formatDateRange(currentPlan.startDate, currentPlan.endDate)} />
 
       <div className="px-4 pt-3 space-y-5 max-w-md mx-auto animate-fade-in">
@@ -113,7 +113,7 @@ export const WeekDashboardPage: React.FC = () => {
             {/* Quick action: Đi chợ */}
             <button
               onClick={() => navigate(`/week/${currentPlan.id}/shopping`)}
-              className="px-3 py-2 rounded-xl bg-[#0F3D2E] text-white font-heading font-semibold text-xs shadow-xs hover:bg-[#164E3D] active:scale-95 transition-all tap-target flex items-center gap-1.5 cursor-pointer"
+              className="px-3 py-2 rounded-xl bg-takosan-green text-white font-heading font-semibold text-xs shadow-xs hover:bg-[#164E3D] active:scale-95 transition-all tap-target flex items-center gap-1.5 cursor-pointer"
               aria-label="Đi chợ theo thực đơn tuần"
             >
               <ShoppingBag className="w-3.5 h-3.5" />

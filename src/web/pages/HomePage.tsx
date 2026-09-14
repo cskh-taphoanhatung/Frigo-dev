@@ -11,7 +11,7 @@ import { formatVndCompact, daysUntil } from '../lib/format';
 import { presentExpiry } from '../lib/inventory-truth';
 import { findTodayMeal } from '../lib/home-meal';
 import { getIngredientImage } from '../lib/ingredient-images';
-import { FRIGO_ASSETS } from '../lib/frigo-assets';
+import { TAKOSAN_BRAND } from '../lib/takosan-brand';
 import { MealPlan, MealSlotItem } from '@frigo/domain';
 import {
   Bell,
@@ -101,17 +101,17 @@ export const HomePage: React.FC = () => {
   const firstName = displayName ? displayName.split(' ').pop() : null;
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] pb-28 max-w-md sm:max-w-lg md:max-w-2xl mx-auto">
+    <div className="min-h-screen bg-takosan-cream pb-28 max-w-md sm:max-w-lg md:max-w-2xl mx-auto">
       {/* HEADER: Avatar + Xin chào + Notification Bell */}
-      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md px-4 py-3.5 border-b border-slate-200/80 flex items-center justify-between shadow-xs">
+      <header className="sticky top-0 z-30 bg-takosan-cream/95 backdrop-blur-md px-4 py-3.5 border-b border-[#F3E4DA] flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/profile')}
             aria-label="Trang cá nhân"
-            className="w-11 h-11 rounded-full border-2 border-[#22C55E] ring-2 ring-emerald-100 overflow-hidden cursor-pointer active:scale-95 transition-transform shrink-0"
+            className="w-11 h-11 rounded-full border-2 border-takosan-green ring-2 ring-takosan-mint bg-takosan-mint overflow-hidden cursor-pointer active:scale-95 transition-transform shrink-0"
           >
             <img
-              src={avatarUrl || FRIGO_ASSETS.brand.mark}
+              src={avatarUrl || TAKOSAN_BRAND.symbol}
               alt=""
               width={44}
               height={44}
@@ -119,7 +119,7 @@ export const HomePage: React.FC = () => {
             />
           </button>
           <div>
-            <h1 className="font-heading font-bold text-lg text-slate-900 leading-tight">
+            <h1 className="font-heading font-bold text-lg text-takosan-navy leading-tight">
               Xin chào{firstName ? `, ${firstName}` : ''}! 👋
             </h1>
             <p className="text-xs text-slate-500 font-medium">Hôm nay ăn gì đây?</p>
@@ -142,20 +142,20 @@ export const HomePage: React.FC = () => {
         ) : weekPlanQuery.isError ? (
           <InlineError error={weekPlanQuery.error} onRetry={() => weekPlanQuery.refetch()} />
         ) : todayMeal && todayMeal.recipe ? (
-          <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-[#0F3D2E] via-[#14532D] to-emerald-700 shadow-elevated">
-            <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-emerald-400/20 blur-2xl" />
+          <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-takosan-green via-[#276B4F] to-[#1F563E] shadow-elevated">
+            <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-takosan-mint/20 blur-2xl" />
             <div className="absolute -bottom-14 -left-8 w-36 h-36 rounded-full bg-lime-300/10 blur-2xl" />
 
             <div className="relative p-5 flex items-center gap-4">
               <div className="flex-1 min-w-0 space-y-2">
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-heading font-bold uppercase tracking-widest text-emerald-200/90 bg-white/10 px-2.5 py-1 rounded-full border border-white/15">
-                  <Flame className="w-3 h-3 text-amber-300" />
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-heading font-bold uppercase tracking-widest text-takosan-mint bg-white/10 px-2.5 py-1 rounded-full border border-white/15">
+                  <Flame className="w-3 h-3 text-takosan-yellow" />
                   {SLOT_LABELS[todayMeal.slotType]}
                 </span>
                 <h3 className="font-heading font-extrabold text-xl text-white leading-snug">
                   {todayMeal.recipe.title}
                 </h3>
-                <div className="flex items-center gap-3 text-[11px] font-medium text-emerald-100/80">
+                <div className="flex items-center gap-3 text-[11px] font-medium text-white/80">
                   <span className="flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5" /> {todayMeal.recipe.cookTimeMinutes} phút
                   </span>
@@ -165,7 +165,7 @@ export const HomePage: React.FC = () => {
                 </div>
                 <button
                   onClick={() => navigate(`/cook/${todayMeal.recipe!.slug}`)}
-                  className="mt-1 px-5 py-2.5 rounded-xl bg-[#22C55E] hover:bg-[#1ea750] text-white font-heading font-bold text-sm shadow-float active:scale-95 transition-all flex items-center gap-2 tap-target"
+                  className="mt-1 px-5 py-2.5 rounded-xl bg-white hover:bg-takosan-cream text-takosan-green font-heading font-bold text-sm shadow-float active:scale-95 transition-all flex items-center gap-2 tap-target"
                 >
                   <Sparkles className="w-4 h-4" />
                   <span>Bắt đầu nấu</span>
@@ -174,7 +174,7 @@ export const HomePage: React.FC = () => {
               </div>
 
               <div className="relative shrink-0">
-                <div className="absolute inset-0 rounded-full bg-[#22C55E]/40 blur-xl scale-110" />
+                <div className="absolute inset-0 rounded-full bg-takosan-coral/40 blur-xl scale-110" />
                 <div className="relative w-24 h-24 rounded-full overflow-hidden border-[3px] border-white/30 ring-4 ring-white/10 shadow-lg">
                   <img
                     src={todayMeal.recipe.imageUrl}
@@ -183,7 +183,7 @@ export const HomePage: React.FC = () => {
                     height={96}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = FRIGO_ASSETS.brand.mark;
+                      (e.currentTarget as HTMLImageElement).src = TAKOSAN_BRAND.symbol;
                     }}
                   />
                 </div>
@@ -191,24 +191,24 @@ export const HomePage: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-[#0F3D2E] via-[#14532D] to-emerald-700 shadow-elevated">
-            <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-emerald-400/20 blur-2xl" />
+          <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-takosan-green via-[#276B4F] to-[#1F563E] shadow-elevated">
+            <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-takosan-mint/20 blur-2xl" />
             <div className="relative p-5 space-y-2">
-              <span className="inline-flex items-center gap-1.5 text-[10px] font-heading font-bold uppercase tracking-widest text-emerald-200/90 bg-white/10 px-2.5 py-1 rounded-full border border-white/15">
-                <CalendarDays className="w-3 h-3 text-amber-300" />
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-heading font-bold uppercase tracking-widest text-takosan-mint bg-white/10 px-2.5 py-1 rounded-full border border-white/15">
+                <CalendarDays className="w-3 h-3 text-takosan-yellow" />
                 Hôm nay
               </span>
               <h3 className="font-heading font-extrabold text-lg text-white leading-snug">
                 {weekPlan ? 'Không có bữa cần nấu tiếp hôm nay' : 'Chưa có thực đơn tuần này'}
               </h3>
-              <p className="text-xs text-emerald-100/80">
+              <p className="text-xs text-white/80">
                 {weekPlan
                   ? 'Xem lại các bữa đã lên lịch hoặc thêm món trong thực đơn tuần.'
-                  : 'Lên thực đơn để Frigo gợi ý món từ nguyên liệu sẵn có.'}
+                  : 'Lên thực đơn để Takosan gợi ý món từ nguyên liệu sẵn có.'}
               </p>
               <button
                 onClick={() => navigate(weekPlan ? `/week/${weekPlan.id}` : '/week/setup')}
-                className="mt-1 px-5 py-2.5 rounded-xl bg-[#22C55E] hover:bg-[#1ea750] text-white font-heading font-bold text-sm shadow-float active:scale-95 transition-all inline-flex items-center gap-2 tap-target"
+                className="mt-1 px-5 py-2.5 rounded-xl bg-white hover:bg-takosan-cream text-takosan-green font-heading font-bold text-sm shadow-float active:scale-95 transition-all inline-flex items-center gap-2 tap-target"
               >
                 <Sparkles className="w-4 h-4" />
                 <span>{weekPlan ? 'Xem thực đơn tuần' : 'Lên thực đơn tuần'}</span>
@@ -229,7 +229,7 @@ export const HomePage: React.FC = () => {
                 <span className="text-[10px] font-heading font-bold uppercase tracking-wider text-slate-400 block">
                   TUẦN NÀY
                 </span>
-                <h3 className="font-heading font-bold text-base text-slate-900">
+                <h3 className="font-heading font-bold text-base text-takosan-navy">
                   {planned}/{total} bữa đã lên thực đơn
                 </h3>
                 <div
@@ -241,7 +241,7 @@ export const HomePage: React.FC = () => {
                   aria-label="Tiến độ thực đơn tuần"
                 >
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-[#22C55E]"
+                    className="h-full rounded-full bg-takosan-green"
                     style={{ width: `${percent}%` }}
                   />
                 </div>
@@ -257,7 +257,7 @@ export const HomePage: React.FC = () => {
 
               <button
                 onClick={() => navigate(`/week/${weekPlan.id}`)}
-                className="shrink-0 px-4 py-2.5 rounded-xl bg-emerald-50 text-[#0F3D2E] border border-emerald-200/80 hover:bg-emerald-100 text-xs font-heading font-bold active:scale-95 transition-all flex items-center gap-1.5 tap-target"
+                className="shrink-0 px-4 py-2.5 rounded-xl bg-takosan-mint text-takosan-green border border-[#BFE3CC] hover:bg-[#CFEDDA] text-xs font-heading font-bold active:scale-95 transition-all flex items-center gap-1.5 tap-target"
               >
                 <span>Xem thực đơn</span>
                 <ChevronRight className="w-4 h-4" />
@@ -274,7 +274,7 @@ export const HomePage: React.FC = () => {
             </h4>
             <button
               onClick={() => navigate('/fridge')}
-              className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 flex items-center tap-target"
+              className="text-[11px] font-semibold text-takosan-green hover:text-[#1F563E] flex items-center tap-target"
             >
               Xem tất cả{inventoryQuery.isSuccess ? ` (${inventory.length})` : ''}{' '}
               <ChevronRight className="w-3 h-3 ml-0.5" />
@@ -299,7 +299,7 @@ export const HomePage: React.FC = () => {
               {inventory.length === 0 && (
                 <button
                   onClick={() => navigate('/scan')}
-                  className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200/80 text-xs font-heading font-bold hover:bg-emerald-100 active:scale-95 transition-all tap-target"
+                  className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-takosan-mint text-takosan-green border border-[#BFE3CC] text-xs font-heading font-bold hover:bg-[#CFEDDA] active:scale-95 transition-all tap-target"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   Quét tủ lạnh
@@ -335,7 +335,7 @@ export const HomePage: React.FC = () => {
                         className="w-full h-full object-contain"
                       />
                     </div>
-                    <p className="font-heading font-bold text-xs text-slate-900 leading-tight">
+                    <p className="font-heading font-bold text-xs text-takosan-navy leading-tight">
                       {item.name}
                     </p>
                     <span
@@ -357,7 +357,7 @@ export const HomePage: React.FC = () => {
         {/* SECTION 4: GỢI Ý MÓN NGON */}
         <div className="space-y-3 pt-2">
           <div className="flex items-center justify-between">
-            <h4 className="font-heading font-bold text-sm text-slate-900">
+            <h4 className="font-heading font-bold text-sm text-takosan-navy">
               Gợi ý cho bạn
             </h4>
 
@@ -367,11 +367,11 @@ export const HomePage: React.FC = () => {
               className={clsx(
                 'px-3 py-1.5 rounded-full text-xs font-heading font-semibold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer',
                 noBuyOnly
-                  ? 'bg-[#0F3D2E] text-white border border-[#0F3D2E]'
+                  ? 'bg-takosan-green text-white border border-takosan-green'
                   : 'bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50'
               )}
             >
-              <CheckCircle className={clsx('w-3.5 h-3.5', noBuyOnly ? 'text-emerald-400' : 'text-emerald-600')} />
+              <CheckCircle className={clsx('w-3.5 h-3.5', noBuyOnly ? 'text-takosan-mint' : 'text-takosan-green')} />
               <span>Không mua thêm gì</span>
             </button>
           </div>
@@ -388,7 +388,7 @@ export const HomePage: React.FC = () => {
                   className={clsx(
                     'px-3.5 py-1.5 rounded-full text-xs font-heading font-semibold whitespace-nowrap transition-all tap-target cursor-pointer',
                     active
-                      ? 'bg-[#0F3D2E] text-white shadow-xs'
+                      ? 'bg-takosan-green text-white shadow-xs'
                       : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'
                   )}
                 >

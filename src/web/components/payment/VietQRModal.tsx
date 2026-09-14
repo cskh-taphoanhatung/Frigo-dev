@@ -90,7 +90,7 @@ export const VietQRModal: React.FC<VietQRModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl border border-slate-200/80 flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="p-4 bg-[#0F3D2E] text-white flex items-center justify-between">
+        <div className="p-4 bg-takosan-green text-white flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white">
               <QrCode className="w-4 h-4" />
@@ -121,7 +121,7 @@ export const VietQRModal: React.FC<VietQRModalProps> = ({
                   Thanh toán thành công! 🎉
                 </h4>
                 <p className="text-xs text-slate-600 mt-1 max-w-xs mx-auto">
-                  Chào mừng bạn đến với <span className="font-semibold text-emerald-700">Frigo Plus</span>. Toàn bộ tính năng cao cấp đã được mở khóa!
+                  Chào mừng bạn đến với <span className="font-semibold text-takosan-green">Takosan Plus</span>. Toàn bộ tính năng cao cấp đã được mở khóa!
                 </p>
               </div>
             </div>
@@ -135,7 +135,7 @@ export const VietQRModal: React.FC<VietQRModalProps> = ({
                   Đang đối soát giao dịch
                 </h4>
                 <p className="text-xs text-slate-600 mt-1 max-w-xs mx-auto">
-                  Chúng tôi đã ghi nhận lệnh chuyển khoản của bạn. Frigo Plus sẽ
+                  Chúng tôi đã ghi nhận lệnh chuyển khoản của bạn. Takosan Plus sẽ
                   <span className="font-semibold text-emerald-700"> tự động kích hoạt</span> ngay
                   khi thanh toán được xác minh. Vui lòng không lặp lại giao dịch.
                 </p>
@@ -151,7 +151,7 @@ export const VietQRModal: React.FC<VietQRModalProps> = ({
                 <div className="flex items-center gap-1.5">
                   <Sparkles className="w-4 h-4 text-amber-500" />
                   <span className="font-heading font-semibold text-xs text-slate-900">
-                    {planType === 'annual' ? 'Gói 1 Năm Frigo Plus' : 'Gói 1 Tháng Frigo Plus'}
+                    {planType === 'annual' ? 'Gói 1 Năm Takosan Plus' : 'Gói 1 Tháng Takosan Plus'}
                   </span>
                 </div>
                 <div className="flex items-center gap-1 text-xs font-mono font-bold text-amber-700">

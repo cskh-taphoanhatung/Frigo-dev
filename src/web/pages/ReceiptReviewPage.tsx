@@ -227,7 +227,7 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] pb-[calc(12rem+env(safe-area-inset-bottom))] max-w-md mx-auto">
+    <div className="min-h-screen bg-takosan-cream pb-[calc(12rem+env(safe-area-inset-bottom))] max-w-md mx-auto">
       <TopBar showBack title="Chi tiết Hóa đơn" subtitle="Bóc tách tự động bởi AI Vision" />
 
       {/* Success Toast */}

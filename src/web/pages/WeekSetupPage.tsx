@@ -96,7 +96,7 @@ export const WeekSetupPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] pb-28">
+    <div className="min-h-screen bg-takosan-cream pb-28">
       <TopBar
         showBack
         onBack={handleBack}
@@ -121,7 +121,7 @@ export const WeekSetupPage: React.FC = () => {
                 Bước 1 / 5
               </span>
               <h2 className="font-heading font-bold text-xl text-slate-900 mt-2">
-                Bạn muốn Frigo lên kế hoạch cho những bữa nào?
+                Bạn muốn Takosan lên kế hoạch cho những bữa nào?
               </h2>
               <p className="text-xs text-slate-500 mt-1">
                 Chọn tần suất bữa ăn gia đình bạn cần nấu tại nhà
@@ -198,7 +198,7 @@ export const WeekSetupPage: React.FC = () => {
                 Ngân sách thực phẩm tuần này
               </h2>
               <p className="text-xs text-slate-500 mt-1">
-                Frigo sẽ tối ưu mua nguyên liệu vừa vặn trong hạn mức
+                Takosan sẽ tối ưu mua nguyên liệu vừa vặn trong hạn mức
               </p>
             </div>
 
@@ -220,7 +220,7 @@ export const WeekSetupPage: React.FC = () => {
                   className={clsx(
                     'p-3.5 rounded-xl border text-sm font-heading font-semibold transition-all tap-target active:scale-[0.98]',
                     !isUnlimitedBudget && budgetVnd === p.value
-                      ? 'bg-[#0F3D2E] text-white shadow-xs border-[#0F3D2E]'
+                      ? 'bg-takosan-green text-white shadow-xs border-takosan-green'
                       : 'bg-white text-slate-800 border-slate-200/80 hover:border-slate-300'
                   )}
                 >
@@ -316,7 +316,7 @@ export const WeekSetupPage: React.FC = () => {
                           className={clsx(
                             'px-2.5 py-1 rounded-lg text-xs font-semibold transition-all tap-target',
                             daySchedules[idx] === t.id
-                              ? 'bg-[#0F3D2E] text-white shadow-xs'
+                              ? 'bg-takosan-green text-white shadow-xs'
                               : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                           )}
                         >
@@ -330,7 +330,7 @@ export const WeekSetupPage: React.FC = () => {
             ) : (
               <div className="p-6 bg-white rounded-xl border border-slate-200/80 text-center">
                 <p className="text-xs text-slate-500">
-                  Frigo sẽ lên kế hoạch nấu ăn cho tất cả các ngày trong tuần.
+                  Takosan sẽ lên kế hoạch nấu ăn cho tất cả các ngày trong tuần.
                 </p>
               </div>
             )}
@@ -400,7 +400,7 @@ export const WeekSetupPage: React.FC = () => {
                 Bạn muốn đi chợ mấy lần?
               </h2>
               <p className="text-xs text-slate-500 mt-1">
-                Giúp Frigo sắp xếp nguyên liệu dễ hỏng và tính toán chuyến mua sắm
+                Giúp Takosan sắp xếp nguyên liệu dễ hỏng và tính toán chuyến mua sắm
               </p>
             </div>
 

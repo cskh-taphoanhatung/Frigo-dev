@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/useAuthStore';
 import { Button } from '../components/common/Button';
-import { FRIGO_ASSETS } from '../lib/frigo-assets';
+import { TAKOSAN_BRAND } from '../lib/takosan-brand';
 import {
   Users,
   Check,
@@ -26,7 +26,7 @@ export const OnboardingPage: React.FC = () => {
   // 3: Tạo tài khoản (1.3)
   // 4: Thông tin cơ bản (1.4)
   // 5: Sở thích & hạn chế (1.5)
-  // 6: Frigo sẽ giúp bạn thế nào? (1.6)
+  // 6: Takosan sẽ giúp bạn thế nào? (1.6)
   // 7: Hoàn tất (1.7)
   const [step, setStep] = useState(2); // Start at Intro 1.2 by default, can toggle to Splash 1.1
 
@@ -104,54 +104,49 @@ export const OnboardingPage: React.FC = () => {
     return (
       <div
         onClick={() => setStep(2)}
-        className="min-h-screen bg-[#0F3D2E] text-white flex flex-col justify-between items-center py-12 px-6 relative cursor-pointer max-w-md mx-auto overflow-hidden animate-fade-in"
+        data-testid="onboarding-splash"
+        className="min-h-screen bg-takosan-navy text-white flex flex-col justify-between items-center py-12 px-6 relative cursor-pointer max-w-md mx-auto overflow-hidden animate-fade-in"
       >
         {/* Top bar indicators */}
-        <div className="w-full flex justify-between items-center text-xs text-emerald-200/60 font-medium pt-2">
+        <div className="w-full flex justify-between items-center text-xs text-white/60 font-medium pt-2">
           <span>9:41</span>
           <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            <span>Frigo Mobile</span>
+            <span className="w-2 h-2 rounded-full bg-takosan-coral" />
+            <span>Takosan</span>
           </div>
         </div>
 
-        {/* Center Brand Header */}
-        <div className="text-center space-y-2 mt-4 z-10">
-          <div className="flex items-center justify-center gap-2 mb-1">
-            <h1 className="font-heading font-extrabold text-4xl text-white tracking-tight">
-              Frigo
-            </h1>
-          </div>
-          <p className="text-sm font-medium text-emerald-200 tracking-wide">
+        {/* Center Brand Header — supplied white lockup, never typed text */}
+        <div className="text-center space-y-3 mt-4 z-10">
+          <img
+            src={TAKOSAN_BRAND.logos.horizontalWhite}
+            alt="Takosan"
+            className="h-12 w-auto mx-auto object-contain"
+          />
+          <p className="text-sm font-medium text-takosan-mint tracking-wide">
             Ăn đủ. Mua đủ. Dùng hết.
           </p>
         </div>
 
-        {/* Center Fresh Vegetables Composition Artwork */}
+        {/* Center mascot */}
         <div className="relative my-auto z-10 py-6">
           <div className="w-64 h-64 mx-auto relative flex items-center justify-center">
+            <div className="absolute inset-6 rounded-full bg-takosan-coral/15 blur-2xl" aria-hidden="true" />
             <img
-              src={FRIGO_ASSETS.illustrations['delicious-meal']}
-              alt="Frigo Fresh Food"
-              className="w-full h-full object-contain drop-shadow-[0_20px_30px_rgba(0,0,0,0.35)] animate-float"
+              src={TAKOSAN_BRAND.mascot.wave}
+              alt="Takosan vẫy tay chào"
+              className="relative w-full h-full object-contain drop-shadow-[0_20px_30px_rgba(0,0,0,0.35)] animate-float"
             />
-            {/* Fresh badges around bowl */}
-            <div className="absolute -top-1 right-2 bg-emerald-700/80 backdrop-blur-md px-3 py-1 rounded-full text-[11px] font-semibold text-emerald-100 border border-emerald-500/30 flex items-center gap-1 shadow-md">
-              <span>🥑 Tươi ngon</span>
-            </div>
-            <div className="absolute -bottom-2 left-2 bg-emerald-700/80 backdrop-blur-md px-3 py-1 rounded-full text-[11px] font-semibold text-emerald-100 border border-emerald-500/30 flex items-center gap-1 shadow-md">
-              <span>🍅 Tự nhiên 100%</span>
-            </div>
           </div>
         </div>
 
         {/* Bottom Slogan */}
         <div className="text-center space-y-2 z-10 pb-4">
-          <p className="font-heading font-bold text-lg text-emerald-100 flex items-center justify-center gap-1.5">
-            <Sparkles className="w-4 h-4 text-amber-300" />
+          <p className="font-heading font-bold text-lg text-white flex items-center justify-center gap-1.5">
+            <Sparkles className="w-4 h-4 text-takosan-yellow" />
             <span>Tươi ngon hơn Mỗi ngày</span>
           </p>
-          <p className="text-[11px] text-emerald-300/80">Chạm màn hình để bắt đầu</p>
+          <p className="text-[11px] text-white/60">Chạm màn hình để bắt đầu</p>
         </div>
       </div>
     );
@@ -160,12 +155,12 @@ export const OnboardingPage: React.FC = () => {
   // 1.2 GIỚI THIỆU (WELCOME HERO)
   if (step === 2) {
     return (
-      <div className="min-h-screen bg-[#FFFDF6] flex flex-col justify-between px-6 py-10 relative max-w-md mx-auto animate-fade-in">
+      <div className="min-h-screen bg-takosan-cream flex flex-col justify-between px-6 py-10 relative max-w-md mx-auto animate-fade-in">
         <div className="pt-2">
           {/* Subtle link back to splash */}
           <button
             onClick={() => setStep(1)}
-            className="text-xs text-slate-600 hover:text-emerald-700 flex items-center gap-1"
+            className="text-xs text-slate-600 hover:text-takosan-green flex items-center gap-1"
           >
             <ChevronLeft className="w-4 h-4" />
             <span>Xem Splash</span>
@@ -176,12 +171,12 @@ export const OnboardingPage: React.FC = () => {
         <div className="text-center pt-2 space-y-2">
           <div className="flex justify-center mb-1">
             <img
-              src={FRIGO_ASSETS.brand.logoPrimary}
-              alt="Frigo"
-              className="h-11 w-auto object-contain"
+              src={TAKOSAN_BRAND.logos.horizontal}
+              alt="Takosan"
+              className="h-12 w-auto object-contain"
             />
           </div>
-          <h2 className="font-heading font-bold text-2xl text-slate-900 leading-tight">
+          <h2 className="font-heading font-bold text-2xl text-takosan-navy leading-tight">
             Biến tủ lạnh thành những bữa ăn tuyệt vời
           </h2>
           <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
@@ -193,8 +188,8 @@ export const OnboardingPage: React.FC = () => {
         <div className="my-6">
           <div className="w-60 h-60 mx-auto flex items-center justify-center">
             <img
-              src={FRIGO_ASSETS.illustrations['delicious-meal']}
-              alt="Delicious Meal"
+              src={TAKOSAN_BRAND.mascot.cooking}
+              alt="Takosan nấu ăn"
               className="w-full h-full object-contain drop-shadow-md"
             />
           </div>
@@ -206,7 +201,7 @@ export const OnboardingPage: React.FC = () => {
             fullWidth
             size="lg"
             onClick={() => setStep(3)}
-            className="bg-[#22C55E] hover:bg-[#1ea750] text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md active:scale-98 transition-all"
+            className="bg-takosan-green hover:bg-[#26694C] text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md active:scale-98 transition-all"
           >
             Bắt đầu
           </Button>
@@ -214,9 +209,9 @@ export const OnboardingPage: React.FC = () => {
           <div className="text-center pt-1">
             <button
               onClick={() => setStep(3)}
-              className="text-xs font-semibold text-slate-600 hover:text-emerald-700 transition-colors"
+              className="text-xs font-semibold text-slate-600 hover:text-takosan-green transition-colors"
             >
-              Đã có tài khoản? <span className="text-emerald-700 underline underline-offset-2">Đăng nhập</span>
+              Đã có tài khoản? <span className="text-takosan-green underline underline-offset-2">Đăng nhập</span>
             </button>
           </div>
         </div>
@@ -227,7 +222,7 @@ export const OnboardingPage: React.FC = () => {
   // 1.3 TẠO TÀI KHOẢN (SOCIAL AUTH)
   if (step === 3) {
     return (
-      <div className="min-h-screen bg-[#FFFDF6] flex flex-col justify-between px-6 py-10 relative max-w-md mx-auto animate-fade-in">
+      <div className="min-h-screen bg-takosan-cream flex flex-col justify-between px-6 py-10 relative max-w-md mx-auto animate-fade-in">
         <div>
           <button
             onClick={() => setStep(2)}
@@ -237,8 +232,8 @@ export const OnboardingPage: React.FC = () => {
           </button>
 
           <div className="space-y-2 mb-8">
-            <h2 className="font-heading font-bold text-2xl text-slate-900 tracking-tight">
-              Chào mừng đến với Frigo
+            <h2 className="font-heading font-bold text-2xl text-takosan-navy tracking-tight">
+              Chào mừng đến với Takosan
             </h2>
             <p className="text-xs text-slate-500 leading-relaxed">
               Tạo tài khoản hoặc đăng nhập nhanh để lưu trữ tủ lạnh và đồng bộ dữ liệu gia đình.
@@ -249,7 +244,7 @@ export const OnboardingPage: React.FC = () => {
             {/* Google — SEC-5: real OAuth flow lives in AuthPage */}
             <button
               onClick={() => navigate('/auth?mode=login&provider=google')}
-              className="w-full py-3.5 px-4 rounded-2xl bg-white border border-slate-200 hover:border-emerald-500/60 shadow-xs flex items-center justify-center gap-3 active:scale-98 transition-all"
+              className="w-full py-3.5 px-4 rounded-2xl bg-white border border-slate-200 hover:border-takosan-green/60 shadow-xs flex items-center justify-center gap-3 active:scale-98 transition-all"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
@@ -277,9 +272,9 @@ export const OnboardingPage: React.FC = () => {
             {/* Apple — SEC-5: not yet supported server-side, route to auth */}
             <button
               onClick={() => navigate('/auth?mode=login')}
-              className="w-full py-3.5 px-4 rounded-2xl bg-white border border-slate-200 hover:border-emerald-500/60 shadow-xs flex items-center justify-center gap-3 active:scale-98 transition-all"
+              className="w-full py-3.5 px-4 rounded-2xl bg-white border border-slate-200 hover:border-takosan-green/60 shadow-xs flex items-center justify-center gap-3 active:scale-98 transition-all"
             >
-              <svg className="w-5 h-5 fill-current text-slate-900" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 fill-current text-takosan-navy" viewBox="0 0 24 24">
                 <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.63-.77 1.06-1.85.94-2.93-.93.04-2.07.63-2.73 1.4-.58.67-1.09 1.76-.95 2.81 1.04.08 2.11-.53 2.74-1.28z" />
               </svg>
               <span className="font-heading font-semibold text-sm text-slate-800">
@@ -290,7 +285,7 @@ export const OnboardingPage: React.FC = () => {
             {/* Email */}
             <button
               onClick={() => navigate('/auth?mode=register')}
-              className="w-full py-3.5 px-4 rounded-2xl bg-white border border-slate-200 hover:border-emerald-500/60 shadow-xs flex items-center justify-center gap-3 active:scale-98 transition-all"
+              className="w-full py-3.5 px-4 rounded-2xl bg-white border border-slate-200 hover:border-takosan-green/60 shadow-xs flex items-center justify-center gap-3 active:scale-98 transition-all"
             >
               <Mail className="w-5 h-5 text-slate-700" />
               <span className="font-heading font-semibold text-sm text-slate-800">
@@ -313,7 +308,7 @@ export const OnboardingPage: React.FC = () => {
                 setGuestError(error instanceof Error ? error.message : 'Không thể khởi tạo phiên khách. Vui lòng thử lại.');
               }
             }}
-            className="text-xs font-semibold text-emerald-700 hover:underline"
+            className="text-xs font-semibold text-takosan-green hover:underline"
           >
             Bỏ qua & Dùng thử ở chế độ Khách →
           </button>
@@ -328,7 +323,7 @@ export const OnboardingPage: React.FC = () => {
   // 1.4 THÔNG TIN CƠ BẢN (FAMILY SIZE & CUISINE)
   if (step === 4) {
     return (
-      <div className="min-h-screen bg-[#FFFDF6] flex flex-col justify-between px-6 py-8 relative max-w-md mx-auto animate-fade-in">
+      <div className="min-h-screen bg-takosan-cream flex flex-col justify-between px-6 py-8 relative max-w-md mx-auto animate-fade-in">
         <div>
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
@@ -338,16 +333,16 @@ export const OnboardingPage: React.FC = () => {
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
+            <span className="text-xs font-bold text-takosan-green uppercase tracking-wider">
               Bước 1 / 4
             </span>
           </div>
 
           <div className="space-y-1 mb-6">
-            <h2 className="font-heading font-bold text-2xl text-slate-900">
+            <h2 className="font-heading font-bold text-2xl text-takosan-navy">
               Một chút thông tin về gia đình bạn
             </h2>
-            <p className="text-xs text-slate-500">Giúp Frigo căn chuẩn định lượng và khẩu vị</p>
+            <p className="text-xs text-slate-500">Giúp Takosan căn chuẩn định lượng và khẩu vị</p>
           </div>
 
           {/* Section 1: Family size selector */}
@@ -366,7 +361,7 @@ export const OnboardingPage: React.FC = () => {
                     className={clsx(
                       'flex-1 py-3 rounded-2xl font-heading font-bold text-sm transition-all border shadow-xs active:scale-95 flex flex-col items-center gap-1',
                       isSelected
-                        ? 'bg-[#0F3D2E] text-white border-[#0F3D2E] shadow-sm'
+                        ? 'bg-takosan-green text-white border-takosan-green shadow-sm'
                         : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
                     )}
                   >
@@ -393,7 +388,7 @@ export const OnboardingPage: React.FC = () => {
                     className={clsx(
                       'px-4 py-2.5 rounded-full text-xs font-heading font-semibold transition-all border active:scale-95 flex items-center gap-1.5',
                       isSelected
-                        ? 'bg-[#22C55E] text-white border-[#22C55E] shadow-xs'
+                        ? 'bg-takosan-green text-white border-takosan-green shadow-xs'
                         : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
                     )}
                   >
@@ -412,7 +407,7 @@ export const OnboardingPage: React.FC = () => {
             fullWidth
             size="lg"
             onClick={() => setStep(5)}
-            className="bg-[#22C55E] hover:bg-[#1ea750] text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md"
+            className="bg-takosan-green hover:bg-[#26694C] text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md"
           >
             Tiếp tục
           </Button>
@@ -424,7 +419,7 @@ export const OnboardingPage: React.FC = () => {
   // 1.5 SỞ THÍCH & HẠN CHẾ (DIETARY RESTRICTIONS)
   if (step === 5) {
     return (
-      <div className="min-h-screen bg-[#FFFDF6] flex flex-col justify-between px-6 py-8 relative max-w-md mx-auto animate-fade-in">
+      <div className="min-h-screen bg-takosan-cream flex flex-col justify-between px-6 py-8 relative max-w-md mx-auto animate-fade-in">
         <div>
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
@@ -434,13 +429,13 @@ export const OnboardingPage: React.FC = () => {
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
+            <span className="text-xs font-bold text-takosan-green uppercase tracking-wider">
               Bước 2 / 4
             </span>
           </div>
 
           <div className="space-y-1 mb-6">
-            <h2 className="font-heading font-bold text-2xl text-slate-900">
+            <h2 className="font-heading font-bold text-2xl text-takosan-navy">
               Bạn có món nào không ăn không?
             </h2>
             <p className="text-xs text-slate-500">Bấm vào để chọn hoặc bỏ chọn</p>
@@ -475,7 +470,7 @@ export const OnboardingPage: React.FC = () => {
             fullWidth
             size="lg"
             onClick={() => setStep(6)}
-            className="bg-[#22C55E] hover:bg-[#1ea750] text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md"
+            className="bg-takosan-green hover:bg-[#26694C] text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md"
           >
             Tiếp tục
           </Button>
@@ -484,10 +479,10 @@ export const OnboardingPage: React.FC = () => {
     );
   }
 
-  // 1.6 FRIGO SẼ GIÚP BẠN THẾ NÀO? (GOAL SELECTION)
+  // 1.6 TAKOSAN SẼ GIÚP BẠN THẾ NÀO? (GOAL SELECTION)
   if (step === 6) {
     return (
-      <div className="min-h-screen bg-[#FFFDF6] flex flex-col justify-between px-6 py-8 relative max-w-md mx-auto animate-fade-in">
+      <div className="min-h-screen bg-takosan-cream flex flex-col justify-between px-6 py-8 relative max-w-md mx-auto animate-fade-in">
         <div>
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
@@ -497,16 +492,16 @@ export const OnboardingPage: React.FC = () => {
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
+            <span className="text-xs font-bold text-takosan-green uppercase tracking-wider">
               Bước 3 / 4
             </span>
           </div>
 
           <div className="space-y-1 mb-6">
-            <h2 className="font-heading font-bold text-2xl text-slate-900">
-              Frigo sẽ giúp bạn thế nào?
+            <h2 className="font-heading font-bold text-2xl text-takosan-navy">
+              Takosan sẽ giúp bạn thế nào?
             </h2>
-            <p className="text-xs text-slate-500">Chọn mục tiêu để Frigo tối ưu trải nghiệm</p>
+            <p className="text-xs text-slate-500">Chọn mục tiêu để Takosan tối ưu trải nghiệm</p>
           </div>
 
           {/* 3 Main Choice Cards */}
@@ -541,7 +536,7 @@ export const OnboardingPage: React.FC = () => {
                   className={clsx(
                     'w-full p-4 rounded-2xl border text-left transition-all shadow-xs relative active:scale-99',
                     isSelected
-                      ? 'bg-white border-[#22C55E] ring-2 ring-[#22C55E]/30'
+                      ? 'bg-white border-takosan-green ring-2 ring-takosan-green/30'
                       : 'bg-white border-slate-200 hover:border-slate-300'
                   )}
                 >
@@ -550,7 +545,7 @@ export const OnboardingPage: React.FC = () => {
                       className={clsx(
                         'w-11 h-11 rounded-xl flex items-center justify-center shrink-0',
                         isSelected
-                          ? 'bg-[#DDF7E3] text-[#0F3D2E]'
+                          ? 'bg-takosan-mint text-takosan-green'
                           : 'bg-slate-100 text-slate-600'
                       )}
                     >
@@ -559,7 +554,7 @@ export const OnboardingPage: React.FC = () => {
 
                     <div className="flex-1 pr-6">
                       <div className="flex items-center gap-2">
-                        <h4 className="font-heading font-bold text-base text-slate-900">
+                        <h4 className="font-heading font-bold text-base text-takosan-navy">
                           {card.title}
                         </h4>
                       </div>
@@ -569,13 +564,13 @@ export const OnboardingPage: React.FC = () => {
                     </div>
 
                     {card.recommended && (
-                      <span className="absolute bottom-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#DDF7E3] text-[#0F3D2E] border border-emerald-300">
+                      <span className="absolute bottom-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded-full bg-takosan-mint text-takosan-green border border-[#BFE3CC]">
                         Khuyên dùng
                       </span>
                     )}
 
                     {isSelected && (
-                      <div className="w-5 h-5 rounded-full bg-[#22C55E] flex items-center justify-center text-white shrink-0 absolute top-4 right-4">
+                      <div className="w-5 h-5 rounded-full bg-takosan-green flex items-center justify-center text-white shrink-0 absolute top-4 right-4">
                         <Check className="w-3.5 h-3.5 stroke-[3]" />
                       </div>
                     )}
@@ -592,7 +587,7 @@ export const OnboardingPage: React.FC = () => {
             fullWidth
             size="lg"
             onClick={() => setStep(7)}
-            className="bg-[#22C55E] hover:bg-[#1ea750] text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md"
+            className="bg-takosan-green hover:bg-[#26694C] text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md"
           >
             Tiếp tục
           </Button>
@@ -603,9 +598,9 @@ export const OnboardingPage: React.FC = () => {
 
   // 1.7 HOÀN TẤT (CELEBRATION & MASCOT)
   return (
-    <div className="min-h-screen bg-[#FFFDF6] flex flex-col justify-between px-6 py-10 relative max-w-md mx-auto animate-fade-in">
+    <div className="min-h-screen bg-takosan-cream flex flex-col justify-between px-6 py-10 relative max-w-md mx-auto animate-fade-in">
       <div className="text-center pt-6 space-y-2">
-        <h2 className="font-heading font-extrabold text-2xl text-slate-900 tracking-tight flex items-center justify-center gap-2">
+        <h2 className="font-heading font-extrabold text-2xl text-takosan-navy tracking-tight flex items-center justify-center gap-2">
           <span>Tuyệt vời!</span>
           <span>Bạn đã sẵn sàng 🎉</span>
         </h2>
@@ -615,8 +610,8 @@ export const OnboardingPage: React.FC = () => {
       <div className="my-auto py-6">
         <div className="w-56 h-56 mx-auto relative flex items-center justify-center">
           <img
-            src={FRIGO_ASSETS.illustrations['shopping-ready']}
-            alt="Ready"
+            src={TAKOSAN_BRAND.mascot.celebrate}
+            alt="Takosan ăn mừng"
             className="w-full h-full object-contain animate-bounce-slow"
           />
         </div>
@@ -626,14 +621,14 @@ export const OnboardingPage: React.FC = () => {
       <div className="space-y-6 pb-4 text-center">
         {guestError && <p role="alert" className="text-sm text-rose-700">{guestError}</p>}
         <p className="text-xs text-slate-600 leading-relaxed max-w-xs mx-auto">
-          Frigo sẽ đồng hành cùng bạn trong hành trình ăn ngon, sống khỏe, tiết kiệm và không lãng phí.
+          Takosan sẽ đồng hành cùng bạn trong hành trình ăn ngon, sống khỏe, tiết kiệm và không lãng phí.
         </p>
 
         <Button
           fullWidth
           size="lg"
           onClick={handleFinish}
-          className="bg-[#22C55E] hover:bg-[#1ea750] text-white font-heading font-bold text-base py-4 rounded-2xl shadow-md active:scale-98 transition-all flex items-center justify-center gap-2"
+          className="bg-takosan-green hover:bg-[#26694C] text-white font-heading font-bold text-base py-4 rounded-2xl shadow-md active:scale-98 transition-all flex items-center justify-center gap-2"
         >
           <span>Bắt đầu khám phá</span>
           <ArrowRight className="w-5 h-5" />

@@ -41,7 +41,7 @@ export const authApi = {
       return {
         user: {
           id: getUserId(),
-          displayName: 'Bạn mới của Frigo',
+          displayName: 'Bạn mới của Takosan',
           isGuest: true,
           household: { id: getHouseholdId(), name: 'Tủ lạnh nhà tôi' },
           subscription: null,

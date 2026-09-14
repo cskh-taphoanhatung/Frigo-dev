@@ -34,7 +34,7 @@ export const ProfilePage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] pb-24 max-w-md mx-auto">
+    <div className="min-h-screen bg-takosan-cream pb-24 max-w-md mx-auto">
       <TopBar title="Hồ sơ" />
 
       <div className="px-4 pt-4 space-y-4">
@@ -48,7 +48,7 @@ export const ProfilePage: React.FC = () => {
                 className="w-13 h-13 rounded-2xl object-cover border-2 border-emerald-500/40 shadow-xs"
               />
             ) : (
-              <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-emerald-600 to-[#0F3D2E] text-white flex items-center justify-center font-heading font-bold text-xl shadow-xs">
+              <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-takosan-coral to-[#E8624F] text-white flex items-center justify-center font-heading font-bold text-xl shadow-xs">
                 {initialLetter}
               </div>
             )}
@@ -120,7 +120,7 @@ export const ProfilePage: React.FC = () => {
 
         {/* App Version Footer */}
         <div className="text-center pt-2 pb-4">
-          <p className="text-[11px] text-slate-400">Frigo • Ăn đủ. Mua đủ. Dùng hết.</p>
+          <p className="text-[11px] text-slate-400">Takosan • Ăn đủ. Mua đủ. Dùng hết.</p>
         </div>
       </div>
       <LogoutDialog

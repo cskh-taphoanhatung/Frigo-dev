@@ -176,7 +176,7 @@ const ScanReview: React.FC<{ effectiveScanId: string }> = ({ effectiveScanId }) 
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] pb-28">
+    <div className="min-h-screen bg-takosan-cream pb-28">
       <TopBar showBack title="Kết quả nhận diện AI"
         subtitle={isConfirmed ? 'Bản quét đã xác nhận · Chỉ xem' : 'Kiểm tra & chỉnh sửa trước khi xác nhận'} />
 

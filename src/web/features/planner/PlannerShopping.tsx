@@ -56,7 +56,7 @@ export function ShoppingResult({ response, locale }: { response: Shopping; local
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const complete = result.cost.status === 'known' && result.cost.totalCost !== null && result.shoppingCompleteness === 'complete';
   return <div className="space-y-5" data-testid="shopping-result">
-    <section className="rounded-2xl bg-[#0F3D2E] text-white p-5 sm:p-6 space-y-3" aria-label={t.knownTotal}>
+    <section className="rounded-2xl bg-takosan-green text-white p-5 sm:p-6 space-y-3" aria-label={t.knownTotal}>
       <h2 className="text-sm text-emerald-100">{complete ? t.completeTotal : t.knownTotal}</h2>
       {result.cost.status === 'unknown' ? <p className="font-semibold text-lg leading-snug">{t.priceUnavailable}</p> : <p className="text-3xl font-heading font-bold break-all">{formatMoney(complete ? result.cost.totalCost : result.cost.knownCost, locale)}</p>}
       {result.cost.unknownCostItemCount > 0 && <p className="text-sm text-amber-100">{result.cost.unknownCostItemCount} {t.unknownPrices}</p>}

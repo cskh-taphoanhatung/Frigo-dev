@@ -26,8 +26,8 @@ export const FamilySharingPage: React.FC = () => {
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: 'Tham gia Tủ lạnh Gia đình trên Frigo',
-        text: `Tham gia tủ lạnh thông minh cùng mình trên Frigo nhé! Nhập mã mời: ${inviteCode}`,
+        title: 'Tham gia Tủ lạnh Gia đình trên Takosan',
+        text: `Tham gia tủ lạnh thông minh cùng mình trên Takosan nhé! Nhập mã mời: ${inviteCode}`,
         url: window.location.origin,
       }).catch(() => {});
     } else {
@@ -52,7 +52,7 @@ export const FamilySharingPage: React.FC = () => {
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(joinUrl)}`;
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] pb-16 text-slate-900 max-w-md mx-auto">
+    <div className="min-h-screen bg-takosan-cream pb-16 text-slate-900 max-w-md mx-auto">
       <TopBar showBack title="Tủ lạnh Gia đình" subtitle="Đồng bộ kho thực phẩm & đi chợ" />
 
       <div className="px-4 pt-3 space-y-4">
@@ -65,7 +65,7 @@ export const FamilySharingPage: React.FC = () => {
         )}
 
         {/* Household Overview Hero Card */}
-        <div className="bg-gradient-to-br from-[#0F3D2E] via-[#144F3C] to-[#0A2A1F] text-white rounded-2xl p-5 shadow-card space-y-3 border border-emerald-800/40">
+        <div className="bg-gradient-to-br from-takosan-green via-[#276B4F] to-[#1F563E] text-white rounded-2xl p-5 shadow-card space-y-3 border border-emerald-800/40">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white">

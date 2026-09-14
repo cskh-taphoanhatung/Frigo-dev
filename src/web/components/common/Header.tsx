@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, User } from 'lucide-react';
+import { TAKOSAN_BRAND } from '../../lib/takosan-brand';
 
 interface HeaderProps {
   showBack?: boolean;
@@ -12,7 +13,7 @@ export const Header: React.FC<HeaderProps> = ({ showBack = false, title, subtitl
   const navigate = useNavigate();
 
   return (
-    <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md px-4 pt-3 pb-2.5 border-b border-slate-200/80">
+    <header className="sticky top-0 z-30 bg-takosan-cream/95 backdrop-blur-md px-4 pt-3 pb-2.5 border-b border-[#F3E4DA]">
       <div className="flex items-center justify-between">
         {showBack ? (
           <div className="flex items-center gap-2">
@@ -34,7 +35,7 @@ export const Header: React.FC<HeaderProps> = ({ showBack = false, title, subtitl
           </div>
         ) : (
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-            <img src="/assets/frigo-logo.svg" alt="Frigo Logo" className="h-7 w-auto" />
+            <img src={TAKOSAN_BRAND.logos.horizontal} alt="Takosan" className="h-8 w-auto" />
           </div>
         )}
 

@@ -47,7 +47,7 @@ export const ShoppingPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] pb-12 max-w-md mx-auto">
+    <div className="min-h-screen bg-takosan-cream pb-12 max-w-md mx-auto">
       <TopBar showBack title="Danh sách mua sắm" subtitle="Các nguyên liệu cần mua thêm" />
 
       <div className="px-4 pt-3 space-y-4">

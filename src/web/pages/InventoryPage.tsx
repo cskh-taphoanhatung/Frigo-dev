@@ -143,7 +143,7 @@ export const InventoryPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] pb-36 relative max-w-md sm:max-w-lg md:max-w-2xl mx-auto">
+    <div className="min-h-screen bg-takosan-cream pb-36 relative max-w-md sm:max-w-lg md:max-w-2xl mx-auto">
       <TopBar />
 
       <div className="px-4 pt-3 space-y-4 animate-fade-in">
@@ -194,7 +194,7 @@ export const InventoryPage: React.FC = () => {
               className={clsx(
                 'px-4 py-2 rounded-full text-xs font-heading font-bold whitespace-nowrap transition-all tap-target cursor-pointer',
                 filterCategory === c.id
-                  ? 'bg-[#0F3D2E] text-white shadow-card scale-105'
+                  ? 'bg-takosan-green text-white shadow-card scale-105'
                   : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50 hover:text-slate-900'
               )}
             >
@@ -261,7 +261,7 @@ export const InventoryPage: React.FC = () => {
       <div className="fixed bottom-20 left-0 right-0 max-w-md sm:max-w-lg md:max-w-2xl mx-auto px-4 z-30 pointer-events-none">
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="w-full py-4 px-4 rounded-2xl bg-gradient-to-r from-[#22C55E] to-emerald-600 hover:from-[#1ea750] hover:to-emerald-700 text-white font-heading font-bold text-[15px] shadow-float active:scale-98 transition-all pointer-events-auto flex items-center justify-center gap-2 tap-target"
+          className="w-full py-4 px-4 rounded-2xl bg-takosan-green hover:bg-[#26694C] text-white font-heading font-bold text-[15px] shadow-float active:scale-98 transition-all pointer-events-auto flex items-center justify-center gap-2 tap-target"
         >
           <Plus className="w-5.5 h-5.5 stroke-[2.5]" />
           <span>Thêm nguyên liệu</span>

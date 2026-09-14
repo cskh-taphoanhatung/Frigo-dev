@@ -25,7 +25,7 @@ export const WeekSettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] pb-24 max-w-md mx-auto">
+    <div className="min-h-screen bg-takosan-cream pb-24 max-w-md mx-auto">
       <TopBar showBack title="Cài đặt thực đơn tuần" />
 
       <div className="px-4 pt-4 max-w-md mx-auto space-y-5">
@@ -42,7 +42,7 @@ export const WeekSettingsPage: React.FC = () => {
                 onClick={() => setBudget(b)}
                 className={`p-3 rounded-xl border text-xs font-semibold transition-all tap-target active:scale-[0.98] ${
                   budget === b
-                    ? 'bg-[#0F3D2E] text-white shadow-xs border-[#0F3D2E]'
+                    ? 'bg-takosan-green text-white shadow-xs border-takosan-green'
                     : 'bg-white text-slate-800 border-slate-200/80 hover:border-slate-300'
                 }`}
               >

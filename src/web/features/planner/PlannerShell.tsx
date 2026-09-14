@@ -21,12 +21,12 @@ export function PlannerShell({ children, plan, locale, setLocale }: {
         </label>
       </div>
       <p className="text-[11px] tracking-[0.18em] font-bold text-emerald-700 mt-3">{t.eyebrow}</p>
-      <h1 className="text-2xl sm:text-3xl font-heading font-bold text-[#0F3D2E] mt-1 leading-tight">{t.title}</h1>
+      <h1 className="text-2xl sm:text-3xl font-heading font-bold text-takosan-green mt-1 leading-tight">{t.title}</h1>
       <p className="text-sm text-slate-600 mt-2 leading-relaxed">{t.intro}</p>
       {plan && <nav aria-label={t.week} className="flex gap-2 mt-5">
         {[{ to: `/planner/${plan.id}`, label: t.week, icon: CalendarDays, end: true },
           { to: `/planner/${plan.id}/shopping`, label: t.shopping, icon: ShoppingBag, end: false }].map(({ to, label, icon: Icon, end }) =>
-          <NavLink key={to} end={end} to={to} className={({ isActive }) => `flex flex-1 items-center justify-center gap-2 min-h-11 px-3 py-2 rounded-xl text-sm font-semibold ${isActive ? 'bg-[#0F3D2E] text-white' : 'bg-slate-100 text-slate-700'}`}><Icon size={17} />{label}</NavLink>)}
+          <NavLink key={to} end={end} to={to} className={({ isActive }) => `flex flex-1 items-center justify-center gap-2 min-h-11 px-3 py-2 rounded-xl text-sm font-semibold ${isActive ? 'bg-takosan-green text-white' : 'bg-slate-100 text-slate-700'}`}><Icon size={17} />{label}</NavLink>)}
       </nav>}
     </header>
     <div className="p-4 sm:p-6 space-y-5">{children}</div>

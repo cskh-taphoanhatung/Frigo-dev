@@ -163,7 +163,7 @@ export const CookingModePage: React.FC = () => {
   if (!activeRecipe || !recipeMatches) {
     const loadingError = recipeQuery.error || inventoryQuery.error;
     return (
-      <div className="min-h-screen bg-[#F8FAF9] p-6 flex flex-col justify-center items-center text-center gap-4">
+      <div className="min-h-screen bg-takosan-cream p-6 flex flex-col justify-center items-center text-center gap-4">
         {loadingError ? (
           <InlineError error={loadingError} onRetry={() => {
             void recipeQuery.refetch();
@@ -209,7 +209,7 @@ export const CookingModePage: React.FC = () => {
   // 1. Completion view (Deduction confirmation)
   if (isCompletedView) {
     return (
-      <div className="min-h-screen bg-[#F8FAF9] p-4 flex flex-col justify-between pb-10 max-w-md mx-auto">
+      <div className="min-h-screen bg-takosan-cream p-4 flex flex-col justify-between pb-10 max-w-md mx-auto">
         <div className="space-y-4">
           {completionError && <p role="alert" className="text-sm text-rose-700">{completionError}</p>}
           <div className="text-center pt-4">
@@ -303,7 +303,7 @@ export const CookingModePage: React.FC = () => {
 
   // 2. Active step cooking mode
   return (
-    <div className="min-h-screen bg-[#F8FAF9] flex flex-col justify-between p-5 max-w-md mx-auto">
+    <div className="min-h-screen bg-takosan-cream flex flex-col justify-between p-5 max-w-md mx-auto">
       <div>
         <div className="flex items-center justify-between mb-3">
           <button
