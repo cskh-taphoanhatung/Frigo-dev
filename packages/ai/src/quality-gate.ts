@@ -6,7 +6,7 @@ import {
 } from './schemas';
 import { AIProviderError } from './errors';
 
-/** Provider output below this threshold is not safe to create a scan draft. */
+/** Confidence below this threshold requires review; it is still truthful draft evidence. */
 export const AI_SCAN_MIN_CONFIDENCE = 0.6;
 export const AI_SCAN_NO_USABLE_ITEMS = 'AI_SCAN_NO_USABLE_ITEMS';
 
@@ -72,8 +72,8 @@ export class AIScanQualityError extends AIProviderError {
 
   constructor(scanType: 'vision' | 'receipt', totalItems: number) {
     super(
-      `${AI_SCAN_NO_USABLE_ITEMS}: Không có mục ${scanType === 'receipt' ? 'hóa đơn' : 'thực phẩm'} đủ tin cậy ` +
-        `(${totalItems} mục bị loại; ngưỡng confidence ${AI_SCAN_MIN_CONFIDENCE}).`,
+      `${AI_SCAN_NO_USABLE_ITEMS}: Không có mục ${scanType === 'receipt' ? 'hóa đơn' : 'thực phẩm'} có nhãn sử dụng được ` +
+        `(${totalItems} mục bị loại).`,
       {
         code: AI_SCAN_NO_USABLE_ITEMS,
         retryable: false,
@@ -86,11 +86,9 @@ export class AIScanQualityError extends AIProviderError {
 }
 
 function usable<T extends { raw_name: string; confidence?: number }>(item: T): boolean {
-  if (isGenericScanLabel(item.raw_name)) return false;
-  // Missing confidence is truthful unknown evidence. The gate may reject a
-  // reported low value, but must not invent a replacement for an absent one.
-  return item.confidence === undefined
-    || (Number.isFinite(item.confidence) && item.confidence >= AI_SCAN_MIN_CONFIDENCE);
+  // Confidence is evidence for review, not permission to discard a valid label.
+  // The schema already bounds reported values to 0..1; absence remains unknown.
+  return !isGenericScanLabel(item.raw_name);
 }
 
 function receiptDuplicateKey(item: ReceiptScanResult['items'][number]): string {

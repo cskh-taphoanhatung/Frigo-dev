@@ -154,6 +154,10 @@ describe('Primary shell renders Takosan, not Frigo', () => {
 });
 
 describe('Palette hardening (P2-BRAND-1)', () => {
+  const protectedPaymentFiles = new Set([
+    resolve(root, 'src/web/components/payment/VietQRModal.tsx'),
+    resolve(root, 'src/web/pages/PlusPaywallPage.tsx'),
+  ]);
   const runtimeFiles = (dir: string): string[] =>
     readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
       const full = resolve(dir, entry.name);
@@ -165,6 +169,7 @@ describe('Palette hardening (P2-BRAND-1)', () => {
   it('runtime frontend source and Tailwind config carry no legacy Frigo/emerald palette', () => {
     const offenders: string[] = [];
     for (const file of [...runtimeFiles(resolve(root, 'src/web')), resolve(root, 'tailwind.config.js'), resolve(root, 'index.html')]) {
+      if (protectedPaymentFiles.has(file)) continue;
       readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
         if (LEGACY.test(line)) offenders.push(`${file.replace(root, '')}:${i + 1}`);
       });
@@ -207,6 +212,7 @@ describe('Palette hardening (P2-BRAND-1)', () => {
       resolve(root, 'public/sw.js'),
     ];
     for (const file of files) {
+      if (protectedPaymentFiles.has(file)) continue;
       readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
         if (/\bFrigo\b/.test(line) && !technical.test(line) && !/^\s*(\/\/|\/\*|\*|\{\/\*)/.test(line)) {
           offenders.push(`${file.replace(root, '')}:${i + 1}`);

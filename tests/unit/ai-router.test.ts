@@ -41,7 +41,7 @@ describe('AI Router & Schema Verification', () => {
     })).toThrow(`${AI_SCAN_NO_USABLE_ITEMS}`);
   });
 
-  it('keeps usable vision items and removes generic/low-confidence items', () => {
+  it('keeps low-confidence evidence while removing generic labels', () => {
     const result = applyVisionScanQualityGate({
       items: [
         { raw_name: '  Cà chua  ', estimated_quantity: 2, unit: 'piece', confidence: AI_SCAN_MIN_CONFIDENCE, storage: 'fridge' },
@@ -50,12 +50,13 @@ describe('AI Router & Schema Verification', () => {
       ],
     });
 
-    expect(result.items).toHaveLength(1);
+    expect(result.items).toHaveLength(2);
     expect(result.items[0].raw_name).toBe('Cà chua');
+    expect(result.items[1]).toMatchObject({ raw_name: 'Trứng gà', confidence: AI_SCAN_MIN_CONFIDENCE - 0.01 });
   });
 
-  it('rejects a vision result containing only low-confidence items', () => {
-    expect(() => applyVisionScanQualityGate({
+  it('preserves a vision result containing only low-confidence evidence', () => {
+    expect(applyVisionScanQualityGate({
       items: [
         {
           raw_name: 'Trứng gà',
@@ -65,7 +66,7 @@ describe('AI Router & Schema Verification', () => {
           storage: 'fridge',
         },
       ],
-    })).toThrow(`${AI_SCAN_NO_USABLE_ITEMS}`);
+    }).items[0]).toMatchObject({ raw_name: 'Trứng gà', confidence: AI_SCAN_MIN_CONFIDENCE - 0.01 });
   });
 
   it('preserves missing confidence as unknown instead of fabricating or rejecting it', () => {

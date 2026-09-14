@@ -180,7 +180,7 @@ export class QwenTaskRuntime {
     for (let index = 0; index < Math.min(policy.maxAttempts, this.governance.maxCallsPerOperation, roles.length); index += 1) {
       const role = roles[index];
       if (!canUseRole(this.governance, role)) {
-        lastError = new AIEscalationExhaustedError(`AI_ESCALATION_DISABLED: ${role} is disabled by policy`, request.task);
+        lastError ??= new AIEscalationExhaustedError(`AI_ESCALATION_DISABLED: ${role} is disabled by policy`, request.task);
         break;
       }
       const provider = this.providers.get(role);

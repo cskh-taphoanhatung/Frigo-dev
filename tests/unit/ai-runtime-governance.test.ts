@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import {
-  AIEscalationExhaustedError,
   AIRouter,
   QwenTaskRuntime,
   AIUsageLedger,
@@ -141,7 +140,7 @@ describe('Qwen task runtime governance', () => {
       task: 'weekly_plan_complex',
       input: { inventory: [] },
       schema: z.object({ plan: z.array(z.string()) }),
-    })).rejects.toBeInstanceOf(AIEscalationExhaustedError);
+    })).rejects.toMatchObject({ code: 'INVALID_RESPONSE' });
     expect(vi.mocked(globalThis.fetch)).toHaveBeenCalledTimes(2);
   });
 

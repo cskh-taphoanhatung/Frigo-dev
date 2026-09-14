@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { MockInstance } from 'vitest';
 import { executeInventoryAdoption } from '../../packages/db/src/inventory-adoption-executor';
 import { backfillLegacyInventory } from '../../packages/db/src/inventory-truth';
 import { authMiddleware } from '../../src/worker/middleware/auth';
@@ -10,13 +11,6 @@ import type { AuthContext, Env } from '../../src/worker/types';
 import { signJwt } from '../../src/worker/utils/jwt';
 import { sha256Hex } from '../../src/worker/utils/session';
 import { SqliteD1 } from '../helpers/sqlite-d1';
-
-const vision = vi.fn();
-const receiptScan = vi.fn();
-vi.mock('@frigo/ai', () => ({ AIRouter: class {
-  vision = vision;
-  receiptScan = receiptScan;
-} }));
 
 const USER_ID = 'integration-scan-user';
 const HOUSEHOLD_ID = 'integration-scan-household';
@@ -31,6 +25,13 @@ app.route('/', scanRoutes);
 describe('production Qwen queue to T13 inventory authority', () => {
   let db: SqliteD1;
   let token: string;
+  let fetchMock: MockInstance<typeof globalThis.fetch>;
+
+  function qwenResponse(value: unknown): Response {
+    return new Response(JSON.stringify({
+      choices: [{ message: { content: JSON.stringify(value) } }],
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  }
 
   beforeEach(async () => {
     db = new SqliteD1();
@@ -43,11 +44,13 @@ describe('production Qwen queue to T13 inventory authority', () => {
     await executeInventoryAdoption(db, { householdId: HOUSEHOLD_ID, actorId: USER_ID }, {}, '2026-09-15T00:00:00Z');
     token = await signJwt({ sub: USER_ID, hid: HOUSEHOLD_ID, typ: 'access',
       exp: Math.floor(Date.now() / 1000) + 3600 }, SECRET);
-    vision.mockReset();
-    receiptScan.mockReset();
+    fetchMock = vi.spyOn(globalThis, 'fetch');
   });
 
-  afterEach(() => db.close());
+  afterEach(() => {
+    vi.restoreAllMocks();
+    db.close();
+  });
 
   async function enqueue(scanId: string, scanType: 'fridge' | 'receipt') {
     const requestFingerprint = await sha256Hex(`${scanType}\nimage/jpeg\n${IMAGE}`);
@@ -60,7 +63,13 @@ describe('production Qwen queue to T13 inventory authority', () => {
       householdId: HOUSEHOLD_ID, scanType, imageBase64: IMAGE,
       mimeType: 'image/jpeg', idempotencyKey: `command-${scanId}`, requestFingerprint,
     };
-    await processScanJob({ DB: db, ENVIRONMENT: 'test' } as unknown as Env, message);
+    await processScanJob({
+      DB: db,
+      ENVIRONMENT: 'test',
+      QWEN_API_KEY: 'integration-qwen-key',
+      AI_ENABLED: 'true',
+      AI_QWEN_ONLY: 'true',
+    } as unknown as Env, message);
     return requestFingerprint;
   }
 
@@ -74,12 +83,12 @@ describe('production Qwen queue to T13 inventory authority', () => {
     return { status: response.status, json: await response.json() as Record<string, unknown> };
   }
 
-  it('preserves receipt fingerprint and raw evidence through confirmation and idempotent replay', async () => {
-    receiptScan.mockResolvedValue({
+  it('preserves a real Qwen result through queue, confirmation and idempotent replay', async () => {
+    fetchMock.mockResolvedValue(qwenResponse({
       merchant_name: 'Integration Market', purchase_date: '2026-09-15', total_amount_vnd: 12000,
       items: [{ raw_name: 'Cà chua', canonical_id: 'TOMATO', estimated_quantity: 2, unit: 'piece',
-        confidence: 0.11, category: 'vegetable', storage: 'pantry', total_price_vnd: 12000 }],
-    });
+        confidence: 0.9, category: 'vegetable', storage: 'pantry', total_price_vnd: 12000 }],
+    }));
     const fingerprint = await enqueue('integration-receipt', 'receipt');
 
     expect(await confirm('integration-receipt')).toMatchObject({ status: 200, json: { success: true } });
@@ -89,7 +98,7 @@ describe('production Qwen queue to T13 inventory authority', () => {
     }]);
     expect(db.query(`SELECT ocr_raw_name, ocr_quantity, ocr_unit, ocr_confidence,
       ocr_canonical_id, ocr_category, ocr_storage, review_state FROM scan_items`)).toEqual([{
-      ocr_raw_name: 'Cà chua', ocr_quantity: 2, ocr_unit: 'piece', ocr_confidence: 0.11,
+      ocr_raw_name: 'Cà chua', ocr_quantity: 2, ocr_unit: 'piece', ocr_confidence: 0.9,
       ocr_canonical_id: 'TOMATO', ocr_category: 'vegetable', ocr_storage: 'pantry',
       review_state: 'CONFIRMED',
     }]);
@@ -114,9 +123,9 @@ describe('production Qwen queue to T13 inventory authority', () => {
     }).toEqual(beforeReplay);
   });
 
-  it('keeps fridge provenance as SCAN after the async queue path', async () => {
-    vision.mockResolvedValue({ items: [{ raw_name: 'Trứng gà', canonical_id: 'CHICKEN_EGG',
-      estimated_quantity: 6, unit: 'piece', confidence: 0, category: 'egg', storage: 'fridge' }] });
+  it('keeps unknown confidence and fridge provenance through the real Qwen queue path', async () => {
+    fetchMock.mockResolvedValue(qwenResponse({ items: [{ raw_name: 'Trứng gà', canonical_id: 'CHICKEN_EGG',
+      estimated_quantity: 6, unit: 'piece', category: 'egg', storage: 'fridge' }] }));
     await enqueue('integration-fridge', 'fridge');
 
     expect(await confirm('integration-fridge')).toMatchObject({ status: 200, json: { success: true } });
@@ -125,7 +134,23 @@ describe('production Qwen queue to T13 inventory authority', () => {
     }]);
     expect(db.query('SELECT source_type FROM inventory_observations')).toEqual([{ source_type: 'SCAN' }]);
     expect(db.query('SELECT confidence, ocr_confidence FROM scan_items')).toEqual([{
-      confidence: 0, ocr_confidence: 0,
+      confidence: 0.9, ocr_confidence: null,
+    }]);
+  });
+
+  it.each([
+    ['zero', 0],
+    ['low', 0.11],
+  ])('persists real Qwen %s confidence without fabricating evidence', async (label, confidence) => {
+    fetchMock.mockImplementation(async () => qwenResponse({
+      items: [{ raw_name: 'Trứng gà', canonical_id: 'CHICKEN_EGG', estimated_quantity: 6,
+        unit: 'piece', confidence, category: 'egg', storage: 'fridge' }],
+    }));
+
+    await enqueue(`integration-${label}`, 'fridge');
+    expect(db.query('SELECT status FROM scans')).toEqual([{ status: 'ready' }]);
+    expect(db.query('SELECT confidence, ocr_confidence FROM scan_items')).toEqual([{
+      confidence, ocr_confidence: confidence,
     }]);
   });
 });
