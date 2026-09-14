@@ -11,6 +11,8 @@ INDEPENDENT INTEGRATION REVIEW**.
 
 `INTEGRATION_APPLICATION_CANDIDATE=e34ed16777166407acf67b2c76d733d89c7d64ca`
 
+`INTEGRATION_DOCS_HEAD=c14116e3f979f90ca42ec21187c1aa55d319185b`
+
 The candidate integrates production Qwen `da41686b`, certified T13 `32ddbb4`
 (review `9c3c3d3`), hardened Takosan `ff63edf`, and byte-identical T13 migrations
 renumbered to `0024`-`0033`. Production migration changes `0`, bridge mismatches
