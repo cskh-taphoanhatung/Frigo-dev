@@ -45,10 +45,10 @@ export const ProfilePage: React.FC = () => {
               <img
                 src={avatarUrl}
                 alt={displayName}
-                className="w-13 h-13 rounded-2xl object-cover border-2 border-emerald-500/40 shadow-xs"
+                className="w-13 h-13 rounded-2xl object-cover border-2 border-takosan-green/40 shadow-xs"
               />
             ) : (
-              <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-takosan-coral to-[#E8624F] text-white flex items-center justify-center font-heading font-bold text-xl shadow-xs">
+              <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-takosan-coral to-takosan-coral-deep text-white flex items-center justify-center font-heading font-bold text-xl shadow-xs">
                 {initialLetter}
               </div>
             )}

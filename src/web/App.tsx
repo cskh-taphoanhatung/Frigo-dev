@@ -99,7 +99,7 @@ class AppErrorBoundary extends React.Component<{ children: React.ReactNode }, { 
           </h1>
           <p>Vui lòng tải lại ứng dụng để thử lại.</p>
           <button
-            className="rounded-xl bg-emerald-700 px-4 py-3 text-white"
+            className="rounded-xl bg-takosan-green px-4 py-3 text-white"
             onClick={() => window.location.reload()}
           >
             Tải lại

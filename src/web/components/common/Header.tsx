@@ -13,7 +13,7 @@ export const Header: React.FC<HeaderProps> = ({ showBack = false, title, subtitl
   const navigate = useNavigate();
 
   return (
-    <header className="sticky top-0 z-30 bg-takosan-cream/95 backdrop-blur-md px-4 pt-3 pb-2.5 border-b border-[#F3E4DA]">
+    <header className="sticky top-0 z-30 bg-takosan-cream/95 backdrop-blur-md px-4 pt-3 pb-2.5 border-b border-takosan-cream-line">
       <div className="flex items-center justify-between">
         {showBack ? (
           <div className="flex items-center gap-2">

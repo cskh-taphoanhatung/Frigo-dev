@@ -64,14 +64,14 @@ export const ShoppingPage: React.FC = () => {
             value={newItemName}
             onChange={(e) => setNewItemName(e.target.value)}
             placeholder="Thêm món: Hành tím, Tiêu, Nấm..."
-            className="flex-1 h-11 px-3.5 rounded-xl border border-slate-200/80 text-sm font-medium text-slate-900 focus:outline-none focus:border-emerald-600 bg-white shadow-xs transition-colors"
+            className="flex-1 h-11 px-3.5 rounded-xl border border-slate-200/80 text-sm font-medium text-slate-900 focus:outline-none focus:border-takosan-green bg-white shadow-xs transition-colors"
           />
 
           <select
             aria-label="Đơn vị"
             value={newItemUnit}
             onChange={(e) => setNewItemUnit(e.target.value)}
-            className="h-11 px-2.5 rounded-xl border border-slate-200/80 text-xs font-semibold text-slate-800 bg-white focus:outline-none focus:border-emerald-600 transition-colors"
+            className="h-11 px-2.5 rounded-xl border border-slate-200/80 text-xs font-semibold text-slate-800 bg-white focus:outline-none focus:border-takosan-green transition-colors"
           >
             <option value="piece">quả/bìa</option>
             <option value="g">gam (g)</option>
@@ -92,7 +92,7 @@ export const ShoppingPage: React.FC = () => {
             <InlineError error={shoppingQuery.error} onRetry={() => shoppingQuery.refetch()} />
           ) : loading ? (
             <div className="text-center py-10">
-              <div className="animate-spin w-7 h-7 border-2 border-emerald-600 border-t-transparent rounded-full mx-auto" />
+              <div className="animate-spin w-7 h-7 border-2 border-takosan-green border-t-transparent rounded-full mx-auto" />
             </div>
           ) : items.length === 0 ? (
             <EmptyState
@@ -113,10 +113,10 @@ export const ShoppingPage: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <button
                     aria-label={item.isChecked ? 'Bỏ đánh dấu đã mua' : 'Đánh dấu đã mua'}
-                    className="text-emerald-600 tap-target flex items-center justify-center shrink-0"
+                    className="text-takosan-green tap-target flex items-center justify-center shrink-0"
                   >
                     {item.isChecked ? (
-                      <CheckCircle2 className="w-5 h-5 fill-emerald-600 text-white" />
+                      <CheckCircle2 className="w-5 h-5 fill-takosan-green text-white" />
                     ) : (
                       <Circle className="w-5 h-5 text-slate-300" />
                     )}

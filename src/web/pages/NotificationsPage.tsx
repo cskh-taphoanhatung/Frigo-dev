@@ -164,7 +164,7 @@ export const NotificationsPage: React.FC = () => {
                 const Icon = TYPE_ICONS[n.type] || Bell;
                 return (
                   <div key={n.id} className="p-4 flex items-start gap-3.5">
-                    <div className="w-9 h-9 rounded-xl bg-takosan-mint text-takosan-green flex items-center justify-center shrink-0">
+                    <div className="w-9 h-9 rounded-xl bg-takosan-mint text-takosan-green-deep flex items-center justify-center shrink-0">
                       <Icon className="w-5 h-5" aria-hidden="true" />
                     </div>
                     <div className="min-w-0">
@@ -204,7 +204,7 @@ export const NotificationsPage: React.FC = () => {
                     <div
                       className={clsx(
                         'w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors',
-                        isChecked ? 'bg-takosan-mint text-takosan-green' : 'bg-slate-100 text-slate-400'
+                        isChecked ? 'bg-takosan-mint text-takosan-green-deep' : 'bg-slate-100 text-slate-400'
                       )}
                     >
                       <Icon className="w-5 h-5" aria-hidden="true" />

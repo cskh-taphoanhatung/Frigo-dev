@@ -7,10 +7,17 @@
   --takosan-mint: #DFF4E6;
   --takosan-yellow: #FFC857;
 
+  /* Derived shades (hover/depth/borders); the six colours above stay canonical. */
   --takosan-green-hover: #26694C;
-  --takosan-green-active: #1F563E;
+  --takosan-green-deep: #1F563E;
+  --takosan-green-active: var(--takosan-green-deep);
+  --takosan-coral-deep: #E8624F;
   --takosan-coral-soft: #FFE6E1;
   --takosan-cream-deep: #FFF1E8;
+  --takosan-cream-line: #F3E4DA;
+  --takosan-mint-hover: #CFEDDA;
+  --takosan-mint-deep: #BFE3CC;
+  --takosan-green-rgb: 46, 125, 91;
 
   --color-action-primary: var(--takosan-green);
   --color-on-action-primary: #FFFFFF;

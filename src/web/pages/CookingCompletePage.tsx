@@ -40,7 +40,7 @@ export const CookingCompletePage: React.FC = () => {
 
       <div className="px-4 pt-4 space-y-5">
         {/* Congratulation Hero with delicious-meal illustration */}
-        <div className="text-center py-4 bg-takosan-mint/70 rounded-2xl p-5 border border-[#BFE3CC] shadow-xs">
+        <div className="text-center py-4 bg-takosan-mint/70 rounded-2xl p-5 border border-takosan-mint-deep shadow-xs">
           <div className="w-24 h-24 mx-auto mb-2 overflow-hidden flex items-center justify-center">
             <img
               src={TAKOSAN_BRAND.mascot.celebrate}
@@ -60,7 +60,7 @@ export const CookingCompletePage: React.FC = () => {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="font-heading font-bold text-base text-slate-900 flex items-center gap-1.5">
-              <Refrigerator className="w-4 h-4 text-emerald-600" />
+              <Refrigerator className="w-4 h-4 text-takosan-green" />
               <span>Cập nhật số lượng trong tủ lạnh</span>
             </h3>
             <span className="text-xs text-slate-500 font-medium">Kiểm tra & chỉnh sửa</span>

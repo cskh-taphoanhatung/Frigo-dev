@@ -48,7 +48,7 @@ export const LandingPage: React.FC = () => {
 
       {/* Hero: mascot with fridge */}
       <div className="relative z-10 my-6">
-        <div className="relative rounded-3xl overflow-hidden border border-[#F3E4DA] bg-white p-6 text-center shadow-xs">
+        <div className="relative rounded-3xl overflow-hidden border border-takosan-cream-line bg-white p-6 text-center shadow-xs">
           <div className="absolute inset-x-0 top-0 h-28 bg-takosan-mint/60 rounded-b-[48px]" aria-hidden="true" />
           <div className="relative w-44 h-44 mx-auto mb-3 flex items-center justify-center">
             <img

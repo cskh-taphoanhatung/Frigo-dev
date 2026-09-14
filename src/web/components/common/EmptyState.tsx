@@ -34,7 +34,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   const imgSrc = TAKOSAN_BRAND.mascot[pose];
 
   return (
-    <div className="bg-white rounded-2xl p-6 text-center border border-[#F3E4DA] shadow-xs my-4 animate-fade-in">
+    <div className="bg-white rounded-2xl p-6 text-center border border-takosan-cream-line shadow-xs my-4 animate-fade-in">
       <div className="w-32 h-32 mx-auto mb-3 overflow-hidden flex items-center justify-center">
         <img src={imgSrc} alt="" aria-hidden="true" width={128} height={128} className="w-full h-full object-contain" data-mascot-pose={pose} />
       </div>

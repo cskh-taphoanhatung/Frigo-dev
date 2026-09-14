@@ -133,7 +133,7 @@ export const ReconciliationPage: React.FC = () => {
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <ScanLine className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <ScanLine className="w-4 h-4 text-takosan-green shrink-0" />
                     <h4 className="font-heading font-semibold text-sm text-slate-900 truncate">
                       {observation.rawName ?? observation.ingredientId ?? 'Nguyên liệu'}
                     </h4>

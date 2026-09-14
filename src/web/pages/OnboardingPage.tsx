@@ -201,7 +201,7 @@ export const OnboardingPage: React.FC = () => {
             fullWidth
             size="lg"
             onClick={() => setStep(3)}
-            className="bg-takosan-green hover:bg-[#26694C] text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md active:scale-98 transition-all"
+            className="bg-takosan-green hover:bg-takosan-green-hover text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md active:scale-98 transition-all"
           >
             Bắt đầu
           </Button>
@@ -407,7 +407,7 @@ export const OnboardingPage: React.FC = () => {
             fullWidth
             size="lg"
             onClick={() => setStep(5)}
-            className="bg-takosan-green hover:bg-[#26694C] text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md"
+            className="bg-takosan-green hover:bg-takosan-green-hover text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md"
           >
             Tiếp tục
           </Button>
@@ -470,7 +470,7 @@ export const OnboardingPage: React.FC = () => {
             fullWidth
             size="lg"
             onClick={() => setStep(6)}
-            className="bg-takosan-green hover:bg-[#26694C] text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md"
+            className="bg-takosan-green hover:bg-takosan-green-hover text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md"
           >
             Tiếp tục
           </Button>
@@ -545,7 +545,7 @@ export const OnboardingPage: React.FC = () => {
                       className={clsx(
                         'w-11 h-11 rounded-xl flex items-center justify-center shrink-0',
                         isSelected
-                          ? 'bg-takosan-mint text-takosan-green'
+                          ? 'bg-takosan-mint text-takosan-green-deep'
                           : 'bg-slate-100 text-slate-600'
                       )}
                     >
@@ -564,7 +564,7 @@ export const OnboardingPage: React.FC = () => {
                     </div>
 
                     {card.recommended && (
-                      <span className="absolute bottom-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded-full bg-takosan-mint text-takosan-green border border-[#BFE3CC]">
+                      <span className="absolute bottom-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded-full bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep">
                         Khuyên dùng
                       </span>
                     )}
@@ -587,7 +587,7 @@ export const OnboardingPage: React.FC = () => {
             fullWidth
             size="lg"
             onClick={() => setStep(7)}
-            className="bg-takosan-green hover:bg-[#26694C] text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md"
+            className="bg-takosan-green hover:bg-takosan-green-hover text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md"
           >
             Tiếp tục
           </Button>
@@ -628,7 +628,7 @@ export const OnboardingPage: React.FC = () => {
           fullWidth
           size="lg"
           onClick={handleFinish}
-          className="bg-takosan-green hover:bg-[#26694C] text-white font-heading font-bold text-base py-4 rounded-2xl shadow-md active:scale-98 transition-all flex items-center justify-center gap-2"
+          className="bg-takosan-green hover:bg-takosan-green-hover text-white font-heading font-bold text-base py-4 rounded-2xl shadow-md active:scale-98 transition-all flex items-center justify-center gap-2"
         >
           <span>Bắt đầu khám phá</span>
           <ArrowRight className="w-5 h-5" />

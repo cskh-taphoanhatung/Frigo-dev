@@ -18,7 +18,7 @@ export const BottomNav: React.FC = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-takosan-cream/95 backdrop-blur-xl border-t border-[#F3E4DA] safe-bottom max-w-md sm:max-w-lg md:max-w-2xl mx-auto shadow-[0_-4px_24px_rgba(31,41,55,0.06)]">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-takosan-cream/95 backdrop-blur-xl border-t border-takosan-cream-line safe-bottom max-w-md sm:max-w-lg md:max-w-2xl mx-auto shadow-[0_-4px_24px_rgba(31,41,55,0.06)]">
       <div className="flex items-stretch justify-around h-[68px] px-1.5">
         {navItems.map((item) => {
           const isActive =

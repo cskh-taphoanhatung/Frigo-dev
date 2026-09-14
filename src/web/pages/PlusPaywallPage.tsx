@@ -86,7 +86,7 @@ export const PlusPaywallPage: React.FC = () => {
                 className={clsx(
                   'rounded-xl p-4 relative shadow-xs cursor-pointer transition-all active:scale-[0.98]',
                   isSelected
-                    ? 'bg-white border-emerald-600 ring-1 ring-emerald-600'
+                    ? 'bg-white border-takosan-green ring-1 ring-takosan-green'
                     : 'bg-white border border-slate-200/80 hover:border-slate-300'
                 )}
               >
@@ -118,8 +118,8 @@ export const PlusPaywallPage: React.FC = () => {
             'Chia sẻ tủ lạnh gia đình không giới hạn thiết bị',
           ].map((feature) => (
             <div key={feature} className="flex items-center gap-2.5 text-xs text-slate-700 font-medium py-1">
-              <div className="w-5 h-5 rounded-full bg-emerald-50 border border-emerald-200/60 flex items-center justify-center shrink-0">
-                <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]" />
+              <div className="w-5 h-5 rounded-full bg-takosan-mint border border-takosan-mint-deep/60 flex items-center justify-center shrink-0">
+                <Check className="w-3.5 h-3.5 text-takosan-green stroke-[2.5]" />
               </div>
               <span>{feature}</span>
             </div>

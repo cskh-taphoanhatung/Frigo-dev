@@ -23,7 +23,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.worker.json --noEmit",
     "lint": "eslint .",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\" \"packages/**/*.{ts,tsx}\"",
-    "check": "bash scripts/deploy-check.sh"
+    "check": "bash scripts/deploy-check.sh",
+    "brand:icons": "node scripts/generate-takosan-icons.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.67.2",
@@ -52,6 +53,7 @@
     "jsdom": "26.1.0",
     "postcss": "^8.5.3",
     "prettier": "^3.5.3",
+    "sharp": "0.33.5",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.3",
     "vite": "^6.2.1",

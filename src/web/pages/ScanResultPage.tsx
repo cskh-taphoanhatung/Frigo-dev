@@ -13,12 +13,12 @@ import { presentConfidence, presentDomainError, presentRefetchOutcome } from '..
 import { ApiError } from '../services/http';
 
 const UNITS: StandardUnit[] = ['piece', 'g', 'kg', 'ml', 'l', 'pack', 'bunch', 'slice'];
-const fieldClass = 'mt-1 w-full min-w-0 h-11 px-3 rounded-lg border border-slate-200 text-sm text-slate-900 bg-white focus:border-emerald-600 focus:outline-none';
+const fieldClass = 'mt-1 w-full min-w-0 h-11 px-3 rounded-lg border border-slate-200 text-sm text-slate-900 bg-white focus:border-takosan-green focus:outline-none';
 const confidenceClass = {
   unknown: 'text-slate-600 bg-slate-100',
   low: 'text-amber-900 bg-amber-100',
   medium: 'text-amber-800 bg-amber-50',
-  high: 'text-emerald-700 bg-emerald-50',
+  high: 'text-takosan-green-deep bg-takosan-mint',
 };
 
 export const ScanResultPage: React.FC = () => {
@@ -192,8 +192,8 @@ const ScanReview: React.FC<{ effectiveScanId: string }> = ({ effectiveScanId }) 
         </p>}
         {/* Banner Alert */}
         <div role={isConfirmed ? 'status' : undefined}
-          className="bg-emerald-50/80 border border-emerald-200/70 rounded-xl p-3.5 flex items-start gap-3">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+          className="bg-takosan-mint/80 border border-takosan-mint-deep/70 rounded-xl p-3.5 flex items-start gap-3">
+          <CheckCircle2 className="w-5 h-5 text-takosan-green shrink-0 mt-0.5" />
           <div className="text-xs">
             <p className="font-heading font-bold text-sm text-slate-900">
               {isConfirmed
@@ -338,7 +338,7 @@ const ScanReview: React.FC<{ effectiveScanId: string }> = ({ effectiveScanId }) 
           onClick={() => setIsManualAddOpen(true)}
           className="flex items-center justify-center gap-1.5 text-xs text-slate-700"
         >
-          <Plus className="w-4 h-4 text-emerald-700" />
+          <Plus className="w-4 h-4 text-takosan-green" />
           <span>Thêm nguyên liệu AI còn thiếu</span>
         </Button>}
       </div>
@@ -391,7 +391,7 @@ const ScanReview: React.FC<{ effectiveScanId: string }> = ({ effectiveScanId }) 
                   value={addName}
                   onChange={(e) => setAddName(e.target.value)}
                   placeholder="Ví dụ: Nấm hương, Hành lá..."
-                  className="w-full h-11 px-3 rounded-lg border border-slate-200/80 text-sm font-medium text-slate-900 bg-white focus:border-emerald-600 focus:outline-none transition-colors"
+                  className="w-full h-11 px-3 rounded-lg border border-slate-200/80 text-sm font-medium text-slate-900 bg-white focus:border-takosan-green focus:outline-none transition-colors"
                 />
               </div>
 
@@ -407,7 +407,7 @@ const ScanReview: React.FC<{ effectiveScanId: string }> = ({ effectiveScanId }) 
                     required
                     value={addQty}
                     onChange={(e) => setAddQty(Number(e.target.value))}
-                    className="w-full h-11 px-3 rounded-lg border border-slate-200/80 text-sm font-medium text-slate-900 bg-white focus:border-emerald-600 focus:outline-none transition-colors"
+                    className="w-full h-11 px-3 rounded-lg border border-slate-200/80 text-sm font-medium text-slate-900 bg-white focus:border-takosan-green focus:outline-none transition-colors"
                   />
                 </div>
 
@@ -417,7 +417,7 @@ const ScanReview: React.FC<{ effectiveScanId: string }> = ({ effectiveScanId }) 
                     id="scan-add-unit"
                     value={addUnit}
                     onChange={(e) => setAddUnit(e.target.value as StandardUnit)}
-                    className="w-full h-11 px-2.5 rounded-lg border border-slate-200/80 text-xs font-semibold text-slate-800 bg-white focus:border-emerald-600 focus:outline-none transition-colors"
+                    className="w-full h-11 px-2.5 rounded-lg border border-slate-200/80 text-xs font-semibold text-slate-800 bg-white focus:border-takosan-green focus:outline-none transition-colors"
                   >
                     {UNITS.map((unit) => <option key={unit} value={unit}>{unit}</option>)}
                   </select>

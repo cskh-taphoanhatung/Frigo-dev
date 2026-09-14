@@ -18,7 +18,7 @@ export const TopBar: React.FC<TopBarProps> = ({ showBack = false, title, subtitl
   const isProfilePage = location.pathname === '/profile';
 
   return (
-    <header className="sticky top-0 z-30 bg-takosan-cream/95 backdrop-blur-md px-4 py-3 border-b border-[#F3E4DA] transition-colors shadow-xs">
+    <header className="sticky top-0 z-30 bg-takosan-cream/95 backdrop-blur-md px-4 py-3 border-b border-takosan-cream-line transition-colors shadow-xs">
       <div className="flex items-center justify-between">
         {showBack ? (
           <div className="flex items-center gap-2.5">
@@ -67,7 +67,7 @@ export const TopBar: React.FC<TopBarProps> = ({ showBack = false, title, subtitl
           ) : (
             <button
               onClick={() => navigate('/profile')}
-              className="w-9 h-9 rounded-xl bg-takosan-mint text-takosan-green border border-[#BFE3CC] hover:bg-[#CFEDDA] active:scale-95 transition-all flex items-center justify-center overflow-hidden"
+              className="w-9 h-9 rounded-xl bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep hover:bg-takosan-mint-hover active:scale-95 transition-all flex items-center justify-center overflow-hidden"
               aria-label="Tài khoản cá nhân"
             >
               {avatarUrl ? (

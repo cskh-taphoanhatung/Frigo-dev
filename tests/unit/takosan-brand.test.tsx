@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { StaticRouter } from 'react-router-dom/server';
@@ -13,9 +13,11 @@ vi.mock('../../src/web/stores/useAuthStore', () => ({
 
 import { TAKOSAN_BRAND } from '../../src/web/lib/takosan-brand';
 import { LandingPage } from '../../src/web/pages/LandingPage';
+import { Header } from '../../src/web/components/common/Header';
 import { TopBar } from '../../src/web/components/common/TopBar';
 import { BottomNav } from '../../src/web/components/layout/BottomNav';
 import { EmptyState } from '../../src/web/components/common/EmptyState';
+import tailwindConfig from '../../tailwind.config.js';
 
 const root = resolve(__dirname, '../..');
 const publicFile = (webPath: string) => resolve(root, 'public', webPath.replace(/^\//, ''));
@@ -80,10 +82,23 @@ describe('PWA metadata', () => {
     expect(html).toContain('href="/takosan/app-icons/favicon.svg"');
     expect(html).toContain('<meta name="theme-color" content="#2E7D5B" />');
     expect(html).toContain('property="og:title" content="Takosan');
-    expect(html).toContain('property="og:image" content="/takosan/brand/takosan-og.png"');
-    expect(html).toContain('https://frigo.tungjpstore.net');
+    // og:image must be absolute for scrapers; the temporary domain stays until the maintainer picks one.
+    expect(html).toContain('property="og:image" content="https://frigo.tungjpstore.net/takosan/brand/takosan-og.png"');
+    expect(html).toContain('property="og:url" content="https://frigo.tungjpstore.net"');
+    expect(html).not.toMatch(/og:image" content="\//);
     expect(html).not.toMatch(/\/frigo\/(brand|app-icons)\//);
     expect(html).toContain('family=Nunito');
+  });
+
+  it('favicon, apple-touch-icon and icon links in index.html point at existing Takosan files', () => {
+    const html = readFileSync(resolve(root, 'index.html'), 'utf8');
+    const iconHrefs = [...html.matchAll(/<link rel="(?:icon|apple-touch-icon)"[^>]*href="([^"]+)"/g)].map((m) => m[1]);
+    expect(iconHrefs.length).toBeGreaterThanOrEqual(3);
+    for (const href of iconHrefs) {
+      expect(href.startsWith('/takosan/app-icons/')).toBe(true);
+      expect(existsSync(publicFile(href))).toBe(true);
+    }
+    expect(existsSync(publicFile(TAKOSAN_BRAND.og))).toBe(true);
   });
 
   it('service worker cache version moved off frigo-pwa-v1 and precaches Takosan assets', () => {
@@ -110,7 +125,12 @@ describe('Primary shell renders Takosan, not Frigo', () => {
     expect(html).not.toContain('/frigo/brand/');
   });
 
-  it('TopBar and BottomNav use the Takosan logo and icon grammar', () => {
+  it('Header, TopBar and BottomNav use the Takosan logo and icon grammar', () => {
+    const header = render(<Header />);
+    expect(header).toContain(`src="${TAKOSAN_BRAND.logos.horizontal}"`);
+    expect(header).toContain('alt="Takosan"');
+    expect(header).not.toContain('frigo-logo');
+
     const top = render(<TopBar />);
     expect(top).toContain(`src="${TAKOSAN_BRAND.logos.horizontal}"`);
     expect(top).toContain('alt="Takosan"');
@@ -129,5 +149,91 @@ describe('Primary shell renders Takosan, not Frigo', () => {
     expect(render(<EmptyState type="no-recipes" title="Trống" description="x" />)).toContain(TAKOSAN_BRAND.mascot.recipe);
     expect(render(<EmptyState type="shopping-ready" title="Trống" description="x" />)).toContain(TAKOSAN_BRAND.mascot.shopping);
     expect(render(<EmptyState type="error" title="Lỗi" description="x" />)).toContain(TAKOSAN_BRAND.mascot.thinking);
+  });
+});
+
+describe('Palette hardening (P2-BRAND-1)', () => {
+  const runtimeFiles = (dir: string): string[] =>
+    readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const full = resolve(dir, entry.name);
+      if (entry.isDirectory()) return runtimeFiles(full);
+      return /\.(tsx?|css)$/.test(entry.name) ? [full] : [];
+    });
+  const LEGACY = /emerald-|#059669|#047857|#0F3D2E|#14532D|#22C55E|#1ea750|#DDF7E3|#FFFDF6|#F8FAF9|#34d399/i;
+
+  it('runtime frontend source and Tailwind config carry no legacy Frigo/emerald palette', () => {
+    const offenders: string[] = [];
+    for (const file of [...runtimeFiles(resolve(root, 'src/web')), resolve(root, 'tailwind.config.js'), resolve(root, 'index.html')]) {
+      readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
+        if (LEGACY.test(line)) offenders.push(`${file.replace(root, '')}:${i + 1}`);
+      });
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it('Tailwind config parses and exposes the locked palette plus Takosan-green tinted shadows', () => {
+    const theme = (tailwindConfig as { theme: { extend: { colors: Record<string, unknown>; boxShadow: Record<string, string> } } }).theme.extend;
+    const takosan = theme.colors.takosan as Record<string, string | Record<string, string>>;
+    const value = (c: string | Record<string, string>) => (typeof c === 'string' ? c : c.DEFAULT);
+    for (const [name, hex] of Object.entries(TAKOSAN_BRAND.colors)) {
+      expect(value(takosan[name])).toBe(hex);
+    }
+    for (const name of ['float', 'glow']) {
+      expect(theme.boxShadow[name]).toContain('rgba(46, 125, 91');
+      expect(theme.boxShadow[name]).not.toMatch(/rgba\((5, 150, 105|16, 185, 129)/);
+    }
+    // Legacy `frigo.*` aliases must resolve to Takosan values, never to the old emerald ramp.
+    expect(JSON.stringify(theme.colors.frigo)).not.toMatch(/#059669|#047857|#0F3D2E|#10B981|#34D399/i);
+  });
+
+  it('active runtime components do not reference legacy Frigo brand or app-icon assets', () => {
+    const offenders: string[] = [];
+    for (const file of runtimeFiles(resolve(root, 'src/web'))) {
+      const text = readFileSync(file, 'utf8');
+      if (file.endsWith('frigo-assets.ts')) continue; // legacy manifest kept for content paths
+      if (/\/frigo\/(brand|app-icons|illustrations)\/|\/assets\/frigo-logo/.test(text)) offenders.push(file.replace(root, ''));
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it('visible runtime copy no longer says Frigo (technical identifiers excluded)', () => {
+    const offenders: string[] = [];
+    const technical = /X-Frigo-|frigo_[a-z_]+|@frigo\/|\/frigo\/|frigo-assets|frigo-tokens|--frigo-|frigo\.tungjpstore\.net/;
+    const files = [
+      ...runtimeFiles(resolve(root, 'src/web')),
+      resolve(root, 'index.html'),
+      resolve(root, 'public/manifest.json'),
+      resolve(root, 'public/sw.js'),
+    ];
+    for (const file of files) {
+      readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
+        if (/\bFrigo\b/.test(line) && !technical.test(line) && !/^\s*(\/\/|\/\*|\*|\{\/\*)/.test(line)) {
+          offenders.push(`${file.replace(root, '')}:${i + 1}`);
+        }
+      });
+    }
+    expect(offenders).toEqual([]);
+  });
+});
+
+describe('Brand generator (P2-BRAND-2)', () => {
+  it('sharp is a direct, exactly pinned devDependency and the generator imports it directly', () => {
+    const pkg = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
+    expect(pkg.devDependencies.sharp).toBe('0.33.5');
+    expect(pkg.scripts['brand:icons']).toBe('node scripts/generate-takosan-icons.mjs');
+    const script = readFileSync(resolve(root, 'scripts/generate-takosan-icons.mjs'), 'utf8');
+    expect(script).toContain("import sharp from 'sharp'");
+    expect(script).not.toContain('NODE_PATH');
+    expect(script).not.toContain('createRequire');
+  });
+
+  it('every generated runtime icon the generator promises exists', () => {
+    const expected = [16, 32, 48, 64, 128, 180, 192, 256, 512].map((s) => `/takosan/app-icons/icon-${s}.png`).concat([
+      '/takosan/app-icons/icon-maskable-512.png',
+      '/takosan/app-icons/takosan-app-icon-light-512.png',
+      '/takosan/app-icons/takosan-app-icon-mint-512.png',
+      '/takosan/brand/takosan-og.png',
+    ]);
+    expect(expected.filter((p) => !existsSync(publicFile(p)))).toEqual([]);
   });
 });

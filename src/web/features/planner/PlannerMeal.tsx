@@ -48,9 +48,9 @@ export function PlannerMeal({ plan, slotId, model, locale }: {
   }
   const codes = explanation?.reasonCodes ?? meal.reasons;
   return <>
-    <Link className="inline-flex items-center gap-2 min-h-11 text-sm text-emerald-800 font-semibold" to={`/planner/${plan.id}`}><ArrowLeft size={16} />{t.back}</Link>
+    <Link className="inline-flex items-center gap-2 min-h-11 text-sm text-takosan-green-deep font-semibold" to={`/planner/${plan.id}`}><ArrowLeft size={16} />{t.back}</Link>
     <Card className="!p-5 sm:!p-6">
-      <p className="text-xs font-bold text-emerald-800 uppercase tracking-wide">{t[meal.mealType]} · {meal.date}</p>
+      <p className="text-xs font-bold text-takosan-green-deep uppercase tracking-wide">{t[meal.mealType]} · {meal.date}</p>
       <h2 className="text-2xl font-heading font-bold text-slate-900 mt-2 leading-tight">{meal.title}</h2>
       <div className="flex gap-5 text-sm text-slate-600 mt-4"><span className="inline-flex items-center gap-1"><Users size={16} />{meal.servings} {t.people}</span><span className="inline-flex items-center gap-1"><Clock size={16} />{meal.cookTimeMinutes === null ? t.unknownTime : `${meal.cookTimeMinutes} ${t.minutes}`}</span></div>
       <Button className="mt-5" fullWidth variant="secondary" disabled={!!model.busy || plan.freshness.reasons.includes('planning_time_elapsed')} onClick={() => setSwapOpen(true)}><RefreshCw size={16} className="mr-2" />{t.swap}</Button>
@@ -72,7 +72,7 @@ export function PlannerMeal({ plan, slotId, model, locale }: {
         if (response) setExplanation(response); else setAiFailed(true);
       }}><Sparkles size={16} className="mr-2" />{t.explain}</Button>
       {model.busy === 'explain' && <p role="status" className="text-sm mt-2">{t.explaining}</p>}
-      {(explanation || aiFailed) && <p role="status" className="text-xs text-emerald-900 mt-3">{explanation?.source === 'ai' ? t.aiUsed : t.fallback}</p>}
+      {(explanation || aiFailed) && <p role="status" className="text-xs text-takosan-green-deep mt-3">{explanation?.source === 'ai' ? t.aiUsed : t.fallback}</p>}
       <p className="text-xs text-slate-500 mt-3">{t.aiNote}</p>
     </Card>
     <Card><h3 className="font-heading font-bold text-lg">{t.feedback}</h3><div className="grid grid-cols-2 gap-2 mt-4">{(['liked', 'disliked', 'cooked', 'skipped', ...(swappedHere ? ['swapped' as const] : [])] as const).map((type) =>

@@ -154,7 +154,7 @@ export const InventoryPage: React.FC = () => {
               Tủ lạnh của tôi
             </h2>
             <p className="text-xs text-slate-500 mt-1 font-medium">
-              <span className="inline-flex items-center gap-1 text-emerald-700 font-bold">
+              <span className="inline-flex items-center gap-1 text-takosan-green font-bold">
                 🧊 {items.length} nguyên liệu
               </span>{' '}
               sẵn sàng nấu
@@ -167,10 +167,10 @@ export const InventoryPage: React.FC = () => {
         <button
           type="button"
           onClick={() => navigate('/inventory-reconciliation')}
-          className="w-full flex items-center justify-between px-4 py-2.5 rounded-2xl bg-white border border-slate-200/80 shadow-card text-left tap-target cursor-pointer hover:border-emerald-500/40 transition-all"
+          className="w-full flex items-center justify-between px-4 py-2.5 rounded-2xl bg-white border border-slate-200/80 shadow-card text-left tap-target cursor-pointer hover:border-takosan-green/40 transition-all"
         >
           <span className="text-xs font-semibold text-slate-700">Đối chiếu tủ lạnh</span>
-          <span className="text-[11px] text-emerald-700 font-bold">Xem bằng chứng →</span>
+          <span className="text-[11px] text-takosan-green font-bold">Xem bằng chứng →</span>
         </button>
 
         {/* Search */}
@@ -181,7 +181,7 @@ export const InventoryPage: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Tìm theo tên nguyên liệu..."
-            className="w-full h-12 pl-11 pr-4 bg-white rounded-2xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-card transition-all"
+            className="w-full h-12 pl-11 pr-4 bg-white rounded-2xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-card transition-all"
           />
         </div>
 
@@ -261,7 +261,7 @@ export const InventoryPage: React.FC = () => {
       <div className="fixed bottom-20 left-0 right-0 max-w-md sm:max-w-lg md:max-w-2xl mx-auto px-4 z-30 pointer-events-none">
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="w-full py-4 px-4 rounded-2xl bg-takosan-green hover:bg-[#26694C] text-white font-heading font-bold text-[15px] shadow-float active:scale-98 transition-all pointer-events-auto flex items-center justify-center gap-2 tap-target"
+          className="w-full py-4 px-4 rounded-2xl bg-takosan-green hover:bg-takosan-green-hover text-white font-heading font-bold text-[15px] shadow-float active:scale-98 transition-all pointer-events-auto flex items-center justify-center gap-2 tap-target"
         >
           <Plus className="w-5.5 h-5.5 stroke-[2.5]" />
           <span>Thêm nguyên liệu</span>
@@ -296,7 +296,7 @@ export const InventoryPage: React.FC = () => {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Ví dụ: Thịt ba chỉ, Trứng gà, Cà chua..."
-                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 font-medium text-sm text-slate-900 placeholder:text-slate-400"
+                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green font-medium text-sm text-slate-900 placeholder:text-slate-400"
                 />
               </div>
 
@@ -311,7 +311,7 @@ export const InventoryPage: React.FC = () => {
                     required
                     value={quantity}
                     onChange={(e) => setQuantity(Number(e.target.value))}
-                    className="w-full h-11 px-3.5 rounded-xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 font-medium text-sm text-slate-900"
+                    className="w-full h-11 px-3.5 rounded-xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green font-medium text-sm text-slate-900"
                   />
                 </div>
 
@@ -322,7 +322,7 @@ export const InventoryPage: React.FC = () => {
                   <select
                     value={unit}
                     onChange={(e) => setUnit(e.target.value as StandardUnit)}
-                    className="w-full h-11 px-3 rounded-xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 font-medium text-sm text-slate-900 bg-white"
+                    className="w-full h-11 px-3 rounded-xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green font-medium text-sm text-slate-900 bg-white"
                   >
                     <option value="g">gam (g)</option>
                     <option value="kg">kg</option>
@@ -343,7 +343,7 @@ export const InventoryPage: React.FC = () => {
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    className="w-full h-11 px-3 rounded-xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 font-medium text-sm text-slate-900 bg-white"
+                    className="w-full h-11 px-3 rounded-xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green font-medium text-sm text-slate-900 bg-white"
                   >
                     <option value="vegetable">Rau củ</option>
                     <option value="meat">Thịt</option>
@@ -362,7 +362,7 @@ export const InventoryPage: React.FC = () => {
                   <select
                     value={storage}
                     onChange={(e) => setStorage(e.target.value)}
-                    className="w-full h-11 px-3 rounded-xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 font-medium text-sm text-slate-900 bg-white"
+                    className="w-full h-11 px-3 rounded-xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green font-medium text-sm text-slate-900 bg-white"
                   >
                     <option value="fridge">Ngăn mát</option>
                     <option value="freezer">Ngăn đông</option>
@@ -390,7 +390,7 @@ export const InventoryPage: React.FC = () => {
                       className={clsx(
                         'flex-1 py-2 rounded-lg text-xs font-medium border transition-all tap-target cursor-pointer',
                         expiryDays === d.days
-                          ? 'bg-emerald-50 border-emerald-600 text-emerald-900 font-semibold'
+                          ? 'bg-takosan-mint border-takosan-green text-takosan-green-deep font-semibold'
                           : 'bg-white border-slate-200/80 text-slate-600 hover:bg-slate-50'
                       )}
                     >

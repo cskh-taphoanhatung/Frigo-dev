@@ -19,7 +19,7 @@ const EXPIRY_TONE_CLASS: Record<string, string> = {
   expired: 'bg-rose-50 text-rose-800 border-rose-200',
   expiring: 'bg-amber-50 text-amber-900 border-amber-200',
   estimated: 'bg-sky-50 text-sky-900 border-sky-200',
-  fresh: 'bg-emerald-50 text-emerald-900 border-emerald-200',
+  fresh: 'bg-takosan-mint text-takosan-green-deep border-takosan-mint-deep',
 };
 
 const STORAGE_LABEL: Record<string, string> = {
@@ -203,7 +203,7 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
               <h3 className="font-heading font-bold text-xl text-slate-900 leading-tight">{item.name}</h3>
               <StatusChip status={status} />
             </div>
-            <p className="text-sm font-semibold text-emerald-700">{item.quantity} {item.unit}</p>
+            <p className="text-sm font-semibold text-takosan-green">{item.quantity} {item.unit}</p>
           </div>
         </div>
 
@@ -227,7 +227,7 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-xs">
             <div className="flex items-center gap-1.5 text-slate-500 mb-1">
-              <Layers className="w-4 h-4 text-emerald-600" />
+              <Layers className="w-4 h-4 text-takosan-green" />
               <span className="text-[11px] font-semibold">Vị trí</span>
             </div>
             <p className="font-heading font-semibold text-sm text-slate-900">
@@ -237,7 +237,7 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
 
           <div className="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-xs">
             <div className="flex items-center gap-1.5 text-slate-500 mb-1">
-              <Calendar className="w-4 h-4 text-emerald-600" />
+              <Calendar className="w-4 h-4 text-takosan-green" />
               <span className="text-[11px] font-semibold">Hạn sử dụng</span>
             </div>
             <p className={clsx('font-heading font-semibold text-xs px-2 py-1 rounded-lg border inline-block',
@@ -250,7 +250,7 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
         {lot && (
           <div className="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-xs space-y-2">
             <div className="flex items-center gap-1.5 text-slate-500">
-              <Receipt className="w-4 h-4 text-emerald-600" />
+              <Receipt className="w-4 h-4 text-takosan-green" />
               <span className="text-[11px] font-semibold">Nguồn gốc &amp; lô</span>
             </div>
             <dl className="grid grid-cols-2 gap-y-1.5 text-xs">
@@ -272,7 +272,7 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
 
         {!editing ? (
           <Button fullWidth variant="outline" onClick={startEdit} className="flex items-center justify-center gap-2">
-            <PackageOpen className="w-4 h-4 text-emerald-600" />
+            <PackageOpen className="w-4 h-4 text-takosan-green" />
             <span>Sửa thông tin nguyên liệu</span>
           </Button>
         ) : (
@@ -294,7 +294,7 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
                 maxLength={100}
                 value={draft.name}
                 onChange={(event) => setDraft({ ...draft, name: event.target.value })}
-                className="w-full h-11 px-3 rounded-xl border border-slate-200/80 text-sm font-medium text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600"
+                className="w-full h-11 px-3 rounded-xl border border-slate-200/80 text-sm font-medium text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -306,7 +306,7 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
                   id="lot-unit-input"
                   value={draft.unit}
                   onChange={(event) => setDraft({ ...draft, unit: event.target.value })}
-                  className="w-full h-11 px-3 rounded-xl border border-slate-200/80 text-sm font-medium text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600"
+                  className="w-full h-11 px-3 rounded-xl border border-slate-200/80 text-sm font-medium text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green"
                 >
                   <option value="g">gam (g)</option>
                   <option value="kg">kg</option>
@@ -326,7 +326,7 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
                   id="lot-category-input"
                   value={draft.category}
                   onChange={(event) => setDraft({ ...draft, category: event.target.value })}
-                  className="w-full h-11 px-3 rounded-xl border border-slate-200/80 text-sm font-medium text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600"
+                  className="w-full h-11 px-3 rounded-xl border border-slate-200/80 text-sm font-medium text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green"
                 >
                   {!Object.hasOwn(CATEGORY_LABEL, editBaseline.category) && <option value={editBaseline.category}>{editBaseline.category}</option>}
                   {Object.entries(CATEGORY_LABEL).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
@@ -342,7 +342,7 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
                 type="date"
                 value={draft.expiryDate}
                 onChange={(event) => setDraft({ ...draft, expiryDate: event.target.value })}
-                className="w-full h-11 px-3 rounded-xl border border-slate-200/80 text-sm font-medium text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600"
+                className="w-full h-11 px-3 rounded-xl border border-slate-200/80 text-sm font-medium text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green"
               />
               <p className="text-[11px] text-slate-500 mt-1">
                 Ngày bạn chọn được lưu là hạn dùng đã biết chắc chắn.
@@ -356,7 +356,7 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
                 id="lot-storage-input"
                 value={draft.storage}
                 onChange={(event) => setDraft({ ...draft, storage: event.target.value })}
-                className="w-full h-11 px-3 rounded-xl border border-slate-200/80 text-sm font-medium text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600"
+                className="w-full h-11 px-3 rounded-xl border border-slate-200/80 text-sm font-medium text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green"
               >
                 <option value="fridge">Ngăn mát</option>
                 <option value="freezer">Ngăn đông</option>
@@ -374,7 +374,7 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
 
         <div className="pt-2">
           <h4 className="font-heading font-bold text-base text-slate-900 flex items-center gap-1.5 mb-3">
-            <ChefHat className="w-4 h-4 text-emerald-600" />
+            <ChefHat className="w-4 h-4 text-takosan-green" />
             <span>Món ngon có thể nấu ({matchingRecipes.length})</span>
           </h4>
 
@@ -383,11 +383,11 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
               <div
                 key={recipe.id}
                 onClick={() => navigate(`/recipes/${recipe.slug}`)}
-                className="bg-white rounded-xl p-3 flex items-center gap-3.5 border border-slate-200/80 shadow-xs cursor-pointer hover:border-emerald-500/40 active:scale-[0.99] transition-all"
+                className="bg-white rounded-xl p-3 flex items-center gap-3.5 border border-slate-200/80 shadow-xs cursor-pointer hover:border-takosan-green/40 active:scale-[0.99] transition-all"
               >
                 <img src={recipe.imageUrl} alt={recipe.title} className="w-14 h-14 rounded-lg object-cover shrink-0 border border-slate-100" />
                 <div className="flex-1 min-w-0">
-                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200/60 uppercase">
+                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep/60 uppercase">
                     {recipe.cuisine}
                   </span>
                   <h5 className="font-heading font-semibold text-sm text-slate-900 truncate mt-1">{recipe.title}</h5>

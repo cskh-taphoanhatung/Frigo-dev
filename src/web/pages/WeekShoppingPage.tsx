@@ -133,7 +133,7 @@ export const WeekShoppingPage: React.FC = () => {
             <span className="font-heading font-bold text-xs text-slate-800 uppercase tracking-wider">
               Đã chọn ({completedShopping.items.length} món)
             </span>
-            <span className="text-xs font-bold text-emerald-700">Đã nhập {completedShopping.count} món</span>
+            <span className="text-xs font-bold text-takosan-green">Đã nhập {completedShopping.count} món</span>
           </div>
 
           <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
@@ -143,7 +143,7 @@ export const WeekShoppingPage: React.FC = () => {
                 className="flex items-center justify-between text-xs py-1"
               >
                 <div className="flex items-center gap-2 text-slate-800">
-                  <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />
+                  <Check className="w-3.5 h-3.5 text-takosan-green stroke-[3]" />
                   <span>{item.name}</span>
                 </div>
                 <span className="font-heading font-semibold text-slate-700">
@@ -160,7 +160,7 @@ export const WeekShoppingPage: React.FC = () => {
             fullWidth
             size="lg"
             onClick={() => navigate('/fridge')}
-            className="bg-takosan-green hover:bg-[#26694C] text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md flex items-center justify-center gap-2"
+            className="bg-takosan-green hover:bg-takosan-green-hover text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md flex items-center justify-center gap-2"
           >
             <Refrigerator className="w-5 h-5" />
             <span>Xem tủ lạnh</span>
@@ -200,7 +200,7 @@ export const WeekShoppingPage: React.FC = () => {
               <span className="font-heading font-bold text-slate-900">
                 Đang đi chợ — {checkedCount}/{totalCount} món
               </span>
-              <span className="font-bold text-emerald-700">
+              <span className="font-bold text-takosan-green">
                 {progressPercent}%
               </span>
             </div>
@@ -224,7 +224,7 @@ export const WeekShoppingPage: React.FC = () => {
               </p>
             </div>
 
-            <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
+            <span className="px-3 py-1 rounded-full bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep text-xs font-bold">
               1 chuyến
             </span>
           </div>
@@ -317,7 +317,7 @@ export const WeekShoppingPage: React.FC = () => {
                         {item.recommendedPurchaseQuantity} {item.unit}
                       </span>
                       {item.sourceRecipes.length > 1 ? (
-                        <span className="text-emerald-700 font-medium"> • Dùng cho {item.sourceRecipes.length} món</span>
+                        <span className="text-takosan-green font-medium"> • Dùng cho {item.sourceRecipes.length} món</span>
                       ) : null}
                     </p>
                   </div>
@@ -342,7 +342,7 @@ export const WeekShoppingPage: React.FC = () => {
             fullWidth
             size="lg"
             onClick={() => setShoppingMode('active')}
-            className="bg-takosan-green hover:bg-[#26694C] text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md"
+            className="bg-takosan-green hover:bg-takosan-green-hover text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md"
           >
             Bắt đầu đi chợ
           </Button>
@@ -353,7 +353,7 @@ export const WeekShoppingPage: React.FC = () => {
             onClick={handleFinishShopping}
             isLoading={isSubmitting}
             disabled={checkedCount === 0}
-            className="bg-takosan-green hover:bg-[#26694C] text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md flex items-center justify-center gap-2"
+            className="bg-takosan-green hover:bg-takosan-green-hover text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md flex items-center justify-center gap-2"
           >
             <span>Hoàn tất đi chợ</span>
             <ArrowRight className="w-5 h-5" />

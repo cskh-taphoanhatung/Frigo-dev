@@ -233,7 +233,7 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
       {/* Success Toast */}
       {successToast && (
         <div className="fixed top-16 left-4 right-4 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-200 max-w-md mx-auto border border-white/10">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+          <CheckCircle2 className="w-5 h-5 text-takosan-mint shrink-0" />
           <p className="text-xs font-semibold leading-tight">{successToast}</p>
         </div>
       )}
@@ -251,7 +251,7 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
           </div>
         )}
         {isConfirmed && (
-          <p role="status" className="rounded-xl bg-emerald-50 p-3 text-xs text-emerald-800">
+          <p role="status" className="rounded-xl bg-takosan-mint p-3 text-xs text-takosan-green-deep">
             Hóa đơn đã được xác nhận. Thông tin dưới đây đã lưu; sửa lô trong tủ lạnh nếu cần.
           </p>
         )}
@@ -259,7 +259,7 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
         <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-700 shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-takosan-mint border border-takosan-mint-deep flex items-center justify-center text-takosan-green-deep shrink-0">
                 <Store className="w-5 h-5" />
               </div>
               <div>
@@ -273,7 +273,7 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
                 </p>
               </div>
             </div>
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200/60">
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep/60">
               AI OCR
             </span>
           </div>
@@ -327,10 +327,10 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
                         onChange={(event) => updateItem(item.id, { rawName: event.target.value })}
                         disabled={disabled}
                         aria-invalid={!item.rejected && !item.rawName.trim()}
-                        className="w-full font-heading font-semibold text-sm text-slate-900 bg-transparent border-b border-transparent focus:border-emerald-500 focus:outline-none disabled:text-slate-400"
+                        className="w-full font-heading font-semibold text-sm text-slate-900 bg-transparent border-b border-transparent focus:border-takosan-green focus:outline-none disabled:text-slate-400"
                       />
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        <span className="text-xs font-semibold text-emerald-700" data-testid="receipt-price">
+                        <span className="text-xs font-semibold text-takosan-green" data-testid="receipt-price">
                           Thành tiền OCR: {presentPrice(item.totalPriceVnd)}
                         </span>
                         <span
@@ -339,7 +339,7 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
                             confidence.tone === 'unknown' ? 'bg-slate-100 text-slate-600 border-slate-200'
                               : confidence.tone === 'low' ? 'bg-rose-50 text-rose-800 border-rose-200'
                                 : confidence.tone === 'medium' ? 'bg-amber-50 text-amber-900 border-amber-200'
-                                  : 'bg-emerald-50 text-emerald-800 border-emerald-200/60')}
+                                  : 'bg-takosan-mint text-takosan-green-deep border-takosan-mint-deep/60')}
                         >
                           {confidence.label}
                         </span>
@@ -475,7 +475,7 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
             onClick={() => void handleConfirm(true)}
             className="flex items-center justify-center gap-2 text-slate-800"
           >
-            <CalendarCheck className="w-4 h-4 text-emerald-600" />
+            <CalendarCheck className="w-4 h-4 text-takosan-green" />
             <span>Lưu hóa đơn & mở danh sách tuần</span>
           </Button>
         )}

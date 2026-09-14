@@ -13,14 +13,14 @@ export function PlannerShell({ children, plan, locale, setLocale }: {
   return <div className="min-h-screen pb-8" lang={locale}>
     <header className="border-b border-slate-200/70 bg-white px-4 py-4 sm:px-6">
       <div className="flex items-center justify-between gap-3">
-        <Link to="/" className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-900 min-h-11"><ArrowLeft size={17} />{t.home}</Link>
+        <Link to="/" className="inline-flex items-center gap-2 text-sm font-semibold text-takosan-green-deep min-h-11"><ArrowLeft size={17} />{t.home}</Link>
         <label className="text-xs text-slate-600">Language
           <select aria-label="Language" className="ml-2 min-h-11 rounded-lg border border-slate-200 bg-white px-2" value={locale} onChange={(e) => setLocale(e.target.value as PlannerLocale)}>
             <option value="vi">Tiếng Việt</option><option value="en">English</option>
           </select>
         </label>
       </div>
-      <p className="text-[11px] tracking-[0.18em] font-bold text-emerald-700 mt-3">{t.eyebrow}</p>
+      <p className="text-[11px] tracking-[0.18em] font-bold text-takosan-green mt-3">{t.eyebrow}</p>
       <h1 className="text-2xl sm:text-3xl font-heading font-bold text-takosan-green mt-1 leading-tight">{t.title}</h1>
       <p className="text-sm text-slate-600 mt-2 leading-relaxed">{t.intro}</p>
       {plan && <nav aria-label={t.week} className="flex gap-2 mt-5">

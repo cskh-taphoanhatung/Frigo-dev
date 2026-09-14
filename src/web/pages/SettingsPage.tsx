@@ -58,7 +58,7 @@ export const SettingsPage: React.FC = () => {
         {/* PWA / App Installation */}
         <Card className="p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <Smartphone className="w-4 h-4 text-emerald-600" />
+            <Smartphone className="w-4 h-4 text-takosan-green" />
             <h4 className="font-heading font-bold text-sm text-slate-900">Ứng dụng Takosan trên điện thoại</h4>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
@@ -73,7 +73,7 @@ export const SettingsPage: React.FC = () => {
               onClick={handleInstallPwa}
               className="w-full flex items-center justify-center gap-2 text-xs text-slate-800"
             >
-              <Smartphone className="w-3.5 h-3.5 text-emerald-600" />
+              <Smartphone className="w-3.5 h-3.5 text-takosan-green" />
               <span>Cài đặt lên Màn hình chính (PWA)</span>
             </Button>
           )}
@@ -82,7 +82,7 @@ export const SettingsPage: React.FC = () => {
         {/* Offline & Cache Management */}
         <Card className="p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <Wifi className="w-4 h-4 text-emerald-600" />
+            <Wifi className="w-4 h-4 text-takosan-green" />
             <h4 className="font-heading font-bold text-sm text-slate-900">Bộ nhớ đệm ứng dụng</h4>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
@@ -102,7 +102,7 @@ export const SettingsPage: React.FC = () => {
         {/* Language */}
         <Card className="p-4 space-y-2.5">
           <div className="flex items-center gap-2">
-            <Globe className="w-4 h-4 text-emerald-600" />
+            <Globe className="w-4 h-4 text-takosan-green" />
             <h4 className="font-heading font-bold text-sm text-slate-900">Ngôn ngữ hiển thị</h4>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
@@ -113,7 +113,7 @@ export const SettingsPage: React.FC = () => {
         {/* Privacy Notes */}
         <Card className="p-4 space-y-2">
           <div className="flex items-center gap-2">
-            <Shield className="w-4 h-4 text-emerald-600" />
+            <Shield className="w-4 h-4 text-takosan-green" />
             <h4 className="font-heading font-bold text-sm text-slate-900">Quyền riêng tư & AI</h4>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">

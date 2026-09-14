@@ -35,7 +35,7 @@ export const SessionBoundary: React.FC<{ children: React.ReactNode }> = ({ child
         <p role={verificationFailed ? 'alert' : 'status'}>
           {verificationFailed ? 'Không thể xác minh phiên. Vui lòng kết nối mạng và thử lại.' : 'Đang kiểm tra phiên…'}
         </p>
-        {verificationFailed && <button className="rounded-xl bg-emerald-700 px-4 py-3 text-white" onClick={() => setRetry((value) => value + 1)}>Thử lại</button>}
+        {verificationFailed && <button className="rounded-xl bg-takosan-green px-4 py-3 text-white" onClick={() => setRetry((value) => value + 1)}>Thử lại</button>}
       </section>
     );
     return <>{children}</>;
@@ -48,7 +48,7 @@ export const SessionBoundary: React.FC<{ children: React.ReactNode }> = ({ child
         <h1 className="text-xl font-bold">{pending ? 'Đang đăng xuất…' : 'Chưa xác nhận đăng xuất'}</h1>
         <p role={pending ? 'status' : 'alert'}>{pending ? 'Đã tạm dừng đồng bộ riêng tư. Đang thu hồi phiên trên máy chủ.' : logoutError}</p>
         {!pending && (
-          <button className="rounded-xl bg-emerald-700 px-4 py-3 font-semibold text-white" onClick={async () => {
+          <button className="rounded-xl bg-takosan-green px-4 py-3 font-semibold text-white" onClick={async () => {
             if (await logout()) navigate('/auth', { replace: true });
           }}>
             Thử đăng xuất lại

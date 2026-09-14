@@ -115,7 +115,7 @@ export const WeekExportModal: React.FC<WeekExportModalProps> = ({
         {/* Header */}
         <div className="p-4 bg-takosan-green text-white flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white">
+            <div className="w-8 h-8 rounded-lg bg-takosan-green flex items-center justify-center text-white">
               <Share2 className="w-4 h-4" />
             </div>
             <div>
@@ -138,7 +138,7 @@ export const WeekExportModal: React.FC<WeekExportModalProps> = ({
           <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-xs space-y-2">
             <div className="flex items-center justify-between">
               <span className="font-heading font-semibold text-sm text-slate-900">Thực đơn tuần này</span>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200/60">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep/60">
                 {totalMeals} bữa
               </span>
             </div>
@@ -146,7 +146,7 @@ export const WeekExportModal: React.FC<WeekExportModalProps> = ({
             <div className="grid grid-cols-2 gap-2 text-xs py-1">
               <div>
                 <span className="text-slate-500 block text-[11px]">Ngân sách:</span>
-                <span className="font-semibold text-emerald-700">
+                <span className="font-semibold text-takosan-green">
                   {plan.budget.displayText}
                 </span>
               </div>
@@ -167,10 +167,10 @@ export const WeekExportModal: React.FC<WeekExportModalProps> = ({
           <div className="space-y-2">
             <button
               onClick={handleCopyShopping}
-              className="w-full p-3 rounded-xl bg-white border border-slate-200/80 hover:border-emerald-500/50 flex items-center justify-between transition-all tap-target text-left shadow-xs active:scale-[0.99]"
+              className="w-full p-3 rounded-xl bg-white border border-slate-200/80 hover:border-takosan-green/50 flex items-center justify-between transition-all tap-target text-left shadow-xs active:scale-[0.99]"
             >
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-700">
+                <div className="w-9 h-9 rounded-lg bg-takosan-mint border border-takosan-mint-deep flex items-center justify-center text-takosan-green-deep">
                   <ShoppingBag className="w-4 h-4" />
                 </div>
                 <div>
@@ -179,7 +179,7 @@ export const WeekExportModal: React.FC<WeekExportModalProps> = ({
                 </div>
               </div>
               {copiedType === 'shopping' ? (
-                <span className="text-xs font-semibold text-emerald-700 flex items-center gap-1">
+                <span className="text-xs font-semibold text-takosan-green flex items-center gap-1">
                   <Check className="w-3.5 h-3.5" /> Đã chép
                 </span>
               ) : (
@@ -189,10 +189,10 @@ export const WeekExportModal: React.FC<WeekExportModalProps> = ({
 
             <button
               onClick={handleCopyMenu}
-              className="w-full p-3 rounded-xl bg-white border border-slate-200/80 hover:border-emerald-500/50 flex items-center justify-between transition-all tap-target text-left shadow-xs active:scale-[0.99]"
+              className="w-full p-3 rounded-xl bg-white border border-slate-200/80 hover:border-takosan-green/50 flex items-center justify-between transition-all tap-target text-left shadow-xs active:scale-[0.99]"
             >
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-700">
+                <div className="w-9 h-9 rounded-lg bg-takosan-mint border border-takosan-mint-deep flex items-center justify-center text-takosan-green-deep">
                   <Calendar className="w-4 h-4" />
                 </div>
                 <div>
@@ -201,7 +201,7 @@ export const WeekExportModal: React.FC<WeekExportModalProps> = ({
                 </div>
               </div>
               {copiedType === 'menu' ? (
-                <span className="text-xs font-semibold text-emerald-700 flex items-center gap-1">
+                <span className="text-xs font-semibold text-takosan-green flex items-center gap-1">
                   <Check className="w-3.5 h-3.5" /> Đã chép
                 </span>
               ) : (

@@ -523,8 +523,8 @@ export const AuthPage: React.FC = () => {
           </div>
         )}
         {successMessage && (
-          <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs flex items-center gap-2 animate-in fade-in">
-            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+          <div className="mt-4 p-3 bg-takosan-mint border border-takosan-mint-deep text-takosan-green-deep rounded-xl text-xs flex items-center gap-2 animate-in fade-in">
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-takosan-green" />
             <span>{successMessage}</span>
           </div>
         )}
@@ -536,16 +536,16 @@ export const AuthPage: React.FC = () => {
               const digits = devOtp.split('');
               setOtpDigits(digits);
             }}
-            className="mt-3 p-3 bg-emerald-50 border border-emerald-200/80 rounded-xl text-xs flex items-center justify-between cursor-pointer hover:bg-emerald-100/70 transition-all shadow-xs"
+            className="mt-3 p-3 bg-takosan-mint border border-takosan-mint-deep/80 rounded-xl text-xs flex items-center justify-between cursor-pointer hover:bg-takosan-mint-hover/70 transition-all shadow-xs"
           >
-            <div className="flex items-center gap-2 text-emerald-950">
+            <div className="flex items-center gap-2 text-takosan-green-deep">
               <Sparkles className="w-4 h-4 text-takosan-green" />
               <div>
                 <span className="font-medium">Mã OTP Thử nghiệm: </span>
-                <span className="font-heading font-bold text-sm tracking-widest text-emerald-800">{devOtp}</span>
+                <span className="font-heading font-bold text-sm tracking-widest text-takosan-green-deep">{devOtp}</span>
               </div>
             </div>
-            <span className="text-[10px] font-semibold text-takosan-green bg-white px-2 py-0.5 rounded-md border border-emerald-200">
+            <span className="text-[10px] font-semibold text-takosan-green bg-white px-2 py-0.5 rounded-md border border-takosan-mint-deep">
               Tự điền
             </span>
           </div>
@@ -866,7 +866,7 @@ export const AuthPage: React.FC = () => {
       {/* Footer Security Badge */}
       <div className="text-center pt-8">
         <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500">
-          <ShieldCheck className="w-4 h-4 text-emerald-600" />
+          <ShieldCheck className="w-4 h-4 text-takosan-green" />
           <span>Bảo mật dữ liệu thực phẩm & Tôn trọng quyền riêng tư</span>
         </div>
       </div>

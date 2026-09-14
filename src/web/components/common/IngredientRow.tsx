@@ -49,7 +49,7 @@ export const IngredientRow: React.FC<IngredientRowProps> = ({
       onClick={onClick}
       data-testid="inventory-row"
       data-item-id={id}
-      className="bg-white rounded-2xl p-3.5 flex items-center justify-between border border-slate-200/80 shadow-card hover:border-emerald-500/40 hover:shadow-elevated active:scale-[0.99] transition-all cursor-pointer"
+      className="bg-white rounded-2xl p-3.5 flex items-center justify-between border border-slate-200/80 shadow-card hover:border-takosan-green/40 hover:shadow-elevated active:scale-[0.99] transition-all cursor-pointer"
     >
       <div className="flex items-center gap-3.5 min-w-0">
         <div className="w-14 h-14 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 p-2 overflow-hidden">

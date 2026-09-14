@@ -110,7 +110,7 @@ export const RecipesPage: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Tìm món canh, thịt kho, phở, bún chả, nguyên liệu..."
-            className="w-full h-11 pl-10 pr-4 bg-white rounded-xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-xs transition-all"
+            className="w-full h-11 pl-10 pr-4 bg-white rounded-xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-xs transition-all"
           />
         </div>
 
@@ -123,7 +123,7 @@ export const RecipesPage: React.FC = () => {
             {categoryFilter && (
               <button
                 onClick={() => setCategoryFilter(null)}
-                className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800"
+                className="text-[11px] font-semibold text-takosan-green hover:text-takosan-green-deep"
               >
                 Đặt lại
               </button>
@@ -162,7 +162,7 @@ export const RecipesPage: React.FC = () => {
                 : 'bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50'
             )}
           >
-            <CheckCircle className={clsx('w-3.5 h-3.5', noBuyOnly ? 'text-emerald-400' : 'text-emerald-600')} />
+            <CheckCircle className={clsx('w-3.5 h-3.5', noBuyOnly ? 'text-takosan-mint' : 'text-takosan-green')} />
             <span>Không mua thêm</span>
           </button>
 
@@ -175,7 +175,7 @@ export const RecipesPage: React.FC = () => {
                 : 'bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50'
             )}
           >
-            <Clock className={clsx('w-3.5 h-3.5', under20MinsOnly ? 'text-emerald-400' : 'text-emerald-600')} />
+            <Clock className={clsx('w-3.5 h-3.5', under20MinsOnly ? 'text-takosan-mint' : 'text-takosan-green')} />
             <span>&le; 20 phút</span>
           </button>
 
@@ -187,7 +187,7 @@ export const RecipesPage: React.FC = () => {
               className={clsx(
                 'px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all tap-target cursor-pointer border',
                 regionFilter === reg.id
-                  ? 'bg-emerald-800 text-white border-emerald-800 font-semibold shadow-xs'
+                  ? 'bg-takosan-green text-white border-takosan-green font-semibold shadow-xs'
                   : 'bg-white text-slate-600 border-slate-200/80 hover:bg-slate-50 hover:text-slate-900'
               )}
             >
@@ -215,7 +215,7 @@ export const RecipesPage: React.FC = () => {
         {/* Active Filters Summary Header */}
         <div className="flex items-center justify-between pt-1">
           <span className="text-xs font-semibold text-slate-700">
-            Tìm thấy <span className="text-emerald-700 font-bold">{filtered.length}</span> món ngon
+            Tìm thấy <span className="text-takosan-green font-bold">{filtered.length}</span> món ngon
           </span>
           {(categoryFilter || regionFilter || cuisineFilter || noBuyOnly || under20MinsOnly || search) && (
             <button
@@ -227,7 +227,7 @@ export const RecipesPage: React.FC = () => {
                 setUnder20MinsOnly(false);
                 setSearch('');
               }}
-              className="text-xs text-emerald-700 font-medium hover:underline"
+              className="text-xs text-takosan-green font-medium hover:underline"
             >
               Xóa tất cả lọc
             </button>
@@ -238,7 +238,7 @@ export const RecipesPage: React.FC = () => {
         <div className="space-y-3">
           {loading ? (
             <div className="text-center py-10">
-              <div className="animate-spin w-7 h-7 border-2 border-emerald-600 border-t-transparent rounded-full mx-auto mb-2" />
+              <div className="animate-spin w-7 h-7 border-2 border-takosan-green border-t-transparent rounded-full mx-auto mb-2" />
               <p className="text-xs text-slate-500 font-medium">Đang tìm món...</p>
             </div>
           ) : recommendationsQuery.isError ? (

@@ -103,7 +103,7 @@ export const HomePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-takosan-cream pb-28 max-w-md sm:max-w-lg md:max-w-2xl mx-auto">
       {/* HEADER: Avatar + Xin chào + Notification Bell */}
-      <header className="sticky top-0 z-30 bg-takosan-cream/95 backdrop-blur-md px-4 py-3.5 border-b border-[#F3E4DA] flex items-center justify-between shadow-xs">
+      <header className="sticky top-0 z-30 bg-takosan-cream/95 backdrop-blur-md px-4 py-3.5 border-b border-takosan-cream-line flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/profile')}
@@ -142,9 +142,9 @@ export const HomePage: React.FC = () => {
         ) : weekPlanQuery.isError ? (
           <InlineError error={weekPlanQuery.error} onRetry={() => weekPlanQuery.refetch()} />
         ) : todayMeal && todayMeal.recipe ? (
-          <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-takosan-green via-[#276B4F] to-[#1F563E] shadow-elevated">
+          <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-takosan-green via-takosan-green-hover to-takosan-green-deep shadow-elevated">
             <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-takosan-mint/20 blur-2xl" />
-            <div className="absolute -bottom-14 -left-8 w-36 h-36 rounded-full bg-lime-300/10 blur-2xl" />
+            <div className="absolute -bottom-14 -left-8 w-36 h-36 rounded-full bg-takosan-yellow/10 blur-2xl" />
 
             <div className="relative p-5 flex items-center gap-4">
               <div className="flex-1 min-w-0 space-y-2">
@@ -191,7 +191,7 @@ export const HomePage: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-takosan-green via-[#276B4F] to-[#1F563E] shadow-elevated">
+          <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-takosan-green via-takosan-green-hover to-takosan-green-deep shadow-elevated">
             <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-takosan-mint/20 blur-2xl" />
             <div className="relative p-5 space-y-2">
               <span className="inline-flex items-center gap-1.5 text-[10px] font-heading font-bold uppercase tracking-widest text-takosan-mint bg-white/10 px-2.5 py-1 rounded-full border border-white/15">
@@ -257,7 +257,7 @@ export const HomePage: React.FC = () => {
 
               <button
                 onClick={() => navigate(`/week/${weekPlan.id}`)}
-                className="shrink-0 px-4 py-2.5 rounded-xl bg-takosan-mint text-takosan-green border border-[#BFE3CC] hover:bg-[#CFEDDA] text-xs font-heading font-bold active:scale-95 transition-all flex items-center gap-1.5 tap-target"
+                className="shrink-0 px-4 py-2.5 rounded-xl bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep hover:bg-takosan-mint-hover text-xs font-heading font-bold active:scale-95 transition-all flex items-center gap-1.5 tap-target"
               >
                 <span>Xem thực đơn</span>
                 <ChevronRight className="w-4 h-4" />
@@ -274,7 +274,7 @@ export const HomePage: React.FC = () => {
             </h4>
             <button
               onClick={() => navigate('/fridge')}
-              className="text-[11px] font-semibold text-takosan-green hover:text-[#1F563E] flex items-center tap-target"
+              className="text-[11px] font-semibold text-takosan-green hover:text-takosan-green-deep flex items-center tap-target"
             >
               Xem tất cả{inventoryQuery.isSuccess ? ` (${inventory.length})` : ''}{' '}
               <ChevronRight className="w-3 h-3 ml-0.5" />
@@ -299,7 +299,7 @@ export const HomePage: React.FC = () => {
               {inventory.length === 0 && (
                 <button
                   onClick={() => navigate('/scan')}
-                  className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-takosan-mint text-takosan-green border border-[#BFE3CC] text-xs font-heading font-bold hover:bg-[#CFEDDA] active:scale-95 transition-all tap-target"
+                  className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep text-xs font-heading font-bold hover:bg-takosan-mint-hover active:scale-95 transition-all tap-target"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   Quét tủ lạnh
