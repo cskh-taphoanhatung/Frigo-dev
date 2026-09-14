@@ -1,6 +1,54 @@
-# Frigo AI Handoff — T13R certified, ready for independent review #2
+# Frigo AI Handoff — T13 independent final review #2 PASS
 
-## Current handoff — T13R certified freeze, 2026-09-14
+## Current handoff — independent review #2, 2026-09-14
+
+Task: independent final review #2 of the exact T13 application freeze (read /
+verify / re-run only; no fixes). Status: **INDEPENDENT T13 FINAL REVIEW #2 — PASS.
+T13 CERTIFIED FOR INTEGRATION PLANNING.** Repository `vn-dlo/Frigo-dev`
+(ID **1368281478**, resolved by ID; owner string keeps changing). Reviewer branch
+`hoplite/polyrhen-82141980` — docs-only commit(s) parented on the certification
+publication continuation `897102b6816c22af2e6a49f29662690e3e3206e0`, whose
+application tree equals the freeze.
+
+`T13R_APPLICATION_FREEZE = 32ddbb4f2bb636fdcf201e9ca99c4689d3655477` is unchanged.
+Main `d1b06732f8a80db4e77986df31ff28d9f04641fa` unchanged. Rejected freeze
+`7b7bb695…` remains DO NOT RELEASE (used only for red-proof/regression comparison).
+Takosan `ff63edfb…`/`60ab7d4…` were explicitly NOT reviewed as T13.
+
+Exact checks executed (detached `/tmp/hoplite/t13-review` @ `32ddbb4`, frozen
+install, Node 24.19.0, pnpm 10.26.0, Vitest 3.2.7, Playwright 1.63.0, wrangler
+3.114.17, sqlite3 3.45.1): `git diff --check`, `pnpm lint`, `pnpm typecheck`,
+`pnpm build` PASS; `pnpm test` **3471/3471, 138 files**; focused T08 385/6, T09
+982/12, T10 91/5, T11 28/1, T12 40/3, T13 272/10, T13R-A 45/5, T13R-B 174/7; real
+local D1 `*-d1.test.mjs` **92/5**; `pnpm check:migrations` `migration-smoke=ok`;
+`wrangler d1 migrations apply frigo-db --local` 32 ✅, `pnpm schema:check:local`
+PASS, `pragma_foreign_key_check` 0; independent legacy replay on real local D1 with
+isolated `--persist-to` (0001–0031 → 5 seeded pre-0032 rows → 0032): pre-existing
+columns byte-identical, all 0032 columns `typeof=null`, fabricated 0, FK 0, both
+reviewed-expiry triggers verified to ABORT invalid writes and accept a valid one,
+schema gate 0 issues; `CI=1 pnpm exec playwright test` **60/60** (20 × 360/390/430),
+run last and serially; final `git status --porcelain` EMPTY. Hosted CI for the exact
+SHA: 0 workflow runs, 0 check runs, 0 status contexts (**NO HOSTED GITHUB CI STATUS
+FOR T13R_APPLICATION_FREEZE**; workflow triggers only main/PR).
+
+Failures: none. Notes: an early `pnpm install` shell result was not persisted by the
+platform; state was inspected read-only and the idempotent install re-run (Done,
+lockfile unchanged). Focused per-suite counts differ from the certification's
+groupings because the reviewer chose files independently; every file passed.
+
+New findings: P0 0, P1 0, blocking P2 0, **P3 3** (non-blocking): legacy (non-adopted)
+`mapInventoryRow` emits no `expiryKind` so a stored legacy date presents as
+"Chưa rõ hạn"; `findCanonicalIngredient` alias-substring matching lets some
+free-form labels count as an explicit remap; freeze-tree AUTHORITY_MAP/TEST_MATRIX
+headers still cite `7b7bb69` (corrected at docs head `42e0037`). Full record:
+`docs/ai/inventory-truth/t13/T13_INDEPENDENT_FINAL_REVIEW_2.md`.
+
+Next action (only): produce the **CERTIFIED T13 + HARDENED TAKOSAN → SAFE
+INTEGRATION / CONSOLIDATION PLAN**. Hard stop: no main merge, no brand merge, no
+deploy, no remote D1, no PayOS, no T14, no production reconciliation.
+
+
+## Previous handoff — T13R certified freeze, 2026-09-14 (superseded by review #2)
 
 Task: final technical certification of the fully remediated T13 candidate
 (T13R-A + T13R-B), exact application freeze, detached recertification, docs.

@@ -1,6 +1,37 @@
-# Frigo current state — T13R certified, ready for independent review #2
+# Frigo current state — T13 independent final review #2 PASS
 
-## Current authoritative state — T13R certified freeze, 2026-09-14
+## Current authoritative state — independent review #2, 2026-09-14
+
+**INDEPENDENT T13 FINAL REVIEW #2 — PASS. T13 CERTIFIED FOR INTEGRATION PLANNING.**
+Repository `vn-dlo/Frigo-dev` (owner renamed again from `vn-blo`), ID **1368281478**
+(resolved by ID). Reviewer branch `hoplite/polyrhen-82141980` (docs-only). Exact
+reviewed freeze **`T13R_APPLICATION_FREEZE=32ddbb4f2bb636fdcf201e9ca99c4689d3655477`**
+— unchanged and NOT redefined. Protected main `d1b06732…` unchanged.
+
+Independently re-run in a clean detached worktree at `32ddbb4` (frozen install):
+`git diff --check`/lint/typecheck/build PASS; full Vitest **3471/3471, 138 files**;
+focused T08 385/6, T09 982/12, T10 91/5, T11 28/1, T12 40/3, T13 272/10, T13R-A
+45/5, T13R-B 174/7 (reviewer's own file selections); real local D1 workerd **92/5**;
+`pnpm check:migrations` ok; fresh real D1 32 ✅ + schema gate + FK 0; independent
+populated 0001–0031 → seed → 0032 replay on real D1 (pre-existing columns byte-
+identical, all new columns NULL, 0 fabricated rows, triggers verified to ABORT);
+32 migrations, 0031 `c580d30b…`/0032 `48f26f7c…` unchanged, 0033 absent; writer/
+reader UNKNOWN **0/0** (src/packages statement sets identical to `7b7bb69`);
+browser **60/60** (20 cases × 360/390/430, serial, last); post-run detached
+porcelain **EMPTY**. `7e68e3b → 32ddbb4` production-source delta NONE.
+**NO HOSTED GITHUB CI STATUS FOR T13R_APPLICATION_FREEZE** (0 runs / 0 checks /
+0 contexts; CI triggers only on main/PR). Original P1-1..P1-4, P2-1..P2-6 and the
+IngredientRow crash: all PASS from source + re-run. AC1–AC14 **14 PASS**; roadmap
+R3/R4/R5/R6/R7/R8/R11/U1/U4/U6/U7/U8/U12/U13/U14 **DONE**. New findings: P0 0,
+P1 0, blocking P2 0, **P3 3** (legacy-row expiry shown unknown; alias-substring
+remap sensitivity; stale freeze-tree doc headers) — non-blocking.
+Record: [T13_INDEPENDENT_FINAL_REVIEW_2.md](inventory-truth/t13/T13_INDEPENDENT_FINAL_REVIEW_2.md).
+
+Only authorized next step: **CERTIFIED T13 + HARDENED TAKOSAN → SAFE INTEGRATION /
+CONSOLIDATION PLAN**. No merge/deploy/remote D1/PayOS/T14/production reconciliation.
+
+
+## Previous state — T13R certified freeze, 2026-09-14 (superseded by review #2)
 
 **T13 REMEDIATION CERTIFIED — READY FOR INDEPENDENT FINAL REVIEW #2.** Repository
 `vn-blo/Frigo-dev` (provider owner renamed from `vn-co3`), ID **1368281478**.
