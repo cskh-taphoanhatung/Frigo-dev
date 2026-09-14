@@ -1,8 +1,13 @@
 # T13 receipt / vision truth
 
-**T13 COMPLETE — STOP for INDEPENDENT T13 FINAL REVIEW.** Contracts below describe
-application freeze `7b7bb695ee597a46cf4022a2c534e2fea374be5d`; exact certification
-commands and failures are in [T13B_FINAL_HARDENING.md](T13B_FINAL_HARDENING.md).
+**T13 REMEDIATION CERTIFIED — READY FOR INDEPENDENT FINAL REVIEW #2.** Contracts
+below hold at the T13R application freeze `32ddbb4f2bb636fdcf201e9ca99c4689d3655477`
+and were strengthened by T13R-A (async queue writes the same `ocr_*` evidence as the
+sync route; 0032 retains `ocr_canonical_id/category/storage` and the reviewed
+expiry per confirmed line) and T13R-B (the Cloudflare fridge `vision()` parser no
+longer floors or defaults confidence). Exact gates:
+[T13R_FINAL_CERTIFICATION.md](T13R_FINAL_CERTIFICATION.md); the historical
+`7b7bb69` record is in [T13B_FINAL_HARDENING.md](T13B_FINAL_HARDENING.md).
 
 ## Evidence and authority
 

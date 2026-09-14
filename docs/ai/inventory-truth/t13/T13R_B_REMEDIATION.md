@@ -1,6 +1,35 @@
 # T13R-B Remediation — Truthful Presentation & Conflict Recovery
 
-## SAFE STOP — T13R-B — 2026-09-13T21:35Z
+## CERTIFIED — T13R application freeze, 2026-09-14
+
+**T13 REMEDIATION CERTIFIED — READY FOR INDEPENDENT FINAL REVIEW #2.**
+The T13R-B fixes below (P2-1 `4d587eb`, P2-4/P2-5/P2-6 + IngredientRow crash in
+`7e68e3b`) are now certified at the exact application freeze
+**`T13R_APPLICATION_FREEZE=32ddbb4f2bb636fdcf201e9ca99c4689d3655477`** on
+`hoplite/delos-f0bb1d04` (repository `vn-blo/Frigo-dev`, ID 1368281478; main
+`d1b06732…` unchanged). The freeze differs from `7e68e3b` only in a synthetic
+preview fixture and two e2e specs (`bd2f5f3`, `32ddbb4`); application source,
+migrations, dependencies and harness config are byte-identical.
+
+Finding status at the freeze: **P2-1 / P2-4 / P2-5 / P2-6 CERTIFIED** (focused
+T13R-B 171/7, full 3471/138, browser 60/60 at 360/390/430, pre-freeze and clean
+detached). The previously blocked publication is resolved: `83248df` (this file's
+safe-stop docs) is remote on `hoplite/medma-164548ce`, and the freeze is remote on
+`hoplite/delos-f0bb1d04`. Complete gates, blocker disposition, AC1–AC14 and roadmap
+closure: [T13R_FINAL_CERTIFICATION.md](T13R_FINAL_CERTIFICATION.md).
+
+Certification-only test/fixture changes after the WIP (no application code):
+
+- `bd2f5f3` — the openedAt fixture seeded a `FRESH_MILK` 'Sữa tươi' stock row;
+  fridge confirmation grouped browser case C's 'Sữa tươi' line into it (`CORRECT`)
+  instead of creating a third `SCAN` lot → **3 failed / 51 passed** on the first full
+  serial run. The fixture now seeds `preview-stock-cheese` (no matching review line).
+- `32ddbb4` — `tests/e2e/t13r-a-expiry-reopen.e2e.ts`: browser proof that a
+  confirmed explicit expiry survives a fresh-document reopen (RED at `7b7bb69`).
+
+---
+
+## Historical — SAFE STOP — T13R-B — 2026-09-13T21:35Z (superseded above)
 
 Safe stop requested mid-session. Full certification was NOT started. Work is
 checkpointed as a WIP commit; no freeze was created.

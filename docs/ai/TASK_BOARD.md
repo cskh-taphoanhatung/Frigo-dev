@@ -1,6 +1,27 @@
 # Frigo task board
 
-## Current board — T13R-A complete, 2026-09-13
+## Current board — T13R certified freeze, 2026-09-14
+
+- **T13 REMEDIATION CERTIFIED — READY FOR INDEPENDENT FINAL REVIEW #2.** Repo
+  `vn-blo/Frigo-dev`, ID 1368281478; branch `hoplite/delos-f0bb1d04`;
+  **T13R_APPLICATION_FREEZE `32ddbb4f2bb636fdcf201e9ca99c4689d3655477`** (remote
+  == local, verified). Main `d1b06732…` unchanged. Rejected `7b7bb69…` **DO NOT
+  RELEASE**.
+- Freeze = `7e68e3b` application tree + two test/fixture-only commits (`bd2f5f3`
+  fixture collision fix after a 3 failed/51 passed browser run; `32ddbb4` new
+  P2-B browser reopen spec, RED at `7b7bb69`). Application/migrations/deps/harness
+  config byte-identical to `7e68e3b`.
+- Blockers P0/P1/blocking P2 **0/0/0**; AC1–AC14 **all PASS**; roadmap rows all
+  **DONE**. Gates (pre-freeze and clean detached): full **3471/138**, T13R-A
+  **45/5**, T13R-B **171/7**, real D1 **92/5**, browser **60/60**, 32 migrations
+  (0031/0032 unchanged, 0033 absent), fresh + legacy populated real D1 replay,
+  schema gate, writer/reader UNKNOWN 0/0, diff-check, detached porcelain EMPTY.
+  **NO HOSTED CI FOR THE EXACT FREEZE.**
+- Next: **INDEPENDENT T13 FINAL REVIEW #2** of `32ddbb4` and its docs head. No
+  merge/deploy/remote D1/PayOS/T14/reconciliation. Details:
+  [T13R_FINAL_CERTIFICATION.md](inventory-truth/t13/T13R_FINAL_CERTIFICATION.md).
+
+## Historical board — T13R-A complete, 2026-09-13 (superseded)
 
 - **T13R-A COMPLETE — READY FOR T13R-B.** Branch
   `hoplite/oropos-eb2d4886--t13r-a-data-integrity-ownership`;

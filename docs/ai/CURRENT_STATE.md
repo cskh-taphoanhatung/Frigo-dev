@@ -1,6 +1,42 @@
-# Frigo current state — T13R-A complete, T13R-B pending
+# Frigo current state — T13R certified, ready for independent review #2
 
-## Current authoritative state — T13R-A application checkpoint, 2026-09-13
+## Current authoritative state — T13R certified freeze, 2026-09-14
+
+**T13 REMEDIATION CERTIFIED — READY FOR INDEPENDENT FINAL REVIEW #2.** Repository
+`vn-blo/Frigo-dev` (provider owner renamed from `vn-co3`), ID **1368281478**.
+Branch `hoplite/delos-f0bb1d04` (this thread's broker-authorized branch; it
+descends from `origin/hoplite/medma-164548ce` = `83248df…`, the T13R-B safe-stop
+docs head). **T13R_APPLICATION_FREEZE=`32ddbb4f2bb636fdcf201e9ca99c4689d3655477`**,
+published and fetch-verified. Protected main `d1b06732…` unchanged. Rejected
+freeze `7b7bb69…` remains **DO NOT RELEASE**.
+
+The freeze differs from the T13R-B candidate `7e68e3b` only by two certification
+test/fixture commits (`bd2f5f3` fixture collision fix, `32ddbb4` new P2-B browser
+reopen spec); `git diff 7e68e3b 32ddbb4 -- src packages migrations wrangler.jsonc
+package.json pnpm-lock.yaml playwright.config.ts` is EMPTY. All T13R-A (P1-1..P1-4,
+P2-A, P2-B) and T13R-B (P2-1, P2-4, P2-5, P2-6) fixes plus the IngredientRow
+`/fridge` crash fix are re-verified at the freeze; original blockers P0/P1/blocking
+P2 = **0/0/0**; original AC1–AC14 **all PASS**; roadmap R3/R4/R5/R6/R7/R8/R11 and
+U1/U4/U6/U7/U8/U12/U13/U14 **DONE**.
+
+Exact gates, pre-freeze and clean detached at `32ddbb4`: lint/typecheck/build PASS;
+full Vitest **3471/138** (both); focused T13R-A **45/5**, T13R-B **171/7**, T08
+130/2, T09 1259/17, T10 98/6, T11 39/2, T12 22/3, T13 320/12; real local D1
+**92/5**; browser **60/60** (20 cases × 360/390/430, serial, last) both pre-freeze
+and detached; `pnpm check:migrations` ok; fresh 32-migration real local D1 apply +
+schema gate + FK 0; legacy populated 0030→0031→0032 replay on real local D1 (0
+fabricated rows, pre-existing columns identical, schema gate PASS); **32**
+migrations, 0031 `c580d30b…` and 0032 `48f26f7c…` unchanged, 0033 absent; writer/
+reader UNKNOWN **0/0** (src/packages statement sets identical to `fc0f9c5` and
+`7b7bb69`); `git diff --check` PASS; detached `git status --porcelain` EMPTY.
+Retained failure: first full browser run on the `7e68e3b` tree was 3 failed/51
+passed (fixture collision, fixed by `bd2f5f3`). **NO HOSTED GITHUB CI STATUS FOR
+T13R_APPLICATION_FREEZE.** Record: [T13R_FINAL_CERTIFICATION.md](inventory-truth/t13/T13R_FINAL_CERTIFICATION.md).
+
+Only next step: **INDEPENDENT T13 FINAL REVIEW #2**. No merge/deploy/remote D1/
+PayOS/T14/repository reconciliation. `.hoplite/settings.json` overlay uncommitted.
+
+## Historical — T13R-A application checkpoint, 2026-09-13 (superseded)
 
 **T13R-A COMPLETE — READY FOR T13R-B. NOT a final T13 freeze.** Repository
 `vn-co3/Frigo-dev` (renamed from `vn-co2`), ID **1368281478**. Branch

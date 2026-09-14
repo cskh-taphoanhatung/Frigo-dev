@@ -1,11 +1,16 @@
 # T13 continuation — independent final review only
 
-**T13 COMPLETE — STOP for INDEPENDENT T13 FINAL REVIEW.** Browser verification,
-application freeze and clean-detached local certification are complete. This is
-not approval to merge, deploy or reconcile production. The earlier Preview-blocked
-WIP checkpoints and limited viewport/API-only reports are historical.
+**T13 REMEDIATION CERTIFIED — READY FOR INDEPENDENT FINAL REVIEW #2.** The
+review target is now the T13R application freeze
+**`32ddbb4f2bb636fdcf201e9ca99c4689d3655477`** on `hoplite/delos-f0bb1d04`
+(repository `vn-blo/Frigo-dev`, ID 1368281478); see
+[T13R_FINAL_CERTIFICATION.md](T13R_FINAL_CERTIFICATION.md). The harness
+reproduction steps below still apply (the Playwright `testMatch` now also
+selects `t13r-a-*.e2e.ts` and `t13r-b-*.e2e.ts`; expect **60** cases = 20 × 3
+widths). The `7b7bb69` target below was rejected by the first independent review
+and is retained as history.
 
-## Exact review target
+## Historical review target (`7b7bb69`, rejected)
 
 | Field | Value |
 | --- | --- |

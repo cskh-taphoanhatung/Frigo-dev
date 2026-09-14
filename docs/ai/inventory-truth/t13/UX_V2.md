@@ -1,7 +1,16 @@
 # T13 Inventory UX V2
 
-**T13 COMPLETE — STOP for INDEPENDENT T13 FINAL REVIEW.** This describes frozen
-application `7b7bb695ee597a46cf4022a2c534e2fea374be5d`, including the separate U7
+**T13 REMEDIATION CERTIFIED — READY FOR INDEPENDENT FINAL REVIEW #2.** The current
+frozen application is `32ddbb4f2bb636fdcf201e9ca99c4689d3655477` (T13R). Relative to
+the text below, T13R changed: the detail page is keyed by lot route with a draft
+owner check (P1-3); a free-form rename keeps canonical identity (P1-2); receipt
+review renders only its own scan (P1-4); confirmed reviews reopen with the accepted
+expiry (P2-B); list/detail conflicts show specific copy, an explicit authoritative
+refetch whose failure is stated honestly, and a manual reload (P2-4); Home qualifies
+ESTIMATED expiry (P2-5); NULL `openedAt` reads 'Chưa có thông tin', never 'Chưa mở'
+(P2-6). Browser proof is now **60/60** (20 cases × 360/390/430); see
+[T13R_FINAL_CERTIFICATION.md](T13R_FINAL_CERTIFICATION.md). The remainder of this
+document describes the historical `7b7bb69` tree, including the separate U7
 metadata fix `47b10e25d6853a9bc4f9dfcf2e83bc01ba330bf2`. The UI distinguishes
 known facts, estimates and unknowns; it never grants stock authority to evidence.
 

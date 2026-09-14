@@ -1,6 +1,77 @@
-# Frigo AI Handoff — T13R-A complete, T13R-B next
+# Frigo AI Handoff — T13R certified, ready for independent review #2
 
-## Current handoff — T13R-A application checkpoint, 2026-09-13
+## Current handoff — T13R certified freeze, 2026-09-14
+
+Task: final technical certification of the fully remediated T13 candidate
+(T13R-A + T13R-B), exact application freeze, detached recertification, docs.
+Status: **T13 REMEDIATION CERTIFIED — READY FOR INDEPENDENT FINAL REVIEW #2.**
+Repository `vn-blo/Frigo-dev` (owner renamed from `vn-co3`; ID **1368281478**
+verified via public API). Branch `hoplite/delos-f0bb1d04` — this thread's only
+broker-authorized branch; it fast-forwards from `origin/hoplite/medma-164548ce`
+(`83248df4f97d2110527a69e92a3ebe162aa71492`, the T13R-B safe-stop docs head, which
+is itself docs-only above the T13R-B candidate `7e68e3b358f73786cc02eaa7db24537df855fba5`).
+
+**T13R_APPLICATION_FREEZE = `32ddbb4f2bb636fdcf201e9ca99c4689d3655477`**, published
+via the trusted broker and fetch-verified (`origin/hoplite/delos-f0bb1d04 ==
+32ddbb4`). The docs-only commit that follows this handoff is `T13R_DOCS_HEAD`; its
+explicit application-path diff against the freeze must be EMPTY. Main
+`d1b06732f8a80db4e77986df31ff28d9f04641fa` unchanged. Rejected freeze
+`7b7bb695ee597a46cf4022a2c534e2fea374be5d` unchanged, **DO NOT RELEASE**.
+
+Why `7e68e3b` is not the freeze: certification required two test/fixture-only
+changes. `bd2f5f3` — the T13R-B openedAt fixture seeded a `FRESH_MILK` 'Sữa tươi'
+row that fridge confirmation grouped browser case C into (**3 failed / 51 passed**
+first full serial run); the fixture now seeds `preview-stock-cheese`. `32ddbb4` —
+new `tests/e2e/t13r-a-expiry-reopen.e2e.ts` because the packet requires browser
+coverage of the explicit-expiry reopen (previously jsdom-only); RED at `7b7bb69`,
+GREEN 6/6. Application source, migrations, dependencies and harness config are
+byte-identical to `7e68e3b` (explicit path diff EMPTY).
+
+Exact checks — pre-freeze (development worktree, `CI=1`, Vitest before browser)
+and clean detached (`git worktree add --detach /tmp/t13r-freeze 32ddbb4`, frozen
+install, Node 24.19.0, pnpm 10.26.0, Playwright 1.63.0): `pnpm lint`/`pnpm
+typecheck`/`pnpm build` PASS; `pnpm test` **3471/3471 in 138 files** (identical
+both runs); focused T13R-A **45/5**; focused T13R-B (7 files) **171/7**; T08
+**130/2**, T09 **1259/17**, T10 **98/6**, T11 **39/2**, T12 **22/3**, T13
+**320/12**; real local D1 `*-d1.test.mjs` **92/5**; `pnpm check:migrations`
+`migration-smoke=ok`; fresh `wrangler d1 migrations apply --local` 32 ✅, n=32,
+last 0032, FK []; `pnpm schema:check:local` PASS; legacy populated replay on real
+local D1 (0001–0030 → seeded legacy lines → 0031 → seeded T13 lines → 0032) all ✅,
+pre-existing `scan_items` columns identical, all new 0032 columns NULL (0
+fabricated), FK [], schema gate PASS; migrations **32**, 0031 blob `c580d30b…` ==
+`fc0f9c5` == `7b7bb69`, 0032 blob `48f26f7c…` == `fc0f9c5`, 0033 absent; writer
+audit `src`+`packages` statement set identical to `fc0f9c5`/`7b7bb69` (only two
+synthetic preview seed INSERTs added in `scripts/planner-preview-fixtures.mjs`),
+reader call set identical — UNKNOWN writers **0**, UNKNOWN readers **0**, T09/T11
+authority preserved; `git diff --check` PASS; browser `pnpm exec playwright test`
+serial and last **60 passed / 0 failed** (20 cases × 360/390/430) pre-freeze at
+`32ddbb4` and detached; detached `git status --porcelain` EMPTY.
+
+Blocker disposition: P1-1/P1-2/P1-3/P1-4, P2-1/P2-2/P2-3/P2-4/P2-5/P2-6 and the
+IngredientRow `/fridge` ReferenceError all CLOSED with permanent tests re-run at
+the freeze; **P0 0, P1 0, blocking P2 0**. Original AC1–AC14 **all PASS**
+(numbering from `release/T13_PROPOSED_SCOPE.md`); R3/R4/R5/R6/R7/R8/R11 and
+U1/U4/U6/U7/U8/U12/U13/U14 **DONE**. **NO HOSTED GITHUB CI STATUS FOR
+T13R_APPLICATION_FREEZE** (0 runs / 0 checks / 0 contexts; `ci.yml` triggers on
+main/PR only).
+
+Evidence (gitignored/sandbox): `.hoplite/artifacts/t13r-cert/{,prefreeze-bd2f5f3,
+prefreeze-32ddbb4}/`, `/tmp/t13r-detached-logs/` (freeze), `/tmp/t13r-detached-logs-
+bd2f5f3/`, drivers `/tmp/t13r-tools/`. Full record:
+[T13R_FINAL_CERTIFICATION.md](inventory-truth/t13/T13R_FINAL_CERTIFICATION.md).
+
+Limitations: all evidence is local; hosted CI absent for the exact freeze. Browser
+evidence uses the repository's isolated synthetic harness (`SCAN_QUEUE_MODE` sync);
+the async queue path is proven by the real queue processor over real migrations in
+Vitest, not in the browser. `.hoplite/settings.json` overlay remains uncommitted.
+
+Safety: main merged NO; production modified/deployed NO; remote D1 NO; PayOS NO;
+T14 NO; repository reconciliation NO.
+
+Next action: **INDEPENDENT T13 FINAL REVIEW #2** of exact freeze `32ddbb4` and its
+docs-only head. Nothing else is authorized.
+
+## Historical handoff — T13R-A application checkpoint, 2026-09-13 (superseded)
 
 Task: T13R-A data-integrity & ownership remediation of the rejected T13 freeze.
 Status: **T13R-A COMPLETE — READY FOR T13R-B.** Not a final T13 freeze.

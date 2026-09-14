@@ -1,11 +1,34 @@
 # T13 authority map — certified writer and reader audit
 
-**T13 COMPLETE — STOP for INDEPENDENT T13 FINAL REVIEW.** Audited application
-freeze: `7b7bb695ee597a46cf4022a2c534e2fea374be5d`.
-**Writer UNKNOWN=0; reader UNKNOWN=0.** These are classification results, not a
-claim that the repository contains no legacy SQL or deferred projection reader.
-The existing [T12 authority map](../t12/FINAL_AUTHORITY_MAP.md) remains the
-baseline; T13 does not remove its compatibility or cutover conditions.
+**T13 REMEDIATION CERTIFIED — READY FOR INDEPENDENT FINAL REVIEW #2.** Audited
+application freeze: **`32ddbb4f2bb636fdcf201e9ca99c4689d3655477`** (T13R, 2026-09-14);
+the rejected freeze `7b7bb695ee597a46cf4022a2c534e2fea374be5d` is the comparison
+baseline. **Writer UNKNOWN=0; reader UNKNOWN=0.** These are classification
+results, not a claim that the repository contains no legacy SQL or deferred
+projection reader. The existing [T12 authority map](../t12/FINAL_AUTHORITY_MAP.md)
+remains the baseline; T13 does not remove its compatibility or cutover conditions.
+
+### T13R re-audit at the exact freeze
+
+Run in the clean detached worktree at `32ddbb4` against `fc0f9c5` (T13R-A
+checkpoint) and `7b7bb69` (rejected freeze):
+
+- Writer statement set (`INSERT INTO|UPDATE|DELETE FROM inventory_lots|inventory_items|inventory_events`
+  over `packages src scripts`): `src/` + `packages/` statements **identical** to
+  both baselines (line numbers only shift). The only delta is two synthetic seed
+  `INSERT INTO inventory_items` rows in `scripts/planner-preview-fixtures.mjs`
+  (`preview-stock-cheese` with a recorded `opened_at`, `preview-stock-spinach` with
+  an ESTIMATED expiry) — preview bootstrap for the T13R-B browser cases, classified
+  with the existing fixture row as synthetic local bootstrap, not a deployed writer.
+- Reader call set (`readInventoryAuthorityMode|runLegacyInventoryBatch|fetchHouseholdInventoryFromDb|MEAL_PLANNER_ENABLED|readInventoryLot|readInventorySummary|loadMealPlanningSnapshot`
+  over `packages src scripts wrangler.jsonc`): **identical** to both baselines (69
+  lines).
+- T13R-A/T13R-B touched no inventory writer and no T11 reader: P1-1/P2-A write
+  `scan_items.ocr_*` evidence columns only; P1-2 changes which `ingredient_id`
+  value the existing PATCH adapter passes (identity preserved), not the statement;
+  P1-3/P1-4/P2-4/P2-5/P2-6 are frontend presentation/ownership; P2-1 is the AI
+  provider parser. **T09 mutation authority and T11 canonical read authority are
+  preserved.** The `SAFE_DEFERRED` meal-planner condition below is unchanged.
 
 ## Writer classifications
 
@@ -94,17 +117,17 @@ The detached source audit and its classification were recorded at the exact
 freeze, not inferred from an empty working-tree diff. Inspect candidates with:
 
 ```sh
-FREEZE=7b7bb695ee597a46cf4022a2c534e2fea374be5d
+FREEZE=32ddbb4f2bb636fdcf201e9ca99c4689d3655477   # T13R; 7b7bb69… is the rejected baseline
 git grep -n -E '(INSERT INTO|UPDATE|DELETE FROM) +(inventory_lots|inventory_items|inventory_events)' \
   "$FREEZE" -- packages src scripts
 git grep -n 'inventory_items' "$FREEZE" -- packages src scripts
-git grep -n -E 'readInventoryAuthorityMode|runLegacyInventoryBatch|fetchHouseholdInventoryFromDb|MEAL_PLANNER_ENABLED' \
+git grep -n -E 'readInventoryAuthorityMode|runLegacyInventoryBatch|fetchHouseholdInventoryFromDb|MEAL_PLANNER_ENABLED|readInventoryLot|readInventorySummary|loadMealPlanningSnapshot' \
   "$FREEZE" -- packages src scripts wrangler.jsonc
 ```
 
 These searches enumerate candidates; review their callers and gates against the
 classifications above. Preview/bootstrap/legacy paths are not “unknown” merely
-because they contain stock SQL. Detailed executed gates and private
-`authority-audit.log` location are in
-[T13B_FINAL_HARDENING.md](T13B_FINAL_HARDENING.md). No remote D1, production
+because they contain stock SQL. T13R gates and evidence locations are in
+[T13R_FINAL_CERTIFICATION.md](T13R_FINAL_CERTIFICATION.md); the historical `7b7bb69`
+audit is in [T13B_FINAL_HARDENING.md](T13B_FINAL_HARDENING.md). No remote D1, production
 credentials, PayOS, main merge or deployment was used for certification.

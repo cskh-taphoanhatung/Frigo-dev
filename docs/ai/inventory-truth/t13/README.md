@@ -1,11 +1,19 @@
 # T13 — Receipt/Vision truth & Inventory UX V2
 
-**T13 COMPLETE — STOP for INDEPENDENT T13 FINAL REVIEW.** Local certification
-passed at the immutable application freeze below. This is not independent final
-review approval, a main merge, or a deployment. Earlier completion claims and
-browser-blocked WIP reports are historical, not the current certification record.
+**T13 REMEDIATION CERTIFIED — READY FOR INDEPENDENT FINAL REVIEW #2.** The first
+freeze `7b7bb69` below was **rejected** by the independent review (4 P1, 6 blocking
+P2). T13R-A (`fc0f9c5`) and T13R-B (`4d587eb`, `7e68e3b`) fixed every confirmed
+blocker and the new exact application freeze
+**`T13R_APPLICATION_FREEZE=32ddbb4f2bb636fdcf201e9ca99c4689d3655477`** passed the
+full local pre-freeze and clean-detached gate set on 2026-09-14 (repository
+`vn-blo/Frigo-dev`, ID 1368281478, branch `hoplite/delos-f0bb1d04`, main
+`d1b06732…` unchanged). Current record:
+[T13R_FINAL_CERTIFICATION.md](T13R_FINAL_CERTIFICATION.md); remediation detail:
+[T13R_A_REMEDIATION.md](T13R_A_REMEDIATION.md), [T13R_B_REMEDIATION.md](T13R_B_REMEDIATION.md).
+This is not independent review approval, a main merge, or a deployment. The
+sections below describe the historical `7b7bb69` certification.
 
-## Certified checkpoint
+## Historical certified checkpoint (`7b7bb69`, rejected by independent review)
 
 | Field | Value |
 | --- | --- |
