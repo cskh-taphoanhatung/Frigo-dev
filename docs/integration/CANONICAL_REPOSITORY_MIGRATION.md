@@ -15,6 +15,11 @@ PR_NUMBER=2
 PR_TITLE=Promote certified Frigo/Takosan integration to canonical main
 CURRENT_PRE_DOCS_HEAD=c8acd0aa5ae746aeed628c6ca730ac26d71c3b4b
 PREVIOUS_HOSTED_CI=34968469709 validate PASS
+EXTERNAL_TECHNICAL_REVIEW=APPROVED
+REVIEWED_HEAD=6ee4529b202510345a70b6fc31ab849d3de8929f
+REVIEW_FINDINGS=P0=0 P1=0 P2=0
+MAINTAINER_DECISION=External technical review accepted as sufficient for canonical repository consolidation
+GITHUB_NATIVE_COLLABORATOR_APPROVAL=WAIVED BY EXPLICIT MAINTAINER DECISION
 BRANCH_PROTECTION=ENABLED
 REQUIRED_APPROVALS=1
 REQUIRED_STATUS=validate
@@ -33,6 +38,11 @@ T14_STARTED=NO
 at immutable freeze `5f6853d0ed11415871dca0fd31ff28d9f04641fa` and promotion
 PR #2 is open. The docs head created after this receipt must receive an exact-
 head `CI / validate` PASS, followed by one independent approving review.
+
+The maintainer has now accepted the external technical review for this
+consolidation: P0=0, P1=0, P2=0, reviewed head `6ee4529...`. This acceptance
+waives only the GitHub-native collaborator approval requirement; CI, PR,
+force-push and branch-deletion protections remain mandatory.
 
 ## Production deployment status
 

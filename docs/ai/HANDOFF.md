@@ -11,11 +11,16 @@
 - Protection: `validate` required, one independent approval required,
   force-push blocked, branch deletion blocked.
 
-Current required action: wait for exact-new-head `validate` PASS, then obtain
-one independent approving review. A maintainer may authorize a separate,
-history-preserving merge only after those gates pass. Do not modify application
-code, squash, rebase, deploy, migrate production, touch production resources or
-start T14.
+Current required action: wait for exact-new-head `validate` PASS, then reduce
+only the approval count to zero under the recorded maintainer decision and use
+a history-preserving merge commit. Do not modify application code, squash,
+rebase, deploy, migrate production, touch production resources or start T14.
+
+Maintainer decision: external technical review is accepted for this
+consolidation at reviewed head `6ee4529b202510345a70b6fc31ab849d3de8929f`
+(P0=0, P1=0, P2=0). The GitHub-native collaborator approval may be waived by
+the owner; do not fabricate or impersonate a GitHub review. All other branch
+protections and exact-head CI gates remain required.
 
 Production deployment remains a separate task and is not authorized. The
 rolling-schema compatibility issue around canonical migration `0032` must be

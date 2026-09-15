@@ -10,11 +10,19 @@ is historical and superseded. PR #2 targets `main` from
 `c8acd0aa5ae746aeed628c6ca730ac26d71c3b4b`, with hosted CI run `34968469709`
 passing `validate`.
 
-Branch protection is enabled: `validate` and one independent approval are
+Branch protection is enabled: `validate` and one approval are currently
 required, force-push and branch deletion are blocked, and no merge has occurred.
-After this docs reconciliation, wait for `CI / validate` to pass on the exact new
-head, then obtain one independent approval and separate maintainer merge
-authorization.
+After this docs head receives exact-new-head `CI / validate` PASS, the accepted
+maintainer decision permits reducing only the approval count to zero; all other
+protections and the merge-commit requirement remain.
+
+## Maintainer review acceptance
+
+`EXTERNAL_TECHNICAL_REVIEW=APPROVED` for reviewed head
+`6ee4529b202510345a70b6fc31ab849d3de8929f`, with P0=0, P1=0 and P2=0. The
+maintainer explicitly accepts that review as sufficient for this repository
+consolidation and may waive only the GitHub-native collaborator approval
+requirement. CI, PR, force-push and branch-deletion protections remain active.
 
 ## Production deployment status
 

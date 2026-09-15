@@ -14,8 +14,11 @@
 - [done] Hosted CI run `34968469709` passed on pre-docs head `c8acd0aa`.
 - [in progress] Final documentation reconciliation.
 - [pending] Exact-new-head hosted `CI / validate` PASS.
-- [pending] One independent approving review.
-- [pending] Separate maintainer authorization for history-preserving merge.
+- [pending] Exact-new-head CI, then apply the documented approval waiver.
+- [pending] History-preserving merge commit after all gates pass.
+- [done] Maintainer accepted external technical review for head `6ee4529...`
+  with P0/P1/P2 = 0; native collaborator approval may be waived only for this
+  consolidation.
 - [blocked / out of scope] Production rollout pending the `0032` compatibility
   plan; no deploy or remote resource mutation is authorized.
 - [not started] T14.
