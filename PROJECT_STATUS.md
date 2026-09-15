@@ -1,5 +1,24 @@
 # Frigo Project Status
 
+## Current canonical / production status — 2026-09-15 UTC
+
+Canonical `vn-clo/Frigo-dev` (ID `1368281478`) main is freshly verified at
+`055913596acd3bef049aa0eb007bde2873a658a9`. PR #9 merged the Auth/GIS popup,
+OCR pending UX and COOP fixes as `911db7fdddcd60ea1e3f3c17b4aed3f4b922bda5`;
+PR #10 records Worker `20bc1f35-6ffe-4085-ba79-d54a0b53da71` at 100% of the
+custom domain. Main differs from that application merge only by documentation.
+
+T14A audit is being reconciled docs-only; accepted T14B-A follows only after
+T14A's fresh hosted CI and protected merge. T14B-B is not started. Static
+`ALL_RECIPES` remains authority (71/59/12); migrations remain 0001–0033 and media
+is deferred to T14C. No deploy or production mutation is part of this task.
+Main CI `35030996228` passed; Deploy `35031212139` failed only in staging for
+missing `CLOUDFLARE_API_TOKEN`, with release success and production skipped.
+PR #4 remains historical: CLOSE_ARCHIVE recommended, not merge.
+Exact integration evidence: `docs/ai/recipe-catalog/T14_INTEGRATION_REFRESH.md`.
+
+# Historical checkpoints — superseded as current status
+
 ## Auth/OCR production hardening — CANDIDATE (2026-09-16)
 
 The production screenshot's Google `HTTP 400` was caused by a client-side

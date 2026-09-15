@@ -17,6 +17,20 @@
 - [done] Production smoke, readiness and live SPA/API COOP checks pass; no
   migration or production data resource was mutated.
 
+## CURRENT — T14 integration refresh, 2026-09-15 UTC
+
+- `vn-clo/Frigo-dev` (ID `1368281478`), main `055913596acd3bef049aa0eb007bde2873a658a9`.
+- PR #9 Auth/OCR production lineage `911db7f`; Worker version
+  `20bc1f35-6ffe-4085-ba79-d54a0b53da71`; PR #10 rollout receipt preserved.
+- T14A audit reconciled docs-only, pending fresh gates/merge; accepted T14B-A
+  pending sequential integration. T14B-B NOT STARTED. Static authority 71/59/12,
+  migrations 0001–0033 unchanged; media deferred to T14C.
+- Main CI passed; Deploy staging missing-token blocker is separate OPS work.
+- PR #4: CLOSE_ARCHIVE recommended, not merged or deleted.
+- Exact evidence and next action: `docs/ai/recipe-catalog/T14_INTEGRATION_REFRESH.md`.
+
+# Historical boards — superseded by the current refresh above
+
 ## CANONICAL REPOSITORY CONSOLIDATION COMPLETE — 2026-09-15
 
 - `vn-dlo/Frigo-dev` (ID `1368281478`) is now the canonical long-term
