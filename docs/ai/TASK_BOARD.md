@@ -1,5 +1,13 @@
 # Frigo / Takosan current task board — 2026-09-15
 
+## T14B-A — Review remediation — DONE (awaiting maintainer merge)
+
+- [done] Finding B: renderer confined to `.artifacts/recipe-seed/` (policy + 29 tests).
+- [done] Finding A: hosted CI reported truthfully as NOT_TRIGGERED for stacked PR #8.
+- [done] Fresh gates: 152 files / 3673 tests; migrations immutable; authority unchanged.
+- [blocked-on-maintainer] merge PR #7 → retarget PR #8 to `main` → hosted `validate` → merge PR #8.
+- [note] PR #4 → CLOSE_ARCHIVE recommended. Cuisine taxonomy decision required before T14E.
+
 ## T14B-A — Recipe catalog safety foundation — IMPLEMENTED (pending review)
 
 - [done] F-08 neutralized: generator test deleted; read-only seed validation +

@@ -1,5 +1,21 @@
 # Frigo / Takosan current handoff — 2026-09-15
 
+## T14B-A review remediation handoff — 2026-09-15
+
+- Independent review: architecture PASS; findings A (hosted CI misstated) and B (renderer
+  output too permissive) remediated on `hoplite/koroneia-838b0ccc--t14b-a-catalog-safety`
+  (hardening commit `582ced73a715e92e0476e9b9e050e86cbb36c6b9`).
+- Topology (fresh): `origin/main` `345cecf`; PR #7 OPEN/draft, head `769e053`, base `main`,
+  `validate` SUCCESS (run 35021686468); PR #8 OPEN/draft, base = PR #7 branch, **0 hosted
+  runs/checks** — `HOSTED_CI_VALIDATE=NOT_TRIGGERED` because `ci.yml` only fires for PRs
+  targeting `main`/`master`. PR #4 OPEN, `PR4_RECOMMENDED_DISPOSITION=CLOSE_ARCHIVE` (not acted on).
+- Fresh gates on the remediated head: typecheck 0, lint 0, `check:migrations` ok, build 0,
+  full Vitest **152 files / 3673 tests passed**, `recipe:seed:check` ok, renderer refuses all 11
+  forbidden targets (exit 3), 33 migrations byte-identical, no `0034`, `git diff --check` clean.
+- Cuisine taxonomy: current 6-value enum is NOT the final long-tail taxonomy; decide before T14E bulk ingestion.
+- Next action (maintainer): review/merge PR #7 (docs-only, CI green) → retarget PR #8 to `main`
+  so hosted `validate` runs → merge PR #8. T14B-B must start from the NEW canonical main.
+
 ## T14B-A recipe catalog safety foundation handoff — 2026-09-15
 
 - Branch: `hoplite/koroneia-838b0ccc--t14b-a-catalog-safety` (local alias

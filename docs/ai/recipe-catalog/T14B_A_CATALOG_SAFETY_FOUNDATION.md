@@ -85,7 +85,8 @@ mutation code and `wrangler.jsonc` are untouched.
 | | Before | After |
 | --- | --- | --- |
 | Behavior | `tests/unit/generate-migration.test.ts` rewrote `vietnamese-bank.ts` and regenerated `migrations/0006` on every `pnpm test` | Test deleted. `renderVietnameseRecipeSeedSql()` (pure, no `fs`) renders the seed in memory; `tests/unit/recipe-seed-readonly.test.ts` asserts byte-equality with committed `0006`, asserts bank image references, snapshots migration/bank hashes+mtimes before/after, and scans `tests/` for repo-relative `writeFile` calls |
-| Explicit generator | none | `pnpm recipe:seed:check` (read-only compare; exits 1 if stale with instruction to ship a NEW migration) and `pnpm recipe:seed:render` (writes only to `.artifacts/recipe-seed/`, refuses any path under `migrations/` or `packages/`) |
+| Explicit generator | none | `pnpm recipe:seed:check` (read-only compare; exits 1 if stale with instruction to ship a NEW migration) and `pnpm recipe:seed:render` (writes only beneath `.artifacts/recipe-seed/`) |
+| Output containment (review finding B) | `--out` refused only `migrations/` and `packages/` | `scripts/recipe-seed-output-policy.mjs`: segment-aware containment (`path.relative`, not prefix matching) allows only files strictly beneath `<repo>/.artifacts/recipe-seed/`; rejects `src/`, `docs/`, `package.json`, `wrangler.jsonc`, `.artifacts/other/`, sibling prefix `.artifacts/recipe-seed-evil/`, `..` traversal, absolute paths elsewhere, and symlinked ancestors (allowed root or `.artifacts` pointing outside). Renderer exits 3 on refusal; `--check` never writes. 29 regression tests in `tests/unit/recipe-seed-output-policy.test.mjs`. |
 | Invocation from tests/CI | implicit | never; CI workflow unchanged |
 
 ## 6. Drift framework — actual current output
@@ -131,21 +132,58 @@ future  per-flow authority migration behind flags with per-flow rollback
 - Acceptance: `auditCatalogDrift` shows `staticOnly = d1Only = []`, `core/requirements/units/steps/tags/media.changed = []`,
   `incompleteRows = rejectedRows = []`; runtime view of every D1 row `toEqual` the static recipe.
 
-## 8. Verification (fresh, this branch)
+## 7a. Review remediation and hosted-CI truth (2026-09-15)
+
+Independent review accepted the architecture (no runtime-authority switch, no
+migration change, no Inventory Truth/Qwen/media/CSP/payment change) and raised two
+findings, both addressed here:
+
+- **A — hosted CI misstated.** `.github/workflows/ci.yml` triggers `pull_request` only for
+  `branches: [main, master]`. PR #8 targets the PR #7 branch, so at head `05685855` it had
+  0 workflow runs / 0 check runs / 0 status contexts. Truthful status:
+  `HOSTED_CI_VALIDATE=NOT_TRIGGERED`, `REASON=PR base is not main/master under current workflow`.
+  Hosted evidence for T14B-A will exist only after PR #7 merges and PR #8 is retargeted to `main`.
+  The earlier "CI pending" wording was wrong and is withdrawn.
+- **B — renderer output too permissive.** Fixed as described in §5 (commit `582ced7`).
+
+**Cuisine taxonomy caveat (document only).** `RUNTIME_RECIPE_CUISINES`
+(`vietnamese|korean|japanese|chinese|thai|italian`) mirrors today's 71 recipes and the
+legacy `CuisineType`. It is **not** a sufficient long-tail taxonomy for thousands of
+international recipes; a taxonomy decision (open string with controlled vocabulary,
+or an expanded enum plus `recipe_classifications`) is a prerequisite before any bulk
+T14E ingestion. No widening in T14B-A.
+
+**Nutrition remains truthfully unsupported.** The drift report reports
+`nutrition.representation = 'unsupported_by_catalog_model'` for all 59 shared rows.
+Static runtime macros must not be copied into `nutrition_profiles`/`recipe_nutrition`
+without a sourcing/provenance/basis decision (ADR-004, ADR-009); that belongs to T14B-B design.
+
+## 8. Verification (fresh, head `582ced7` + this docs commit)
 
 ```
-pnpm install --frozen-lockfile        exit 0 (T14A sandbox, unchanged lockfile)
+pnpm install --frozen-lockfile        exit 0 (unchanged lockfile)
+pnpm recipe:seed:check                recipe-seed-check=ok (59 recipes match 0006_vietnamese_recipe_bank.sql)
 pnpm typecheck                        exit 0
 pnpm lint                             exit 0
 pnpm check:migrations                 migration-smoke=ok
 pnpm build                            ✓ built, exit 0
-npx vitest run (full)                 Test Files 151 passed (151) · Tests 3644 passed (3644)
-npx vitest run <3 new suites>         3 files / 16 tests passed
-pnpm recipe:seed:check                recipe-seed-check=ok (59 recipes match 0006_vietnamese_recipe_bank.sql)
-node scripts/render-recipe-seed.mjs --out migrations/evil.sql   refused, exit 3
-sha256sum migrations/*.sql (before vs after every gate)          identical, 33 files, last 0033, no 0034
-git status after full vitest          only intentional docs edits; no migration/recipe source change
+npx vitest run (full)                 Test Files 152 passed (152) · Tests 3673 passed (3673)
+                                      (T14B-A baseline 151/3644 + 1 file/29 policy tests)
+focused T14B-A suites                 recipe-seed-readonly 5 · runtime-recipe-contract 5 ·
+                                      recipe-catalog-safety 6 · recipe-seed-output-policy 29
+pnpm recipe:seed:render               writes only .artifacts/recipe-seed/0006_…sql (== committed 0006)
+render --out <11 forbidden paths>     each refused, exit 3, nothing written
+                                      (migrations/, packages/recipes/, src/worker/, src/web/, docs/,
+                                       package.json, wrangler.jsonc, .artifacts/other/,
+                                       .artifacts/recipe-seed-evil/, ../evil.sql, /tmp/evil.sql)
+sha256sum migrations/*.sql            identical before/after every gate; 33 files; last 0033; no 0034
+git status after full vitest          only the intentional docs edit; no migration/recipe source change
 git diff --check                      clean
+src imports of new modules            0 (ALL_RECIPES remains runtime authority)
+inventory SQL-touching file set       unchanged vs T14A start
+
+HOSTED_CI_VALIDATE=NOT_TRIGGERED
+REASON=PR #8 base is hoplite/koroneia-838b0ccc (PR #7), not main/master, under .github/workflows/ci.yml
 ```
 
 ## 9. Safety confirmation

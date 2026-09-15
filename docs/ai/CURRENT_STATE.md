@@ -1,5 +1,14 @@
 # Frigo / Takosan current authority — 2026-09-15
 
+## T14B-A review remediation — 2026-09-15
+
+Renderer output is now confined to `.artifacts/recipe-seed/` via a segment-aware,
+symlink-aware policy (`scripts/recipe-seed-output-policy.mjs`, 29 tests). Hosted CI
+for PR #8 is truthfully `NOT_TRIGGERED` while it targets the PR #7 branch (workflow
+fires only for `main`/`master`). Full Vitest 152/3673 on the remediated head; 33
+migrations byte-identical; no `0034`; runtime authority unchanged. State:
+`T14B_A_READY_FOR_MERGE` pending PR #7 merge + PR #8 retarget to `main` for hosted evidence.
+
 ## T14B-A recipe catalog safety foundation — 2026-09-15
 
 Branch `hoplite/koroneia-838b0ccc--t14b-a-catalog-safety` (stacked on T14A PR #7,
