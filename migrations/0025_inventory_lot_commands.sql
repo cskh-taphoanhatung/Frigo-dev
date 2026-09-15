@@ -39,14 +39,15 @@ END;
 
 CREATE TRIGGER trg_inventory_lots_live_insert
 BEFORE INSERT ON inventory_lots WHEN NEW.legacy_item_id IS NOT NULL BEGIN
-  SELECT CASE WHEN NOT EXISTS (
-    SELECT 1 FROM inventory_items WHERE id = NEW.legacy_item_id AND household_id = NEW.household_id
-  ) THEN RAISE(ABORT, 'Lot projection household mismatch') END;
-  SELECT CASE WHEN (NEW.state = 'ACTIVE' AND NEW.quantity_milli <= 0)
-    OR (NEW.state <> 'ACTIVE' AND NEW.quantity_milli <> 0)
-    THEN RAISE(ABORT, 'Invalid live lot lifecycle') END;
-  SELECT CASE WHEN NEW.ingredient_id IS NULL AND length(trim(NEW.raw_name, char(9) || char(10) || char(13) || ' ')) = 0
-    THEN RAISE(ABORT, 'New live lot identity required') END;
+  SELECT RAISE(ABORT, 'Lot projection household mismatch')
+    WHERE NOT EXISTS (
+      SELECT 1 FROM inventory_items WHERE id = NEW.legacy_item_id AND household_id = NEW.household_id
+    );
+  SELECT RAISE(ABORT, 'Invalid live lot lifecycle')
+    WHERE (NEW.state = 'ACTIVE' AND NEW.quantity_milli <= 0)
+      OR (NEW.state <> 'ACTIVE' AND NEW.quantity_milli <> 0);
+  SELECT RAISE(ABORT, 'New live lot identity required')
+    WHERE NEW.ingredient_id IS NULL AND length(trim(NEW.raw_name, char(9) || char(10) || char(13) || ' ')) = 0;
 END;
 CREATE TRIGGER trg_inventory_lots_no_live_replace
 BEFORE INSERT ON inventory_lots
@@ -64,17 +65,19 @@ WHEN NEW.source_type = 'LEGACY_BACKFILL' AND EXISTS (
 END;
 CREATE TRIGGER trg_inventory_lots_live_update
 BEFORE UPDATE ON inventory_lots WHEN NEW.legacy_item_id IS NOT NULL OR OLD.legacy_item_id IS NOT NULL BEGIN
-  SELECT CASE WHEN NOT EXISTS (
-    SELECT 1 FROM inventory_items WHERE id = NEW.legacy_item_id AND household_id = NEW.household_id
-  ) THEN RAISE(ABORT, 'Lot projection household mismatch') END;
-  SELECT CASE WHEN OLD.legacy_item_id IS NOT NULL AND (
-    NEW.legacy_item_id IS NOT OLD.legacy_item_id OR NEW.id IS NOT OLD.id
-    OR NEW.household_id IS NOT OLD.household_id OR NEW.source_type IS NOT OLD.source_type
-    OR NEW.source_id IS NOT OLD.source_id OR NEW.version <> OLD.version + 1
-  ) THEN RAISE(ABORT, 'Live lot mapping/provenance/version is immutable or stale') END;
-  SELECT CASE WHEN (NEW.state = 'ACTIVE' AND NEW.quantity_milli <= 0)
-    OR (NEW.state <> 'ACTIVE' AND NEW.quantity_milli <> 0)
-    THEN RAISE(ABORT, 'Invalid live lot lifecycle') END;
+  SELECT RAISE(ABORT, 'Lot projection household mismatch')
+    WHERE NOT EXISTS (
+      SELECT 1 FROM inventory_items WHERE id = NEW.legacy_item_id AND household_id = NEW.household_id
+    );
+  SELECT RAISE(ABORT, 'Live lot mapping/provenance/version is immutable or stale')
+    WHERE OLD.legacy_item_id IS NOT NULL AND (
+      NEW.legacy_item_id IS NOT OLD.legacy_item_id OR NEW.id IS NOT OLD.id
+      OR NEW.household_id IS NOT OLD.household_id OR NEW.source_type IS NOT OLD.source_type
+      OR NEW.source_id IS NOT OLD.source_id OR NEW.version <> OLD.version + 1
+    );
+  SELECT RAISE(ABORT, 'Invalid live lot lifecycle')
+    WHERE (NEW.state = 'ACTIVE' AND NEW.quantity_milli <= 0)
+      OR (NEW.state <> 'ACTIVE' AND NEW.quantity_milli <> 0);
 END;
 CREATE TRIGGER trg_inventory_lots_live_delete
 BEFORE DELETE ON inventory_lots
@@ -95,12 +98,14 @@ END;
 
 CREATE TRIGGER trg_inventory_events_command_insert
 BEFORE INSERT ON inventory_events WHEN NEW.command_id IS NOT NULL BEGIN
-  SELECT CASE WHEN NOT EXISTS (
-    SELECT 1 FROM inventory_commands WHERE id = NEW.command_id AND household_id = NEW.household_id
-  ) THEN RAISE(ABORT, 'Inventory event command household mismatch') END;
-  SELECT CASE WHEN NEW.inventory_item_id IS NULL OR NOT EXISTS (
-    SELECT 1 FROM inventory_lots WHERE legacy_item_id = NEW.inventory_item_id AND household_id = NEW.household_id
-  ) THEN RAISE(ABORT, 'Inventory event requires owned lot projection') END;
+  SELECT RAISE(ABORT, 'Inventory event command household mismatch')
+    WHERE NOT EXISTS (
+      SELECT 1 FROM inventory_commands WHERE id = NEW.command_id AND household_id = NEW.household_id
+    );
+  SELECT RAISE(ABORT, 'Inventory event requires owned lot projection')
+    WHERE NEW.inventory_item_id IS NULL OR NOT EXISTS (
+      SELECT 1 FROM inventory_lots WHERE legacy_item_id = NEW.inventory_item_id AND household_id = NEW.household_id
+    );
 END;
 CREATE TRIGGER trg_inventory_events_command_update
 BEFORE UPDATE ON inventory_events WHEN OLD.command_id IS NOT NULL OR NEW.command_id IS NOT NULL BEGIN

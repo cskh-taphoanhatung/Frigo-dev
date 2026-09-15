@@ -1,7 +1,7 @@
 -- Evidence must match the stock written in the same transaction, not only itself.
 CREATE TRIGGER trg_inventory_events_command_poststate_insert
 BEFORE INSERT ON inventory_events WHEN NEW.command_id IS NOT NULL BEGIN
-  SELECT CASE WHEN NOT EXISTS (
+  SELECT RAISE(ABORT, 'Inventory command event evidence mismatch') WHERE NOT EXISTS (
     SELECT 1 FROM inventory_commands c
     JOIN inventory_lots l ON l.legacy_item_id = NEW.inventory_item_id AND l.household_id = c.household_id
     JOIN inventory_items i ON i.id = l.legacy_item_id AND i.household_id = l.household_id
@@ -37,5 +37,5 @@ BEFORE INSERT ON inventory_events WHEN NEW.command_id IS NOT NULL BEGIN
       AND i.unit = l.canonical_unit AND i.version = l.legacy_version
       AND i.name = l.raw_name AND i.ingredient_id IS l.ingredient_id
       AND i.storage = lower(s.type)
-  ) THEN RAISE(ABORT, 'Inventory command event evidence mismatch') END;
+  );
 END;

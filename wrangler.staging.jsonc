@@ -1,0 +1,49 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "frigo-staging",
+  "main": "src/worker/index.ts",
+  "compatibility_date": "2024-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "assets": {
+    "directory": "./dist/client",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "single-page-application"
+  },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "frigo-db-staging-v3",
+    "database_id": "7854298a-20f5-46aa-9cbf-917079c2a3dd",
+    "migrations_dir": "migrations"
+  }],
+  "r2_buckets": [{ "binding": "IMAGES", "bucket_name": "frigo-images-staging" }],
+  "kv_namespaces": [{ "binding": "CACHE", "id": "5582086f94e34e0ca9c4ef6fc6f0016e" }],
+  "queues": {
+    "producers": [{ "binding": "SCAN_QUEUE", "queue": "frigo-scan-queue-staging" }],
+    "consumers": [{
+      "queue": "frigo-scan-queue-staging",
+      "max_batch_size": 5,
+      "max_batch_timeout": 10,
+      "dead_letter_queue": "frigo-scan-dlq-staging"
+    }]
+  },
+  "ai": { "binding": "AI" },
+  "vars": {
+    "ENVIRONMENT": "staging",
+    "APP_URL": "https://frigo-staging.tungbipdz.workers.dev",
+    "AI_MOCK_MODE": "true",
+    "SCAN_QUEUE_MODE": "async",
+    "WEEK_SCHEMA_MODE": "dual",
+    "GROQ_FALLBACK_ENABLED": "false",
+    "CLOUDFLARE_VISION_FALLBACK": "false",
+    "GLM_FALLBACK_ENABLED": "false",
+    "DEEPSEEK_FALLBACK_ENABLED": "false",
+    "CLEANUP_RESERVED_SCAN_RETENTION_MINUTES": "60",
+    "TURNSTILE_SITE_KEY": "1x00000000000000000000AA"
+  },
+  "observability": {
+    "logs": { "enabled": true, "head_sampling_rate": 0.1, "invocation_logs": true, "persist": true }
+  },
+  "triggers": { "crons": ["0 3 * * *"] }
+}

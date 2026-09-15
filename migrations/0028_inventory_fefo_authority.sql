@@ -5,16 +5,15 @@ DROP TRIGGER trg_inventory_events_command_poststate_insert;
 CREATE TRIGGER trg_inventory_events_command_authority_insert
 BEFORE INSERT ON inventory_events WHEN NEW.command_id IS NOT NULL AND COALESCE((SELECT json_extract(result_json, '$.schemaVersion') FROM inventory_commands WHERE id = NEW.command_id), 1) <> 2 BEGIN
   -- Separate JSON validity checks keep malformed input out of JSON extraction.
-  SELECT CASE WHEN typeof(NEW.metadata) <> 'text' OR json_valid(NEW.metadata) IS NOT 1
-    THEN RAISE(ABORT, 'Inventory command event evidence mismatch') END;
-  SELECT CASE WHEN NOT EXISTS (
+  SELECT RAISE(ABORT, 'Inventory command event evidence mismatch') WHERE typeof(NEW.metadata) <> 'text' OR json_valid(NEW.metadata) IS NOT 1;
+  SELECT RAISE(ABORT, 'Inventory command event evidence mismatch') WHERE NOT EXISTS (
     SELECT 1 FROM inventory_commands c WHERE c.id = NEW.command_id
       AND c.household_id = NEW.household_id
       AND typeof(c.result_json) = 'text' AND json_valid(c.result_json) = 1
       AND typeof(c.fingerprint) = 'text' AND json_valid(c.fingerprint) = 1
-  ) THEN RAISE(ABORT, 'Inventory command event evidence mismatch') END;
+  );
 
-  SELECT CASE WHEN NOT EXISTS (
+  SELECT RAISE(ABORT, 'Inventory command event evidence mismatch') WHERE NOT EXISTS (
     WITH evidence AS (
       SELECT c.*, json_object(
         'schemaVersion', 1, 'householdId', c.household_id, 'actorId', c.actor_id,
@@ -109,12 +108,12 @@ BEFORE INSERT ON inventory_events WHEN NEW.command_id IS NOT NULL AND COALESCE((
     ) AND NOT EXISTS (
       SELECT fullkey FROM json_tree(e.fingerprint) GROUP BY fullkey HAVING count(*) > 1
     )
-  ) THEN RAISE(ABORT, 'Inventory command event evidence mismatch') END;
+  );
 END;
 
 CREATE TRIGGER trg_inventory_events_command_poststate_insert
 BEFORE INSERT ON inventory_events WHEN NEW.command_id IS NOT NULL AND COALESCE((SELECT json_extract(result_json, '$.schemaVersion') FROM inventory_commands WHERE id = NEW.command_id), 1) <> 2 BEGIN
-  SELECT CASE WHEN NOT EXISTS (
+  SELECT RAISE(ABORT, 'Inventory command event evidence mismatch') WHERE NOT EXISTS (
     SELECT 1 FROM inventory_commands c
     JOIN inventory_lots l ON l.legacy_item_id = NEW.inventory_item_id AND l.household_id = c.household_id
     JOIN inventory_items i ON i.id = l.legacy_item_id AND i.household_id = l.household_id
@@ -150,7 +149,7 @@ BEFORE INSERT ON inventory_events WHEN NEW.command_id IS NOT NULL AND COALESCE((
       AND i.unit = l.canonical_unit AND i.version = l.legacy_version
       AND i.name = l.raw_name AND i.ingredient_id IS l.ingredient_id
       AND i.storage = lower(s.type)
-  ) THEN RAISE(ABORT, 'Inventory command event evidence mismatch') END;
+  );
 END;
 
 -- `mode` is reserved to v2 FEFO receipts so malformed v2 envelopes cannot fall through to v1.
@@ -162,33 +161,30 @@ WHEN json_valid(NEW.result_json) IS 1
     OR json_type(NEW.result_json, '$.schemaVersion') IS NOT NULL
     OR CASE WHEN json_valid(NEW.fingerprint) = 1
       THEN json_extract(NEW.fingerprint, '$.command.mode') = 'FEFO' ELSE 0 END) BEGIN
-  SELECT CASE WHEN json_type(NEW.result_json, '$.schemaVersion') IS NOT 'integer'
+  SELECT RAISE(ABORT, 'Inventory FEFO command evidence mismatch') WHERE json_type(NEW.result_json, '$.schemaVersion') IS NOT 'integer'
     OR json_extract(NEW.result_json, '$.schemaVersion') IS NOT 2
     OR json_type(NEW.result_json, '$.mode') IS NOT 'text'
-    OR json_extract(NEW.result_json, '$.mode') IS NOT 'FEFO'
-    THEN RAISE(ABORT, 'Inventory FEFO command evidence mismatch') END;
+    OR json_extract(NEW.result_json, '$.mode') IS NOT 'FEFO';
 END;
 
 -- A v2 receipt is a complete, pre-write FEFO allocation witness.
 CREATE TRIGGER trg_inventory_commands_fefo_authority_insert
 BEFORE INSERT ON inventory_commands
 WHEN COALESCE(json_extract(NEW.result_json, '$.schemaVersion'), 1) = 2 BEGIN
-  SELECT CASE WHEN typeof(NEW.result_json) <> 'text' OR length(CAST(NEW.result_json AS BLOB)) > 262144
+  SELECT RAISE(ABORT, 'Inventory FEFO command evidence mismatch') WHERE typeof(NEW.result_json) <> 'text' OR length(CAST(NEW.result_json AS BLOB)) > 262144
     OR json_valid(NEW.result_json) IS NOT 1
     OR typeof(NEW.fingerprint) <> 'text' OR length(CAST(NEW.fingerprint AS BLOB)) > 16384
-    OR json_valid(NEW.fingerprint) IS NOT 1
-    THEN RAISE(ABORT, 'Inventory FEFO command evidence mismatch') END;
-  SELECT CASE WHEN length(json_extract(NEW.fingerprint, '$.command.ingredientId')) NOT BETWEEN 1 AND 200
+    OR json_valid(NEW.fingerprint) IS NOT 1;
+  SELECT RAISE(ABORT, 'Inventory FEFO command evidence mismatch') WHERE length(json_extract(NEW.fingerprint, '$.command.ingredientId')) NOT BETWEEN 1 AND 200
     OR (json_type(NEW.fingerprint, '$.command.reason') IS NOT NULL AND (
       length(json_extract(NEW.fingerprint, '$.command.reason')) NOT BETWEEN 1 AND 1000
       OR length(trim(json_extract(NEW.fingerprint, '$.command.reason'), char(9) || char(10) || char(13) || ' ')) = 0
       OR instr(json_extract(NEW.fingerprint, '$.command.reason'), char(0)) > 0
-    )) THEN RAISE(ABORT, 'Inventory FEFO command evidence mismatch') END;
-  SELECT CASE WHEN json_type(NEW.result_json) IS NOT 'object' OR json_type(NEW.fingerprint) IS NOT 'object'
+    ));
+  SELECT RAISE(ABORT, 'Inventory FEFO command evidence mismatch') WHERE json_type(NEW.result_json) IS NOT 'object' OR json_type(NEW.fingerprint) IS NOT 'object'
     OR EXISTS (SELECT 1 FROM json_tree(NEW.result_json) GROUP BY fullkey HAVING count(*) > 1)
-    OR EXISTS (SELECT 1 FROM json_tree(NEW.fingerprint) GROUP BY fullkey HAVING count(*) > 1)
-    THEN RAISE(ABORT, 'Inventory FEFO command evidence mismatch') END;
-  SELECT CASE WHEN (SELECT count(*) FROM json_each(NEW.result_json)) <> 8
+    OR EXISTS (SELECT 1 FROM json_tree(NEW.fingerprint) GROUP BY fullkey HAVING count(*) > 1);
+  SELECT RAISE(ABORT, 'Inventory FEFO command evidence mismatch') WHERE (SELECT count(*) FROM json_each(NEW.result_json)) <> 8
     OR EXISTS (SELECT 1 FROM json_each(NEW.result_json) WHERE key NOT IN
       ('schemaVersion', 'commandId', 'commandType', 'mode', 'ingredientId', 'quantityMilli', 'canonicalUnit', 'effects'))
     OR (SELECT count(*) FROM json_each(NEW.fingerprint)) <> 3
@@ -196,9 +192,8 @@ WHEN COALESCE(json_extract(NEW.result_json, '$.schemaVersion'), 1) = 2 BEGIN
     OR json_type(NEW.fingerprint, '$.command') IS NOT 'object'
     OR EXISTS (SELECT 1 FROM json_each(NEW.fingerprint, '$.command') WHERE key NOT IN
       ('type', 'mode', 'ingredientId', 'quantityMilli', 'canonicalUnit', 'reason', 'expectedInventoryVersion'))
-    OR (SELECT count(*) FROM json_each(NEW.fingerprint, '$.command')) NOT BETWEEN 5 AND 7
-    THEN RAISE(ABORT, 'Inventory FEFO command evidence mismatch') END;
-  SELECT CASE WHEN json_type(NEW.result_json, '$.schemaVersion') IS NOT 'integer'
+    OR (SELECT count(*) FROM json_each(NEW.fingerprint, '$.command')) NOT BETWEEN 5 AND 7;
+  SELECT RAISE(ABORT, 'Inventory FEFO command evidence mismatch') WHERE json_type(NEW.result_json, '$.schemaVersion') IS NOT 'integer'
     OR json_extract(NEW.result_json, '$.schemaVersion') IS NOT 2
     OR json_type(NEW.result_json, '$.commandId') IS NOT 'text' OR json_extract(NEW.result_json, '$.commandId') IS NOT NEW.id
     OR json_type(NEW.result_json, '$.commandType') IS NOT 'text' OR json_extract(NEW.result_json, '$.commandType') IS NOT 'USE'
@@ -227,9 +222,8 @@ WHEN COALESCE(json_extract(NEW.result_json, '$.schemaVersion'), 1) = 2 BEGIN
       AND (json_type(NEW.fingerprint, '$.command.expectedInventoryVersion') IS NOT 'integer'
         OR json_extract(NEW.fingerprint, '$.command.expectedInventoryVersion') NOT BETWEEN 1 AND 9007199254740991
         OR NOT EXISTS (SELECT 1 FROM households h WHERE h.id = NEW.household_id
-          AND h.inventory_version = json_extract(NEW.fingerprint, '$.command.expectedInventoryVersion'))))
-    THEN RAISE(ABORT, 'Inventory FEFO command evidence mismatch') END;
-  SELECT CASE WHEN json_type(NEW.result_json, '$.effects') IS NOT 'array'
+          AND h.inventory_version = json_extract(NEW.fingerprint, '$.command.expectedInventoryVersion'))));
+  SELECT RAISE(ABORT, 'Inventory FEFO command evidence mismatch') WHERE json_type(NEW.result_json, '$.effects') IS NOT 'array'
     OR json_array_length(NEW.result_json, '$.effects') NOT BETWEEN 1 AND 32
     OR EXISTS (
       SELECT 1 FROM json_each(NEW.result_json, '$.effects') e
@@ -256,11 +250,10 @@ WHEN COALESCE(json_extract(NEW.result_json, '$.schemaVersion'), 1) = 2 BEGIN
       ) GROUP BY lot_id HAVING count(*) > 1
     )
     OR (SELECT COALESCE(SUM(-json_extract(value, '$.deltaMilli')), 0)
-      FROM json_each(NEW.result_json, '$.effects')) IS NOT json_extract(NEW.result_json, '$.quantityMilli')
-    THEN RAISE(ABORT, 'Inventory FEFO command evidence mismatch') END;
+      FROM json_each(NEW.result_json, '$.effects')) IS NOT json_extract(NEW.result_json, '$.quantityMilli');
 
   -- Every before snapshot must be the current mapped lot and legacy projection.
-  SELECT CASE WHEN EXISTS (
+  SELECT RAISE(ABORT, 'Inventory FEFO command evidence mismatch') WHERE EXISTS (
     SELECT 1 FROM json_each(NEW.result_json, '$.effects') e
     LEFT JOIN inventory_lots l ON l.id = json_extract(e.value, '$.before.id')
       AND l.legacy_item_id = json_extract(e.value, '$.legacyItemId')
@@ -302,10 +295,10 @@ WHEN COALESCE(json_extract(NEW.result_json, '$.schemaVersion'), 1) = 2 BEGIN
       OR json_extract(e.value, '$.before.purchasePrice.minorDigits') IS NOT l.minor_digits
       OR i.quantity <> l.quantity_milli / 1000.0 OR i.unit <> l.canonical_unit OR i.version IS NOT l.legacy_version
       OR i.name IS NOT l.raw_name OR i.ingredient_id IS NOT l.ingredient_id OR i.storage IS NOT lower(s.type)
-  ) THEN RAISE(ABORT, 'Inventory FEFO command evidence mismatch') END;
+  );
 
   -- Full lot objects are strict; after may change only the consumption fields.
-  SELECT CASE WHEN EXISTS (
+  SELECT RAISE(ABORT, 'Inventory FEFO command evidence mismatch') WHERE EXISTS (
     SELECT 1 FROM json_each(NEW.result_json, '$.effects') e
     WHERE (SELECT count(*) FROM json_each(e.value, '$.before')) <> 24
       OR (SELECT count(*) FROM json_each(e.value, '$.after')) <> 24
@@ -313,8 +306,8 @@ WHEN COALESCE(json_extract(NEW.result_json, '$.schemaVersion'), 1) = 2 BEGIN
         ('id', 'householdId', 'ingredientId', 'rawName', 'quantityMilli', 'canonicalUnit', 'storageLocationId', 'state', 'purchasedAt', 'openedAt', 'expiryAt', 'estimatedExpiryAt', 'expiryKind', 'sourceType', 'sourceId', 'version', 'createdAt', 'updatedAt', 'purchasePrice', 'legacyExpiryAt', 'legacyExpiryKind', 'legacyExpirySource', 'legacyOpenedAt', 'legacyVersion'))
       OR EXISTS (SELECT 1 FROM json_each(e.value, '$.after') WHERE key NOT IN
         ('id', 'householdId', 'ingredientId', 'rawName', 'quantityMilli', 'canonicalUnit', 'storageLocationId', 'state', 'purchasedAt', 'openedAt', 'expiryAt', 'estimatedExpiryAt', 'expiryKind', 'sourceType', 'sourceId', 'version', 'createdAt', 'updatedAt', 'purchasePrice', 'legacyExpiryAt', 'legacyExpiryKind', 'legacyExpirySource', 'legacyOpenedAt', 'legacyVersion'))
-  ) THEN RAISE(ABORT, 'Inventory FEFO command evidence mismatch') END;
-  SELECT CASE WHEN EXISTS (
+  );
+  SELECT RAISE(ABORT, 'Inventory FEFO command evidence mismatch') WHERE EXISTS (
     SELECT 1 FROM json_each(NEW.result_json, '$.effects') e
     WHERE json_type(e.value, '$.before.id') IS NOT 'text' OR json_type(e.value, '$.after.id') IS NOT 'text'
       OR json_type(e.value, '$.before.householdId') IS NOT 'text' OR json_type(e.value, '$.after.householdId') IS NOT 'text'
@@ -339,16 +332,16 @@ WHEN COALESCE(json_extract(NEW.result_json, '$.schemaVersion'), 1) = 2 BEGIN
       OR json_type(e.value, '$.before.legacyExpirySource') NOT IN ('text', 'null') OR json_type(e.value, '$.after.legacyExpirySource') NOT IN ('text', 'null')
       OR json_type(e.value, '$.before.legacyOpenedAt') NOT IN ('text', 'null') OR json_type(e.value, '$.after.legacyOpenedAt') NOT IN ('text', 'null')
       OR json_type(e.value, '$.before.legacyVersion') IS NOT 'integer'
-  ) THEN RAISE(ABORT, 'Inventory FEFO command evidence mismatch') END;
-  SELECT CASE WHEN EXISTS (
+  );
+  SELECT RAISE(ABORT, 'Inventory FEFO command evidence mismatch') WHERE EXISTS (
     SELECT 1 FROM json_each(NEW.result_json, '$.effects') e
     WHERE (json_type(e.value, '$.before.purchasePrice') = 'object' AND ((SELECT count(*) FROM json_each(e.value, '$.before.purchasePrice')) <> 3 OR EXISTS (SELECT 1 FROM json_each(e.value, '$.before.purchasePrice') WHERE key NOT IN ('currency', 'amountMinor', 'minorDigits'))))
       OR (json_type(e.value, '$.after.purchasePrice') = 'object' AND ((SELECT count(*) FROM json_each(e.value, '$.after.purchasePrice')) <> 3 OR EXISTS (SELECT 1 FROM json_each(e.value, '$.after.purchasePrice') WHERE key NOT IN ('currency', 'amountMinor', 'minorDigits'))))
       OR (json_type(e.value, '$.before.purchasePrice') = 'object' AND (json_type(e.value, '$.before.purchasePrice.currency') IS NOT 'text' OR json_type(e.value, '$.before.purchasePrice.amountMinor') IS NOT 'integer' OR json_type(e.value, '$.before.purchasePrice.minorDigits') IS NOT 'integer'))
       OR (json_type(e.value, '$.after.purchasePrice') = 'object' AND (json_type(e.value, '$.after.purchasePrice.currency') IS NOT 'text' OR json_type(e.value, '$.after.purchasePrice.amountMinor') IS NOT 'integer' OR json_type(e.value, '$.after.purchasePrice.minorDigits') IS NOT 'integer'))
-  ) THEN RAISE(ABORT, 'Inventory FEFO command evidence mismatch') END;
+  );
   -- Separate shape and transition predicates to fit D1's expression-depth limit.
-  SELECT CASE WHEN EXISTS (
+  SELECT RAISE(ABORT, 'Inventory FEFO command evidence mismatch') WHERE EXISTS (
     SELECT 1 FROM json_each(NEW.result_json, '$.effects') e
     WHERE json_extract(e.value, '$.after.id') IS NOT json_extract(e.value, '$.before.id')
       OR json_extract(e.value, '$.after.householdId') IS NOT json_extract(e.value, '$.before.householdId')
@@ -381,7 +374,7 @@ WHEN COALESCE(json_extract(NEW.result_json, '$.schemaVersion'), 1) = 2 BEGIN
       OR json_type(e.value, '$.after.legacyVersion') IS NOT 'integer'
       OR json_extract(e.value, '$.after.legacyVersion') IS NOT json_extract(e.value, '$.before.legacyVersion') + 1
       OR json_extract(e.value, '$.after.updatedAt') IS NOT NEW.created_at
-  ) THEN RAISE(ABORT, 'Inventory FEFO command evidence mismatch') END;
+  );
 END;
 
 -- Each FEFO event must be the receipt effect written to the mapped lot/projection.
@@ -389,21 +382,20 @@ CREATE TRIGGER trg_inventory_events_command_fefo_authority_insert
 BEFORE INSERT ON inventory_events
 WHEN NEW.command_id IS NOT NULL
   AND COALESCE((SELECT json_extract(result_json, '$.schemaVersion') FROM inventory_commands WHERE id = NEW.command_id), 1) = 2 BEGIN
-  SELECT CASE WHEN typeof(NEW.metadata) <> 'text' OR length(CAST(NEW.metadata AS BLOB)) > 262144
+  SELECT RAISE(ABORT, 'Inventory FEFO command event evidence mismatch') WHERE typeof(NEW.metadata) <> 'text' OR length(CAST(NEW.metadata AS BLOB)) > 262144
     OR json_valid(NEW.metadata) IS NOT 1
     OR NOT EXISTS (SELECT 1 FROM inventory_commands c WHERE c.id = NEW.command_id
       AND c.household_id = NEW.household_id AND c.command_type = 'USE'
       AND typeof(c.result_json) = 'text' AND json_valid(c.result_json) = 1
-      AND typeof(c.fingerprint) = 'text' AND json_valid(c.fingerprint) = 1)
-    THEN RAISE(ABORT, 'Inventory FEFO command event evidence mismatch') END;
-  SELECT CASE WHEN EXISTS (SELECT 1 FROM json_tree(NEW.metadata) GROUP BY fullkey HAVING count(*) > 1)
+      AND typeof(c.fingerprint) = 'text' AND json_valid(c.fingerprint) = 1);
+  SELECT RAISE(ABORT, 'Inventory FEFO command event evidence mismatch') WHERE EXISTS (SELECT 1 FROM json_tree(NEW.metadata) GROUP BY fullkey HAVING count(*) > 1)
     OR EXISTS (
       SELECT 1 FROM inventory_commands c WHERE c.id = NEW.command_id AND (
         EXISTS (SELECT 1 FROM json_tree(c.result_json) GROUP BY fullkey HAVING count(*) > 1)
         OR EXISTS (SELECT 1 FROM json_tree(c.fingerprint) GROUP BY fullkey HAVING count(*) > 1)
       )
-    ) THEN RAISE(ABORT, 'Inventory FEFO command event evidence mismatch') END;
-  SELECT CASE WHEN NOT EXISTS (
+    );
+  SELECT RAISE(ABORT, 'Inventory FEFO command event evidence mismatch') WHERE NOT EXISTS (
     WITH effect AS (
       SELECT c.id, c.household_id, c.actor_id, c.client_key, c.fingerprint, c.result_json, c.created_at,
         e.key AS effect_key, e.value AS effect
@@ -442,8 +434,8 @@ WHEN NEW.command_id IS NOT NULL
         EXCEPT SELECT fullkey, type, atom FROM json_tree(e.expected_metadata))
       AND NOT EXISTS (SELECT fullkey, type, atom FROM json_tree(e.expected_metadata)
         EXCEPT SELECT fullkey, type, atom FROM json_tree(NEW.metadata))
-  ) THEN RAISE(ABORT, 'Inventory FEFO command event evidence mismatch') END;
-  SELECT CASE WHEN NOT EXISTS (
+  );
+  SELECT RAISE(ABORT, 'Inventory FEFO command event evidence mismatch') WHERE NOT EXISTS (
     SELECT 1 FROM inventory_commands c
     JOIN json_each(c.result_json, '$.effects') e
     JOIN inventory_lots l ON l.legacy_item_id = NEW.inventory_item_id AND l.household_id = c.household_id
@@ -484,5 +476,5 @@ WHEN NEW.command_id IS NOT NULL
       AND i.unit = l.canonical_unit AND i.version = l.legacy_version
       AND i.name IS l.raw_name AND i.ingredient_id IS l.ingredient_id
       AND i.storage IS lower(s.type)
-  ) THEN RAISE(ABORT, 'Inventory FEFO command event evidence mismatch') END;
+  );
 END;

@@ -92,7 +92,7 @@ WHEN EXISTS (SELECT 1 FROM inventory_observations
 END;
 CREATE TRIGGER trg_inventory_observations_immutable_update
 BEFORE UPDATE ON inventory_observations BEGIN
-  SELECT CASE WHEN NEW.id IS NOT OLD.id OR NEW.household_id IS NOT OLD.household_id
+  SELECT RAISE(ABORT, 'Observation evidence is immutable') WHERE NEW.id IS NOT OLD.id OR NEW.household_id IS NOT OLD.household_id
     OR NEW.source_type IS NOT OLD.source_type OR NEW.source_ref IS NOT OLD.source_ref
     OR NEW.fingerprint IS NOT OLD.fingerprint OR NEW.observed_at IS NOT OLD.observed_at
     OR NEW.recorded_at IS NOT OLD.recorded_at OR NEW.ingredient_id IS NOT OLD.ingredient_id
@@ -104,11 +104,9 @@ BEFORE UPDATE ON inventory_observations BEGIN
     OR NEW.opened_at IS NOT OLD.opened_at OR NEW.evidence IS NOT OLD.evidence
     OR NEW.note IS NOT OLD.note
     OR NEW.authoritative_inventory_version IS NOT OLD.authoritative_inventory_version
-    OR NEW.created_at IS NOT OLD.created_at
-  THEN RAISE(ABORT, 'Observation evidence is immutable') END;
-  SELECT CASE WHEN NEW.version IS NOT OLD.version + 1
-    OR NOT (OLD.status = 'OPEN' AND NEW.status IN ('RECONCILED', 'STALE'))
-  THEN RAISE(ABORT, 'Invalid observation lifecycle transition') END;
+    OR NEW.created_at IS NOT OLD.created_at;
+  SELECT RAISE(ABORT, 'Invalid observation lifecycle transition') WHERE NEW.version IS NOT OLD.version + 1
+    OR NOT (OLD.status = 'OPEN' AND NEW.status IN ('RECONCILED', 'STALE'));
 END;
 CREATE TRIGGER trg_inventory_observations_immutable_delete
 BEFORE DELETE ON inventory_observations
@@ -118,12 +116,10 @@ END;
 CREATE TRIGGER trg_inventory_observations_lot_household_insert
 BEFORE INSERT ON inventory_observations
 WHEN NEW.lot_id IS NOT NULL BEGIN
-  SELECT CASE WHEN NOT EXISTS (SELECT 1 FROM inventory_lots
-    WHERE id = NEW.lot_id AND household_id = NEW.household_id)
-  THEN RAISE(ABORT, 'Observation lot household mismatch') END;
-  SELECT CASE WHEN NEW.legacy_item_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM inventory_lots
-    WHERE id = NEW.lot_id AND legacy_item_id = NEW.legacy_item_id)
-  THEN RAISE(ABORT, 'Observation lot mapping mismatch') END;
+  SELECT RAISE(ABORT, 'Observation lot household mismatch') WHERE NOT EXISTS (SELECT 1 FROM inventory_lots
+    WHERE id = NEW.lot_id AND household_id = NEW.household_id);
+  SELECT RAISE(ABORT, 'Observation lot mapping mismatch') WHERE NEW.legacy_item_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM inventory_lots
+    WHERE id = NEW.lot_id AND legacy_item_id = NEW.legacy_item_id);
 END;
 CREATE TRIGGER trg_inventory_observations_lot_household_update
 BEFORE UPDATE ON inventory_observations
@@ -133,9 +129,8 @@ END;
 CREATE TRIGGER trg_inventory_observations_projection_household_insert
 BEFORE INSERT ON inventory_observations
 WHEN NEW.legacy_item_id IS NOT NULL AND NEW.lot_id IS NULL BEGIN
-  SELECT CASE WHEN NOT EXISTS (SELECT 1 FROM inventory_items
-    WHERE id = NEW.legacy_item_id AND household_id = NEW.household_id)
-  THEN RAISE(ABORT, 'Observation projection household mismatch') END;
+  SELECT RAISE(ABORT, 'Observation projection household mismatch') WHERE NOT EXISTS (SELECT 1 FROM inventory_items
+    WHERE id = NEW.legacy_item_id AND household_id = NEW.household_id);
 END;
 
 -- A decision may only be recorded when its observation is still OPEN at the
@@ -143,18 +138,14 @@ END;
 -- batch, so an applied decision always implies the observation state it saw.
 CREATE TRIGGER trg_inventory_reconciliation_decisions_observation_guard
 BEFORE INSERT ON inventory_reconciliation_decisions BEGIN
-  SELECT CASE WHEN NOT EXISTS (SELECT 1 FROM inventory_observations o
+  SELECT RAISE(ABORT, 'Observation is not open at the expected version') WHERE NOT EXISTS (SELECT 1 FROM inventory_observations o
     WHERE o.id = NEW.observation_id AND o.household_id = NEW.household_id
-      AND o.status = 'OPEN' AND o.version = NEW.expected_observation_version)
-  THEN RAISE(ABORT, 'Observation is not open at the expected version') END;
-  SELECT CASE WHEN NEW.command_id IS NOT NULL AND NOT EXISTS (
+      AND o.status = 'OPEN' AND o.version = NEW.expected_observation_version);
+  SELECT RAISE(ABORT, 'Reconciliation decision command household mismatch') WHERE NEW.command_id IS NOT NULL AND NOT EXISTS (
     SELECT 1 FROM inventory_commands c
-    WHERE c.id = NEW.command_id AND c.household_id = NEW.household_id)
-  THEN RAISE(ABORT, 'Reconciliation decision command household mismatch') END;
-  SELECT CASE WHEN NEW.decision_type <> 'DISMISS' AND (NEW.command_id IS NULL OR NEW.result_json IS NULL)
-  THEN RAISE(ABORT, 'A stock-affecting decision requires its command receipt') END;
-  SELECT CASE WHEN NEW.decision_type = 'DISMISS' AND NEW.command_id IS NOT NULL
-  THEN RAISE(ABORT, 'A dismissal decision cannot carry a stock command') END;
+    WHERE c.id = NEW.command_id AND c.household_id = NEW.household_id);
+  SELECT RAISE(ABORT, 'A stock-affecting decision requires its command receipt') WHERE NEW.decision_type <> 'DISMISS' AND (NEW.command_id IS NULL OR NEW.result_json IS NULL);
+  SELECT RAISE(ABORT, 'A dismissal decision cannot carry a stock command') WHERE NEW.decision_type = 'DISMISS' AND NEW.command_id IS NOT NULL;
 END;
 CREATE TRIGGER trg_inventory_reconciliation_decisions_immutable_update
 BEFORE UPDATE ON inventory_reconciliation_decisions BEGIN
