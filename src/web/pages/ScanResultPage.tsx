@@ -11,6 +11,7 @@ import { capturePrivateSession } from '../lib/private-session';
 import { invalidateInventoryDependents } from '../lib/query-invalidation';
 import { presentConfidence, presentDomainError, presentRefetchOutcome } from '../lib/inventory-truth';
 import { ApiError } from '../services/http';
+import { ScanProcessingState } from '../components/scan/ScanProcessingState';
 
 const UNITS: StandardUnit[] = ['piece', 'g', 'kg', 'ml', 'l', 'pack', 'bunch', 'slice'];
 const fieldClass = 'mt-1 w-full min-w-0 h-11 px-3 rounded-lg border border-slate-200 text-sm text-slate-900 bg-white focus:border-takosan-green focus:outline-none';
@@ -205,6 +206,7 @@ const ScanReview: React.FC<{ effectiveScanId: string }> = ({ effectiveScanId }) 
         subtitle={isConfirmed ? 'Bản quét đã xác nhận · Chỉ xem' : 'Kiểm tra & chỉnh sửa trước khi xác nhận'} />
 
       <div className="px-4 pt-3 space-y-4">
+        {scanStatus === 'pending' && <ScanProcessingState stage="analyzing" kind="fridge" compact />}
         {confirmError && <p role="alert" className="text-sm text-red-700">{confirmError}</p>}
         {loadError && <p role="alert" className="text-sm text-red-700">
           {loadError}

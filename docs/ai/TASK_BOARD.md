@@ -1,5 +1,19 @@
 # Frigo / Takosan current task board — 2026-09-15
 
+## Auth/OCR production hardening — 2026-09-16
+
+- [done] Remove credential-less Google fallback and keep production sign-in
+  bound to a real Google Identity Services credential.
+- [done] Make GIS initialization resilient to the async script-load race and
+  show an explicit retry/unavailable state.
+- [done] Add staged OCR pending UX to upload, fridge review and receipt review
+  without changing server status or inventory authority.
+- [done] Add auth and scan-processing regression tests; focused `54/54` and
+  full `3632/3632` Vitest pass.
+- [done] Run lint, typecheck, migration smoke, build and diff check.
+- [next] Run browser auth/OCR smoke against the exact PR head, obtain hosted CI
+  and review, then decide separately whether a production deploy is authorized.
+
 ## Production rollout receipt — COMPLETE
 
 - [done] Production D1 migration applied and verified at `0001`-`0033`.
@@ -830,3 +844,13 @@ rolling `qwen3.7-flash` alias is canary-only.
 - [done] Owner-visible PR #2 exact-head CI run `34968012294` passed all hosted
   validation steps on `8eb6d2b8d54e5e2fd08c0a11acd9f57a1e068b24`.
 - [current gate] PR #2 still needs one independent approving review before merge.
+
+## Auth/OAuth production hardening follow-up (2026-09-16)
+
+- [done] Isolate Safari/Google GIS blank popup to Worker COOP precedence.
+- [done] Use `same-origin-allow-popups` for SPA documents and retain
+  `same-origin` for `/api/*` responses.
+- [done] Add regression coverage; focused `17/17`, lint, typecheck and diff
+  check pass.
+- [blocked] Publish/deploy through the reviewed production path; no deployment
+  or production resource mutation was performed in this task.

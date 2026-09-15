@@ -1,5 +1,27 @@
 # Frigo / Takosan current authority — 2026-09-15
 
+## Auth/OCR production hardening checkpoint — 2026-09-16
+
+Branch `codex/auth-ocr-production-fix` contains a focused production fix for
+the auth/OCR issues observed on the live Takosan screen. The credential-less
+`Đăng nhập nhanh với Google` fallback was removed; Google Identity Services now
+waits for the async SDK, initializes once, and exposes an honest retry state if
+the provider script is unavailable. The backend's strict Google credential and
+audience checks were not changed.
+
+Scan, fridge review and receipt review now share `ScanProcessingState`, showing
+received/queued/analyzing/validating/review stages, elapsed time and a clear
+promise that results appear only after server processing completes. Existing
+`pending`/`processing`/`ready`/`confirmed`/`failed` contracts and polling remain
+unchanged.
+
+Verification on this branch: focused auth/OCR `54/54`; full Vitest `3632/3632`
+across 151 files; `pnpm lint`, `pnpm typecheck`, `pnpm check:migrations`,
+`pnpm build`, and `git diff --check` passed. No production deployment, remote
+migration, secret/configuration change, PayOS change or production resource
+mutation was performed. Next action: browser smoke on the exact branch/PR,
+then hosted CI and maintainer review before any release.
+
 ## Production rollout receipt — 2026-09-15
 
 The previously blocked rolling-schema release was completed with explicit
@@ -1240,3 +1262,21 @@ Playwright 51 passed); certification and freeze not started. Details:
   `8eb6d2b8d54e5e2fd08c0a11acd9f57a1e068b24`; exact hosted CI run
   `34968012294` passed validate, lint, typecheck, Vitest, migration smoke, and
   build. The PR remains blocked only by the required independent approval.
+
+## Google GIS popup blank-page fix (2026-09-16)
+
+- Root cause isolated from the production `/auth` response and Safari symptom:
+  Hono `secureHeaders` was emitting `Cross-Origin-Opener-Policy: same-origin`,
+  which breaks the opener relationship Google Identity Services needs for its
+  popup credential handshake.
+- The Worker now disables Hono's fixed COOP value and applies a path-aware
+  policy after routing: SPA documents use `same-origin-allow-popups`, while
+  `/api/*` responses retain `same-origin` isolation. `public/_headers` matches
+  the SPA policy for static hosting.
+- Regression coverage in `tests/integration/worker-cors.test.mjs` proves both
+  headers and prevents weakening API isolation. Focused auth/COOP tests pass
+  (`17/17`); lint, typecheck and `git diff --check` also pass.
+- This is a code fix only. No Worker deployment, production auth change,
+  secret change, migration, or resource mutation was performed. The fix must
+  still be published through the normal reviewed deployment path before the
+  live `frigo.tungjpstore.net` response changes.

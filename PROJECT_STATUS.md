@@ -1,5 +1,20 @@
 # Frigo Project Status
 
+## Auth/OCR production hardening — CANDIDATE (2026-09-16)
+
+The production screenshot's Google `HTTP 400` was caused by a client-side
+credential-less fallback, not by a backend verification defect. The fallback is
+removed and the official GIS flow now waits for its async script before
+rendering, with an explicit retry state if loading fails. OCR scan/upload and
+both review routes now show staged pending progress and elapsed-time guidance;
+they still wait for authoritative `ready`/`confirmed` before enabling writes.
+
+Branch `codex/auth-ocr-production-fix` verification: focused auth/OCR `54/54`,
+full Vitest `3632/3632` (151 files), lint, typecheck, migration smoke, build and
+diff check all pass. This is a review candidate only: no production deploy,
+remote migration, secret/configuration, PayOS or production data mutation was
+performed. Browser smoke and hosted CI/review remain before release.
+
 ## Production rollout — COMPLETE WITH FOLLOW-UP (2026-09-15)
 
 Production D1 `frigo-db` is migrated through `0033` and the canonical Worker
@@ -328,3 +343,15 @@ exact-head hosted CI; deployment and all payment work remain separate owner acti
   93 file, lint, typecheck, migration replay tới `0023` và build. Live-provider
   smoke, readiness và Worker deployment đã PASS; hosted PR #17 CI `34728606704`
   đã PASS. Cảnh báo duy nhất là `CONFIG_PLUS_GRANT_SECRET_MISSING`.
+
+## Auth/OAuth popup hardening (2026-09-16)
+
+- Safari blank Google sign-in popup was traced to `Cross-Origin-Opener-Policy:
+  same-origin` on the SPA. Hono `secureHeaders` was overwriting the intended
+  path-aware header after downstream middleware completed.
+- Fixed in code so SPA documents emit `same-origin-allow-popups` for Google GIS,
+  while `/api/*` remains `same-origin`; static `_headers` is aligned.
+- Regression `tests/integration/worker-cors.test.mjs` passes (`17/17` focused
+  auth/COOP tests), plus lint, typecheck and diff check. No deployment or
+  production resource mutation has been performed; live verification remains
+  the next release-gated action.
