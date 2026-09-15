@@ -1,6 +1,28 @@
-# Production integration remediation — COMMITTED LOCALLY (2026-09-15)
+# Frigo / Takosan current task board — 2026-09-15
 
-## Current canonical-promotion task — branch published, PR open
+## Canonical consolidation finalization
+
+- [done] Application integration frozen at
+  `5f6853d0ed11415871dca0fd31d4981d60518310`.
+- [done] Independent remediation completed; `e34ed167` is historical and
+  superseded.
+- [done] Canonical promotion branch published as
+  `canonical/5f6853d-promotion-ci`.
+- [done] Main protection enabled: `validate`, one approval, no force-push or
+  branch deletion.
+- [done] PR #2 opened against `main`.
+- [done] Hosted CI run `34968469709` passed on pre-docs head `c8acd0aa`.
+- [in progress] Final documentation reconciliation.
+- [pending] Exact-new-head hosted `CI / validate` PASS.
+- [pending] One independent approving review.
+- [pending] Separate maintainer authorization for history-preserving merge.
+- [blocked / out of scope] Production rollout pending the `0032` compatibility
+  plan; no deploy or remote resource mutation is authorized.
+- [not started] T14.
+
+# Historical production integration remediation — 2026-09-15
+
+## Historical canonical-promotion task — superseded as current authority
 
 - Canonical repository plan: `docs/integration/CANONICAL_REPOSITORY_CONSOLIDATION_PLAN.md`.
 - Production rollout plan (separate): `docs/integration/SAFE_PRODUCTION_MERGER_PLAN.md`.
@@ -770,22 +792,21 @@ rolling `qwen3.7-flash` alias is canary-only.
   benchmark, deploy, remote migration, secret update, PayOS/payment change or
   T08-T12 import. T08-T12 remains pending U01/U02. After normal publication,
   verify the branch SHA and request review before any release action.
-## Canonical promotion blocker (2026-09-15)
+## Historical canonical promotion attempts (superseded by PR #2)
 
-- [blocked] PR #1 exact-head hosted CI: GitHub reports no checks and rejects
+- [historical] PR #1 exact-head hosted CI: GitHub reported no checks and rejected
   workflow dispatch because Actions is disabled for the current user.
-- [blocked] Main protection/admin review: current CLI identity has push only;
+- [historical] Main protection/admin review: the earlier CLI identity had push only;
   branch protection endpoint is unavailable (`404`) and no rulesets were
   observed.
 - [done] Re-pushed promotion head after an empty, tree-neutral retrigger commit
   `ae1689c1f5525262da3478137b402692e4e4ed45`.
-- [next] Repository administrator enables Actions for the actor/repository and
-  confirms required branch protection; then rerun exact-head CI and review PR
-  #1 before any history-preserving merge.
+- [resolved] Repository owner `vn-dlo` authenticated, Actions enabled, and main
+  protection configured; PR #2 replaced the stale PR #1 attempt.
 - [done] Authenticated `gh` as `vn-dlo`; confirmed repository admin/maintain
   permission and enabled main protection with required `validate` status.
-- [blocked] Exact-head CI remains absent after owner-authored tree-neutral
+- [historical] Exact-head CI remained absent after owner-authored tree-neutral
   trigger `6ec7ff08ef258ef2ca95fb5d24b581b939ef1c92`.
 - [done] Owner-visible PR #2 exact-head CI run `34968012294` passed all hosted
   validation steps on `8eb6d2b8d54e5e2fd08c0a11acd9f57a1e068b24`.
-- [blocked] PR #2 still needs one independent approving review before merge.
+- [current gate] PR #2 still needs one independent approving review before merge.

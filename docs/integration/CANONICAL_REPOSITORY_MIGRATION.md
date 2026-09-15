@@ -1,37 +1,54 @@
 # Canonical repository migration record
 
-Status: **PROMOTION BRANCH PUBLISHED; PR OPEN; MAIN NOT MERGED**
-
-This record documents the prepared promotion state. It is not evidence of a
-main merge, branch-protection change or deployment. The execution plan is
-`CANONICAL_REPOSITORY_CONSOLIDATION_PLAN.md`; production rollout remains a
-separate task governed by `SAFE_PRODUCTION_MERGER_PLAN.md`.
-
-## Intended authority
-
-- Old development source: `vn-dlo/Frigo-dev` main at `d1b06732f8a80db4e77986df31ff28d9f04641fa`
-- Legacy production source: `Tungjpstore/Frigo` at `05423f2ad675006a4c7913e696f1979b3fcaae59`
-- Certified application freeze: `5f6853d0ed11415871dca0fd31d4981d60518310`
-- Previous published integration docs head: `f26003b6bd9f32f8cddda4119d0ced2f532c9017`
-- New canonical repository: `vn-dlo/Frigo-dev` (repository ID `1368281478`)
-- Intended promotion branch: `canonical/5f6853d-promotion`
-
-## Required execution receipt
-
-Populate only after independently verifying each item:
+## Current authoritative receipt
 
 ```text
+CANONICAL_REPOSITORY=vn-dlo/Frigo-dev
 CANONICAL_REPO_ID=1368281478
 CANONICAL_BASE=d1b06732f8a80db4e77986df31ff28d9f04641fa
+APPLICATION_FREEZE=5f6853d0ed11415871dca0fd31d4981d60518310
+HISTORICAL_INTEGRATION_CANDIDATE=e34ed16777166407acf67b2c76d733d89c7d64ca SUPERSEDED
 CANONICAL_REMOTE=canonical-frigo-dev
-PROMOTION_BRANCH_SHA=f48e830ed9cdde2214ad5b4dbd58b8bc30c06106
+PROMOTION_BRANCH=canonical/5f6853d-promotion-ci
 ARCHIVE_BRANCH_SHA=d1b06732f8a80db4e77986df31ff28d9f04641fa
-CANONICAL_DOCS_HEAD=f48e830ed9cdde2214ad5b4dbd58b8bc30c06106
-PR_NUMBER=1
-HOSTED_CI_RESULT=NOT REPORTED
-BRANCH_PROTECTION_RESULT=REQUIRES MANUAL ADMIN ACTION
+PR_NUMBER=2
+PR_TITLE=Promote certified Frigo/Takosan integration to canonical main
+CURRENT_PRE_DOCS_HEAD=c8acd0aa5ae746aeed628c6ca730ac26d71c3b4b
+PREVIOUS_HOSTED_CI=34968469709 validate PASS
+BRANCH_PROTECTION=ENABLED
+REQUIRED_APPROVALS=1
+REQUIRED_STATUS=validate
+FORCE_PUSH=BLOCKED
+BRANCH_DELETE=BLOCKED
 FINAL_CANONICAL_MAIN=UNCHANGED d1b06732f8a80db4e77986df31ff28d9f04641fa
+MERGED=NO
+PRODUCTION_DEPLOYED=NO
+REMOTE_PRODUCTION_MIGRATIONS=NO
+T14_STARTED=NO
 ```
+
+## Canonical repository status
+
+**READY FOR INDEPENDENT REVIEW / MERGE.** Application integration is complete
+at immutable freeze `5f6853d0ed11415871dca0fd31ff28d9f04641fa` and promotion
+PR #2 is open. The docs head created after this receipt must receive an exact-
+head `CI / validate` PASS, followed by one independent approving review.
+
+## Production deployment status
+
+**NOT AUTHORIZED / NOT READY FOR DIRECT ROLLOUT.** Repository promotion does not
+certify production deployment. The rolling-schema compatibility issue around
+canonical migration `0032` remains governed by
+`SAFE_PRODUCTION_MERGER_PLAN.md`. This task authorizes no deployment, remote
+D1 migration, KV/R2/queue mutation, PayOS change, secret change or DNS change.
+
+## Historical / superseded state
+
+- `e34ed16777166407acf67b2c76d733d89c7d64ca` was the earlier integration
+  candidate and is superseded by `5f6853d0ed11415871dca0fd31d4981d60518310`.
+- `231d1e76e0320133e047624eea2be546ff779bd6` was a prior published docs head.
+- PR #1 and its missing-CI/admin-control notes were a prior attempt; PR #1 is
+  closed and PR #2 is the current promotion PR.
 
 ## Invariants
 

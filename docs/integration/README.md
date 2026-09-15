@@ -1,22 +1,25 @@
-# Production integration candidate
+# Frigo / Takosan integration records
 
 ## Current canonical-consolidation status — 2026-09-15
 
-The authoritative repository-promotion plan is
-[`CANONICAL_REPOSITORY_CONSOLIDATION_PLAN.md`](CANONICAL_REPOSITORY_CONSOLIDATION_PLAN.md).
-It now includes the independent strengths/weaknesses matrix for production and
-Frigo-dev, the complete upgrade inventory, the `0023` collision decision and
-the exact gaps that remain after composition. The target canonical repository is
-`vn-dlo/Frigo-dev`; no push, PR, merge or deployment is authorized by this
-planning update.
+**CANONICAL REPOSITORY: READY FOR INDEPENDENT REVIEW / MERGE.** The target is
+`vn-dlo/Frigo-dev` (ID `1368281478`), application freeze `5f6853d`, and current
+promotion PR #2. Pre-docs head `c8acd0aa` passed hosted run `34968469709`;
+branch protection requires exact-head `validate` plus one independent approval.
+No merge has occurred.
 
 [`SAFE_PRODUCTION_MERGER_PLAN.md`](SAFE_PRODUCTION_MERGER_PLAN.md) remains the
 separate production rollout plan. Its pre/post-`0032` compatibility blocker is
 still real and must be solved before remote bridge migrations or production
-deployment, but it does not justify re-integrating or dropping certified Git
-lineage during repository promotion. Historical production tips `fafe1cc`,
-`2052932` and `089c406` must not be cherry-picked when their adapted behavior is
-already in production `main`; Qwen `da41686` remains the explicit missing source.
+deployment. **PRODUCTION DEPLOYMENT: NOT AUTHORIZED / NOT READY FOR DIRECT
+ROLLOUT.** Repository readiness does not authorize deployment, remote D1/KV/R2/
+queue changes, PayOS, secrets, DNS or T14.
+
+The authoritative repository-promotion plan is
+[`CANONICAL_REPOSITORY_CONSOLIDATION_PLAN.md`](CANONICAL_REPOSITORY_CONSOLIDATION_PLAN.md).
+Historical production tips `fafe1cc`, `2052932` and `089c406` are already
+represented and must not be cherry-picked again; Qwen `da41686` remains
+preserved in the certified lineage.
 
 ## Historical independent-review remediation — 2026-09-15
 

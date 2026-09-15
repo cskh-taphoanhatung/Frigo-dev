@@ -1,8 +1,22 @@
 # Integration handoff
 
-## Full canonical-consolidation audit handoff — 2026-09-15
+## Current canonical consolidation handoff — 2026-09-15
 
-Status: **PLAN COMPLETE; CURRENT CANDIDATE NOT PRODUCTION-READY**.
+**CANONICAL REPOSITORY STATUS: READY FOR INDEPENDENT REVIEW / MERGE.** Current
+repository is `vn-dlo/Frigo-dev` (ID `1368281478`), application freeze is
+`5f6853d0ed11415871dca0fd31d4981d60518310`, and PR #2 targets `main` from
+`canonical/5f6853d-promotion-ci`. Pre-docs head
+`c8acd0aa5ae746aeed628c6ca730ac26d71c3b4b` passed hosted CI run `34968469709`.
+After this docs update, require exact-new-head `validate` PASS, one independent
+approval, then separate maintainer authorization for history-preserving merge.
+
+**PRODUCTION DEPLOYMENT STATUS: NOT AUTHORIZED / NOT READY FOR DIRECT ROLLOUT.**
+Repository promotion does not solve the rolling-schema compatibility issue
+around canonical migration `0032`. Do not modify application code, merge,
+squash, rebase, deploy, migrate production, touch D1/KV/R2/queues/PayOS/secrets/
+DNS, or start T14 in this task. `e34ed167` is historical and superseded.
+
+## Historical canonical-consolidation audit handoff — superseded
 
 The authoritative repository-promotion plan is
 `CANONICAL_REPOSITORY_CONSOLIDATION_PLAN.md`; it contains the independent

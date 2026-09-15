@@ -1,6 +1,29 @@
-# Production integration handoff — 2026-09-15
+# Frigo / Takosan current handoff — 2026-09-15
 
-## Current safe-merger planning handoff
+## Current canonical repository handoff
+
+- Repository: `vn-dlo/Frigo-dev` (ID `1368281478`).
+- Application freeze: `5f6853d0ed11415871dca0fd31d4981d60518310`.
+- Historical superseded candidate: `e34ed16777166407acf67b2c76d733d89c7d64ca`.
+- Current PR: #2, base `main`, head `canonical/5f6853d-promotion-ci`.
+- Current pre-docs head: `c8acd0aa5ae746aeed628c6ca730ac26d71c3b4b`.
+- Previous exact-head CI: run `34968469709`, `validate` PASS.
+- Protection: `validate` required, one independent approval required,
+  force-push blocked, branch deletion blocked.
+
+Current required action: wait for exact-new-head `validate` PASS, then obtain
+one independent approving review. A maintainer may authorize a separate,
+history-preserving merge only after those gates pass. Do not modify application
+code, squash, rebase, deploy, migrate production, touch production resources or
+start T14.
+
+Production deployment remains a separate task and is not authorized. The
+rolling-schema compatibility issue around canonical migration `0032` must be
+resolved through the production rollout plan before any direct rollout.
+
+# Historical production integration handoff — 2026-09-15
+
+## Historical safe-merger planning handoff — superseded as current authority
 
 Status: **PROMOTION BRANCH PUBLISHED; PR OPEN; MERGE/RELEASE BLOCKED ON HOSTED CI, ADMIN CONTROLS AND ROLLING COMPATIBILITY**.
 

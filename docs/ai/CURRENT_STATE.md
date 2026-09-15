@@ -1,6 +1,32 @@
-# Production integration candidate — 2026-09-15
+# Frigo / Takosan current authority — 2026-09-15
 
-## Current merger-plan audit
+## Canonical repository consolidation
+
+**READY FOR INDEPENDENT REVIEW / MERGE.** The canonical repository is
+`vn-dlo/Frigo-dev` (ID `1368281478`). The immutable application freeze is
+`5f6853d0ed11415871dca0fd31d4981d60518310`; the earlier `e34ed167` candidate
+is historical and superseded. PR #2 targets `main` from
+`canonical/5f6853d-promotion-ci`. Its pre-docs head is
+`c8acd0aa5ae746aeed628c6ca730ac26d71c3b4b`, with hosted CI run `34968469709`
+passing `validate`.
+
+Branch protection is enabled: `validate` and one independent approval are
+required, force-push and branch deletion are blocked, and no merge has occurred.
+After this docs reconciliation, wait for `CI / validate` to pass on the exact new
+head, then obtain one independent approval and separate maintainer merge
+authorization.
+
+## Production deployment status
+
+**NOT AUTHORIZED / NOT READY FOR DIRECT ROLLOUT.** Canonical repository
+readiness is separate from deployment readiness. The rolling-schema
+compatibility concern around canonical migration `0032` remains unresolved for
+production sequencing. No deploy, remote D1 migration, KV/R2/queue mutation,
+PayOS change, secret/DNS change or T14 work is authorized here.
+
+# Historical production integration evidence — 2026-09-15
+
+## Historical merger-plan audit — superseded as current authority
 
 **NOT READY TO MERGE OR DEPLOY.** A fresh two-repository/branch/migration audit
 is recorded in `docs/integration/CANONICAL_REPOSITORY_CONSOLIDATION_PLAN.md`;
