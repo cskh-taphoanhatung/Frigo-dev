@@ -2,7 +2,7 @@
 
 ## Current safe-merger planning handoff
 
-Status: **AUDIT COMPLETE; IMPLEMENTATION/RELEASE BLOCKED ON ROLLING COMPATIBILITY**.
+Status: **PROMOTION BRANCH PUBLISHED; PR OPEN; MERGE/RELEASE BLOCKED ON HOSTED CI, ADMIN CONTROLS AND ROLLING COMPATIBILITY**.
 
 The decision-complete repository-promotion plan is
 `docs/integration/CANONICAL_REPOSITORY_CONSOLIDATION_PLAN.md`; production
@@ -14,6 +14,14 @@ frontend and platform upgrades through `d270cd4`/`57c88c5` and `3f33d11`, so
 their historical branch tips must not be reapplied.
 Qwen source `da41686` is not in production `main`; it is 15 commits ahead and
 must remain an explicit frozen merge source.
+
+Promotion receipt: branch `canonical/5f6853d-promotion` is
+`f48e830ed9cdde2214ad5b4dbd58b8bc30c06106`; archive pointer
+`archive/pre-canonical-consolidation` is `d1b06732f8a80db4e77986df31ff28d9f04641fa`;
+PR #1 targets `main`. Local frozen install, lint, typecheck, migration smoke,
+build, Vitest `3630/3630`, D1 `92/92`, browser `60/60`, and diff check passed.
+Hosted exact-head CI has not reported. Branch protection is 404 and current
+account is not admin. Do not merge.
 
 Migration audit found exactly one semantic numbering collision: production
 `0023_scan_request_fingerprint.sql` (`777f4b6f...`) versus dev

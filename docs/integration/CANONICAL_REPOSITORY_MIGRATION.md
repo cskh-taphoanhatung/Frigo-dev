@@ -1,10 +1,9 @@
 # Canonical repository migration record
 
-Status: **TEMPLATE - NOT EXECUTED**
+Status: **PROMOTION BRANCH PUBLISHED; PR OPEN; MAIN NOT MERGED**
 
-This record is reserved for the actual repository-authority transition. It must
-not be treated as evidence that a push, PR, merge, branch-protection change or
-deployment has occurred. The execution plan is
+This record documents the prepared promotion state. It is not evidence of a
+main merge, branch-protection change or deployment. The execution plan is
 `CANONICAL_REPOSITORY_CONSOLIDATION_PLAN.md`; production rollout remains a
 separate task governed by `SAFE_PRODUCTION_MERGER_PLAN.md`.
 
@@ -22,16 +21,16 @@ separate task governed by `SAFE_PRODUCTION_MERGER_PLAN.md`.
 Populate only after independently verifying each item:
 
 ```text
-CANONICAL_REPO_ID=
-CANONICAL_BASE=
-CANONICAL_REMOTE=
-PROMOTION_BRANCH_SHA=
-ARCHIVE_BRANCH_SHA=
-CANONICAL_DOCS_HEAD=
-PR_NUMBER=
-HOSTED_CI_RESULT=
-BRANCH_PROTECTION_RESULT=
-FINAL_CANONICAL_MAIN=
+CANONICAL_REPO_ID=1368281478
+CANONICAL_BASE=d1b06732f8a80db4e77986df31ff28d9f04641fa
+CANONICAL_REMOTE=canonical-frigo-dev
+PROMOTION_BRANCH_SHA=f48e830ed9cdde2214ad5b4dbd58b8bc30c06106
+ARCHIVE_BRANCH_SHA=d1b06732f8a80db4e77986df31ff28d9f04641fa
+CANONICAL_DOCS_HEAD=f48e830ed9cdde2214ad5b4dbd58b8bc30c06106
+PR_NUMBER=1
+HOSTED_CI_RESULT=NOT REPORTED
+BRANCH_PROTECTION_RESULT=REQUIRES MANUAL ADMIN ACTION
+FINAL_CANONICAL_MAIN=UNCHANGED d1b06732f8a80db4e77986df31ff28d9f04641fa
 ```
 
 ## Invariants

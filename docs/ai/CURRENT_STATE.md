@@ -28,14 +28,19 @@ bridge, and Takosan brand-only trains; each begins at the prior deployed head.
 Current `f26003b` is not production-deployable as-is; canonical repository
 promotion still requires the exact lineage, docs-only and hosted-CI gates.
 Repository access remains production
-`ADMIN` and Frigo-dev `WRITE`; no merge, push, deploy or remote mutation occurred.
+`ADMIN` and Frigo-dev `WRITE`. Promotion branch `canonical/5f6853d-promotion`
+was published at `f48e830ed9cdde2214ad5b4dbd58b8bc30c06106`, archive pointer
+`archive/pre-canonical-consolidation` preserves `d1b06732`, and PR #1 is open.
+No merge, deploy or remote database/resource mutation occurred.
 
 Fresh planning-audit checks: repository/API metadata, heads/merge-base/ancestry,
 source diff inventories, all-ref migration variants, bridge blob equality,
 production/integrated scan SQL inspection, and two real SQLite ordering probes.
-Both probes exited `1` with the expected trigger/missing-column failures;
-`git diff --check` passes. No application suite was rerun because only planning
-documents changed in this audit continuation.
+Both probes exited `1` with the expected trigger/missing-column failures.
+Promotion validation then passed: frozen install, lint, typecheck, migration
+smoke, build, `git diff --check`, full Vitest `3630/3630` (149 files), local D1
+`92/92` (5 files), and browser `60/60` serial at 360/390/430. Hosted PR checks
+have not started/reported yet; branch protection API remains 404.
 
 ## Historical remediation state — superseded by the merger-plan audit above
 

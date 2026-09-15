@@ -1,9 +1,12 @@
 # Production integration remediation — COMMITTED LOCALLY (2026-09-15)
 
-## Current merger-plan task — audit complete, implementation not started
+## Current canonical-promotion task — branch published, PR open
 
 - Canonical repository plan: `docs/integration/CANONICAL_REPOSITORY_CONSOLIDATION_PLAN.md`.
 - Production rollout plan (separate): `docs/integration/SAFE_PRODUCTION_MERGER_PLAN.md`.
+- Promotion branch: `canonical/5f6853d-promotion` at `f48e830`.
+- Archive pointer: `archive/pre-canonical-consolidation` at `d1b06732`.
+- PR: `vn-dlo/Frigo-dev#1`, base `main`, head `canonical/5f6853d-promotion`.
 - Production frontend/platform branches are represented by later production
   lineage; do not cherry-pick `fafe1cc`, `2052932` or `089c406` again.
 - Qwen source `da41686` is not in production `main`; integrate it only after the
@@ -22,6 +25,9 @@
 - Fresh audit: source/ancestry/path/migration hashes reverified; both unsafe
   schema orders reproduced with SQLite; docs-only `git diff --check` PASS.
   Full application gates were not rerun because no code/schema changed.
+- Hosted exact-head CI has not reported; branch protection is unavailable to the
+  current `WRITE` account. Do not merge until hosted CI and admin protection/
+  no-deploy controls are reviewed.
 - No merge, deploy, remote D1, production resource or PayOS action authorized.
 
 ## Historical candidate remediation — superseded as next-action authority
