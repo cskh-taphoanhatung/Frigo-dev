@@ -1276,7 +1276,9 @@ Playwright 51 passed); certification and freeze not started. Details:
 - Regression coverage in `tests/integration/worker-cors.test.mjs` proves both
   headers and prevents weakening API isolation. Focused auth/COOP tests pass
   (`17/17`); lint, typecheck and `git diff --check` also pass.
-- This is a code fix only. No Worker deployment, production auth change,
-  secret change, migration, or resource mutation was performed. The fix must
-  still be published through the normal reviewed deployment path before the
-  live `frigo.tungjpstore.net` response changes.
+- Published through PR #9 after exact-head hosted CI passed. Worker version
+  `20bc1f35-6ffe-4085-ba79-d54a0b53da71` now serves 100% of the custom domain.
+  Post-deploy smoke passed; `/auth` returns `same-origin-allow-popups`, API
+  responses retain `same-origin`, and readiness reports database/queue/AI/email
+  healthy with only the pre-existing `CONFIG_PLUS_GRANT_SECRET_MISSING`
+  warning. No migration, secret, PayOS, DNS, KV, R2 or queue mutation occurred.

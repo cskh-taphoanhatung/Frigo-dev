@@ -852,5 +852,8 @@ rolling `qwen3.7-flash` alias is canary-only.
   `same-origin` for `/api/*` responses.
 - [done] Add regression coverage; focused `17/17`, lint, typecheck and diff
   check pass.
-- [blocked] Publish/deploy through the reviewed production path; no deployment
-  or production resource mutation was performed in this task.
+- [done] Published through PR #9 and deployed Worker version
+  `20bc1f35-6ffe-4085-ba79-d54a0b53da71` to 100% of the custom domain.
+- [done] Post-deploy smoke, health/readiness and SPA/API COOP header checks
+  pass. Only the pre-existing `CONFIG_PLUS_GRANT_SECRET_MISSING` warning
+  remains.
