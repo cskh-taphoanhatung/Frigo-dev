@@ -1543,3 +1543,17 @@ T13R-B truth-presentation remediation checkpointed at WIP `7e68e3b` on
 status, test evidence, and next step: `docs/ai/inventory-truth/t13/T13R_B_REMEDIATION.md`.
 Findings P2-1/P2-4/P2-5/P2-6 = FIXED (test-backed, NOT certified). No
 freeze created. Main unchanged. See T13R_B_REMEDIATION.md before continuing.
+## Canonical promotion CLI handoff (2026-09-15)
+
+The canonical promotion remains intentionally unmerged. GitHub CLI verified
+`vn-dlo/Frigo-dev`, PR #1, base `main`, and promotion head
+`ae1689c1f5525262da3478137b402692e4e4ed45`. The head differs from the prior
+receipt only by an empty commit used to request a fresh PR event; application,
+migration, and documentation trees are unchanged by that commit.
+
+The exact hosted CI gate is unresolved: `gh run list` and PR checks are empty,
+and `gh workflow run` returns HTTP 422 `Actions has been disabled for this
+user`. The CLI account is `Tungjpstore` with push but not admin/maintain access;
+branch protection is not configured/visible. Do not merge or deploy. An admin
+must enable Actions and confirm main protection, then rerun checks against the
+exact head and explicitly authorize a history-preserving merge.

@@ -1157,3 +1157,17 @@ T13R-B truthful presentation + conflict remediation code/tests complete and
 green on executed checks (typecheck, t13r-b-presentation 12/12, full
 Playwright 51 passed); certification and freeze not started. Details:
 `docs/ai/inventory-truth/t13/T13R_B_REMEDIATION.md`.
+## Canonical promotion CLI checkpoint (2026-09-15)
+
+- GitHub CLI identity: `Tungjpstore`; target `vn-dlo/Frigo-dev` (repository ID
+  `1368281478`) is reachable with push access, but the account has no admin or
+  maintain permission.
+- PR #1 remains open from `canonical/5f6853d-promotion`. The promotion head was
+  advanced by one empty commit, `ae1689c1f5525262da3478137b402692e4e4ed45`,
+  solely to retrigger pull-request validation; its tree is unchanged.
+- Exact hosted CI is still absent: no workflow run, check run, or status exists
+  for the promotion head. Manual dispatch was rejected by GitHub with HTTP 422:
+  `Actions has been disabled for this user`.
+- No merge, deployment, remote migration, production KV/R2/D1 mutation, or
+  payment/PayOS change was performed. Promotion remains blocked pending hosted
+  CI and maintainer/admin authorization.

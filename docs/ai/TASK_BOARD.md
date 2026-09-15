@@ -770,3 +770,15 @@ rolling `qwen3.7-flash` alias is canary-only.
   benchmark, deploy, remote migration, secret update, PayOS/payment change or
   T08-T12 import. T08-T12 remains pending U01/U02. After normal publication,
   verify the branch SHA and request review before any release action.
+## Canonical promotion blocker (2026-09-15)
+
+- [blocked] PR #1 exact-head hosted CI: GitHub reports no checks and rejects
+  workflow dispatch because Actions is disabled for the current user.
+- [blocked] Main protection/admin review: current CLI identity has push only;
+  branch protection endpoint is unavailable (`404`) and no rulesets were
+  observed.
+- [done] Re-pushed promotion head after an empty, tree-neutral retrigger commit
+  `ae1689c1f5525262da3478137b402692e4e4ed45`.
+- [next] Repository administrator enables Actions for the actor/repository and
+  confirms required branch protection; then rerun exact-head CI and review PR
+  #1 before any history-preserving merge.
