@@ -4,8 +4,11 @@
 dependency, test or production change was made. This document is the only
 artifact (plus the docs-only state/handoff updates listed in §16).
 
-**Audit branch:** `audit/t14a-production-recipe-truth` created from exact
-`origin/main` `345cecf388321a00c96be387744a10e8c98bd9ac`.
+**Audit branch:** `audit/t14a-production-recipe-truth` created locally from
+exact `origin/main` `345cecf388321a00c96be387744a10e8c98bd9ac`. The
+platform's brokered Git path only publishes the thread branch, so the identical
+commit is published remotely as `hoplite/koroneia-838b0ccc` (same tree, same
+parent `345cecf`; no history rewrite).
 
 ---
 

@@ -2,9 +2,10 @@
 
 ## T14A production recipe truth audit handoff — 2026-09-15
 
-- Task: T14A audit-only. Branch `audit/t14a-production-recipe-truth` from
-  `origin/main` `345cecf388321a00c96be387744a10e8c98bd9ac`; repository
-  `vn-dlo/Frigo-dev` (ID `1368281478`).
+- Task: T14A audit-only. Local branch `audit/t14a-production-recipe-truth`
+  from `origin/main` `345cecf388321a00c96be387744a10e8c98bd9ac`, published
+  remotely as thread branch `hoplite/koroneia-838b0ccc` (identical commit);
+  repository `vn-dlo/Frigo-dev` (ID `1368281478`).
 - Output: `docs/ai/recipe-catalog/T14A_PRODUCTION_RECIPE_TRUTH_AUDIT.md` plus
   this docs-only state/board/handoff update. No application, migration,
   config, test, dependency or production change.
