@@ -2,7 +2,7 @@
 
 ## Current T14 integration refresh — 2026-09-15 UTC
 
-- [done] Fresh canonical main `055913596acd3bef049aa0eb007bde2873a658a9`
+- [done] Fresh canonical main `fbd14c771070e1b5594532648d79fb60c891747d`
   verified in `vn-clo/Frigo-dev` (ID `1368281478`).
 - [done] PR #9 Auth/OCR production merge `911db7f` and PR #10 docs-only
   receipt preserved; deployed Worker recorded as `20bc1f35-6ffe-4085-ba79-d54a0b53da71`.
@@ -10,9 +10,12 @@
 - [done] T14A docs semantically reconciled on current main; fresh frozen install,
   lint, typecheck, test (151 files / 3633 tests), migration smoke, build and diff
   check pass; application diff empty and all 33 migration hashes unchanged.
-- [in progress] T14A exact-head hosted CI and protected merge required.
-- [accepted, not integrated] T14B-A safety foundation from PR #8; bring only
-  its approved delta onto the resulting new main after T14A lands.
+- [done] T14A exact-head hosted run `35034318031` passed on `e916d292`;
+  PR #11 merged normally as `fbd14c771070e1b5594532648d79fb60c891747d`.
+- [in progress] Accepted T14B-A delta from PR #8 reconciled on the resulting
+  new main; fresh local and exact-head hosted gates required before merge.
+- [done] Preserve Auth/OCR ADR-022; renumber imported recipe ADR to ADR-023
+  without changing its accepted architecture.
 - [not started] T14B-B. No migration 0034, data parity write or authority switch.
 - [deferred] Media to T14C; runtime remains static `ALL_RECIPES` (71/59/12).
 - [OPS blocked] Deploy `35031212139`: release success, staging missing-token

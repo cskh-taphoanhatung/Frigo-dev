@@ -3,7 +3,7 @@
 ## Current T14 integration refresh — 2026-09-15 UTC
 
 Canonical repository: `vn-clo/Frigo-dev` (ID `1368281478`). Fresh main:
-`055913596acd3bef049aa0eb007bde2873a658a9`; not the historical T14 audit base
+`fbd14c771070e1b5594532648d79fb60c891747d`; not the historical T14 audit base
 `345cecf`. PR #9 merged as `911db7fdddcd60ea1e3f3c17b4aed3f4b922bda5`;
 PR #10 is its docs-only rollout receipt. Recorded production Worker version
 `20bc1f35-6ffe-4085-ba79-d54a0b53da71` serves the custom domain at 100%.
@@ -14,8 +14,11 @@ T14A audit knowledge is reconciled in
 `recipe-catalog/T14A_PRODUCTION_RECIPE_TRUTH_AUDIT.md`; recipe architecture and
 migrations were unchanged by PR #9/#10. Fresh frozen install, lint, typecheck,
 test (151 files / 3633 tests), migration smoke, build and diff check passed;
-all 33 migration hashes match. T14A awaits hosted CI and protected merge.
-Accepted T14B-A source PR #8 is not yet on current main;
+all 33 migration hashes match. T14A merged through PR #11 after exact-head
+`e916d292d391ba999bcdd96bfdfec98e6b598678` passed hosted run `35034318031`.
+Accepted T14B-A source PR #8 is now reconciled on a fresh branch from that main,
+pending fresh local/hosted validation and protected merge. Its functional blobs
+are unchanged; the recipe ADR is renumbered to ADR-023 to preserve Auth ADR-022.
 **T14B-B NOT STARTED**. Authority remains static `ALL_RECIPES` (71 = 59 VN +
 12 global); D1 remains shadow, media is deferred to T14C, no 0034 is created.
 
@@ -23,6 +26,8 @@ Starting-main CI `35030996228` passed. Deploy `35031212139` has release success,
 staging failure from missing `CLOUDFLARE_API_TOKEN`, production skipped. This is
 an OPS/RELEASE blocker, not T14. PR #4 remains open; **CLOSE_ARCHIVE** is the
 recommended disposition, not merge. No deployment or production mutation here.
+The RuntimeRecipe contract, completeness/FK-stub classifier, read-only D1 content
+projection, drift audit and hardened seed renderer remain non-authoritative.
 Exact checks, status and next action: `recipe-catalog/T14_INTEGRATION_REFRESH.md`.
 
 # Historical checkpoints — superseded as current-state and next-action authority
