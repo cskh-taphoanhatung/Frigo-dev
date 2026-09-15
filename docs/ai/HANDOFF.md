@@ -1,5 +1,30 @@
 # Frigo / Takosan current handoff — 2026-09-15
 
+## T14B-A recipe catalog safety foundation handoff — 2026-09-15
+
+- Branch: `hoplite/koroneia-838b0ccc--t14b-a-catalog-safety` (local alias
+  `feat/t14b-a-recipe-catalog-safety-foundation`), `T14B_A_START_SHA=769e0532fadc95018bc1aedc01a36b396b91a974`
+  (T14A PR #7 head; application tree identical to `main` `345cecf` and to deployed `e6b9195`).
+- Preconditions: repo ID `1368281478`; PR #7 open/draft, `validate` SUCCESS, unmerged (docs-only);
+  PR #4 open, historical compatibility bridge, not a base — recommend close/archive.
+- Code: `packages/recipes/src/{seed-render,runtime-recipe,catalog-entry,catalog-drift}.ts`,
+  `packages/db/src/recipe-content.ts`, index re-exports; `scripts/render-recipe-seed.mjs`;
+  `package.json` scripts `recipe:seed:check`, `recipe:seed:render`.
+- Tests: removed `tests/unit/generate-migration.test.ts`; added
+  `tests/unit/recipe-seed-readonly.test.ts` (5), `tests/unit/runtime-recipe-contract.test.ts` (5),
+  `tests/integration/recipe-catalog-safety.test.ts` (6).
+- Docs: `docs/ai/recipe-catalog/T14B_A_CATALOG_SAFETY_FOUNDATION.md`, ADR-022, state/board/handoff.
+- Verification (fresh on `62af106`, Node 24.19.0): `pnpm typecheck` 0; `pnpm lint` 0;
+  `pnpm check:migrations` → `migration-smoke=ok`; `pnpm build` 0; full
+  `NODE_OPTIONS=--no-experimental-webstorage npx vitest run` → **151 files / 3644 tests passed**
+  (was 149/3630: −1 generator file/−2 tests, +3 files/+16 tests); focused new suites 3 files / 16
+  passed; `pnpm recipe:seed:check` → `recipe-seed-check=ok (59 recipes match 0006)`;
+  `recipe:seed:render --out migrations/evil.sql` refused (exit 3); render to `.artifacts/` equals
+  committed 0006; per-file SHA-256 of `migrations/*.sql` identical before/after all gates (33 files,
+  last `0033`, no `0034`); `git status` after full test run shows only intentional docs edits;
+  `git diff --check` clean.
+- Next action: maintainer review; do not merge PR #4; T14B-B per §7 of the foundation doc.
+
 ## T14A production recipe truth audit handoff — 2026-09-15
 
 - Task: T14A audit-only. Local branch `audit/t14a-production-recipe-truth`

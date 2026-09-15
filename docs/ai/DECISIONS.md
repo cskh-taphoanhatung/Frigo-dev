@@ -1,5 +1,39 @@
 # Architecture Decisions
 
+## ADR-022 — Runtime recipe contract, catalog completeness and immutable seeds (T14B-A)
+
+**Status:** Accepted 2026-09-15 (T14B-A safety foundation; no runtime change)
+
+**Decision:**
+1. The foundation `RecipeDefinition` is NOT by itself the production runtime recipe
+   DTO. The complete runtime shape is formalized as `RuntimeRecipe`
+   (`packages/recipes/src/runtime-recipe.ts`), structurally identical to the legacy
+   `Recipe`; `RUNTIME_ONLY_FIELDS` (`category`, `region`, `imageUrl`, `nutrition`,
+   `steps`, `tags`) names exactly what the foundation contract omits.
+2. Any future D1-backed reader must reproduce `RuntimeRecipe` losslessly for every
+   current recipe; lossy adaptation is allowed only into the foundation catalog for
+   validation/planning.
+3. A D1 `recipes` row is not automatically a catalog entry. `classifyCatalogEntry`
+   yields `complete` / `incomplete` (with `fkStub`) / `rejected`; the 7-column
+   cooking/shopping FK anchor shape is always `incomplete`+`fkStub` and is excluded
+   from catalog reads and never auto-repaired.
+4. Runtime recipe authority remains static `ALL_RECIPES` throughout T14B-A/B; D1 is
+   shadow data audited by `auditCatalogDrift`.
+5. Applied migrations are immutable. Normal tests (`pnpm test`, `pnpm check`) may
+   never write tracked source or `migrations/`; seed regeneration is an explicit,
+   maintenance-only command that refuses to write inside `migrations/`.
+6. Recipe media is a separate concern deferred to T14C; `image_url` is not a
+   completeness criterion and the runtime contract keeps `imageUrl: string`.
+
+**Rationale:** T14A proved the static catalog is production truth, the foundation
+model drops runtime-visible fields, FK stubs already exist in D1, and a test rewrote
+an applied migration. Making these boundaries explicit and test-enforced first makes
+the later data-parity migration (T14B-B) deterministic and reversible.
+
+**Consequences:** No route, planner, cooking, inventory, AI or CSP behavior changes.
+Current drift stays truthfully visible (12 global recipes static-only, nutrition
+unrepresented in D1). Contract widening fails `RuntimeRecipeSchema.strict()` tests.
+
 ## ADR-020 — Recoverable OCR provider selection and quality-gated queue failures
 
 **Status:** Accepted 2026-09-12 for the OCR production-recovery candidate; this

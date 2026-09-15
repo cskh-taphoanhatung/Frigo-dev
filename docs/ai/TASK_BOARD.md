@@ -1,5 +1,16 @@
 # Frigo / Takosan current task board — 2026-09-15
 
+## T14B-A — Recipe catalog safety foundation — IMPLEMENTED (pending review)
+
+- [done] F-08 neutralized: generator test deleted; read-only seed validation +
+  explicit `recipe:seed:check` / `recipe:seed:render` (never writes `migrations/`).
+- [done] `RuntimeRecipe` contract + lossless proof for 71 recipes; `RUNTIME_ONLY_FIELDS`.
+- [done] `classifyCatalogEntry` completeness semantics; FK stub excluded, never repaired.
+- [done] `auditCatalogDrift` + `readRecipeContent` (4 read-only SELECTs); deterministic JSON.
+- [done] ADR-022; `docs/ai/recipe-catalog/T14B_A_CATALOG_SAFETY_FOUNDATION.md`.
+- [invariant] `ALL_RECIPES` authority unchanged; migrations 0001–0033 byte-identical; no 0034.
+- [next] Review/merge PR #7 then T14B-A PR; close/archive PR #4; start T14B-B (0034 + 71/71 parity).
+
 ## T14A — Production recipe truth audit — COMPLETE (docs-only)
 
 - [done] First gate `PRODUCTION_MAIN_APPLICATION_EQUIVALENCE = PASS`

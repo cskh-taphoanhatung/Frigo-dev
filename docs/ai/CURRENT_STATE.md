@@ -1,5 +1,24 @@
 # Frigo / Takosan current authority — 2026-09-15
 
+## T14B-A recipe catalog safety foundation — 2026-09-15
+
+Branch `hoplite/koroneia-838b0ccc--t14b-a-catalog-safety` (stacked on T14A PR #7,
+application tree = `main` `345cecf`). Implemented per ADR-022 and
+`docs/ai/recipe-catalog/T14B_A_CATALOG_SAFETY_FOUNDATION.md`:
+`tests/unit/generate-migration.test.ts` (rewrote `vietnamese-bank.ts` and
+`migrations/0006` during `pnpm test`) is removed and replaced by a pure in-memory
+seed renderer + read-only validation test + explicit `pnpm recipe:seed:check` /
+`pnpm recipe:seed:render` (refuses `migrations/`); `RuntimeRecipe` formal contract
+(lossless for all 71 static recipes, distinct from foundation `RecipeDefinition`);
+`classifyCatalogEntry` (complete / incomplete+fkStub / rejected) so cooking/shopping
+FK anchor rows are never catalog entries; `auditCatalogDrift` + read-only
+`readRecipeContent` covering identity, core, requirements, units, steps, nutrition,
+tags, category/region representation and media. Current truthful drift: static 71,
+D1 complete 59, static-only `gl-01..gl-12`, nutrition unrepresented in D1, all
+other classes empty. `ALL_RECIPES` remains the only runtime authority; no route,
+migration (33 files byte-identical, `0034` absent), CSP, inventory, AI or config
+change. PR #4 remains open (recommend close/archive; not acted on).
+
 ## T14A production recipe truth audit — 2026-09-15 (docs-only)
 
 Audit report: `docs/ai/recipe-catalog/T14A_PRODUCTION_RECIPE_TRUTH_AUDIT.md`
