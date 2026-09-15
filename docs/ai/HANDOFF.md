@@ -1,5 +1,27 @@
 # Frigo / Takosan current handoff — 2026-09-15
 
+## Production rollout handoff — 2026-09-15
+
+Production is serving canonical Worker SHA
+`e6b91956484589c088e6d04a9835b3e59a2eb786` after compatibility Worker
+`64ee9ed1d986a5e521598a36656e9c2f59d682ee` was deployed ahead of the remote
+bridge. D1 `frigo-db` has ledger `0001`-`0033`; `pnpm schema:check:remote`
+passed. Readiness returned HTTP 200 with exact canonical commit, database and
+queue healthy, AI/configured, and only the known PLUS-grant warning.
+
+Evidence: export `/tmp/frigo-prod-pre0032-20260916.sql`, SHA-256
+`378c023b15c159d140162e6eb74bbf2ad584e7b699c72384379119defe6dec6a`; health,
+recipes, manifest/Takosan assets and unauthenticated mutation checks passed;
+full local Vitest was `3630/3630`, frozen install/lint/typecheck/build passed.
+Ad-hoc Cloudflare SQL queries were denied with `SQLITE_AUTH`, so rely on the
+repository-owned schema gate rather than claiming direct PRAGMA evidence.
+
+Open follow-up: PR #4 (`release/pre0032-schema-compat`, commit `64ee9ed1`) is
+still open with no hosted checks. Do not bypass branch protection; obtain CI
+and maintainer review, then merge it history-preservingly so production and
+canonical `main` converge. No PayOS, DNS, secret rotation, KV/R2/queue data
+mutation or T14 work was performed.
+
 ## Current canonical repository handoff
 
 - Repository: `vn-dlo/Frigo-dev` (ID `1368281478`).
@@ -25,11 +47,10 @@ consolidation at final reviewed head `7ede92c73a41da24500746fd0eded892689d8558`
 the owner; do not fabricate or impersonate a GitHub review. All other branch
 protections and exact-head CI gates remain required.
 
-Production deployment remains a separate task and is not authorized. The
-rolling-schema compatibility issue around canonical migration `0032` must be
-resolved through the production rollout plan before any direct rollout.
-The automatic post-merge Deploy workflow skipped staging because it is
-unconfigured and skipped production entirely.
+Production deployment is complete under the separate rollout receipt above.
+The automatic post-merge Deploy workflow had skipped production earlier; the
+operator-authorized rollout later applied the bridge migrations and deployed
+the exact canonical SHA. PR #4 is the remaining canonicalization follow-up.
 
 # Historical production integration handoff — 2026-09-15
 
