@@ -2,16 +2,15 @@
 CREATE TRIGGER trg_inventory_events_command_authority_insert
 BEFORE INSERT ON inventory_events WHEN NEW.command_id IS NOT NULL BEGIN
   -- Separate JSON validity checks keep malformed input out of JSON extraction.
-  SELECT CASE WHEN typeof(NEW.metadata) <> 'text' OR json_valid(NEW.metadata) IS NOT 1
-    THEN RAISE(ABORT, 'Inventory command event evidence mismatch') END;
-  SELECT CASE WHEN NOT EXISTS (
+  SELECT RAISE(ABORT, 'Inventory command event evidence mismatch') WHERE typeof(NEW.metadata) <> 'text' OR json_valid(NEW.metadata) IS NOT 1;
+  SELECT RAISE(ABORT, 'Inventory command event evidence mismatch') WHERE NOT EXISTS (
     SELECT 1 FROM inventory_commands c WHERE c.id = NEW.command_id
       AND c.household_id = NEW.household_id
       AND typeof(c.result_json) = 'text' AND json_valid(c.result_json) = 1
       AND typeof(c.fingerprint) = 'text' AND json_valid(c.fingerprint) = 1
-  ) THEN RAISE(ABORT, 'Inventory command event evidence mismatch') END;
+  );
 
-  SELECT CASE WHEN NOT EXISTS (
+  SELECT RAISE(ABORT, 'Inventory command event evidence mismatch') WHERE NOT EXISTS (
     WITH evidence AS (
       SELECT c.*, json_object(
         'schemaVersion', 1, 'householdId', c.household_id, 'actorId', c.actor_id,
@@ -106,5 +105,5 @@ BEFORE INSERT ON inventory_events WHEN NEW.command_id IS NOT NULL BEGIN
     ) AND NOT EXISTS (
       SELECT fullkey FROM json_tree(e.fingerprint) GROUP BY fullkey HAVING count(*) > 1
     )
-  ) THEN RAISE(ABORT, 'Inventory command event evidence mismatch') END;
+  );
 END;
