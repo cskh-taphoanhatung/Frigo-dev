@@ -2,24 +2,24 @@
 
 ## Canonical repository consolidation
 
-**READY FOR INDEPENDENT REVIEW / MERGE.** The canonical repository is
-`vn-dlo/Frigo-dev` (ID `1368281478`). The immutable application freeze is
-`5f6853d0ed11415871dca0fd31d4981d60518310`; the earlier `e34ed167` candidate
-is historical and superseded. PR #2 targets `main` from
-`canonical/5f6853d-promotion-ci`. Its pre-docs head is
-`c8acd0aa5ae746aeed628c6ca730ac26d71c3b4b`, with hosted CI run `34968469709`
-passing `validate`.
+**CANONICAL REPOSITORY CONSOLIDATION COMPLETE.** The canonical repository is
+`vn-dlo/Frigo-dev` (ID `1368281478`), and `main` is
+`a5cfb14cfd5840be23eb16b26a3689f5e2d6e805`. PR #2 merged reviewed head
+`7ede92c73a41da24500746fd0eded892689d8558` using a history-preserving merge
+commit; its tree matches the reviewed head exactly. The immutable application
+freeze remains `5f6853d0ed11415871dca0fd31d4981d60518310`; `e34ed167` is
+historical and superseded.
 
-Branch protection is enabled: `validate` and one approval are currently
-required, force-push and branch deletion are blocked, and no merge has occurred.
-After this docs head receives exact-new-head `CI / validate` PASS, the accepted
-maintainer decision permits reducing only the approval count to zero; all other
-protections and the merge-commit requirement remain.
+Exact PR CI run `34972891435` and post-merge main CI run `34973522150` passed.
+Branch protection requires strict `validate`, blocks force-push and deletion,
+enforces admins, and retains the maintainer-authorized approval count of zero.
+The rollback pointer preserves old main `d1b06732` at
+`archive/pre-canonical-consolidation`.
 
 ## Maintainer review acceptance
 
-`EXTERNAL_TECHNICAL_REVIEW=APPROVED` for reviewed head
-`6ee4529b202510345a70b6fc31ab849d3de8929f`, with P0=0, P1=0 and P2=0. The
+`EXTERNAL_TECHNICAL_REVIEW=APPROVED` for final reviewed head
+`7ede92c73a41da24500746fd0eded892689d8558`, with P0=0, P1=0 and P2=0. The
 maintainer explicitly accepts that review as sufficient for this repository
 consolidation and may waive only the GitHub-native collaborator approval
 requirement. CI, PR, force-push and branch-deletion protections remain active.
@@ -30,7 +30,9 @@ requirement. CI, PR, force-push and branch-deletion protections remain active.
 readiness is separate from deployment readiness. The rolling-schema
 compatibility concern around canonical migration `0032` remains unresolved for
 production sequencing. No deploy, remote D1 migration, KV/R2/queue mutation,
-PayOS change, secret/DNS change or T14 work is authorized here.
+PayOS change, secret/DNS change or T14 work is authorized here. The automatic
+post-merge Deploy workflow performed no deployment: staging was unconfigured
+and production was skipped.
 
 # Historical production integration evidence — 2026-09-15
 
@@ -64,8 +66,9 @@ promotion still requires the exact lineage, docs-only and hosted-CI gates.
 Repository access remains production
 `ADMIN` and Frigo-dev `WRITE`. Promotion branch `canonical/5f6853d-promotion`
 was published at `f48e830ed9cdde2214ad5b4dbd58b8bc30c06106`, archive pointer
-`archive/pre-canonical-consolidation` preserves `d1b06732`, and PR #1 is open.
-No merge, deploy or remote database/resource mutation occurred.
+`archive/pre-canonical-consolidation` preserves `d1b06732`, and PR #1 was
+closed. PR #2 later completed the canonical merge; no production deploy or
+remote database/resource mutation occurred.
 
 Fresh planning-audit checks: repository/API metadata, heads/merge-base/ancestry,
 source diff inventories, all-ref migration variants, bridge blob equality,

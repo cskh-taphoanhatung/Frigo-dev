@@ -1,5 +1,16 @@
 # Frigo Project Status
 
+## Canonical repository consolidation — COMPLETE (2026-09-15)
+
+`vn-dlo/Frigo-dev` (repository ID `1368281478`) is the canonical long-term
+source of truth. PR #2 merged reviewed head `7ede92c` using history-preserving
+merge commit `a5cfb14cfd5840be23eb16b26a3689f5e2d6e805`; the merge tree is
+identical to the reviewed tree and all required production/Qwen/T13/Takosan
+lineage is preserved. Exact PR and post-merge CI passed. No staging or
+production deploy, remote migration, production resource mutation, PayOS/DNS
+change, or T14 work was performed. Production rollout remains separately
+blocked on the documented `0032` compatibility sequence.
+
 ## Final hardening — source verification, not a production deployment (2026-09-08)
 
 The current release status is in `FINAL_HARDENING_REPORT.md`; historical **LIVE**

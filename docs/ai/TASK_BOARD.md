@@ -8,15 +8,18 @@
   superseded.
 - [done] Canonical promotion branch published as
   `canonical/5f6853d-promotion-ci`.
-- [done] Main protection enabled: `validate`, one approval, no force-push or
-  branch deletion.
+- [done] Main protection enabled: strict `validate`, no force-push or branch
+  deletion, admin enforcement; approval count zero under the recorded waiver.
 - [done] PR #2 opened against `main`.
 - [done] Hosted CI run `34968469709` passed on pre-docs head `c8acd0aa`.
-- [in progress] Final documentation reconciliation.
-- [pending] Exact-new-head hosted `CI / validate` PASS.
-- [pending] Exact-new-head CI, then apply the documented approval waiver.
-- [pending] History-preserving merge commit after all gates pass.
-- [done] Maintainer accepted external technical review for head `6ee4529...`
+- [done] Final reviewed head `7ede92c...` passed exact PR CI run `34972891435`.
+- [done] History-preserving merge commit `a5cfb14cfd5840be23eb16b26a3689f5e2d6e805` created by PR #2.
+- [done] Merge tree matches reviewed head; required source lineage is preserved.
+- [done] Post-merge main CI run `34973522150` passed.
+- [done] Automatic Deploy workflow made no deployment: staging unconfigured,
+  production skipped.
+- [in progress] Publish this docs-only post-merge receipt through a separate PR.
+- [done] Maintainer accepted external technical review for final head `7ede92c...`
   with P0/P1/P2 = 0; native collaborator approval may be waived only for this
   consolidation.
 - [blocked / out of scope] Production rollout pending the `0032` compatibility
