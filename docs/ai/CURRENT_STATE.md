@@ -1171,3 +1171,8 @@ Playwright 51 passed); certification and freeze not started. Details:
 - No merge, deployment, remote migration, production KV/R2/D1 mutation, or
   payment/PayOS change was performed. Promotion remains blocked pending hosted
   CI and maintainer/admin authorization.
+- Repository-owner authentication is now active in `gh` as `vn-dlo`, with
+  admin/maintain access. `main` protection was enabled: PR required, one
+  approving review, `validate` status required, force-push and deletion blocked.
+- Promotion head is now `6ec7ff08ef258ef2ca95fb5d24b581b939ef1c92` after a
+  second empty, tree-neutral CI trigger commit. Hosted CI still has no run.

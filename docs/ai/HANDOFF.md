@@ -1557,3 +1557,11 @@ user`. The CLI account is `Tungjpstore` with push but not admin/maintain access;
 branch protection is not configured/visible. Do not merge or deploy. An admin
 must enable Actions and confirm main protection, then rerun checks against the
 exact head and explicitly authorize a history-preserving merge.
+
+Follow-up: `gh` is now authenticated as repository owner `vn-dlo` with admin/
+maintain access. Main protection is configured to require one PR approval and
+the `validate` status, with force-push and deletion disabled. The promotion
+head is `6ec7ff08ef258ef2ca95fb5d24b581b939ef1c92`; this is another empty
+tree-neutral trigger commit. Actions is enabled, but no exact-head workflow run
+has appeared. Do not merge until the `validate` check is actually present and
+passing, then obtain explicit maintainer authorization.

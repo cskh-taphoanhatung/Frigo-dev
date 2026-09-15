@@ -782,3 +782,7 @@ rolling `qwen3.7-flash` alias is canary-only.
 - [next] Repository administrator enables Actions for the actor/repository and
   confirms required branch protection; then rerun exact-head CI and review PR
   #1 before any history-preserving merge.
+- [done] Authenticated `gh` as `vn-dlo`; confirmed repository admin/maintain
+  permission and enabled main protection with required `validate` status.
+- [blocked] Exact-head CI remains absent after owner-authored tree-neutral
+  trigger `6ec7ff08ef258ef2ca95fb5d24b581b939ef1c92`.
