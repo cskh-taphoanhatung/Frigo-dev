@@ -1,6 +1,43 @@
 # Production integration candidate — 2026-09-15
 
-## Current remediation state
+## Current merger-plan audit
+
+**NOT READY TO MERGE OR DEPLOY.** A fresh two-repository/branch/migration audit
+is recorded in `docs/integration/CANONICAL_REPOSITORY_CONSOLIDATION_PLAN.md`;
+the separate production rollout risks remain in
+`docs/integration/SAFE_PRODUCTION_MERGER_PLAN.md`. Production
+`main` already contains adapted frontend upgrade lineage `d270cd4`/`57c88c5`
+and platform hardening lineage `3f33d11`; historical tips `fafe1cc`, `2052932`
+and `089c406` are not independent cherry-picks. The confirmed migration
+collision remains production `0023_scan_request_fingerprint.sql` versus dev
+`0023_inventory_truth_foundation.sql`, resolved by immutable production
+`0001`-`0023` plus byte-copied T08-T13 `0024`-`0033`.
+
+Qwen task-runtime source `da41686` is 15 commits ahead of and not contained in
+production `main`; it remains a required merge source. The fetched history's
+additional `0024`-`0032` filename variants are the current integration branch's
+`+1` aliases of the same certified dev blobs, not extra migrations.
+
+New release blocker: canonical `0032_scan_evidence_retention.sql` enforces
+`review_state`/`is_confirmed` coupling, while the current production Worker
+writes only `is_confirmed`. The integrated Worker also assumes the new columns
+exist. A schema-capability compatibility release and rolling-upgrade rehearsal
+must precede any remote bridge migration. That compatibility release must be
+merged/deployed independently, followed by separate Qwen/runtime, T08-T13
+bridge, and Takosan brand-only trains; each begins at the prior deployed head.
+Current `f26003b` is not production-deployable as-is; canonical repository
+promotion still requires the exact lineage, docs-only and hosted-CI gates.
+Repository access remains production
+`ADMIN` and Frigo-dev `WRITE`; no merge, push, deploy or remote mutation occurred.
+
+Fresh planning-audit checks: repository/API metadata, heads/merge-base/ancestry,
+source diff inventories, all-ref migration variants, bridge blob equality,
+production/integrated scan SQL inspection, and two real SQLite ordering probes.
+Both probes exited `1` with the expected trigger/missing-column failures;
+`git diff --check` passes. No application suite was rerun because only planning
+documents changed in this audit continuation.
+
+## Historical remediation state — superseded by the merger-plan audit above
 
 **INDEPENDENT-REVIEW BLOCKERS FIXED AND COMMITTED.** The working branch remains
 `integration/t13-takosan-qwen`; remediation candidate is `5f6853d` on base HEAD

@@ -1,5 +1,31 @@
 # Production integration remediation — COMMITTED LOCALLY (2026-09-15)
 
+## Current merger-plan task — audit complete, implementation not started
+
+- Canonical repository plan: `docs/integration/CANONICAL_REPOSITORY_CONSOLIDATION_PLAN.md`.
+- Production rollout plan (separate): `docs/integration/SAFE_PRODUCTION_MERGER_PLAN.md`.
+- Production frontend/platform branches are represented by later production
+  lineage; do not cherry-pick `fafe1cc`, `2052932` or `089c406` again.
+- Qwen source `da41686` is not in production `main`; integrate it only after the
+  compatibility release, from its frozen source SHA.
+- Migration numbering decision: preserve production `0001`-`0023`; map the ten
+  certified T08-T13 migrations to `0024`-`0033`; no other collision found.
+- Release blocker: old production confirmation writes only `is_confirmed`, but
+  canonical `0032` requires matching `review_state`; current integrated code
+  also cannot run before the evidence columns exist.
+- Next production-rollout task: build/test/review a pre/post-0032 compatibility
+  release directly from production `05423f2`. After it is independently merged
+  and deployed by an authorized operator, run three independently gated trains:
+  Qwen/runtime, T08-T13 plus bridge, then Takosan brand-only. Do not deploy
+  `f26003b` as-is; repository promotion is governed separately by the canonical
+  consolidation plan.
+- Fresh audit: source/ancestry/path/migration hashes reverified; both unsafe
+  schema orders reproduced with SQLite; docs-only `git diff --check` PASS.
+  Full application gates were not rerun because no code/schema changed.
+- No merge, deploy, remote D1, production resource or PayOS action authorized.
+
+## Historical candidate remediation — superseded as next-action authority
+
 - Reviewed candidate `e34ed16777166407acf67b2c76d733d89c7d64ca` is
   superseded. Remediation commit is `5f6853d` on top of `231d1e7`.
 - Qwen production runtime, certified T13 Inventory Truth, hardened Takosan, and

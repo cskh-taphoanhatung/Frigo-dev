@@ -1,5 +1,30 @@
 # T13 migration bridge
 
+## Release blocker discovered by the full merger audit
+
+The filename/hash bridge is valid, but it is not sufficient rollout proof.
+Canonical `0032_scan_evidence_retention.sql` adds a trigger requiring
+`review_state` and `is_confirmed` to change together. The production Worker at
+`05423f2` confirms a scan by updating only `is_confirmed = 1`, so applying
+`0032` while that Worker may still receive traffic can break scan confirmation.
+Conversely, the integrated T13 Worker selects the new evidence columns and
+cannot safely run before they exist. A pre/post-schema-compatible Worker and a
+rolling-upgrade rehearsal are therefore mandatory before any remote bridge
+application. See `SAFE_PRODUCTION_MERGER_PLAN.md`.
+
+The fetched remote history also contains `0024`-`0032` filename variants from
+the already-renumbered integration branch. They are the same Git blobs as dev
+`0023`-`0031`, shifted by one; they are not extra migrations. Release tooling
+must use the frozen source-to-canonical manifest and reject any mixed numbering
+chain.
+
+Ledger rule: production-shaped databases contain
+`0023_scan_request_fingerprint.sql`; databases that already contain
+`0023_inventory_truth_foundation.sql` follow the original dev history and must
+not receive the shifted bridge in place. Rebuild disposable dev databases from
+canonical history. Reprovision a mixed/noncanonical staging database rather
+than renaming or deleting D1 ledger rows.
+
 Production currently ends at migration `0023_scan_request_fingerprint.sql`.
 That applied migration is immutable. The bridge therefore starts at `0024` and
 renumbers the ten development Inventory Truth migrations contiguously through

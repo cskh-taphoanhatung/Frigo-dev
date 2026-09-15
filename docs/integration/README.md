@@ -1,8 +1,27 @@
 # Production integration candidate
 
-## Independent-review remediation — 2026-09-15
+## Current canonical-consolidation status — 2026-09-15
 
-Status: **REMEDIATED AND VALIDATED LOCALLY**.
+The authoritative repository-promotion plan is
+[`CANONICAL_REPOSITORY_CONSOLIDATION_PLAN.md`](CANONICAL_REPOSITORY_CONSOLIDATION_PLAN.md).
+It now includes the independent strengths/weaknesses matrix for production and
+Frigo-dev, the complete upgrade inventory, the `0023` collision decision and
+the exact gaps that remain after composition. The target canonical repository is
+`vn-dlo/Frigo-dev`; no push, PR, merge or deployment is authorized by this
+planning update.
+
+[`SAFE_PRODUCTION_MERGER_PLAN.md`](SAFE_PRODUCTION_MERGER_PLAN.md) remains the
+separate production rollout plan. Its pre/post-`0032` compatibility blocker is
+still real and must be solved before remote bridge migrations or production
+deployment, but it does not justify re-integrating or dropping certified Git
+lineage during repository promotion. Historical production tips `fafe1cc`,
+`2052932` and `089c406` must not be cherry-picked when their adapted behavior is
+already in production `main`; Qwen `da41686` remains the explicit missing source.
+
+## Historical independent-review remediation — 2026-09-15
+
+Status: **REMEDIATED AND VALIDATED LOCALLY; SUPERSEDED AS RELEASE AUTHORITY BY
+THE MERGER PLAN ABOVE**.
 
 The reviewed application candidate `e34ed16777166407acf67b2c76d733d89c7d64ca`
 is superseded by remediation commit `5f6853d` on top of `231d1e7`. Protected payment
@@ -63,18 +82,17 @@ remote D1, production R2/KV/queues, secrets, PayOS, and T14 are out of scope.
 
 ## Execution order
 
-1. Preserve production migration blobs and integrate the Qwen lineage.
-2. Renumber the ten T13 migrations above production migration `0023`.
-3. Merge T13/Takosan semantically and resolve the nine overlapping paths.
-4. Prove provider evidence survives the real queue consumer and T09/T11 remain
-   the only mutation/read authorities.
-5. Run local migration, static, full Vitest, and browser gates in that order.
-6. Publish only the integration branch after the required gates pass.
+1. Release a minimal pre/post-0032 compatibility Worker from production main.
+2. Integrate and independently release Qwen/runtime with no new migration.
+3. Integrate and independently release certified T08-T13 plus `0024`-`0033`.
+4. Apply Takosan as a final brand-only train with zero payment/migration change.
+5. Start each train from the exact preceding deployed production SHA and repeat
+   local, hosted, staging and production gates for that train.
 
 See `PRODUCTION_CONSOLIDATION.md`, `T13_MIGRATION_BRIDGE.md`, `TEST_MATRIX.md`,
 and `HANDOFF.md` for the final evidence.
 
-## Final certification — 2026-09-15
+## Historical final certification — 2026-09-15
 
 Status: **HISTORICAL CERTIFICATION OF THE REVIEWED CANDIDATE; SUPERSEDED BY THE
 REMEDIATION SECTION ABOVE**.

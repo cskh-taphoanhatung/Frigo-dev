@@ -1,6 +1,51 @@
 # Integration handoff
 
-## Independent-review remediation handoff — 2026-09-15
+## Full canonical-consolidation audit handoff — 2026-09-15
+
+Status: **PLAN COMPLETE; CURRENT CANDIDATE NOT PRODUCTION-READY**.
+
+The authoritative repository-promotion plan is
+`CANONICAL_REPOSITORY_CONSOLIDATION_PLAN.md`; it contains the independent
+strengths/weaknesses matrix and merge decisions. Production frontend and
+platform upgrade tips are already represented by adapted main lineages, so they
+must be semantically checked but not cherry-picked again.
+Qwen source `da41686` is 15 commits ahead of production `main` and remains a
+required integration source; it is not already in production.
+Migration numbering has one confirmed collision (`0023`); the canonical
+`0001`-`0023` + `0024`-`0033` bridge is correct by filename/blob mapping.
+
+The separate production rollout plan still has a blocker: canonical `0032`
+creates a review-state trigger that rejects
+the current production Worker's legacy confirmation update. The integrated
+Worker also assumes the new columns exist. A compatibility release and rolling
+pre/post-0032 rehearsal are required before any production migration/deploy.
+The failure was reproduced locally with real migration SQL. No remote state,
+production resource, merge, deployment or payment path was changed.
+
+Required production-rollout sequence: create and independently release a
+schema-compatible
+Worker from production `05423f2`; after it is merged and serving all traffic,
+freeze the new production head and use three release trains: Qwen/runtime,
+T08-T13 plus migrations, then Takosan brand-only. Each starts from the prior
+deployed head. Do not deploy current `f26003b` directly; repository promotion
+is a separate history-preserving gate.
+
+The repository deploy workflow automatically deploys staging after successful
+CI on a `main` push. Therefore Train B cannot merge until canonical staging D1
+is already at `0033` under the compatible Qwen Worker. Production remains a
+separate manual confirmed dispatch.
+
+Audit checks executed: repository metadata/API permission lookup; branch heads,
+merge-base, ancestry and diff inventories; all-fetched-ref migration variant
+scan; certified-source/bridge Git-blob comparison; production and integrated
+scan SQL inspection; two in-memory SQLite ordering probes; `git diff --check`;
+and protected-path diff inspection. The negative probes exited `1` with the two
+expected schema errors recorded in `TEST_MATRIX.md`. No application suite was
+rerun because this continuation changes documentation only. One initial shell
+ancestry loop and one text-search command had quoting/word-splitting errors;
+both were rerun with direct commands and did not modify files.
+
+## Historical independent-review remediation handoff — 2026-09-15
 
 Status: **FIXES COMPLETE AND LOCAL GATES GREEN**.
 

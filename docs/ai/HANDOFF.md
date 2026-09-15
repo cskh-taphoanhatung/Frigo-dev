@@ -1,5 +1,41 @@
 # Production integration handoff — 2026-09-15
 
+## Current safe-merger planning handoff
+
+Status: **AUDIT COMPLETE; IMPLEMENTATION/RELEASE BLOCKED ON ROLLING COMPATIBILITY**.
+
+The decision-complete repository-promotion plan is
+`docs/integration/CANONICAL_REPOSITORY_CONSOLIDATION_PLAN.md`; production
+rollout sequencing remains in `docs/integration/SAFE_PRODUCTION_MERGER_PLAN.md`.
+Verified access is production
+`ADMIN` and Frigo-dev `WRITE`; fetched default heads remain `05423f2` and
+`d1b0673`; common base is `d1b0673`. Production already contains the adapted
+frontend and platform upgrades through `d270cd4`/`57c88c5` and `3f33d11`, so
+their historical branch tips must not be reapplied.
+Qwen source `da41686` is not in production `main`; it is 15 commits ahead and
+must remain an explicit frozen merge source.
+
+Migration audit found exactly one semantic numbering collision: production
+`0023_scan_request_fingerprint.sql` (`777f4b6f...`) versus dev
+`0023_inventory_truth_foundation.sql` (`1ec671af...`). Canonical resolution is
+production `0001`-`0023` unchanged plus certified T08-T13 at `0024`-`0033`.
+However canonical `0032` adds a trigger that rejects the current production
+Worker's `is_confirmed = 1`-only confirmation update, while the integrated
+Worker assumes the new columns exist. Next action is a separately reviewed
+schema-capability compatibility release and pre/post-0032 rolling rehearsal,
+not a production merge or migration. Release the compatibility Worker
+independently from `05423f2`, then run separate Qwen/runtime, T08-T13 bridge and
+Takosan brand-only trains, each from the prior deployed production head. Do not
+promote current `f26003b` directly. No remote state was changed in this audit.
+
+Executed checks: repository/API permissions; branch heads, merge-base,
+ancestry and source diff counts; all-fetched-ref migration scan; bridge/source
+blob comparison; scan SQL inspection; pre/post-0032 SQLite failure probes; and
+`git diff --check` (PASS). Both probes exited `1` with the expected errors. No
+application suite was rerun because this continuation changed docs only.
+
+## Historical candidate remediation handoff — superseded
+
 Status: **INDEPENDENT-REVIEW REMEDIATION COMPLETE AND COMMITTED LOCALLY**.
 
 `WORKING_BRANCH=integration/t13-takosan-qwen`

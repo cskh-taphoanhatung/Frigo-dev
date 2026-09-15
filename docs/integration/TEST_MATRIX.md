@@ -1,5 +1,23 @@
 # Integration test matrix
 
+## Current release-readiness gap
+
+The historical candidate gates below remain valid local evidence, but the
+production release matrix is **NOT COMPLETE**. A new mandatory gate is the
+rolling schema/code compatibility rehearsal around canonical `0032`: the old
+production Worker must not fail after the trigger exists, and the new Worker
+must not query T13 columns before they exist. A direct SQLite probe reproduced
+the old-Worker failure with
+`scan_items.review_state must agree with is_confirmed`. Do not treat the PASS
+table below as production authorization until a compatibility release passes
+both schema shapes; see `SAFE_PRODUCTION_MERGER_PLAN.md`.
+
+The complementary probe also failed as expected: the integrated Worker query
+against a schema through canonical `0031` returned `no such column:
+ocr_raw_name`. Both negative probes used the repository migration files and
+exited `1`. Permanent compatibility tests must replace these ad-hoc probes in
+the implementation phase.
+
 | Gate | Required evidence | Status |
 | --- | --- | --- |
 | Production migration hashes | 23 existing path/blob pairs unchanged | PASS |
