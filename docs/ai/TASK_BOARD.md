@@ -786,6 +786,6 @@ rolling `qwen3.7-flash` alias is canary-only.
   permission and enabled main protection with required `validate` status.
 - [blocked] Exact-head CI remains absent after owner-authored tree-neutral
   trigger `6ec7ff08ef258ef2ca95fb5d24b581b939ef1c92`.
-- [done] Owner-visible PR #2 exact-head CI run `34967472305` passed all hosted
-  validation steps on `adc6cae5d07df75fc1d57674ff6215d60ad0b077`.
+- [done] Owner-visible PR #2 exact-head CI run `34968012294` passed all hosted
+  validation steps on `8eb6d2b8d54e5e2fd08c0a11acd9f57a1e068b24`.
 - [blocked] PR #2 still needs one independent approving review before merge.

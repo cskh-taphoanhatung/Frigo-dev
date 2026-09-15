@@ -1567,7 +1567,7 @@ has appeared. Do not merge until the `validate` check is actually present and
 passing, then obtain explicit maintainer authorization.
 
 Owner-visible PR #2 (`canonical/5f6853d-promotion-ci`) now has exact hosted CI
-run `34967472305` passing on `adc6cae5d07df75fc1d57674ff6215d60ad0b077`.
+run `34968012294` passing on `8eb6d2b8d54e5e2fd08c0a11acd9f57a1e068b24`.
 Hosted validate completed lint, typecheck, full Vitest, migration smoke, and
 build successfully. Main protection correctly leaves the PR blocked pending
 one independent approval; no merge or deployment has occurred.

@@ -1176,7 +1176,7 @@ Playwright 51 passed); certification and freeze not started. Details:
   approving review, `validate` status required, force-push and deletion blocked.
 - Promotion head is now `6ec7ff08ef258ef2ca95fb5d24b581b939ef1c92` after a
   second empty, tree-neutral CI trigger commit. Hosted CI still has no run.
-- A clean owner-visible PR #2 was created from the same tree at
-  `adc6cae5d07df75fc1d57674ff6215d60ad0b077`; exact hosted CI run `34967472305`
-  passed validate, lint, typecheck, Vitest, migration smoke, and build. The
-  PR remains blocked only by the required independent approval.
+- A clean owner-visible PR #2 is now at
+  `8eb6d2b8d54e5e2fd08c0a11acd9f57a1e068b24`; exact hosted CI run
+  `34968012294` passed validate, lint, typecheck, Vitest, migration smoke, and
+  build. The PR remains blocked only by the required independent approval.
