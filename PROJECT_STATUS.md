@@ -352,6 +352,9 @@ exact-head hosted CI; deployment and all payment work remain separate owner acti
 - Fixed in code so SPA documents emit `same-origin-allow-popups` for Google GIS,
   while `/api/*` remains `same-origin`; static `_headers` is aligned.
 - Regression `tests/integration/worker-cors.test.mjs` passes (`17/17` focused
-  auth/COOP tests), plus lint, typecheck and diff check. No deployment or
-  production resource mutation has been performed; live verification remains
-  the next release-gated action.
+  auth/COOP tests), plus lint, typecheck and diff check. PR #9 merged as
+  `911db7f` and Worker version `20bc1f35-6ffe-4085-ba79-d54a0b53da71` is live
+  at 100%. Post-deploy smoke, health/readiness and live header checks pass.
+  Readiness is degraded only because of the pre-existing
+  `CONFIG_PLUS_GRANT_SECRET_MISSING` warning; no migration or production data
+  resource was mutated.

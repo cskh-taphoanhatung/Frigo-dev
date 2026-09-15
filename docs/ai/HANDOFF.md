@@ -1657,5 +1657,9 @@ Hono `secureHeaders` was the effective source because it ran after the custom
 header middleware and overwrote the GIS-compatible value. The fix disables
 that one Hono default and sets COOP by path: SPA `same-origin-allow-popups`, API
 `same-origin`. The regression test is green (`17/17` focused tests), with lint,
-typecheck and diff check green. The code is not deployed; a reviewed release
-must publish it before validating the live Safari flow.
+typecheck and diff check green. PR #9 merged as `911db7f`; Worker version
+`20bc1f35-6ffe-4085-ba79-d54a0b53da71` is live at 100%. Production smoke and
+readiness pass, `/auth` now returns `same-origin-allow-popups`, and `/api/*`
+retains `same-origin`. The only readiness warning is the pre-existing
+`CONFIG_PLUS_GRANT_SECRET_MISSING`; no migration or production data resource
+was changed.
