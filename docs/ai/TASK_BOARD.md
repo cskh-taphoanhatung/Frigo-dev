@@ -1,5 +1,23 @@
 # Frigo / Takosan current task board — 2026-09-15
 
+## T14A — Production recipe truth audit — COMPLETE (docs-only)
+
+- [done] First gate `PRODUCTION_MAIN_APPLICATION_EQUIVALENCE = PASS`
+  (`e6b9195` → `345cecf` differs only in 7 docs paths).
+- [done] Lineage, migration (`0001`–`0033`, next `0034`), recipe authority,
+  domain-model drift, catalog abstraction, scale, media/CSP, planner, cooking
+  boundary, AI boundary, offline, tests, data quality recorded in
+  `docs/ai/recipe-catalog/T14A_PRODUCTION_RECIPE_TRUTH_AUDIT.md`.
+- [done] Local gates: frozen install, typecheck, lint, `check:migrations`,
+  build, full Vitest `3630/3630` (149 files), focused recipe suite `255/255`.
+- [finding P1] Vietnamese recipe images blocked by production CSP `img-src`.
+- [finding P1] Static `ALL_RECIPES` is the sole runtime recipe authority; D1
+  is a partial seed shadow (12 global recipes absent, nutrition/steps/media
+  outside the catalog contract).
+- [blocked-for-T14B] PR #4 disposition; generator test
+  `tests/unit/generate-migration.test.ts` rewrites `0006` during `pnpm test`.
+- [next] T14B design per Strategy A (static authority, D1 shadow) — not started.
+
 ## Production rollout receipt — COMPLETE
 
 - [done] Production D1 migration applied and verified at `0001`-`0033`.
