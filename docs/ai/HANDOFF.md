@@ -4,9 +4,10 @@
 
 - Task: reconcile T14A then accepted T14B-A; no redesign or T14B-B.
 - Repository: `vn-clo/Frigo-dev`, ID `1368281478`; verified canonical main
-  `055913596acd3bef049aa0eb007bde2873a658a9`.
-- Branch: `hoplite/poteidaia-c88481ca`, directly from current main; T14A
-  docs-only integration not yet merged. Source PR #7 head `769e0532` is historical.
+  `fbd14c771070e1b5594532648d79fb60c891747d` after T14A PR #11 merged.
+- Branch: `hoplite/poteidaia-c88481ca-integrate-t14b-a-current-main`, directly
+  from that main. Only accepted PR #8 functional delta is imported, unchanged.
+  T14A source PR #7 head `769e0532` and old PR #8 stack are historical references.
 - Output: historical audit retained with explicit lineage refresh; current
   production truth wins over old shared-status prose. Detailed receipt:
   `recipe-catalog/T14_INTEGRATION_REFRESH.md`.
@@ -15,14 +16,18 @@
   adds docs only. No fresh deploy or production probe was performed here.
 - Checks: fresh frozen install, lint, typecheck, test (**151 files / 3633 tests**),
   migration smoke, build and diff check all exit 0. All 33 migration hashes match;
-  application-path diff is empty. Hosted integration validation still pending.
+  T14A application-path diff is empty. Exact T14A hosted head `e916d292` passed
+  run `35034318031`; merge SHA is the canonical main above. T14B-A full local and
+  exact-head hosted verification are pending at this pre-validation checkpoint.
 - Blockers: Deploy `35031212139` staging lacks `CLOUDFLARE_API_TOKEN`; release
   succeeded, production skipped. Main CI `35030996228` passed. Do not fix secrets.
 - Safety: migrations 0001–0033, static `ALL_RECIPES` authority, Inventory Truth,
   Qwen, PayOS and PR #9 headers/source remain unchanged; media deferred to T14C.
   PR #4 remains open with CLOSE_ARCHIVE recommendation, not merge.
-- Next action: obtain exact-head hosted T14A validation, protected
-  merge, then reconcile only PR #8's accepted delta on the resulting new main.
+- Architecture: accepted safety modules remain non-authoritative. Recipe ADR-023
+  only renumbers the historical ADR-022 to preserve PR #9's Auth/OCR decision.
+- Next action: verify T14B-A on this new base, publish against main, obtain fresh
+  exact-head hosted validation, then protected merge and final receipt.
   **T14B-B NOT STARTED; do not create 0034 or deploy.**
 
 # Historical handoffs — not current next-action authority

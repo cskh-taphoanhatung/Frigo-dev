@@ -19,11 +19,12 @@
 
 ## CURRENT — T14 integration refresh, 2026-09-15 UTC
 
-- `vn-clo/Frigo-dev` (ID `1368281478`), main `055913596acd3bef049aa0eb007bde2873a658a9`.
+- `vn-clo/Frigo-dev` (ID `1368281478`), main `fbd14c771070e1b5594532648d79fb60c891747d`.
 - PR #9 Auth/OCR production lineage `911db7f`; Worker version
   `20bc1f35-6ffe-4085-ba79-d54a0b53da71`; PR #10 rollout receipt preserved.
-- T14A audit reconciled docs-only, pending fresh gates/merge; accepted T14B-A
-  pending sequential integration. T14B-B NOT STARTED. Static authority 71/59/12,
+- T14A merged via PR #11 after exact-head CI `35034318031` passed. Accepted
+  T14B-A reconciled on that new main, pending fresh gates/merge. T14B-B NOT STARTED.
+  Static authority 71/59/12,
   migrations 0001–0033 unchanged; media deferred to T14C.
 - Main CI passed; Deploy staging missing-token blocker is separate OPS work.
 - PR #4: CLOSE_ARCHIVE recommended, not merged or deleted.

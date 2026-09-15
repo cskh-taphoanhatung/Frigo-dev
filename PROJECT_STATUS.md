@@ -3,13 +3,14 @@
 ## Current canonical / production status — 2026-09-15 UTC
 
 Canonical `vn-clo/Frigo-dev` (ID `1368281478`) main is freshly verified at
-`055913596acd3bef049aa0eb007bde2873a658a9`. PR #9 merged the Auth/GIS popup,
+`fbd14c771070e1b5594532648d79fb60c891747d`. PR #9 merged the Auth/GIS popup,
 OCR pending UX and COOP fixes as `911db7fdddcd60ea1e3f3c17b4aed3f4b922bda5`;
 PR #10 records Worker `20bc1f35-6ffe-4085-ba79-d54a0b53da71` at 100% of the
 custom domain. Main differs from that application merge only by documentation.
 
-T14A audit is being reconciled docs-only; accepted T14B-A follows only after
-T14A's fresh hosted CI and protected merge. T14B-B is not started. Static
+T14A audit merged docs-only through PR #11 after exact-head hosted run
+`35034318031` passed. Accepted T14B-A is reconciled on the resulting new main,
+pending fresh local/hosted validation and protected merge. T14B-B is not started. Static
 `ALL_RECIPES` remains authority (71/59/12); migrations remain 0001–0033 and media
 is deferred to T14C. No deploy or production mutation is part of this task.
 Main CI `35030996228` passed; Deploy `35031212139` failed only in staging for

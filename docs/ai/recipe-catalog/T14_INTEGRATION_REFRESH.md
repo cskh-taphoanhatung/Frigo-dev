@@ -1,5 +1,45 @@
 # T14A / T14B-A integration refresh
 
+## Current reconciliation checkpoint — T14A merged, T14B-A validation pending
+
+```text
+CURRENT_CANONICAL_MAIN=fbd14c771070e1b5594532648d79fb60c891747d
+T14A_INTEGRATION_PR=11
+T14A_INTEGRATION_HEAD=e916d292d391ba999bcdd96bfdfec98e6b598678
+T14A_CI_RUN=35034318031
+T14A_VALIDATE=SUCCESS
+T14A_CANONICAL_MERGE_SHA=fbd14c771070e1b5594532648d79fb60c891747d
+T14B_A_INTEGRATION_BRANCH=hoplite/poteidaia-c88481ca-integrate-t14b-a-current-main
+T14B_A_BASE_MAIN=fbd14c771070e1b5594532648d79fb60c891747d
+T14B_A_SOURCE_HEAD=4a1fa07cbc9c22e393234bcba9212ca2ef887d65
+T14B_A_HISTORICAL_CODE_SHA=582ced73a715e92e0476e9b9e050e86cbb36c6b9
+T14B_A_MERGED=NO (at this pre-validation checkpoint)
+T14B_B_STARTED=NO
+```
+
+PR #11 merged through the normal protected flow after exact-head hosted success,
+fresh full local gates (151 files / 3633 tests), a docs-only diff and independent
+read-only preservation review. Main was checked immediately before merge and
+advanced only by that authorized integration. Its application tree still equals
+PR #9 merge `911db7f`; the recorded production Worker remains
+`20bc1f35-6ffe-4085-ba79-d54a0b53da71`.
+
+T14B-A applies exactly the 15 functional paths in the accepted PR #8 delta
+(including the deletion of the migration-writing test); no functional redesign.
+The RuntimeRecipe contract, classifier/FK-stub exclusion, drift audit, read-only
+D1 projection, pure renderer and contained output policy remain as accepted.
+The documentation-only ADR collision is resolved by numbering the imported
+recipe decision **ADR-023**, preserving PR #9's Auth/OCR ADR-022 verbatim.
+
+Next action: run all fresh gates on this integration head, prove exact accepted
+functional blobs and production/inventory/migration preservation, publish against
+main, require exact-head hosted `validate`, then normal protected merge. A final
+post-merge receipt must record actual test counts, CI and merge SHAs; the old
+152/3673 count is historical and must not be substituted for fresh evidence.
+No production access/deploy is needed. T14B-B remains blocked until both land.
+
+## Initial remote audit and T14A pre-merge checkpoint (historical below)
+
 ## Scope and canonical identity
 
 Reconcile approved T14 knowledge and safety tooling with the newer Auth/OCR
