@@ -1,5 +1,23 @@
 # Frigo Project Status
 
+## Production rollout — COMPLETE WITH FOLLOW-UP (2026-09-15)
+
+Production D1 `frigo-db` is migrated through `0033` and the canonical Worker
+`e6b91956484589c088e6d04a9835b3e59a2eb786` is serving traffic. The compatibility
+release `64ee9ed1d986a5e521598a36656e9c2f59d682ee` was deployed before the
+schema transition. Remote schema gate, health/readiness, public recipes,
+Takosan manifest, auth boundary smoke, frozen install, lint, typecheck, build
+and full Vitest `3630/3630` passed. Readiness is HTTP 200 with DB/queue/AI/config
+healthy and only `CONFIG_PLUS_GRANT_SECRET_MISSING` as a warning.
+
+The pre-migration export is `/tmp/frigo-prod-pre0032-20260916.sql` with SHA-256
+`378c023b15c159d140162e6eb74bbf2ad584e7b699c72384379119defe6dec6a`. Cloudflare
+ad-hoc SQL returned `SQLITE_AUTH`; the repository-owned schema gate is the
+read-only schema evidence. PR #4 remains open without hosted checks and must be
+reviewed/merged before the compatibility bridge is considered canonical. No
+PayOS, DNS, secret rotation, production KV/R2/queue data mutation or T14 work
+occurred.
+
 ## Canonical repository consolidation — COMPLETE (2026-09-15)
 
 `vn-dlo/Frigo-dev` (repository ID `1368281478`) is the canonical long-term

@@ -1,5 +1,29 @@
 # Frigo / Takosan current authority — 2026-09-15
 
+## Production rollout receipt — 2026-09-15
+
+The previously blocked rolling-schema release was completed with explicit
+operator authorization. Production D1 `frigo-db` now reports the complete
+`0001`-`0033` ledger; `pnpm schema:check:remote` passed, including inventory
+authority, scan evidence retention/completeness and foreign-key checks. The
+pre-migration SQL export is `/tmp/frigo-prod-pre0032-20260916.sql` with SHA-256
+`378c023b15c159d140162e6eb74bbf2ad584e7b699c72384379119defe6dec6a`.
+
+Compatibility Worker `64ee9ed1d986a5e521598a36656e9c2f59d682ee` was deployed
+first, then canonical Worker `e6b91956484589c088e6d04a9835b3e59a2eb786` was
+deployed to the production custom domain. Readiness now reports the exact
+canonical SHA with `database=ok`, `queue=ok`, `ai=configured`,
+`config.ok=true`; the only issue is the pre-existing warning
+`CONFIG_PLUS_GRANT_SECRET_MISSING`. Public health, recipes, manifest/Takosan
+branding and unauthenticated mutation boundaries returned expected responses.
+
+Remote SQL API ad-hoc `PRAGMA` queries returned Cloudflare `SQLITE_AUTH`; the
+repository-owned remote schema gate is the accepted read-only evidence. No
+production KV/R2/queue data was mutated, and no PayOS, DNS, secret rotation or
+T14 work occurred. PR #4 (`release/pre0032-schema-compat`) remains open with
+no hosted checks; it must be reviewed/merged before the compatibility code is
+considered part of canonical `main`.
+
 ## Canonical repository consolidation
 
 **CANONICAL REPOSITORY CONSOLIDATION COMPLETE.** The canonical repository is
@@ -26,13 +50,12 @@ requirement. CI, PR, force-push and branch-deletion protections remain active.
 
 ## Production deployment status
 
-**NOT AUTHORIZED / NOT READY FOR DIRECT ROLLOUT.** Canonical repository
-readiness is separate from deployment readiness. The rolling-schema
-compatibility concern around canonical migration `0032` remains unresolved for
-production sequencing. No deploy, remote D1 migration, KV/R2/queue mutation,
-PayOS change, secret/DNS change or T14 work is authorized here. The automatic
-post-merge Deploy workflow performed no deployment: staging was unconfigured
-and production was skipped.
+**ROLLOUT COMPLETE WITH FOLLOW-UP.** Production is serving canonical
+`e6b91956484589c088e6d04a9835b3e59a2eb786` and D1 is at migration `0033`.
+The compatibility sequencing concern was handled by deploying `64ee9ed1`
+before the bridge migration. The remaining follow-up is review/merge of PR #4;
+do not down-migrate or bypass branch protection. PayOS, DNS, secret rotation,
+production KV/R2/queue data and T14 remain untouched.
 
 # Historical production integration evidence — 2026-09-15
 

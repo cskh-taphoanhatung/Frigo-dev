@@ -32,3 +32,11 @@
 - Certification (full Vitest, build, migrations, D1, authority audit,
   freeze) NOT started. Next: resume certification per
   `docs/ai/inventory-truth/t13/T13R_B_REMEDIATION.md`.
+## Production rollout receipt — 2026-09-15
+
+- Production D1 `frigo-db`: migrations `0001`-`0033`, remote schema gate PASS.
+- Deployed compatibility SHA `64ee9ed1`; deployed canonical SHA
+  `e6b91956484589c088e6d04a9835b3e59a2eb786`.
+- Readiness exact-SHA PASS; DB/queue/AI/config healthy, PLUS-grant warning only.
+- Full Vitest `3630/3630`, lint/typecheck/build and frozen install PASS.
+- Follow-up blocked on hosted CI/review for open PR #4; no protection bypass.

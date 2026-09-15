@@ -1,5 +1,19 @@
 # Frigo / Takosan current task board — 2026-09-15
 
+## Production rollout receipt — COMPLETE
+
+- [done] Production D1 migration applied and verified at `0001`-`0033`.
+- [done] Pre-migration SQL export recorded (SHA-256
+  `378c023b15c159d140162e6eb74bbf2ad584e7b699c72384379119defe6dec6a`).
+- [done] Compatibility Worker `64ee9ed1` deployed before schema cutover.
+- [done] Canonical Worker `e6b91956484589c088e6d04a9835b3e59a2eb786` deployed
+  and readiness verified on the production custom domain.
+- [done] Remote schema gate, build, lint, typecheck and full Vitest `3630/3630`
+  passed; smoke covered health, readiness, recipes, PWA manifest and auth
+  boundaries.
+- [blocked] PR #4 must receive hosted CI/review and be merged so the deployed
+  compatibility bridge is reachable from canonical `main`.
+
 ## Canonical consolidation finalization
 
 - [done] Application integration frozen at
@@ -22,8 +36,8 @@
 - [done] Maintainer accepted external technical review for final head `7ede92c...`
   with P0/P1/P2 = 0; native collaborator approval may be waived only for this
   consolidation.
-- [blocked / out of scope] Production rollout pending the `0032` compatibility
-  plan; no deploy or remote resource mutation is authorized.
+- [done] Production rollout completed through D1 `0033` and canonical Worker
+  `e6b9195`; PR #4 compatibility bridge remains a follow-up.
 - [not started] T14.
 
 # Historical production integration remediation — 2026-09-15

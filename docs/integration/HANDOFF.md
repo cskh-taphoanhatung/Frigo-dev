@@ -14,12 +14,12 @@ deletion are blocked, admin enforcement remains enabled, and the approval count
 is zero under the recorded maintainer waiver. Archive branch
 `archive/pre-canonical-consolidation` preserves old main at `d1b06732`.
 
-**PRODUCTION DEPLOYMENT STATUS: NOT AUTHORIZED / NOT READY FOR DIRECT ROLLOUT.**
-Repository promotion does not solve the rolling-schema compatibility issue
-around canonical migration `0032`. The automatic post-merge Deploy workflow
-created a release manifest but skipped staging because staging is unconfigured;
-its production job was skipped. Do not deploy, migrate production, touch
-D1/KV/R2/queues/PayOS/secrets/DNS, or start T14. `e34ed167` is historical and
+**PRODUCTION DEPLOYMENT STATUS: ROLLOUT COMPLETE WITH FOLLOW-UP.** Production
+serves `e6b91956484589c088e6d04a9835b3e59a2eb786` after compatibility
+`64ee9ed1` was deployed before the `0032` bridge. D1 is at `0001`-`0033` and
+the repository-owned remote schema gate passed. PR #4 remains open without
+hosted checks; do not bypass protection. PayOS, DNS, secrets, production
+KV/R2/queue data and T14 remain untouched. `e34ed167` is historical and
 superseded.
 
 ## Historical canonical-consolidation audit handoff — superseded
