@@ -2,18 +2,23 @@
 
 ## Current canonical / production status — 2026-09-15 UTC
 
-Canonical `vn-clo/Frigo-dev` (ID `1368281478`) main is freshly verified at
-`fbd14c771070e1b5594532648d79fb60c891747d`. PR #9 merged the Auth/GIS popup,
+Canonical `vn-clo/Frigo-dev` (ID `1368281478`) main before this docs-only receipt
+is freshly verified at `a165474a623a8130c9a9ed4f1df096b3ac3b3ae9`.
+The final tip is recorded in the receipt PR's post-merge comment.
+PR #9 merged the Auth/GIS popup,
 OCR pending UX and COOP fixes as `911db7fdddcd60ea1e3f3c17b4aed3f4b922bda5`;
 PR #10 records Worker `20bc1f35-6ffe-4085-ba79-d54a0b53da71` at 100% of the
-custom domain. Main differs from that application merge only by documentation.
+custom domain. Starting main and T14A main differ from that application merge
+only by documentation; final T14B-A main additionally contains the approved
+non-authoritative safety library/tooling, not a production release.
 
 T14A audit merged docs-only through PR #11 after exact-head hosted run
-`35034318031` passed. Accepted T14B-A is reconciled on the resulting new main,
-pending fresh local/hosted validation and protected merge. T14B-B is not started. Static
+`35034318031` passed. Accepted T14B-A merged through PR #12 after exact-head
+hosted run `35035112092` and all fresh local gates passed (154 files / 3676 tests).
+Both foundations are canonical. T14B-B is not started. Static
 `ALL_RECIPES` remains authority (71/59/12); migrations remain 0001–0033 and media
 is deferred to T14C. No deploy or production mutation is part of this task.
-Main CI `35030996228` passed; Deploy `35031212139` failed only in staging for
+Main CI `35035415271` passed; Deploy `35035612637` failed only in staging for
 missing `CLOUDFLARE_API_TOKEN`, with release success and production skipped.
 PR #4 remains historical: CLOSE_ARCHIVE recommended, not merge.
 Exact integration evidence: `docs/ai/recipe-catalog/T14_INTEGRATION_REFRESH.md`.

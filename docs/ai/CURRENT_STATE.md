@@ -2,8 +2,8 @@
 
 ## Current T14 integration refresh — 2026-09-15 UTC
 
-Canonical repository: `vn-clo/Frigo-dev` (ID `1368281478`). Fresh main:
-`fbd14c771070e1b5594532648d79fb60c891747d`; not the historical T14 audit base
+Canonical repository: `vn-clo/Frigo-dev` (ID `1368281478`). Verified main before
+this docs-only receipt: `a165474a623a8130c9a9ed4f1df096b3ac3b3ae9`; not the historical T14 audit base
 `345cecf`. PR #9 merged as `911db7fdddcd60ea1e3f3c17b4aed3f4b922bda5`;
 PR #10 is its docs-only rollout receipt. Recorded production Worker version
 `20bc1f35-6ffe-4085-ba79-d54a0b53da71` serves the custom domain at 100%.
@@ -16,18 +16,25 @@ migrations were unchanged by PR #9/#10. Fresh frozen install, lint, typecheck,
 test (151 files / 3633 tests), migration smoke, build and diff check passed;
 all 33 migration hashes match. T14A merged through PR #11 after exact-head
 `e916d292d391ba999bcdd96bfdfec98e6b598678` passed hosted run `35034318031`.
-Accepted T14B-A source PR #8 is now reconciled on a fresh branch from that main,
-pending fresh local/hosted validation and protected merge. Its functional blobs
-are unchanged; the recipe ADR is renumbered to ADR-023 to preserve Auth ADR-022.
+Accepted T14B-A source PR #8 is now **merged through PR #12** as `a165474a`.
+Exact integration head `3e3937419b560f1ebf0aa7f5e29a3131508b7d94` passed hosted
+run `35035112092` and all fresh local gates (154 files / 3676 tests). Its 15
+functional paths are unchanged from the accepted source; recipe ADR-023 preserves
+Auth ADR-022. All PR #9 files, 33 migration hashes and inventory authority match.
 **T14B-B NOT STARTED**. Authority remains static `ALL_RECIPES` (71 = 59 VN +
 12 global); D1 remains shadow, media is deferred to T14C, no 0034 is created.
 
-Starting-main CI `35030996228` passed. Deploy `35031212139` has release success,
+Post-T14B-A main CI `35035415271` passed. Deploy `35035612637` has release success,
 staging failure from missing `CLOUDFLARE_API_TOKEN`, production skipped. This is
 an OPS/RELEASE blocker, not T14. PR #4 remains open; **CLOSE_ARCHIVE** is the
 recommended disposition, not merge. No deployment or production mutation here.
 The RuntimeRecipe contract, completeness/FK-stub classifier, read-only D1 content
 projection, drift audit and hardened seed renderer remain non-authoritative.
+Fresh local replay: D1 complete 59, static-only `gl-01..gl-12`, d1-only/incomplete/
+rejected empty, supported-field drift zero, nutrition `unsupported_by_catalog_model`.
+Both integration prerequisites are complete (**READY_FOR_T14B_B**); no new task
+is started. The receipt PR's post-merge comment records exact final main and
+`T14B_B_BASE_MAIN` after this docs-only receipt, which cannot embed its own merge SHA.
 Exact checks, status and next action: `recipe-catalog/T14_INTEGRATION_REFRESH.md`.
 
 # Historical checkpoints — superseded as current-state and next-action authority

@@ -3,11 +3,12 @@
 ## Current handoff — T14 integration refresh, 2026-09-15 UTC
 
 - Task: reconcile T14A then accepted T14B-A; no redesign or T14B-B.
-- Repository: `vn-clo/Frigo-dev`, ID `1368281478`; verified canonical main
-  `fbd14c771070e1b5594532648d79fb60c891747d` after T14A PR #11 merged.
-- Branch: `hoplite/poteidaia-c88481ca-integrate-t14b-a-current-main`, directly
-  from that main. Only accepted PR #8 functional delta is imported, unchanged.
-  T14A source PR #7 head `769e0532` and old PR #8 stack are historical references.
+- Repository: `vn-clo/Frigo-dev`, ID `1368281478`; verified canonical main before
+  this docs-only receipt `a165474a623a8130c9a9ed4f1df096b3ac3b3ae9`.
+- Merges: T14A PR #11 → `fbd14c771070e1b5594532648d79fb60c891747d`, then
+  T14B-A PR #12 → `a165474a623a8130c9a9ed4f1df096b3ac3b3ae9`. Normal protected
+  flow, no history rewrite. Source PRs #7/#8 remain historical references.
+- Branch: docs-only final merge receipt from both completed integrations.
 - Output: historical audit retained with explicit lineage refresh; current
   production truth wins over old shared-status prose. Detailed receipt:
   `recipe-catalog/T14_INTEGRATION_REFRESH.md`.
@@ -17,17 +18,23 @@
 - Checks: fresh frozen install, lint, typecheck, test (**151 files / 3633 tests**),
   migration smoke, build and diff check all exit 0. All 33 migration hashes match;
   T14A application-path diff is empty. Exact T14A hosted head `e916d292` passed
-  run `35034318031`; merge SHA is the canonical main above. T14B-A full local and
-  exact-head hosted verification are pending at this pre-validation checkpoint.
-- Blockers: Deploy `35031212139` staging lacks `CLOUDFLARE_API_TOKEN`; release
-  succeeded, production skipped. Main CI `35030996228` passed. Do not fix secrets.
+  run `35034318031`. T14B-A exact head `3e393741` passed hosted run `35035112092`
+  and every fresh required local gate: 154 files / 3676 tests, seed check/render,
+  typecheck, lint, migration smoke, build, diff check; post-run tree empty.
+- Blockers: Deploy `35035612637` staging lacks `CLOUDFLARE_API_TOKEN`; release
+  succeeded, production skipped. Main CI `35035415271` passed. Do not fix secrets.
 - Safety: migrations 0001–0033, static `ALL_RECIPES` authority, Inventory Truth,
   Qwen, PayOS and PR #9 headers/source remain unchanged; media deferred to T14C.
   PR #4 remains open with CLOSE_ARCHIVE recommendation, not merge.
 - Architecture: accepted safety modules remain non-authoritative. Recipe ADR-023
   only renumbers the historical ADR-022 to preserve PR #9's Auth/OCR decision.
-- Next action: verify T14B-A on this new base, publish against main, obtain fresh
-  exact-head hosted validation, then protected merge and final receipt.
+- Recipe truth: 71/59/12 runtime; fresh local D1 replay complete 59, static-only
+  globals 12, d1-only/incomplete/rejected empty, supported-field drift zero;
+  nutrition unsupported, not fabricated parity. Renderer containment intact.
+- Next action: finish the protected docs-only receipt. Its post-merge PR comment
+  records exact final main / `T14B_B_BASE_MAIN` and final CI/Deploy status (a commit
+  cannot embed its own eventual merge SHA). Then use that final main for a
+  separately authorized T14B-B packet. **READY_FOR_T14B_B** prerequisites only.
   **T14B-B NOT STARTED; do not create 0034 or deploy.**
 
 # Historical handoffs — not current next-action authority

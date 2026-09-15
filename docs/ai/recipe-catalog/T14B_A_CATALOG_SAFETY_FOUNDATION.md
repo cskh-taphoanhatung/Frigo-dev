@@ -29,8 +29,11 @@ PR #9's production application merge `911db7fdddcd60ea1e3f3c17b4aed3f4b922bda5`
 and PR #10's rollout receipt remain intact. The recorded serving Worker is
 `20bc1f35-6ffe-4085-ba79-d54a0b53da71`, not historical `e6b9195`. T14B-A's
 additive, non-authoritative library/tooling changes are not a production release.
-Current exact-head gates and eventual merge are recorded in
-`T14_INTEGRATION_REFRESH.md`; old CI and “not triggered” status below are historical.
+Integration PR #12 merged as `a165474a623a8130c9a9ed4f1df096b3ac3b3ae9` after
+exact head `3e3937419b560f1ebf0aa7f5e29a3131508b7d94` passed hosted run
+`35035112092` and all fresh local gates (154 files / 3676 tests). Final canonical
+baseline receipt: `T14_INTEGRATION_REFRESH.md`; old CI and “not triggered” status
+below are historical.
 T14B-B is not started, media remains deferred to T14C, and PR #4 remains historical
 with CLOSE_ARCHIVE recommendation (not merged/deleted).
 
