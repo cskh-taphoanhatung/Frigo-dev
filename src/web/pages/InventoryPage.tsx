@@ -8,8 +8,10 @@ import { InlineLoading, InlineError } from '../components/common/AsyncState';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
 import { Button } from '../components/common/Button';
 import { api } from '../services/api';
+import { ApiError } from '../services/http';
 import { queryKeys } from '../lib/queryKeys';
 import { invalidateInventoryDependents } from '../lib/query-invalidation';
+import { presentDomainError, presentRefetchOutcome } from '../lib/inventory-truth';
 import { Plus, Search, X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { StandardUnit } from '@frigo/domain';
@@ -22,6 +24,8 @@ export const InventoryPage: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<{ id: string; version: number } | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
+  // True while a conflict's authoritative reload has not succeeded (T13R-B P2-4).
+  const [refetchFailed, setRefetchFailed] = useState(false);
 
   // Form states
   const [name, setName] = useState('');
@@ -38,21 +42,45 @@ export const InventoryPage: React.FC = () => {
   const items = inventoryQuery.data ?? [];
   const loading = inventoryQuery.isPending;
 
+  // T13R-B P2-4: a conflict-class failure (CONFLICT / IDEMPOTENCY_CONFLICT /
+  // STALE_SNAPSHOT …) means the displayed stock is stale. The authoritative
+  // inventory is reloaded and the stale rows replaced; the copy claims a
+  // successful refresh only when the reload actually succeeded, and the
+  // mutation itself is never resubmitted automatically (retry: false).
+  const presentMutationFailure = async (error: unknown, fallback: string) => {
+    const code = error instanceof ApiError ? error.code : null;
+    const presentation = presentDomainError(code, fallback);
+    if (!presentation.refetch) {
+      setRefetchFailed(false);
+      setMutationError(presentation.message);
+      return;
+    }
+    setMutationError(presentation.message);
+    await invalidateInventoryDependents();
+    const reloaded = await inventoryQuery.refetch({ throwOnError: false });
+    const refreshed = reloaded.status === 'success';
+    setRefetchFailed(!refreshed);
+    setMutationError(presentRefetchOutcome(presentation, refreshed).message);
+  };
+
   const updateQty = useMutation({
+    retry: false,
     mutationFn: ({ id, newQty, version }: { id: string; newQty: number; version: number }) =>
       api.updateInventoryItem(id, { quantity: newQty }, version),
     onSuccess: invalidateInventoryDependents,
-    onError: () => setMutationError('Chưa cập nhật được số lượng. Vui lòng thử lại.'),
+    onError: (error: unknown) => presentMutationFailure(error, 'Chưa cập nhật được số lượng. Vui lòng thử lại.'),
   });
 
   const deleteItem = useMutation({
+    retry: false,
     mutationFn: ({ id, version }: { id: string; version: number }) =>
       api.deleteInventoryItem(id, version),
     onSuccess: invalidateInventoryDependents,
-    onError: () => setMutationError('Chưa xóa được nguyên liệu. Vui lòng thử lại.'),
+    onError: (error: unknown) => presentMutationFailure(error, 'Chưa xóa được nguyên liệu. Vui lòng thử lại.'),
   });
 
   const addItem = useMutation({
+    retry: false,
     mutationFn: (payload: any) => api.addInventoryItem(payload),
     onSuccess: () => {
       void invalidateInventoryDependents();
@@ -60,11 +88,12 @@ export const InventoryPage: React.FC = () => {
       setName('');
       setQuantity(1);
     },
-    onError: () => setMutationError('Chưa thêm được nguyên liệu. Vui lòng thử lại.'),
+    onError: (error: unknown) => presentMutationFailure(error, 'Chưa thêm được nguyên liệu. Vui lòng thử lại.'),
   });
 
   const handleUpdateQty = (id: string, currentQty: number, delta: number, version: number) => {
     setMutationError(null);
+    setRefetchFailed(false);
     updateQty.mutate({ id, newQty: Math.max(1, currentQty + delta), version });
   };
 
@@ -72,7 +101,12 @@ export const InventoryPage: React.FC = () => {
     e.preventDefault();
     if (!name.trim()) return;
     setMutationError(null);
-    const expiryDate = new Date(Date.now() + expiryDays * 86400000).toISOString().split('T')[0];
+    setRefetchFailed(false);
+    // T13: "Chưa rõ" means no expiry evidence exists. Sending a computed date
+    // here would manufacture a dated fact the user never supplied.
+    const expiryDate = expiryDays > 0
+      ? new Date(Date.now() + expiryDays * 86400000).toISOString().split('T')[0]
+      : null;
     addItem.mutate({
       name: name.trim(),
       quantity: Number(quantity),
@@ -80,6 +114,8 @@ export const InventoryPage: React.FC = () => {
       category,
       storage,
       expiryDate,
+      // Day chips are estimates, never dated facts.
+      expiryEstimated: expiryDate !== null,
     });
   };
 
@@ -107,7 +143,7 @@ export const InventoryPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] pb-36 relative max-w-md sm:max-w-lg md:max-w-2xl mx-auto">
+    <div className="min-h-screen bg-takosan-cream pb-36 relative max-w-md sm:max-w-lg md:max-w-2xl mx-auto">
       <TopBar />
 
       <div className="px-4 pt-3 space-y-4 animate-fade-in">
@@ -118,13 +154,24 @@ export const InventoryPage: React.FC = () => {
               Tủ lạnh của tôi
             </h2>
             <p className="text-xs text-slate-500 mt-1 font-medium">
-              <span className="inline-flex items-center gap-1 text-emerald-700 font-bold">
+              <span className="inline-flex items-center gap-1 text-takosan-green font-bold">
                 🧊 {items.length} nguyên liệu
               </span>{' '}
               sẵn sàng nấu
             </p>
           </div>
         </div>
+
+        {/* T13: entry point to the reconciliation surface for evidence that
+            needs a human decision. */}
+        <button
+          type="button"
+          onClick={() => navigate('/inventory-reconciliation')}
+          className="w-full flex items-center justify-between px-4 py-2.5 rounded-2xl bg-white border border-slate-200/80 shadow-card text-left tap-target cursor-pointer hover:border-takosan-green/40 transition-all"
+        >
+          <span className="text-xs font-semibold text-slate-700">Đối chiếu tủ lạnh</span>
+          <span className="text-[11px] text-takosan-green font-bold">Xem bằng chứng →</span>
+        </button>
 
         {/* Search */}
         <div className="relative">
@@ -134,7 +181,7 @@ export const InventoryPage: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Tìm theo tên nguyên liệu..."
-            className="w-full h-12 pl-11 pr-4 bg-white rounded-2xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-card transition-all"
+            className="w-full h-12 pl-11 pr-4 bg-white rounded-2xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-card transition-all"
           />
         </div>
 
@@ -147,7 +194,7 @@ export const InventoryPage: React.FC = () => {
               className={clsx(
                 'px-4 py-2 rounded-full text-xs font-heading font-bold whitespace-nowrap transition-all tap-target cursor-pointer',
                 filterCategory === c.id
-                  ? 'bg-[#0F3D2E] text-white shadow-card scale-105'
+                  ? 'bg-takosan-green text-white shadow-card scale-105'
                   : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50 hover:text-slate-900'
               )}
             >
@@ -159,13 +206,24 @@ export const InventoryPage: React.FC = () => {
         {/* Inventory Item List */}
         <div className="space-y-2 pt-1">
           {mutationError && (
-            <p className="text-xs text-rose-600 font-medium px-1" role="alert">
-              {mutationError}
-            </p>
+            <div className="text-xs text-rose-600 font-medium px-1 space-y-1" role="alert"
+              data-refetch-state={refetchFailed ? 'failed' : 'ok'}>
+              <p>{mutationError}</p>
+              {refetchFailed && (
+                <button type="button" className="underline font-semibold tap-target" disabled={inventoryQuery.isFetching}
+                  onClick={async () => {
+                    // Explicit read-only reload; the failed mutation is never retried here.
+                    const reloaded = await inventoryQuery.refetch({ throwOnError: false });
+                    if (reloaded.status === 'success') { setRefetchFailed(false); setMutationError(null); }
+                  }}>
+                  {inventoryQuery.isFetching ? 'Đang tải lại…' : 'Tải lại tủ lạnh'}
+                </button>
+              )}
+            </div>
           )}
           {loading ? (
             <InlineLoading label="Đang tải tủ lạnh…" />
-          ) : inventoryQuery.isError ? (
+          ) : inventoryQuery.isError && inventoryQuery.data === undefined ? (
             <InlineError error={inventoryQuery.error} onRetry={() => inventoryQuery.refetch()} />
           ) : filteredItems.length === 0 ? (
             <EmptyState
@@ -188,6 +246,8 @@ export const InventoryPage: React.FC = () => {
                 freshness={item.freshness}
                 ingredientId={item.ingredientId}
                 expiryDate={item.expiryDate}
+                expiryKind={item.expiryKind}
+                estimatedExpiryDate={item.estimatedExpiryDate}
                 onClick={() => navigate(`/ingredients/${item.id}`)}
                 onUpdateQuantity={(delta) => handleUpdateQty(item.id, item.quantity, delta, item.version)}
                 onDelete={() => setPendingDelete({ id: item.id, version: item.version })}
@@ -201,7 +261,7 @@ export const InventoryPage: React.FC = () => {
       <div className="fixed bottom-20 left-0 right-0 max-w-md sm:max-w-lg md:max-w-2xl mx-auto px-4 z-30 pointer-events-none">
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="w-full py-4 px-4 rounded-2xl bg-gradient-to-r from-[#22C55E] to-emerald-600 hover:from-[#1ea750] hover:to-emerald-700 text-white font-heading font-bold text-[15px] shadow-float active:scale-98 transition-all pointer-events-auto flex items-center justify-center gap-2 tap-target"
+          className="w-full py-4 px-4 rounded-2xl bg-takosan-green hover:bg-takosan-green-hover text-white font-heading font-bold text-[15px] shadow-float active:scale-98 transition-all pointer-events-auto flex items-center justify-center gap-2 tap-target"
         >
           <Plus className="w-5.5 h-5.5 stroke-[2.5]" />
           <span>Thêm nguyên liệu</span>
@@ -236,7 +296,7 @@ export const InventoryPage: React.FC = () => {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Ví dụ: Thịt ba chỉ, Trứng gà, Cà chua..."
-                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 font-medium text-sm text-slate-900 placeholder:text-slate-400"
+                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green font-medium text-sm text-slate-900 placeholder:text-slate-400"
                 />
               </div>
 
@@ -251,7 +311,7 @@ export const InventoryPage: React.FC = () => {
                     required
                     value={quantity}
                     onChange={(e) => setQuantity(Number(e.target.value))}
-                    className="w-full h-11 px-3.5 rounded-xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 font-medium text-sm text-slate-900"
+                    className="w-full h-11 px-3.5 rounded-xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green font-medium text-sm text-slate-900"
                   />
                 </div>
 
@@ -262,7 +322,7 @@ export const InventoryPage: React.FC = () => {
                   <select
                     value={unit}
                     onChange={(e) => setUnit(e.target.value as StandardUnit)}
-                    className="w-full h-11 px-3 rounded-xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 font-medium text-sm text-slate-900 bg-white"
+                    className="w-full h-11 px-3 rounded-xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green font-medium text-sm text-slate-900 bg-white"
                   >
                     <option value="g">gam (g)</option>
                     <option value="kg">kg</option>
@@ -283,7 +343,7 @@ export const InventoryPage: React.FC = () => {
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    className="w-full h-11 px-3 rounded-xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 font-medium text-sm text-slate-900 bg-white"
+                    className="w-full h-11 px-3 rounded-xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green font-medium text-sm text-slate-900 bg-white"
                   >
                     <option value="vegetable">Rau củ</option>
                     <option value="meat">Thịt</option>
@@ -302,7 +362,7 @@ export const InventoryPage: React.FC = () => {
                   <select
                     value={storage}
                     onChange={(e) => setStorage(e.target.value)}
-                    className="w-full h-11 px-3 rounded-xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 font-medium text-sm text-slate-900 bg-white"
+                    className="w-full h-11 px-3 rounded-xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green font-medium text-sm text-slate-900 bg-white"
                   >
                     <option value="fridge">Ngăn mát</option>
                     <option value="freezer">Ngăn đông</option>
@@ -317,6 +377,7 @@ export const InventoryPage: React.FC = () => {
                 </label>
                 <div className="flex gap-2">
                   {[
+                    { days: 0, label: 'Chưa rõ' },
                     { days: 2, label: '2 ngày' },
                     { days: 5, label: '5 ngày' },
                     { days: 10, label: '10 ngày' },
@@ -329,7 +390,7 @@ export const InventoryPage: React.FC = () => {
                       className={clsx(
                         'flex-1 py-2 rounded-lg text-xs font-medium border transition-all tap-target cursor-pointer',
                         expiryDays === d.days
-                          ? 'bg-emerald-50 border-emerald-600 text-emerald-900 font-semibold'
+                          ? 'bg-takosan-mint border-takosan-green text-takosan-green-deep font-semibold'
                           : 'bg-white border-slate-200/80 text-slate-600 hover:bg-slate-50'
                       )}
                     >
@@ -358,6 +419,7 @@ export const InventoryPage: React.FC = () => {
         onConfirm={() => {
           if (pendingDelete) {
             setMutationError(null);
+            setRefetchFailed(false);
             deleteItem.mutate(pendingDelete);
           }
           setPendingDelete(null);

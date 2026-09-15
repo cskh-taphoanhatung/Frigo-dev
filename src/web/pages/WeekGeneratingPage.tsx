@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { MealPlan } from '@frigo/domain';
 import { useWeekStore } from '../stores/useWeekStore';
-import { FRIGO_ASSETS } from '../lib/frigo-assets';
+import { TAKOSAN_BRAND } from '../lib/takosan-brand';
 import { capturePrivateSession, currentPrivateScope } from '../lib/private-session';
 import { todayLocalIso } from '../lib/format';
 import { InlineError, InlineLoading } from '../components/common/AsyncState';
@@ -41,11 +41,11 @@ export const WeekGeneratingPage: React.FC = () => {
   }, [generatePlan, navigate, setupDraft]);
 
   return (
-    <div className="min-h-screen bg-[#FFFDF6] text-slate-900 flex flex-col justify-center gap-8 p-6 max-w-md mx-auto">
+    <div className="min-h-screen bg-takosan-cream text-takosan-navy flex flex-col justify-center gap-8 p-6 max-w-md mx-auto">
       <div className="text-center">
-        <img src={FRIGO_ASSETS.brand.mark} alt="Frigo Planner" className="w-16 h-16 mx-auto mb-4" />
+        <img src={TAKOSAN_BRAND.mascot.calendar} alt="Takosan lên lịch" className="w-28 h-28 mx-auto mb-4" />
         <h2 className="font-heading font-bold text-2xl text-slate-900">
-          {error ? 'Chưa tạo được thực đơn' : 'Frigo đang lên thực đơn tuần…'}
+          {error ? 'Chưa tạo được thực đơn' : 'Takosan đang lên thực đơn tuần…'}
         </h2>
         <p className="text-xs text-slate-500 mt-2">Ăn đủ • Mua đủ • Dùng hết</p>
       </div>

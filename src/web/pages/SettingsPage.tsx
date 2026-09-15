@@ -51,20 +51,20 @@ export const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] pb-12 text-slate-900">
+    <div className="min-h-screen bg-takosan-cream pb-12 text-slate-900">
       <TopBar showBack title="Cài đặt" />
 
       <div className="px-4 pt-3 space-y-4">
         {/* PWA / App Installation */}
         <Card className="p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <Smartphone className="w-4 h-4 text-emerald-600" />
-            <h4 className="font-heading font-bold text-sm text-slate-900">Ứng dụng Frigo trên điện thoại</h4>
+            <Smartphone className="w-4 h-4 text-takosan-green" />
+            <h4 className="font-heading font-bold text-sm text-slate-900">Ứng dụng Takosan trên điện thoại</h4>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
             {isStandalone
               ? '✅ Ứng dụng đã được cài đặt và đang chạy ở chế độ Độc lập (Standalone PWA).'
-              : 'Cài đặt Frigo lên màn hình chính để mở nhanh không qua trình duyệt và sử dụng ngoại tuyến mọi lúc mọi nơi.'}
+              : 'Cài đặt Takosan lên màn hình chính để mở nhanh không qua trình duyệt và sử dụng ngoại tuyến mọi lúc mọi nơi.'}
           </p>
           {!isStandalone && (
             <Button
@@ -73,7 +73,7 @@ export const SettingsPage: React.FC = () => {
               onClick={handleInstallPwa}
               className="w-full flex items-center justify-center gap-2 text-xs text-slate-800"
             >
-              <Smartphone className="w-3.5 h-3.5 text-emerald-600" />
+              <Smartphone className="w-3.5 h-3.5 text-takosan-green" />
               <span>Cài đặt lên Màn hình chính (PWA)</span>
             </Button>
           )}
@@ -82,7 +82,7 @@ export const SettingsPage: React.FC = () => {
         {/* Offline & Cache Management */}
         <Card className="p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <Wifi className="w-4 h-4 text-emerald-600" />
+            <Wifi className="w-4 h-4 text-takosan-green" />
             <h4 className="font-heading font-bold text-sm text-slate-900">Bộ nhớ đệm ứng dụng</h4>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
@@ -102,7 +102,7 @@ export const SettingsPage: React.FC = () => {
         {/* Language */}
         <Card className="p-4 space-y-2.5">
           <div className="flex items-center gap-2">
-            <Globe className="w-4 h-4 text-emerald-600" />
+            <Globe className="w-4 h-4 text-takosan-green" />
             <h4 className="font-heading font-bold text-sm text-slate-900">Ngôn ngữ hiển thị</h4>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
@@ -113,11 +113,11 @@ export const SettingsPage: React.FC = () => {
         {/* Privacy Notes */}
         <Card className="p-4 space-y-2">
           <div className="flex items-center gap-2">
-            <Shield className="w-4 h-4 text-emerald-600" />
+            <Shield className="w-4 h-4 text-takosan-green" />
             <h4 className="font-heading font-bold text-sm text-slate-900">Quyền riêng tư & AI</h4>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
-            Frigo không gửi email, số điện thoại, vị trí hoặc thông tin cá nhân tới các nhà cung cấp AI. AI chỉ nhận diện nguyên liệu từ hình ảnh bạn chủ động gửi để xử lý yêu cầu.
+            Takosan không gửi email, số điện thoại, vị trí hoặc thông tin cá nhân tới các nhà cung cấp AI. AI chỉ nhận diện nguyên liệu từ hình ảnh bạn chủ động gửi để xử lý yêu cầu.
           </p>
         </Card>
 
@@ -125,7 +125,7 @@ export const SettingsPage: React.FC = () => {
         <div className="text-center py-2 space-y-1">
           <div className="flex items-center justify-center gap-1 text-xs text-slate-400">
             <Info className="w-3.5 h-3.5" />
-            <span>Frigo v{import.meta.env.VITE_APP_VERSION} • Build {import.meta.env.VITE_GIT_COMMIT || 'local'} • {import.meta.env.VITE_BUILD_TIMESTAMP || 'local build'}</span>
+            <span>Takosan v{import.meta.env.VITE_APP_VERSION} • Build {import.meta.env.VITE_GIT_COMMIT || 'local'} • {import.meta.env.VITE_BUILD_TIMESTAMP || 'local build'}</span>
           </div>
           <p className="text-[11px] text-slate-400">Ăn đủ. Mua đủ. Dùng hết.</p>
         </div>
@@ -151,7 +151,7 @@ export const SettingsPage: React.FC = () => {
       />
       <ConfirmDialog
         open={showInstallHelp}
-        title="Cài đặt Frigo lên màn hình chính"
+        title="Cài đặt Takosan lên màn hình chính"
         description={'Trên iPhone (Safari): nhấn nút Chia sẻ rồi chọn "Thêm vào MH chính". Trên Android (Chrome): nhấn menu ba chấm rồi chọn "Cài đặt ứng dụng".'}
         confirmText="Đã hiểu"
         cancelText="Đóng"

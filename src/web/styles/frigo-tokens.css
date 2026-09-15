@@ -1,14 +1,19 @@
+/* Legacy --frigo-* names kept as compatibility aliases onto Takosan tokens.
+   Components may still read them; do not delete until the brand migration is proven. */
+@import "./takosan-tokens.css";
+
 :root {
-  --frigo-primary: #059669;
-  --frigo-primary-hover: #047857;
-  --frigo-deep: #0F3D2E;
-  --frigo-text-main: #0F172A;
+  --frigo-primary: var(--takosan-green);
+  --frigo-primary-hover: var(--takosan-green-hover);
+  --frigo-deep: var(--takosan-green-deep);
+  --frigo-text-main: var(--takosan-navy);
   --frigo-text-muted: #475569;
   --frigo-text-subtle: #94A3B8;
-  --frigo-mint: #E6F4EA;
-  --frigo-cream: #F8FAF9;
+  --frigo-mint: var(--takosan-mint);
+  --frigo-cream: var(--takosan-cream);
   --frigo-surface: #FFFFFF;
   --frigo-border: #E2E8F0;
+  --frigo-border-brand: var(--takosan-cream-line);
   --frigo-border-light: #F1F5F9;
   --frigo-danger: #E11D48;
   --frigo-warning: #D97706;

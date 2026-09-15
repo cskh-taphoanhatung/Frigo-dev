@@ -64,12 +64,12 @@ Dự án tuân thủ phân tách nghiêm ngặt giữa **UI**, **API Worker**, *
   * **Queues:** Hàng đợi xử lý ảnh AI Vision nền (`frigo-scan-queue`).
   * **Turnstile:** Chuẩn bị sẵn cơ chế chống bot và rate-limiting.
 * **AI Architecture:**
-  * Lớp trừu tượng `AIRouter` (không gọi trực tiếp SDK trong business logic).
-  * **Primary Vision:** Qwen-VL (Alibaba Cloud / DashScope).
-  * **Fallback Vision:** Zhipu GLM-4V / Z.ai.
-  * **Reasoning / Recipe Ranker:** DeepSeek (`deepseek-chat` / `deepseek-reasoner`).
+  * Lớp `AIRouter`/`QwenTaskRuntime` nhận task logic (`recipe_generation`, `receipt_ocr`, `fridge_image_analysis`, `weekly_plan`, ...), không nhận physical model từ feature code.
+  * Production bật `AI_QWEN_ONLY=true`: runtime chọn các role `QWEN_FAST`, `QWEN_MULTIMODAL`, `QWEN_OCR`, `QWEN_REASONING` và `QWEN_JUDGE` theo policy; Groq/DeepSeek/GLM/Cloudflare chỉ còn adapter tương thích legacy khi Qwen-only tắt.
+  * Model aliases, prompt versions, token/call ceilings, retry/escalation và giá ước tính tập trung trong `packages/ai/src/model-governance.ts`; usage telemetry không ghi prompt, ảnh hay secret.
+  * **Pinned default:** text dùng `qwen3.7-flash-2026-07-15`; `qwen3.7-flash` chỉ là canary. OCR dùng `qwen-vl-ocr` với escalation Qwen multimodal; reasoning/judge mặc định tắt.
   * **Fallback Mock Mode:** Tích hợp `AI_MOCK_MODE=true` giả lập kết quả thực tế cho kiểm thử local mà không cần API key ngoài.
-  * **Strict Structured Output:** Định dạng JSON kiểm duyệt qua Zod.
+  * **Strict Structured Output:** JSON được kiểm duyệt qua Zod và quality gate; nhãn placeholder hoặc confidence dưới `0.6` không được tạo bản nháp. Lỗi provider được phân loại để queue chỉ retry lỗi tạm thời; production không dùng mock để che lỗi.
 * **Testing & Quality:** Vitest (Unit test scoring engine, AI schemas), strict TypeScript, ESLint, Prettier.
 
 ---
@@ -202,7 +202,7 @@ pnpm wrangler queues create frigo-scan-queue
 pnpm schema:check:local
 pnpm schema:check:remote
 
-# Local (applies pending migrations 0001 -> 0012 in order)
+# Local (applies all pending migrations in order)
 pnpm wrangler d1 migrations apply frigo-db --local
 
 # Production (run only after schema preflight and backup/export)
@@ -213,7 +213,9 @@ Do not replay individual migration files with `d1 execute` in an environment tha
 already tracks migration history; use `migrations apply` so Wrangler records the
 applied version and prevents accidental reordering.
 
-The current D1 baseline covers migrations `0001` through `0013`. Migration `0006`
+The repository migration chain currently covers `0001` through `0023`. The recorded
+production receipt is at `0022` until the OCR recovery migration is explicitly
+applied during a guarded release. Migration `0006`
 was hardened to use UPSERT-style seed writes so replay does not wipe
 `favorites` or `recipe_translations` rows that reference seeded recipes.
 Migration `0010` is additive: it backfills richer Week shadow tables while
@@ -223,9 +225,11 @@ cross-tenant `planId` collision aborts the complete D1 batch.
 Migration `0012` adds the durable scan queue ledger used by the queue consumer
 for idempotency, leases, retries, and permanent failure tracking.
 Migration `0013` adds receipt metadata and unit/total prices for asynchronous
-receipt review.
-`SCAN_QUEUE_MODE` is `async` in production after provider smoke validation; set it to `sync` only as a rollback switch if queue health degrades.
-the queue/DLQ and AI provider health checks pass.
+receipt review. Migration `0023` adds scan request fingerprints and MIME metadata
+so idempotent replays cannot substitute a different image payload.
+`SCAN_QUEUE_MODE` is `async` in production only after provider smoke validation;
+set it to `sync` as a rollback switch if queue health degrades. Confirm the
+queue/DLQ and AI provider health checks before enabling async again.
 See `docs/D1_SCHEMA_GATE.md` for gate behavior and failure handling.
 
 ### Bước 3: Thiết lập Secret Production
@@ -234,8 +238,19 @@ pnpm wrangler secret put QWEN_API_KEY
 pnpm wrangler secret put ZAI_API_KEY
 pnpm wrangler secret put DEEPSEEK_API_KEY
 pnpm wrangler secret put TURNSTILE_SECRET_KEY
+# Optional legacy fallback only; keep disabled while Qwen is configured.
 pnpm wrangler secret put GROQ_API_KEY
 ```
+
+Model/route vars are non-secret configuration. Production sets
+`AI_ENABLED=true`, `AI_QWEN_ONLY=true`, `AI_ALLOW_REASONING_MODEL=false`,
+`AI_ALLOW_JUDGE_MODEL=false`, bounded call/token ceilings and the role aliases
+documented in [docs/ai/QWEN_RUNTIME.md](docs/ai/QWEN_RUNTIME.md). The legacy
+`QWEN_MODEL=qwen3.7-flash` value is retained for compatibility but is not the
+pinned task-runtime model when `AI_MODEL_FAST` is present. Groq, Cloudflare,
+GLM and DeepSeek flags remain false. Run a non-PII provider smoke and the
+guarded workflow in `DEPLOYMENT.md` before representing candidate settings as
+production state.
 
 ### Bước 4: Deploy
 ```bash
@@ -306,8 +321,9 @@ Frigo Week là hệ thống lập kế hoạch thực đơn tuần thông minh k
 
 ## 9. Nguyên tắc Bảo mật & Quyền riêng tư (Privacy-by-Design)
 
-* **Không chia sẻ thông tin cá nhân:** Khi gửi ảnh sang các mô hình AI Vision (Qwen, GLM), API chỉ chuyển đổi ảnh sau khi đã loại bỏ toàn bộ dữ liệu EXIF và GPS. Tuyệt đối không đính kèm email, họ tên, số điện thoại hay thông tin định danh của người dùng.
+* **Không chia sẻ thông tin cá nhân:** Khi gửi ảnh sang các mô hình AI Vision (Groq/Qwen, Cloudflare hoặc GLM), API chỉ chuyển đổi ảnh sau khi đã loại bỏ toàn bộ dữ liệu EXIF và GPS. Tuyệt đối không đính kèm email, họ tên, số điện thoại hay thông tin định danh của người dùng.
 * **Xác thực trước khi lưu:** Dữ liệu nhận diện từ AI luôn được đưa về trạng thái bản nháp (`Draft`). Người dùng có toàn quyền kiểm tra, chỉnh sửa số lượng, đơn vị, hoặc xóa bỏ trước khi cập nhật vào kho thực phẩm.
+* **Quality gate và fail-closed:** Kết quả không có dòng thực phẩm đủ tin cậy (`AI_SCAN_NO_USABLE_ITEMS`) hoặc lỗi provider vĩnh viễn không được biến thành dữ liệu tồn kho giả; queue chỉ retry lỗi tạm thời.
 * **Event Sourcing:** Mọi thao tác thêm bớt nguyên liệu đều lưu vết thành sự kiện (`ADD`, `COOK`, `DISCARD`, `SCAN_CONFIRM`, `SHOPPING_IMPORT`) giúp việc kiểm toán và hoàn tác minh bạch.
 
 ---

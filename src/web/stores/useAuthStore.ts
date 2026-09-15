@@ -58,7 +58,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
   const savedHouseholdId = localStorage.getItem('frigo_household_id') || '';
 
   const savedEmail = localStorage.getItem('frigo_email') || '';
-  const savedDisplayName = localStorage.getItem('frigo_display_name') || 'Người dùng Frigo';
+  const savedDisplayName = localStorage.getItem('frigo_display_name') || 'Người dùng Takosan';
   const savedAvatarUrl = localStorage.getItem('frigo_avatar_url') || '';
   const savedOnboarded = localStorage.getItem('frigo_onboarded') === 'true';
   const savedPlus = localStorage.getItem('frigo_is_plus') === 'true';

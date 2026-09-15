@@ -545,6 +545,14 @@ export function findCanonicalIngredient(input: string): CanonicalIngredient | nu
   return null;
 }
 
+/** Resolve a catalog ID without applying the fuzzy name/alias matching above. */
+export function findCanonicalIngredientById(input: unknown): CanonicalIngredient | null {
+  if (typeof input !== 'string') return null;
+  const clean = input.trim().toLowerCase();
+  if (!clean) return null;
+  return CANONICAL_INGREDIENTS.find((ingredient) => ingredient.id.toLowerCase() === clean) || null;
+}
+
 export * from './units';
 export * from './availability';
 export * from './quantity';
@@ -575,3 +583,5 @@ export * from './week';
 export * from './foundation';
 export * from './meal-planning-api';
 export * from './meal-shopping-api';
+// T11 canonical inventory read model
+export * from './inventory-read-authority';

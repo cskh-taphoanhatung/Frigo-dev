@@ -538,7 +538,7 @@ describe('mounted planner generation interactions', () => {
       form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     });
     expect(submit.disabled).toBe(true);
-    expect(container.textContent).toContain('Frigo is planning from your data');
+    expect(container.textContent).toContain('Takosan is planning from your data');
     expect(fetchMock).toHaveBeenCalledTimes(2);
     const firstKey = new Headers(fetchMock.mock.calls[0][1]?.headers).get('Idempotency-Key');
     expect(firstKey).toBeTruthy();
@@ -662,7 +662,7 @@ describe('mounted planner mutation interactions', () => {
     const pending = deferred<Response>(); fetchMock.mockReturnValueOnce(pending.promise);
     const confirm = button('Regenerate');
     await act(async () => { confirm.click(); confirm.click(); });
-    await until(() => expect(container.textContent).toContain('Frigo is planning from your data'));
+    await until(() => expect(container.textContent).toContain('Takosan is planning from your data'));
     expect(fetchMock.mock.calls.filter(([url]) => String(url).endsWith('/regenerate'))).toHaveLength(1);
     expect(button('Regenerate plan').disabled).toBe(true);
     await act(async () => { pending.resolve(response(hookPlan(2))); });

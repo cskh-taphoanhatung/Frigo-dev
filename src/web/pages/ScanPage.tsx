@@ -8,6 +8,25 @@ import { clsx } from 'clsx';
 import { capturePrivateSession } from '../lib/private-session';
 import { readPrivateImage } from '../lib/private-image';
 
+function scanFailureMessage(error: unknown, fallback: string): string {
+  const detail = error instanceof Error ? error.message.toUpperCase() : '';
+  if (detail.includes('AI_SCAN_NO_USABLE_ITEMS') || detail.includes('INVALID_RESPONSE') || detail.includes('SCHEMA_VALIDATION')) {
+    return 'Ảnh chưa đủ rõ để nhận diện món ăn. Hãy chụp gần hơn, đủ sáng và không bị lóa.';
+  }
+  if (detail.includes('AI_SCAN_TIMEOUT') || detail.includes('REQUEST_TIMEOUT')) {
+    return 'Dịch vụ nhận diện phản hồi quá lâu. Hãy thử lại với ảnh nhỏ và rõ hơn.';
+  }
+  if (detail.includes('AI_SCAN_UNAVAILABLE') || detail.includes('MODEL_NOT_FOUND') ||
+    detail.includes('AUTHENTICATION_FAILED') || detail.includes('PERMISSION_DENIED') ||
+    detail.includes('LICENSE_REQUIRED')) {
+    return 'Dịch vụ nhận diện đang tạm thời không khả dụng. Bạn có thể thử lại hoặc nhập thủ công.';
+  }
+  if (detail.includes('NETWORK_ERROR') || detail.includes('RATE_LIMITED') || detail.includes('UPSTREAM_ERROR')) {
+    return 'Dịch vụ nhận diện đang bận hoặc mất kết nối. Vui lòng thử lại sau ít phút.';
+  }
+  return fallback;
+}
+
 export const ScanPage: React.FC = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -71,14 +90,12 @@ export const ScanPage: React.FC = () => {
 
         const receiptRes = await api.scanReceipt(base64, commandId);
 
-        setTimeout(() => {
-          if (!isCurrent()) return;
-          setProcessing(false);
-          navigate(`/scan/receipt-review?scanId=${encodeURIComponent(receiptRes.id)}`);
-        }, 1600);
-      } catch {
         if (!isCurrent()) return;
-        setErrorMsg('Không thể bóc tách hóa đơn. Vui lòng thử lại với ảnh rõ nét hơn!');
+        setProcessing(false);
+        navigate(`/scan/receipt-review?scanId=${encodeURIComponent(receiptRes.id)}`);
+      } catch (error) {
+        if (!isCurrent()) return;
+        setErrorMsg(scanFailureMessage(error, 'Không thể bóc tách hóa đơn. Vui lòng thử lại với ảnh rõ nét hơn!'));
         setProcessing(false);
       } finally {
         inFlight.current = false;
@@ -93,14 +110,12 @@ export const ScanPage: React.FC = () => {
 
       const scanRes = await api.scanFridge(base64, activeTab, commandId);
 
-      setTimeout(() => {
-        if (!isCurrent()) return;
-        setScanResults(scanRes.id, scanRes.items);
-        navigate(`/scan/${scanRes.id}/review`);
-      }, 1600);
-    } catch {
       if (!isCurrent()) return;
-      setErrorMsg('Không thể xử lý ảnh hoặc nhận diện thất bại. Vui lòng thử lại!');
+      setScanResults(scanRes.id, scanRes.items);
+      navigate(`/scan/${scanRes.id}/review`);
+    } catch (error) {
+      if (!isCurrent()) return;
+      setErrorMsg(scanFailureMessage(error, 'Không thể xử lý ảnh hoặc nhận diện thất bại. Vui lòng thử lại!'));
       setProcessing(false);
     } finally {
       inFlight.current = false;
@@ -108,7 +123,7 @@ export const ScanPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0F3D2E] text-white flex flex-col justify-between p-4 relative overflow-hidden select-none">
+    <div className="min-h-screen bg-takosan-navy text-white flex flex-col justify-between p-4 relative overflow-hidden select-none">
       {/* Top Header */}
       <div className="flex items-center justify-between z-10 pt-2">
         <button
@@ -134,7 +149,7 @@ export const ScanPage: React.FC = () => {
               className={clsx(
                 'px-3.5 py-1.5 rounded-lg text-xs font-heading font-semibold transition-all relative tap-target',
                 activeTab === tab.id
-                  ? 'bg-emerald-600 text-white shadow-xs'
+                  ? 'bg-takosan-green text-white shadow-xs'
                   : 'text-slate-300 hover:text-white'
               )}
             >
@@ -169,8 +184,8 @@ export const ScanPage: React.FC = () => {
           {isProcessing && (
             <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-30 rounded-2xl animate-in fade-in duration-300">
               <div className="relative mb-4">
-                <div className="animate-spin w-14 h-14 border-2 border-emerald-500 border-t-transparent rounded-full" />
-                <Sparkles className="w-6 h-6 text-emerald-300 absolute inset-0 m-auto animate-pulse" />
+                <div className="animate-spin w-14 h-14 border-2 border-takosan-mint border-t-transparent rounded-full" />
+                <Sparkles className="w-6 h-6 text-takosan-coral absolute inset-0 m-auto animate-pulse" />
               </div>
               <h4 className="font-heading font-bold text-base text-white">{statusText}</h4>
               <p className="text-xs text-slate-300 mt-1">Đang phân tích cấu trúc nguyên liệu...</p>

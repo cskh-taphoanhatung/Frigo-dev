@@ -27,7 +27,7 @@ export const WeekSummaryCards: React.FC<WeekSummaryCardsProps> = ({ plan }) => {
         {/* Budget Card */}
         <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs">
           <div className="flex items-center gap-1.5 text-slate-500 mb-1.5">
-            <Wallet className="w-4 h-4 text-emerald-600" />
+            <Wallet className="w-4 h-4 text-takosan-green" />
             <span className="text-xs font-semibold">Ngân sách</span>
           </div>
 
@@ -45,12 +45,12 @@ export const WeekSummaryCards: React.FC<WeekSummaryCardsProps> = ({ plan }) => {
         {/* Fridge Utilization Card */}
         <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs">
           <div className="flex items-center gap-1.5 text-slate-500 mb-1.5">
-            <Refrigerator className="w-4 h-4 text-emerald-600" />
+            <Refrigerator className="w-4 h-4 text-takosan-green" />
             <span className="text-xs font-semibold">Tận dụng tủ</span>
           </div>
 
           <div className="flex items-baseline gap-1">
-            <p className="font-heading font-bold text-2xl text-emerald-700 leading-tight">
+            <p className="font-heading font-bold text-2xl text-takosan-green leading-tight">
               {utilization.utilizationPercent}%
             </p>
             <span className="text-[11px] font-medium text-slate-500">nguyên liệu</span>
@@ -67,7 +67,7 @@ export const WeekSummaryCards: React.FC<WeekSummaryCardsProps> = ({ plan }) => {
         {/* Shopping Items count */}
         <div className="bg-white rounded-xl p-2.5 border border-slate-200/80 shadow-xs">
           <div className="flex items-center justify-center gap-1 text-[11px] font-medium text-slate-500 mb-0.5">
-            <ShoppingBag className="w-3.5 h-3.5 text-emerald-600" />
+            <ShoppingBag className="w-3.5 h-3.5 text-takosan-green" />
             <span>Cần mua</span>
           </div>
           <p className="font-heading font-bold text-sm text-slate-900">
@@ -78,7 +78,7 @@ export const WeekSummaryCards: React.FC<WeekSummaryCardsProps> = ({ plan }) => {
         {/* Planned Meals count */}
         <div className="bg-white rounded-xl p-2.5 border border-slate-200/80 shadow-xs">
           <div className="flex items-center justify-center gap-1 text-[11px] font-medium text-slate-500 mb-0.5">
-            <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+            <Sparkles className="w-3.5 h-3.5 text-takosan-green" />
             <span>Bữa đã lên</span>
           </div>
           <p className="font-heading font-bold text-sm text-slate-900">
@@ -96,7 +96,7 @@ export const WeekSummaryCards: React.FC<WeekSummaryCardsProps> = ({ plan }) => {
             className={clsx(
               'font-heading font-bold text-sm',
               wasteRisk.level === 'LOW'
-                ? 'text-emerald-700'
+                ? 'text-takosan-green'
                 : wasteRisk.level === 'MEDIUM'
                 ? 'text-amber-800'
                 : 'text-rose-700'

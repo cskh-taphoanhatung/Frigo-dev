@@ -140,6 +140,34 @@ describe('real Home data rendered through the shared QueryClient', () => {
     expect(html).not.toContain('FRESH_ITEM_NOT_IN_USE_SOON');
   });
 
+  // T13R-B P2-5: the Home use-soon card must never show an ESTIMATED date as an
+  // unqualified countdown, and never show an UNKNOWN date as a countdown at all.
+  it('qualifies estimated expiry on Home and keeps KNOWN/ESTIMATED/UNKNOWN visually distinct', async () => {
+    const ui = await loadUi();
+    const { HomePage } = await import('../../src/web/pages/HomePage');
+    ui.queryClient.setQueryData(ui.queryKeys.currentWeekPlan(), null);
+    ui.queryClient.setQueryData(ui.queryKeys.inventory(), [
+      { id: 'est', name: 'ESTIMATED_ITEM', freshness: 'use_soon', expiryKind: 'ESTIMATED',
+        expiryDate: '2026-09-10', estimatedExpiryDate: '2026-09-10' },
+      { id: 'known', name: 'KNOWN_ITEM', freshness: 'use_soon', expiryKind: 'KNOWN', expiryDate: '2026-09-10' },
+      { id: 'unknown', name: 'UNKNOWN_ITEM', freshness: 'expiring', expiryKind: 'UNKNOWN', expiryDate: null },
+    ]);
+    ui.queryClient.setQueryData(ui.queryKeys.recommendations({ noBuy: false, cuisine: null }), []);
+    const html = ui.render(<HomePage />);
+    const chips = [...html.matchAll(/data-testid="home-use-soon-expiry" data-expiry-kind="([A-Z]+)"[^>]*>([^<]*)</g)]
+      .map((match) => [match[1], match[2].trim()]);
+    expect(chips).toEqual(expect.arrayContaining([
+      ['ESTIMATED', 'Ước tính còn 2 ngày'],
+      ['KNOWN', '⏳ 2 ngày'],
+      ['UNKNOWN', 'Chưa rõ hạn dùng'],
+    ]));
+    expect(chips).toHaveLength(3);
+    const estimated = chips.find(([kind]) => kind === 'ESTIMATED')![1];
+    const known = chips.find(([kind]) => kind === 'KNOWN')![1];
+    expect(estimated).not.toBe(known);
+    expect(known.toLowerCase()).not.toContain('ước tính');
+  });
+
   it('keeps successful widgets visible while a failed Home query offers retry', async () => {
     const ui = await loadUi();
     const { HomePage } = await import('../../src/web/pages/HomePage');

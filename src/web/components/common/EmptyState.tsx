@@ -1,5 +1,5 @@
 import React from 'react';
-import { FRIGO_ASSETS } from '../../lib/frigo-assets';
+import { TAKOSAN_BRAND, type TakosanMascotPose } from '../../lib/takosan-brand';
 import { Button } from './Button';
 
 interface EmptyStateProps {
@@ -12,6 +12,15 @@ interface EmptyStateProps {
   onSecondaryAction?: () => void;
 }
 
+// Legacy illustration keys map onto the kit's mascot pose library.
+const POSE_BY_TYPE: Record<NonNullable<EmptyStateProps['type']>, TakosanMascotPose> = {
+  'empty-fridge': 'fridge',
+  'no-recipes': 'recipe',
+  'shopping-ready': 'shopping',
+  'delicious-meal': 'cooking',
+  error: 'thinking',
+};
+
 export const EmptyState: React.FC<EmptyStateProps> = ({
   type = 'empty-fridge',
   title,
@@ -21,23 +30,16 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   secondaryActionText,
   onSecondaryAction,
 }) => {
-  const imgSrc =
-    type === 'error'
-      ? FRIGO_ASSETS.illustrations['empty-fridge']
-      : FRIGO_ASSETS.illustrations[type as keyof typeof FRIGO_ASSETS.illustrations] ||
-        FRIGO_ASSETS.illustrations['empty-fridge'];
+  const pose = POSE_BY_TYPE[type] ?? 'fridge';
+  const imgSrc = TAKOSAN_BRAND.mascot[pose];
 
   return (
-    <div className="bg-white rounded-2xl p-6 text-center border border-slate-200/80 shadow-xs my-4 animate-fade-in">
+    <div className="bg-white rounded-2xl p-6 text-center border border-takosan-cream-line shadow-xs my-4 animate-fade-in">
       <div className="w-32 h-32 mx-auto mb-3 overflow-hidden flex items-center justify-center">
-        <img
-          src={imgSrc}
-          alt={title}
-          className="w-full h-full object-contain"
-        />
+        <img src={imgSrc} alt="" aria-hidden="true" width={128} height={128} className="w-full h-full object-contain" data-mascot-pose={pose} />
       </div>
 
-      <h3 className="font-heading font-bold text-base text-slate-900">
+      <h3 className="font-heading font-bold text-base text-takosan-navy">
         {title}
       </h3>
 
@@ -51,7 +53,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
             <Button
               size="md"
               onClick={onAction}
-              className="flex-1 bg-[#22C55E] hover:bg-[#1ea750] text-white font-heading font-bold text-xs py-2.5 rounded-xl shadow-xs"
+              className="flex-1 font-heading font-bold text-xs py-2.5 rounded-xl shadow-xs"
             >
               {actionText}
             </Button>

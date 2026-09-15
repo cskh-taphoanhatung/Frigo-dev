@@ -62,12 +62,83 @@ VALUES ('migration_smoke_req_only', 'migration_smoke_plan', 'GINGER', 'Gừng', 
 .read migrations/0020_t01_foundation_hardening.sql
 .read migrations/0021_recipe_personalization.sql
 .read migrations/0022_generated_meal_plans.sql
+.read migrations/0023_scan_request_fingerprint.sql
+.read migrations/0024_inventory_truth_foundation.sql
+.read migrations/0025_inventory_lot_commands.sql
+.read migrations/0026_inventory_event_authority.sql
+.read migrations/0027_inventory_event_poststate.sql
+.read migrations/0028_inventory_fefo_authority.sql
+.read migrations/0029_inventory_adoption_authority.sql
+.read migrations/0030_inventory_fefo_backfill_compatibility.sql
+.read migrations/0031_inventory_observation_reconciliation.sql
+
+-- T13: seed pre-0032 scan lines so the legacy upgrade is exercised, not just a
+-- fresh replay. One unreviewed line (raw evidence still intact) and one already
+-- confirmed line (its extraction is genuinely lost and must stay NULL).
+INSERT INTO scans (id, user_id, household_id, status, scan_type, purchase_date)
+VALUES ('migration_smoke_receipt', 'demo_user_01', 'demo_household_01', 'ready', 'receipt', '2026-09-10');
+INSERT INTO scan_items (id, scan_id, raw_name, estimated_quantity, unit, confidence, is_confirmed)
+VALUES ('migration_smoke_line_open', 'migration_smoke_receipt', 'Thit heo', 2.0, 'kg', 0.55, 0);
+INSERT INTO scan_items (id, scan_id, raw_name, estimated_quantity, unit, confidence, is_confirmed)
+VALUES ('migration_smoke_line_done', 'migration_smoke_receipt', 'Trung ga', 6, 'piece', 0.9, 1);
+
+.read migrations/0032_scan_evidence_retention.sql
+
+-- T13R-A: seed representative post-0032 / pre-0033 rows so the 0033 upgrade
+-- is exercised over populated data: a T13 pending line with retained 0031
+-- evidence, a T13 confirmed line (its reviewed expiry basis is genuinely
+-- unknown and must stay NULL, never backfilled from the lot), and a T13
+-- rejected line. The two 0031-era legacy rows above stay as they are.
+INSERT INTO scan_items (id, scan_id, raw_name, canonical_id, estimated_quantity, unit, confidence, category, storage,
+  is_confirmed, review_state, ocr_raw_name, ocr_quantity, ocr_unit, ocr_confidence)
+VALUES ('migration_smoke_t13_pending', 'migration_smoke_receipt', 'Ca chua', 'TOMATO', 3, 'piece', 0.9, 'vegetable', 'fridge',
+  0, 'PENDING', 'Ca chua OCR', 3, 'piece', 0.42);
+INSERT INTO scan_items (id, scan_id, raw_name, canonical_id, estimated_quantity, unit, confidence, category, storage,
+  is_confirmed, review_state, ocr_raw_name, ocr_quantity, ocr_unit, ocr_confidence)
+VALUES ('migration_smoke_t13_confirmed', 'migration_smoke_receipt', 'Dau phu', 'TOFU', 2, 'piece', 0.9, 'other', 'pantry',
+  1, 'CONFIRMED', 'Dau hu OCR', 1, 'piece', NULL);
+INSERT INTO scan_items (id, scan_id, raw_name, canonical_id, estimated_quantity, unit, confidence, category, storage,
+  is_confirmed, review_state, ocr_raw_name, ocr_quantity, ocr_unit, ocr_confidence)
+VALUES ('migration_smoke_t13_rejected', 'migration_smoke_receipt', 'Vet ban', NULL, 1, 'piece', 0.9, 'other', 'fridge',
+  0, 'REJECTED', 'Vet ban', 1, 'piece', 0);
+
+.read migrations/0033_scan_evidence_completeness.sql
 
 CREATE TEMP TABLE assert_zero (value INTEGER NOT NULL CHECK (value = 0));
 INSERT INTO assert_zero SELECT COUNT(*) FROM pragma_foreign_key_check;
 INSERT INTO assert_zero SELECT COUNT(*) FROM pragma_integrity_check WHERE integrity_check <> 'ok';
 
 CREATE TEMP TABLE assert_one (value INTEGER NOT NULL CHECK (value = 1));
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'inventory_lots';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'inventory_commands';
+INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('inventory_lots') WHERE name = 'legacy_item_id';
+INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('inventory_events') WHERE name = 'command_id';
+INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('households') WHERE name = 'inventory_version';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name = 'trg_inventory_lots_live_update';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name = 'trg_inventory_events_command_update';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name = 'trg_inventory_events_command_authority_insert';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name = 'trg_inventory_events_command_poststate_insert';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name = 'trg_inventory_commands_fefo_authority_insert';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name = 'trg_inventory_commands_fefo_envelope_insert';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name = 'trg_inventory_events_command_fefo_authority_insert';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'inventory_adoption_receipts';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name = 'trg_inventory_adoption_receipts_immutable_update';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name = 'trg_inventory_adoption_receipts_immutable_delete';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'inventory_observations';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'inventory_reconciliation_decisions';
+INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('inventory_observations') WHERE name = 'evidence';
+INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('inventory_observations') WHERE name = 'authoritative_inventory_version';
+INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('inventory_observations') WHERE name = 'quantity_milli';
+INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('inventory_reconciliation_decisions') WHERE name = 'decision_key';
+INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('inventory_reconciliation_decisions') WHERE name = 'expected_observation_version';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name = 'trg_inventory_observations_immutable_update';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name = 'trg_inventory_observations_immutable_delete';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name = 'trg_inventory_observations_lot_household_insert';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name = 'trg_inventory_observations_projection_household_insert';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name = 'trg_inventory_reconciliation_decisions_observation_guard';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name = 'trg_inventory_reconciliation_decisions_immutable_update';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name = 'trg_inventory_reconciliation_decisions_immutable_delete';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'storage_locations';
 INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('ingredient_aliases') WHERE name = 'normalized_alias';
 INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('inventory_items') WHERE name = 'expiry_source';
 INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('recipes') WHERE name = 'verification_state';
@@ -95,6 +166,10 @@ INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('auth_otps') WHERE
 INSERT INTO assert_zero SELECT COUNT(*) FROM pragma_table_info('auth_otps') WHERE name = 'code';
 INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('scan_quota_ledger') WHERE name = 'idempotency_key';
 INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('scan_quota_periods') WHERE name = 'used_count';
+INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('scans') WHERE name = 'request_fingerprint';
+INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('scans') WHERE name = 'image_mime_type';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master
+  WHERE type = 'index' AND name = 'idx_scans_request_fingerprint';
 INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('meal_plan_days_v2') WHERE name = 'snapshot_json';
 INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('meal_plan_slots_v2') WHERE name = 'leftover_source_id';
 INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('meal_plan_shopping_items_v2') WHERE name = 'required_quantity';
@@ -137,6 +212,90 @@ SELECT COUNT(*) FROM recipe_translations WHERE id = 'migration_smoke_translation
 INSERT INTO assert_one
 SELECT COUNT(*) FROM recipes
 WHERE id = 'vn-canh-01' AND title = 'Canh chua cá lóc Nam Bộ';
+INSERT INTO assert_zero SELECT COUNT(*) FROM pragma_foreign_key_check;
+
+-- T10 observation evidence smoke: identity, optimistic lifecycle and the
+-- dismissal decision path (evidence-only; no stock mutation is possible here).
+INSERT INTO inventory_observations (id, household_id, source_type, source_ref, fingerprint,
+  observed_at, recorded_at, raw_name, quantity, unit, quantity_milli, canonical_unit,
+  evidence, authoritative_inventory_version, version, created_at, updated_at)
+VALUES ('migration_smoke_observation', 'demo_household_01', 'MANUAL', 'migration-smoke',
+  '{"claim":{"quantity":2,"unit":"kg"},"sourceRef":"migration-smoke","sourceType":"MANUAL"}',
+  '2026-09-11T10:00:00Z', '2026-09-11T10:00:00Z', 'Cà chua', 2.0, 'kg', 2000000, 'g',
+  'OBSERVED', 1, 1, '2026-09-11T10:00:00Z', '2026-09-11T10:00:00Z');
+INSERT INTO inventory_reconciliation_decisions (id, household_id, observation_id, decision_key,
+  fingerprint, decision_type, proposed_verdict, actor_id, expected_observation_version, created_at)
+VALUES ('migration_smoke_dismissal', 'demo_household_01', 'migration_smoke_observation',
+  'migration-smoke:dismiss', '{"decisionType":"DISMISS"}', 'DISMISS', 'NO_ACTION',
+  'demo_user_01', 1, '2026-09-11T10:05:00Z');
+INSERT INTO assert_one SELECT COUNT(*) FROM inventory_reconciliation_decisions
+  WHERE id = 'migration_smoke_dismissal' AND decision_type = 'DISMISS' AND command_id IS NULL;
+INSERT INTO assert_one SELECT COUNT(*) FROM inventory_observations
+  WHERE id = 'migration_smoke_observation' AND status = 'OPEN' AND version = 1
+    AND quantity_milli = 2000000 AND canonical_unit = 'g';
+
+-- T13 / 0031: raw OCR evidence is retained separately from the reviewable
+-- values, the confirmed-before-T13 line keeps NULL raw evidence instead of a
+-- fabricated one, and the explicit review lifecycle exists.
+INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('scan_items') WHERE name = 'ocr_raw_name';
+INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('scan_items') WHERE name = 'ocr_quantity';
+INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('scan_items') WHERE name = 'ocr_unit';
+INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('scan_items') WHERE name = 'ocr_confidence';
+INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('scan_items') WHERE name = 'review_state';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master
+  WHERE type = 'trigger' AND name = 'trg_scan_items_review_state_insert';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master
+  WHERE type = 'trigger' AND name = 'trg_scan_items_review_state_update';
+INSERT INTO assert_one SELECT COUNT(*) FROM scan_items
+  WHERE id = 'migration_smoke_line_open' AND review_state = 'PENDING'
+    AND ocr_raw_name = 'Thit heo' AND ocr_quantity = 2.0 AND ocr_unit = 'kg';
+INSERT INTO assert_one SELECT COUNT(*) FROM scan_items
+  WHERE id = 'migration_smoke_line_done' AND review_state = 'CONFIRMED'
+    AND ocr_raw_name IS NULL AND ocr_quantity IS NULL AND ocr_unit IS NULL;
+-- Explicit rejection is representable and distinct from "never reviewed".
+UPDATE scan_items SET review_state = 'REJECTED' WHERE id = 'migration_smoke_line_open';
+INSERT INTO assert_one SELECT COUNT(*) FROM scan_items
+  WHERE id = 'migration_smoke_line_open' AND review_state = 'REJECTED' AND is_confirmed = 0;
+
+-- T13R-A / 0032: complete raw mapping evidence and the reviewed expiry exist,
+-- and NO populated row gained fabricated evidence: every pre-0032 row keeps
+-- NULL ocr_canonical_id/ocr_category/ocr_storage and NULL reviewed expiry,
+-- whatever its review state (legacy pending/confirmed, T13 pending/confirmed/
+-- rejected). The legacy 0031 evidence and lifecycle are untouched.
+INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('scan_items') WHERE name = 'ocr_canonical_id';
+INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('scan_items') WHERE name = 'ocr_category';
+INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('scan_items') WHERE name = 'ocr_storage';
+INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('scan_items') WHERE name = 'reviewed_expiry_date';
+INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('scan_items') WHERE name = 'reviewed_expiry_kind';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master
+  WHERE type = 'trigger' AND name = 'trg_scan_items_reviewed_expiry_insert';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master
+  WHERE type = 'trigger' AND name = 'trg_scan_items_reviewed_expiry_update';
+INSERT INTO assert_zero SELECT COUNT(*) FROM scan_items
+  WHERE scan_id = 'migration_smoke_receipt'
+    AND (ocr_canonical_id IS NOT NULL OR ocr_category IS NOT NULL OR ocr_storage IS NOT NULL
+      OR reviewed_expiry_date IS NOT NULL OR reviewed_expiry_kind IS NOT NULL);
+INSERT INTO assert_one SELECT COUNT(*) FROM scan_items
+  WHERE id = 'migration_smoke_t13_pending' AND review_state = 'PENDING' AND is_confirmed = 0
+    AND ocr_raw_name = 'Ca chua OCR' AND ocr_quantity = 3 AND ocr_unit = 'piece' AND ocr_confidence = 0.42;
+INSERT INTO assert_one SELECT COUNT(*) FROM scan_items
+  WHERE id = 'migration_smoke_t13_confirmed' AND review_state = 'CONFIRMED' AND is_confirmed = 1
+    AND ocr_raw_name = 'Dau hu OCR' AND ocr_quantity = 1 AND ocr_confidence IS NULL;
+INSERT INTO assert_one SELECT COUNT(*) FROM scan_items
+  WHERE id = 'migration_smoke_t13_rejected' AND review_state = 'REJECTED' AND is_confirmed = 0 AND ocr_confidence = 0;
+-- The new writers' shapes are accepted; unlawful shapes are refused fail-closed.
+UPDATE scan_items SET is_confirmed = 1, review_state = 'CONFIRMED',
+  reviewed_expiry_date = '2030-12-31', reviewed_expiry_kind = 'KNOWN'
+  WHERE id = 'migration_smoke_t13_pending';
+INSERT INTO assert_one SELECT COUNT(*) FROM scan_items
+  WHERE id = 'migration_smoke_t13_pending' AND review_state = 'CONFIRMED'
+    AND reviewed_expiry_date = '2030-12-31' AND reviewed_expiry_kind = 'KNOWN';
+INSERT INTO scan_items (id, scan_id, raw_name, estimated_quantity, unit, confidence, is_confirmed, review_state,
+  ocr_raw_name, ocr_quantity, ocr_unit, ocr_confidence, ocr_canonical_id, ocr_category, ocr_storage)
+VALUES ('migration_smoke_t13r_a_new', 'migration_smoke_receipt', 'Trung ga', 6, 'piece', 0.9, 0, 'PENDING',
+  'Trung ga', 6, 'piece', 0.77, 'CHICKEN_EGG', 'egg', 'fridge');
+INSERT INTO assert_one SELECT COUNT(*) FROM scan_items
+  WHERE id = 'migration_smoke_t13r_a_new' AND ocr_canonical_id = 'CHICKEN_EGG' AND ocr_category = 'egg' AND ocr_storage = 'fridge';
 INSERT INTO assert_zero SELECT COUNT(*) FROM pragma_foreign_key_check;
 
 SELECT 'migration-smoke=ok';

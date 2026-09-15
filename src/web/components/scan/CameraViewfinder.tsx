@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Camera, RefreshCw, Zap, ZapOff, Image as ImageIcon } from 'lucide-react';
 import { clsx } from 'clsx';
+import { PRIVATE_IMAGE_JPEG_QUALITY, PRIVATE_IMAGE_MAX_DIMENSION } from '../../lib/private-image';
 
 interface CameraViewfinderProps {
   onCapture: (base64: string) => void;
@@ -91,12 +92,15 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
   const handleCapture = () => {
     if (videoRef.current && videoRef.current.videoWidth > 0) {
       const canvas = document.createElement('canvas');
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
+      const sourceWidth = videoRef.current.videoWidth;
+      const sourceHeight = videoRef.current.videoHeight;
+      const scale = Math.min(1, PRIVATE_IMAGE_MAX_DIMENSION / Math.max(sourceWidth, sourceHeight));
+      canvas.width = Math.max(1, Math.round(sourceWidth * scale));
+      canvas.height = Math.max(1, Math.round(sourceHeight * scale));
       const ctx = canvas.getContext('2d');
       if (ctx) {
         ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        const dataUrl = canvas.toDataURL('image/jpeg', PRIVATE_IMAGE_JPEG_QUALITY);
         onCapture(dataUrl);
         return;
       }
@@ -142,7 +146,7 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
       {(hasCameraError || isStartingCamera) && (
         <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center space-y-3 bg-slate-950/90 backdrop-blur-sm">
           <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center text-white/80">
-            <Camera className="w-7 h-7 text-emerald-400" />
+            <Camera className="w-7 h-7 text-takosan-mint" />
           </div>
           <div>
             <p className="font-heading font-bold text-sm text-white">
@@ -157,7 +161,7 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
           {hasCameraError && (
             <button
               onClick={onSelectFromGallery}
-              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm tap-target transition-all active:scale-[0.98]"
+              className="px-4 py-2 rounded-xl bg-takosan-green hover:bg-takosan-green-hover text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm tap-target transition-all active:scale-[0.98]"
             >
               <ImageIcon className="w-4 h-4" />
               <span>Tải ảnh từ thư viện</span>
@@ -213,13 +217,13 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
             )}
           >
             {/* 4 Corner Markers */}
-            <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-emerald-400 rounded-tl-sm" />
-            <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-emerald-400 rounded-tr-sm" />
-            <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-emerald-400 rounded-bl-sm" />
-            <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-emerald-400 rounded-br-sm" />
+            <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-takosan-green rounded-tl-sm" />
+            <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-takosan-green rounded-tr-sm" />
+            <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-takosan-green rounded-bl-sm" />
+            <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-takosan-green rounded-br-sm" />
 
             {/* Scanning Laser Line */}
-            <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_8px_#34d399] animate-[scanLaser_2.5s_ease-in-out_infinite]" />
+            <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-takosan-coral to-transparent shadow-[0_0_8px_rgba(255,123,107,0.85)] animate-[scanLaser_2.5s_ease-in-out_infinite]" />
           </div>
         </div>
 
@@ -238,10 +242,10 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
           {/* Big Shutter Button */}
           <button
             onClick={handleCapture}
-            className="w-20 h-20 rounded-full border-[3px] border-white/90 flex items-center justify-center bg-transparent active:scale-95 transition-transform p-1.5 tap-target shadow-[0_0_24px_rgba(52,211,153,0.35)]"
+            className="w-20 h-20 rounded-full border-[3px] border-white/90 flex items-center justify-center bg-transparent active:scale-95 transition-transform p-1.5 tap-target shadow-[0_0_24px_rgba(46,125,91,0.45)]"
             aria-label="Chụp ảnh"
           >
-            <div className="w-full h-full rounded-full bg-gradient-to-br from-white to-emerald-50 flex items-center justify-center shadow-md">
+            <div className="w-full h-full rounded-full bg-gradient-to-br from-white to-takosan-mint flex items-center justify-center shadow-md">
               <Camera className="w-8 h-8 text-slate-900 stroke-[2.2]" />
             </div>
           </button>

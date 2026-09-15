@@ -1,0 +1,109 @@
+# Integration test matrix
+
+## Current release-readiness gap
+
+The historical candidate gates below remain valid local evidence, but the
+production release matrix is **NOT COMPLETE**. A new mandatory gate is the
+rolling schema/code compatibility rehearsal around canonical `0032`: the old
+production Worker must not fail after the trigger exists, and the new Worker
+must not query T13 columns before they exist. A direct SQLite probe reproduced
+the old-Worker failure with
+`scan_items.review_state must agree with is_confirmed`. Do not treat the PASS
+table below as production authorization until a compatibility release passes
+both schema shapes; see `SAFE_PRODUCTION_MERGER_PLAN.md`.
+
+The complementary probe also failed as expected: the integrated Worker query
+against a schema through canonical `0031` returned `no such column:
+ocr_raw_name`. Both negative probes used the repository migration files and
+exited `1`. Permanent compatibility tests must replace these ad-hoc probes in
+the implementation phase.
+
+| Gate | Required evidence | Status |
+| --- | --- | --- |
+| Production migration hashes | 23 existing path/blob pairs unchanged | PASS |
+| Fresh install | All 33 migrations, schema PASS, FK 0 | PASS |
+| Production-shaped upgrade | Apply 0001-0023, seed, apply 0024-0033 | PASS |
+| Legacy/populated upgrade | No fabricated evidence or row loss | PASS |
+| Queue evidence | Missing, 0, .11, .9 through `processScanJob` | PASS |
+| Fingerprint + T13 confirm | Fingerprint retained | PASS |
+| Replay/idempotency | No duplicate T09 lot/event effects | PASS |
+| Receipt/fridge provenance | Survives async queue | PASS |
+| T09/T11 authority audit | Unknown writers/readers 0/0 | PASS |
+| Takosan shell/brand | Brand unit tests and assets | PASS |
+| Static/build | diff, frozen install, lint, typecheck, build | PASS |
+| Full Vitest | No material test-count regression | PASS: 3630/3630 |
+| Browser last | 60 cases at 360/390/430 | PASS: 60/60 |
+
+No paid provider or production resource is used by this matrix.
+
+## Final certification receipt — 2026-09-15
+
+### Independent-review remediation receipt
+
+Current remediation application candidate is commit `5f6853d` on `231d1e7`;
+the old candidate SHA below is historical. The real-Qwen integration test mocks only
+DashScope HTTP and passes through runtime, queue, SQLite and T13 confirmation.
+Payment UI has zero diff from `PRODUCTION_BASE`.
+
+| Gate | Result |
+| --- | --- |
+| Focused Qwen runtime/router/integration | `41/41`, 3 files |
+| Broader affected scan/Qwen/T13/brand matrix | First run `300/302`; only two over-broad brand assertions failed |
+| Brand boundary after excluding protected payment UI | `16/16` |
+| Post-annotation focused rerun | `57/57`, 4 files |
+| Full Vitest | `3630/3630`, 149 files |
+| Lint, typecheck, migration smoke, build, diff check | PASS |
+| Browser serial, widths 360/390/430 | `60/60` |
+
+No paid provider, production resource, deployment, merge, push or remote
+mutation was used.
+
+Retained static-check diagnostic: two intermediate `pnpm typecheck` attempts
+failed on over-generic/invalid `fetch` spy annotations. The final
+`MockInstance<typeof globalThis.fetch>` annotation passes typecheck.
+
+Historical mandatory local gates passed at application candidate
+`e34ed16777166407acf67b2c76d733d89c7d64ca`:
+
+| Gate | Result |
+| --- | --- |
+| Frozen install, lint, typecheck, migration smoke, build, diff check | PASS |
+| Full Vitest | `3628/3628`, 149 files (historical candidate) |
+| Real local workerd/D1 | `92/92`, 5 files |
+| Focused integration matrix | `102/102`, 6 files |
+| Browser last/serial | `60/60`, widths 360/390/430 |
+| Production migration hashes | Changed `0` |
+| Bridge blob comparison | Mismatches `0` |
+| Authority audit | Unknown writers/readers `0/0` |
+
+Permanent regressions include `tests/integration/production-integration-scan-flow.test.ts`
+and `tests/integration/production-migration-bridge.test.ts`: they exercise the
+real `AIRouter`/Qwen runtime and `processScanJob` consumer, missing/zero/.11/.9 evidence, receipt/fridge
+provenance, fingerprint retention, T09/T11 confirmation, replay idempotency, and
+production-shaped `0023` -> `0024`-`0033` upgrades.
+
+Retained diagnostics: port `8787` was occupied by unrelated PID 954 on the first
+browser attempt; the next attempt lacked Chromium and failed before cases;
+`pnpm exec playwright install chromium` fixed that, and
+`PORT=3100 PREVIEW_API_PORT=8877 pnpm test:browser` passed. Initial audit helper
+commands had zsh path/word-splitting mistakes; corrected commands proved zero
+changes and ten matches. A concurrent D1 run emitted transient Wrangler temp
+noise; the clean serial run passed `92/92`.
+
+**NO HOSTED GITHUB CI STATUS FOR INTEGRATION_APPLICATION_CANDIDATE**
+
+Exact primary commands:
+
+```sh
+pnpm install --frozen-lockfile
+pnpm lint
+pnpm typecheck
+pnpm check:migrations
+pnpm build
+pnpm test
+pnpm vitest run tests/integration/*-d1.test.mjs
+PORT=3100 PREVIEW_API_PORT=8877 pnpm test:browser
+git diff --check
+```
+
+Environment: Node `25.9.0`, pnpm `10.33.2`, Vitest `3.2.7`, Playwright `1.63.0`.

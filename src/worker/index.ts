@@ -11,6 +11,7 @@ import { productionConfigGate } from './middleware/config-gate';
 import { healthRoutes } from './routes/health';
 import { authRoutes } from './routes/auth';
 import { inventoryRoutes } from './routes/inventory';
+import { inventoryTruthRoutes } from './routes/inventory-truth';
 import { scanRoutes } from './routes/scans';
 import { recipeRoutes } from './routes/recipes';
 import { shoppingRoutes } from './routes/shopping';
@@ -20,6 +21,8 @@ import { weekRoutes } from './routes/week';
 import { mealPlanningRoutes } from './routes/meal-planning';
 import { processScanJob, ScanQueueError } from './services/scan-queue';
 import { billingRoutes } from './routes/billing';
+
+const SCAN_RETRY_DELAY_SECONDS = 5;
 
 type WorkerVariables = { auth: AuthContext; requestId: string };
 type WorkerApp = { Bindings: Env; Variables: WorkerVariables };
@@ -129,6 +132,7 @@ api.use('*', authMiddleware);
 api.route('/', authRoutes);
 api.route('/', billingRoutes);
 api.route('/', inventoryRoutes);
+api.route('/', inventoryTruthRoutes);
 api.route('/', scanRoutes);
 api.route('/', recipeRoutes);
 api.route('/', shoppingRoutes);
@@ -161,7 +165,7 @@ export default {
         const retryable = error instanceof ScanQueueError ? error.retryable : true;
         if (retryable) {
           console.warn('[Queue] Retryable scan job failure', error);
-          msg.retry({ delaySeconds: 30 });
+          msg.retry({ delaySeconds: SCAN_RETRY_DELAY_SECONDS });
         } else {
           // Permanent failures are acknowledged after being persisted as
           // failed; this prevents poison messages from blocking the queue.

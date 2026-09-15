@@ -24,6 +24,9 @@ const InventoryPage = lazy(() =>
 const IngredientDetailPage = lazy(() =>
   import('./pages/IngredientDetailPage').then((m) => ({ default: m.IngredientDetailPage })),
 );
+const ReconciliationPage = lazy(() =>
+  import('./pages/ReconciliationPage').then((m) => ({ default: m.ReconciliationPage })),
+);
 const ScanPage = lazy(() => import('./pages/ScanPage').then((m) => ({ default: m.ScanPage })));
 const ScanResultPage = lazy(() =>
   import('./pages/ScanResultPage').then((m) => ({ default: m.ScanResultPage })),
@@ -96,7 +99,7 @@ class AppErrorBoundary extends React.Component<{ children: React.ReactNode }, { 
           </h1>
           <p>Vui lòng tải lại ứng dụng để thử lại.</p>
           <button
-            className="rounded-xl bg-emerald-700 px-4 py-3 text-white"
+            className="rounded-xl bg-takosan-green px-4 py-3 text-white"
             onClick={() => window.location.reload()}
           >
             Tải lại
@@ -138,6 +141,7 @@ export const App: React.FC = () => {
                   <Route path="/inventory" element={<Navigate to="/fridge" replace />} />
                   <Route path="/ingredients/:id" element={<IngredientDetailPage />} />
                   <Route path="/inventory/:id" element={<IngredientDetailPage />} />
+                  <Route path="/inventory-reconciliation" element={<ReconciliationPage />} />
 
                   {/* AI Scan & Review */}
                   <Route path="/scan" element={<ScanPage />} />

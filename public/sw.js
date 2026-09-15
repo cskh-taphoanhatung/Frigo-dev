@@ -1,13 +1,16 @@
-const CACHE_NAME = 'frigo-pwa-v1';
+// Bumped for the Takosan brand refresh so stale Frigo brand assets are evicted on activate.
+const CACHE_NAME = 'takosan-pwa-v2';
 
 const STATIC_PRECACHE = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/frigo/app-icons/icon-192.png',
-  '/frigo/app-icons/icon-512.png',
-  '/frigo/brand/logo-primary.png',
-  '/frigo/brand/wordmark.png',
+  '/takosan/app-icons/favicon.svg',
+  '/takosan/app-icons/icon-192.png',
+  '/takosan/app-icons/icon-512.png',
+  '/takosan/brand/takosan-logo-horizontal-primary.svg',
+  '/takosan/brand/takosan-symbol.svg',
+  '/takosan/mascot/takosan-neutral.svg',
 ];
 
 self.addEventListener('install', (event) => {
@@ -42,6 +45,7 @@ self.addEventListener('fetch', (event) => {
   // Static assets (images, fonts, css, js): Cache first, fallback to network
   if (
     url.pathname.startsWith('/frigo/') ||
+    url.pathname.startsWith('/takosan/') ||
     url.pathname.startsWith('/assets/') ||
     url.hostname.includes('fonts.gstatic.com') ||
     url.hostname.includes('fonts.googleapis.com')

@@ -5,7 +5,7 @@ import { api } from '../services/api';
 import { TopBar } from '../components/common/TopBar';
 import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
-import { FRIGO_ASSETS } from '../lib/frigo-assets';
+import { TAKOSAN_BRAND } from '../lib/takosan-brand';
 import { CheckCircle2, Refrigerator, ArrowRight } from 'lucide-react';
 
 export const CookingCompletePage: React.FC = () => {
@@ -15,7 +15,7 @@ export const CookingCompletePage: React.FC = () => {
 
   if (!activeRecipe) {
     return (
-      <div className="min-h-screen bg-[#F8FAF9] p-6 flex flex-col justify-center items-center text-center">
+      <div className="min-h-screen bg-takosan-cream p-6 flex flex-col justify-center items-center text-center">
         <p className="text-base text-slate-800 font-medium mb-4">Không có món ăn đang hoàn tất</p>
         <Button onClick={() => navigate('/recipes')}>Xem công thức</Button>
       </div>
@@ -35,16 +35,16 @@ export const CookingCompletePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] pb-12 max-w-md mx-auto">
+    <div className="min-h-screen bg-takosan-cream pb-12 max-w-md mx-auto">
       <TopBar title="Hoàn tất món ăn" />
 
       <div className="px-4 pt-4 space-y-5">
         {/* Congratulation Hero with delicious-meal illustration */}
-        <div className="text-center py-4 bg-emerald-50/80 rounded-2xl p-5 border border-emerald-200/60 shadow-xs">
+        <div className="text-center py-4 bg-takosan-mint/70 rounded-2xl p-5 border border-takosan-mint-deep shadow-xs">
           <div className="w-24 h-24 mx-auto mb-2 overflow-hidden flex items-center justify-center">
             <img
-              src={FRIGO_ASSETS.illustrations['delicious-meal']}
-              alt="Món ăn hoàn tất"
+              src={TAKOSAN_BRAND.mascot.celebrate}
+              alt="Takosan ăn mừng"
               className="w-full h-full object-contain"
             />
           </div>
@@ -60,7 +60,7 @@ export const CookingCompletePage: React.FC = () => {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="font-heading font-bold text-base text-slate-900 flex items-center gap-1.5">
-              <Refrigerator className="w-4 h-4 text-emerald-600" />
+              <Refrigerator className="w-4 h-4 text-takosan-green" />
               <span>Cập nhật số lượng trong tủ lạnh</span>
             </h3>
             <span className="text-xs text-slate-500 font-medium">Kiểm tra & chỉnh sửa</span>

@@ -163,7 +163,7 @@ export const CookingModePage: React.FC = () => {
   if (!activeRecipe || !recipeMatches) {
     const loadingError = recipeQuery.error || inventoryQuery.error;
     return (
-      <div className="min-h-screen bg-[#F8FAF9] p-6 flex flex-col justify-center items-center text-center gap-4">
+      <div className="min-h-screen bg-takosan-cream p-6 flex flex-col justify-center items-center text-center gap-4">
         {loadingError ? (
           <InlineError error={loadingError} onRetry={() => {
             void recipeQuery.refetch();
@@ -209,7 +209,7 @@ export const CookingModePage: React.FC = () => {
   // 1. Completion view (Deduction confirmation)
   if (isCompletedView) {
     return (
-      <div className="min-h-screen bg-[#F8FAF9] p-4 flex flex-col justify-between pb-10 max-w-md mx-auto">
+      <div className="min-h-screen bg-takosan-cream p-4 flex flex-col justify-between pb-10 max-w-md mx-auto">
         <div className="space-y-4">
           {completionError && <p role="alert" className="text-sm text-rose-700">{completionError}</p>}
           <div className="text-center pt-4">
@@ -231,7 +231,7 @@ export const CookingModePage: React.FC = () => {
           <div className="space-y-2.5 pt-2">
             <div className="flex items-center justify-between">
               <h3 className="font-heading font-bold text-sm text-slate-900 flex items-center gap-1.5">
-                <Refrigerator className="w-4 h-4 text-emerald-600" />
+                <Refrigerator className="w-4 h-4 text-takosan-green" />
                 <span>Cập nhật số lượng trong tủ lạnh</span>
               </h3>
               <span className="text-xs text-slate-500 font-medium">Tự động trừ đồ</span>
@@ -303,7 +303,7 @@ export const CookingModePage: React.FC = () => {
 
   // 2. Active step cooking mode
   return (
-    <div className="min-h-screen bg-[#F8FAF9] flex flex-col justify-between p-5 max-w-md mx-auto">
+    <div className="min-h-screen bg-takosan-cream flex flex-col justify-between p-5 max-w-md mx-auto">
       <div>
         <div className="flex items-center justify-between mb-3">
           <button
@@ -331,12 +331,12 @@ export const CookingModePage: React.FC = () => {
                 'w-10 h-10 rounded-xl flex items-center justify-center tap-target transition-all active:scale-95 border',
                 isListening
                   ? 'bg-rose-500 border-rose-500 text-white shadow-xs animate-pulse'
-                  : 'bg-emerald-50 border-emerald-200/60 text-emerald-800 hover:bg-emerald-100'
+                  : 'bg-takosan-mint border-takosan-mint-deep/60 text-takosan-green-deep hover:bg-takosan-mint-hover'
               )}
               title={isListening ? 'Đang nghe... Bấm để tắt' : 'Bật trợ lý rảnh tay'}
               aria-label={isListening ? 'Tắt trợ lý rảnh tay' : 'Bật trợ lý rảnh tay'}
             >
-              {isListening ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4 text-emerald-700" />}
+              {isListening ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4 text-takosan-green" />}
             </button>
 
             <button
@@ -344,32 +344,32 @@ export const CookingModePage: React.FC = () => {
               className={clsx(
                 'w-10 h-10 rounded-xl flex items-center justify-center tap-target transition-all active:scale-95 border',
                 isSpeaking
-                  ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs'
-                  : 'bg-emerald-50 border-emerald-200/60 text-emerald-800 hover:bg-emerald-100'
+                  ? 'bg-takosan-green border-takosan-green text-white shadow-xs'
+                  : 'bg-takosan-mint border-takosan-mint-deep/60 text-takosan-green-deep hover:bg-takosan-mint-hover'
               )}
               title={isSpeaking ? 'Dừng đọc' : 'Đọc to bước này'}
               aria-label={isSpeaking ? 'Dừng đọc' : 'Đọc to bước này'}
             >
-              {isSpeaking ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-emerald-700" />}
+              {isSpeaking ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-takosan-green" />}
             </button>
           </div>
         </div>
 
         {/* Listening Status Banner */}
         {isListening && (
-          <div className="mb-2.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200/60 flex items-center justify-between gap-2 animate-in fade-in slide-in-from-top-2">
-            <div className="flex items-center gap-1.5 text-xs text-emerald-900 font-medium">
-              <span className="w-2 h-2 rounded-full bg-emerald-600 animate-ping" />
+          <div className="mb-2.5 px-3 py-1.5 rounded-xl bg-takosan-mint border border-takosan-mint-deep/60 flex items-center justify-between gap-2 animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-1.5 text-xs text-takosan-green-deep font-medium">
+              <span className="w-2 h-2 rounded-full bg-takosan-green animate-ping" />
               <span>{heardText ? `Đã nghe: "${heardText}"` : 'Trợ lý đang nghe khẩu lệnh: "tiếp", "lùi", "đọc lại"...'}</span>
             </div>
-            <span className="text-[10px] font-semibold text-emerald-700 uppercase">Rảnh tay</span>
+            <span className="text-[10px] font-semibold text-takosan-green uppercase">Rảnh tay</span>
           </div>
         )}
 
         {/* Progress Bar */}
         <div className="w-full h-1.5 bg-slate-200/80 rounded-full overflow-hidden">
           <div
-            className="h-full bg-emerald-600 transition-all duration-300 rounded-full"
+            className="h-full bg-takosan-green transition-all duration-300 rounded-full"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
@@ -378,7 +378,7 @@ export const CookingModePage: React.FC = () => {
       {/* Main Instruction Card */}
       <div className="my-6 flex-1 flex flex-col justify-center">
         <div className="bg-white rounded-2xl p-6 shadow-card border border-slate-200/80 text-center space-y-4">
-          <span className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200/60 flex items-center justify-center font-heading font-bold text-base text-emerald-800 mx-auto shadow-xs">
+          <span className="w-10 h-10 rounded-xl bg-takosan-mint border border-takosan-mint-deep/60 flex items-center justify-center font-heading font-bold text-base text-takosan-green-deep mx-auto shadow-xs">
             {currentStep.stepNumber}
           </span>
 
@@ -398,15 +398,15 @@ export const CookingModePage: React.FC = () => {
               {timerSecondsRemaining === null ? (
                 <button
                   onClick={() => setTimer(currentStep.timerMinutes! * 60)}
-                  className="px-4 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200/60 text-emerald-900 font-heading font-semibold text-xs flex items-center justify-center gap-2 mx-auto hover:bg-emerald-100 active:scale-95 transition-all shadow-xs tap-target"
+                  className="px-4 py-2.5 rounded-xl bg-takosan-mint border border-takosan-mint-deep/60 text-takosan-green-deep font-heading font-semibold text-xs flex items-center justify-center gap-2 mx-auto hover:bg-takosan-mint-hover active:scale-95 transition-all shadow-xs tap-target"
                 >
-                  <Clock className="w-4 h-4 text-emerald-600" />
+                  <Clock className="w-4 h-4 text-takosan-green" />
                   <span>Bật hẹn giờ ({currentStep.timerMinutes} phút)</span>
                 </button>
               ) : (
                 <div className="bg-slate-50 rounded-xl p-3.5 border border-slate-200/80 flex items-center justify-between max-w-xs mx-auto shadow-xs">
                   <div className="flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-emerald-600 animate-pulse" />
+                    <Clock className="w-5 h-5 text-takosan-green animate-pulse" />
                     <span className="font-heading font-bold text-2xl text-slate-900 font-mono">
                       {formatTimer(timerSecondsRemaining)}
                     </span>
@@ -451,7 +451,7 @@ export const CookingModePage: React.FC = () => {
           <Button
             size="lg"
             onClick={handleComplete}
-            className="flex-1 bg-emerald-600 hover:bg-emerald-700 flex items-center justify-center gap-2"
+            className="flex-1 bg-takosan-green hover:bg-takosan-green-hover flex items-center justify-center gap-2"
           >
             <CheckCircle2 className="w-5 h-5" />
             <span>Hoàn thành nấu</span>

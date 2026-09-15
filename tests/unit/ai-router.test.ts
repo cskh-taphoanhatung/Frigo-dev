@@ -1,5 +1,15 @@
-import { describe, it, expect } from 'vitest';
-import { VisionScanResultSchema, AIRouter, MockAIProvider } from '../../packages/ai/src/index';
+import { afterEach, describe, it, expect, vi } from 'vitest';
+import {
+  VisionScanResultSchema,
+  AIRouter,
+  MockAIProvider,
+  applyReceiptScanQualityGate,
+  applyVisionScanQualityGate,
+  AI_SCAN_MIN_CONFIDENCE,
+  AI_SCAN_NO_USABLE_ITEMS,
+} from '../../packages/ai/src/index';
+
+afterEach(() => vi.restoreAllMocks());
 
 describe('AI Router & Schema Verification', () => {
   it('should validate structured vision scan schema', () => {
@@ -23,6 +33,100 @@ describe('AI Router & Schema Verification', () => {
 
     const parsed = VisionScanResultSchema.safeParse(invalidData);
     expect(parsed.success).toBe(false);
+  });
+
+  it('rejects a vision result containing only generic model labels', () => {
+    expect(() => applyVisionScanQualityGate({
+      items: [{ raw_name: 'Tủ lạnh', estimated_quantity: 1, unit: 'piece', confidence: 0.99, storage: 'fridge' }],
+    })).toThrow(`${AI_SCAN_NO_USABLE_ITEMS}`);
+  });
+
+  it('keeps low-confidence evidence while removing generic labels', () => {
+    const result = applyVisionScanQualityGate({
+      items: [
+        { raw_name: '  Cà chua  ', estimated_quantity: 2, unit: 'piece', confidence: AI_SCAN_MIN_CONFIDENCE, storage: 'fridge' },
+        { raw_name: 'Sản phẩm', estimated_quantity: 1, unit: 'piece', confidence: 0.99, storage: 'fridge' },
+        { raw_name: 'Trứng gà', estimated_quantity: 1, unit: 'piece', confidence: AI_SCAN_MIN_CONFIDENCE - 0.01, storage: 'fridge' },
+      ],
+    });
+
+    expect(result.items).toHaveLength(2);
+    expect(result.items[0].raw_name).toBe('Cà chua');
+    expect(result.items[1]).toMatchObject({ raw_name: 'Trứng gà', confidence: AI_SCAN_MIN_CONFIDENCE - 0.01 });
+  });
+
+  it('preserves a vision result containing only low-confidence evidence', () => {
+    expect(applyVisionScanQualityGate({
+      items: [
+        {
+          raw_name: 'Trứng gà',
+          estimated_quantity: 6,
+          unit: 'piece',
+          confidence: AI_SCAN_MIN_CONFIDENCE - 0.01,
+          storage: 'fridge',
+        },
+      ],
+    }).items[0]).toMatchObject({ raw_name: 'Trứng gà', confidence: AI_SCAN_MIN_CONFIDENCE - 0.01 });
+  });
+
+  it('preserves missing confidence as unknown instead of fabricating or rejecting it', () => {
+    const result = applyVisionScanQualityGate({
+      items: [{ raw_name: 'Cà chua', estimated_quantity: 2, unit: 'piece', storage: 'fridge' }],
+    });
+    expect(result.items).toEqual([
+      { raw_name: 'Cà chua', estimated_quantity: 2, unit: 'piece', storage: 'fridge' },
+    ]);
+  });
+
+  it('rejects receipt results containing only placeholder lines', () => {
+    expect(() => applyReceiptScanQualityGate({
+      merchant_name: 'Siêu thị',
+      items: [
+        {
+          raw_name: 'Tên sản phẩm tiếng Việt',
+          estimated_quantity: 1,
+          unit: 'piece',
+          confidence: 0.95,
+          storage: 'fridge',
+        },
+      ],
+    })).toThrow(`${AI_SCAN_NO_USABLE_ITEMS}`);
+  });
+
+  it('drops exact duplicate receipt lines and mathematically impossible piece prices', () => {
+    const result = applyReceiptScanQualityGate({
+      merchant_name: 'WinMart',
+      items: [
+        { raw_name: 'Cà chua', estimated_quantity: 2, unit: 'piece', unit_price_vnd: 10_000, total_price_vnd: 20_000, confidence: 0.95 },
+        { raw_name: ' Cà chua ', estimated_quantity: 2, unit: 'piece', unit_price_vnd: 10_000, total_price_vnd: 20_000, confidence: 0.95 },
+        { raw_name: 'Trứng gà', estimated_quantity: 2, unit: 'piece', unit_price_vnd: 20_000, total_price_vnd: 10_000, confidence: 0.95 },
+      ],
+    });
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]?.raw_name).toBe('Cà chua');
+  });
+
+  it('applies the quality gate before accepting provider output', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({
+      choices: [{ message: { content: JSON.stringify({
+        items: [{ raw_name: 'Tủ lạnh', estimated_quantity: 1, unit: 'piece', confidence: 0.95, storage: 'fridge' }],
+      }) } }],
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+
+    await expect(new AIRouter({ aiMockMode: false, groqApiKey: 'secret', groqFallbackEnabled: true })
+      .vision({ imageBase64OrUrl: 'AQI=' })).rejects.toThrow(AI_SCAN_NO_USABLE_ITEMS);
+  });
+
+  it('applies the quality gate before accepting receipt provider output', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({
+      choices: [{ message: { content: JSON.stringify({
+        merchant_name: 'Siêu thị',
+        items: [{ raw_name: 'Sản phẩm', estimated_quantity: 1, unit: 'piece', confidence: 0.95, storage: 'fridge' }],
+      }) } }],
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+
+    await expect(new AIRouter({ aiMockMode: false, groqApiKey: 'secret', groqFallbackEnabled: true })
+      .receiptScan({ imageBase64OrUrl: 'AQI=' })).rejects.toThrow(AI_SCAN_NO_USABLE_ITEMS);
   });
 
   it('MockAIProvider should return structured items matching required demo fixture', async () => {

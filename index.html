@@ -2,31 +2,38 @@
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/frigo/app-icons/icon-192.png" />
-    <link rel="apple-touch-icon" href="/frigo/app-icons/icon-192.png" />
+    <link rel="icon" type="image/svg+xml" href="/takosan/app-icons/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/takosan/app-icons/icon-32.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/takosan/app-icons/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/takosan/app-icons/icon-180.png" />
     <link rel="manifest" href="/manifest.json" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#0F3D2E" />
-    <meta name="description" content="Frigo - Mở tủ lạnh. Biết ngay hôm nay ăn gì. Ứng dụng quản lý thực phẩm thông minh & gợi ý món ăn AI." />
+    <meta name="theme-color" content="#2E7D5B" />
+    <meta name="application-name" content="Takosan" />
+    <meta name="apple-mobile-web-app-title" content="Takosan" />
+    <meta name="description" content="Takosan - Mở tủ lạnh. Biết ngay hôm nay ăn gì. Trợ lý bếp thân thiện giúp quản lý thực phẩm & gợi ý món ăn bằng AI." />
     
     <!-- OpenGraph -->
-    <meta property="og:title" content="Frigo - Mở tủ lạnh. Biết ngay hôm nay ăn gì." />
-    <meta property="og:description" content="Quản lý thực phẩm trong tủ lạnh, nhận diện nguyên liệu từ ảnh AI, và gợi ý món ăn chuẩn xác." />
-    <meta property="og:image" content="/frigo/brand/logo-primary.png" />
+    <meta property="og:site_name" content="Takosan" />
+    <meta property="og:title" content="Takosan - Mở tủ lạnh. Biết ngay hôm nay ăn gì." />
+    <meta property="og:description" content="Quản lý thực phẩm trong tủ lạnh, nhận diện nguyên liệu từ ảnh AI, và gợi ý món ăn chuẩn xác cùng Takosan." />
+    <meta property="og:image" content="https://frigo.tungjpstore.net/takosan/brand/takosan-og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:url" content="https://frigo.tungjpstore.net" />
     <meta property="og:type" content="website" />
     
-    <!-- Fonts -->
+    <!-- Fonts: Nunito per brand kit; fallback stays system-ui, sans-serif -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Google Identity Services -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     
-    <title>Frigo - Mở tủ lạnh. Biết ngay hôm nay ăn gì</title>
+    <title>Takosan - Mở tủ lạnh. Biết ngay hôm nay ăn gì</title>
   </head>
-  <body class="bg-[#F8FAF9] text-slate-900 font-sans antialiased selection:bg-emerald-100 selection:text-emerald-900">
+  <body class="bg-takosan-cream text-takosan-navy font-sans antialiased selection:bg-takosan-mint selection:text-takosan-green">
     <div id="root"></div>
     <script type="module" src="/src/web/main.tsx"></script>
   </body>

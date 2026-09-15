@@ -134,6 +134,37 @@ backfill or migration is performed by this PR.
 The separate payment-owner review remains responsible for migration 0018 and
 payment activation; this section does not certify payment behavior.
 
+### OCR provider recovery candidate
+
+The OCR recovery adds configuration/code plus the additive migration
+`0023_scan_request_fingerprint.sql`; it has performed no remote data operation.
+Apply and verify that migration before deploying the candidate Worker. Until an
+exact-SHA deployment and readiness receipt are captured, the candidate must be
+treated as unreleased and production remains on the previously recorded Worker
+SHA.
+
+The candidate sends all production AI work through the task-based Qwen runtime.
+`AI_QWEN_ONLY=true` prevents construction of Groq, DeepSeek, GLM and native
+Cloudflare adapters. The pinned text role is `qwen3.7-flash-2026-07-15`, OCR is
+`qwen-vl-ocr` with a Qwen multimodal fallback, and fridge image analysis uses
+`qwen3.8-flash`; the rolling `qwen3.7-flash` value is canary-only. Physical
+model IDs are configured by `AI_MODEL_*`, not feature code. Confirm model access
+with a live, non-PII provider smoke before approval. Reasoning and judge roles
+are disabled by default; a future GLM-5.3 Flash upgrade requires separate model
+and access verification. Never enable mock output in production to mask failure.
+
+Every fridge/receipt response is validated against the Zod contract and a
+deterministic quality gate. Generic or placeholder labels and confidence below
+`0.6` are discarded; if no usable row remains, the operation fails with
+`AI_SCAN_NO_USABLE_ITEMS` and does not create a fabricated draft. Provider
+errors are typed for queue policy: `MODEL_NOT_FOUND`,
+`AUTHENTICATION_FAILED`, `PERMISSION_DENIED`, `LICENSE_REQUIRED`,
+`SCHEMA_VALIDATION`, `INVALID_RESPONSE` and quality failures are permanent;
+`REQUEST_TIMEOUT`, `NETWORK_ERROR`, `RATE_LIMITED` and `UPSTREAM_ERROR` may
+retry within the existing queue attempt limit and dead-letter flow. Public scan
+status returns bounded error codes/retry metadata, not provider credentials or
+raw image content.
+
 ## Configuration safety (config gate)
 
 `validateEnvironment(env)` (`src/worker/config/validation.ts`) runs on every
@@ -144,9 +175,12 @@ gated; development runs via `pnpm dev:worker`, which forces
 `--var ENVIRONMENT:development`.
 
 Fatal in production: missing/invalid/non-HTTPS `APP_URL` (including loopback), `AI_MOCK_MODE=true`,
+`AI_ENABLED=false`, `AI_QWEN_ONLY=false`, non-Qwen `AI_MODEL_*` aliases,
 `WEEK_SCHEMA_MODE != dual`, `SCAN_QUEUE_MODE != async`, missing `DB`,
-`CACHE`, `JWT_SECRET`, `OTP_HASH_SECRET`, `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, missing `AI` binding while mock off, missing
-`SCAN_QUEUE` while async.
+`CACHE`, `JWT_SECRET`, `OTP_HASH_SECRET`, `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`,
+missing `QWEN_API_KEY`, missing `SCAN_QUEUE` while async, or missing `IMAGES` while
+async scan processing is enabled. The native `AI` binding is required only when
+`CLOUDFLARE_VISION_FALLBACK=true`; it is not required for the Qwen-primary path.
 
 `wrangler.jsonc` versions the existing production frontend origin as `APP_URL`;
 review any environment override against the exact origin sending cookie
@@ -162,11 +196,17 @@ stabilization patch. Rotating the OTP key invalidates outstanding challenges;
 there is no multi-key fallback, so coordinate intentional rotation and code
 resends rather than changing the key on every deployment.
 
-When `GROQ_API_KEY` is configured, vision now defaults to
-`meta-llama/llama-4-scout-17b-16e-instruct` unless `GROQ_VISION_MODEL` overrides
-it (`packages/ai/src/providers/groq.ts`). The AI/provider owner must confirm
-the intended effective model and account access before deploying that setup;
-mock-AI tests and the isolated preview do not verify live provider availability.
+The Qwen runtime uses `QWEN_BASE_URL=https://dashscope-intl.aliyuncs.com/compatible-mode/v1`
+for the fetch-compatible provider. The legacy `QWEN_MODEL=qwen3.7-flash` value
+is retained for compatibility-only callers; production task routing resolves
+physical models from the `AI_MODEL_*` role aliases (pinned text
+`qwen3.7-flash-2026-07-15`, OCR `qwen-vl-ocr`, and multimodal
+`qwen3.8-flash`). `GROQ_FALLBACK_ENABLED=false`,
+`CLOUDFLARE_VISION_FALLBACK=false`, `DEEPSEEK_FALLBACK_ENABLED=false` and
+`GLM_FALLBACK_ENABLED=false` keep legacy/extension providers out of the
+Qwen-only production chain. The AI/provider owner must confirm each configured
+model and capture a non-PII live smoke before deployment; mock-AI tests and the
+isolated preview do not verify live provider availability.
 
 Warnings (reported, non-blocking): no email provider (`SEND_EMAIL` binding or
 `RESEND_API_KEY`), missing `PLUS_GRANT_SECRET`. Turnstile is not optional in
@@ -186,6 +226,17 @@ verification. Login, registration, forgot-password and OTP resend require tokens
   secrets, tokens, or binding IDs.
 - `GET /api/v1/config` — public Turnstile site key (unchanged).
 
+### Scan failure and retry observability
+
+`scan_queue_jobs.error_code` records the bounded classification used for the
+current attempt. Permanent provider/configuration/data-quality failures move the
+scan to `failed` immediately and are acknowledged; retryable transport/provider
+failures return to `pending` until `max_attempts` is reached, then follow the
+existing `frigo-scan-dlq` path. The queue still preserves tenant fencing,
+idempotency and lease reclaim. A failed scan may be retried with a new upload;
+do not replay a known permanent model/license/schema failure without changing
+the underlying configuration or input.
+
 ## Scheduled cleanup
 
 `wrangler.jsonc` sets a daily `0 3 * * *` UTC cron. `src/worker/services/cleanup.ts`
@@ -195,6 +246,7 @@ deletes, per retention window (env-overridable, days):
 | --- | --- | --- |
 | expired OTPs | `auth_otps` past `expires_at` | `CLEANUP_OTP_RETENTION_DAYS=7` |
 | expired sessions | `sessions_v2` past `expires_at` | `CLEANUP_SESSION_RETENTION_DAYS=30` |
+| stale scan reservations | old `reserved` quota rows and pending queue intents | `CLEANUP_RESERVED_SCAN_RETENTION_MINUTES=60` |
 | terminal ready jobs | `scan_queue_jobs` status `ready` | `CLEANUP_READY_JOB_RETENTION_DAYS=30` |
 | terminal failed jobs | `scan_queue_jobs` status `failed` | `CLEANUP_FAILED_JOB_RETENTION_DAYS=90` |
 
@@ -245,6 +297,13 @@ cancels the rest. Session revocation is authoritative in D1
   contract while jobs are in flight. A pre-fencing worker is not a safe
   rollback target merely because the extra columns exist. Compatible workers
   reclaim leases; poison messages still land in `frigo-scan-dlq`.
+- **OCR recovery rollback:** the candidate adds the additive `0023_scan_request_fingerprint.sql`
+  migration. Roll back only to a Worker that is schema-compatible with 0023 (or
+  restore the pre-0023 database backup as an approved incident action). Do not
+  use a mock fixture as a production fallback. If candidate queue jobs contain
+  new typed error codes, inspect/retry them only after the selected Worker
+  understands the codes; otherwise upload a fresh scan after restoring provider
+  configuration.
 - **Config rollback:** if a config mistake shipped, fix the var/secrets and
   redeploy; the config gate blocks any request until configuration is valid
   (fail closed, loud).
@@ -278,8 +337,11 @@ Source migration checksums do not certify the contents of the remote database.
    and the final hardening SHA. Configure required production Environment reviewers
    separately; source code cannot enforce the repository's reviewer settings.
 4. Confirm stable `OTP_HASH_SECRET`, mandatory production Turnstile keys, HTTPS
-   `APP_URL`, exact `PRODUCTION_URL`, provider availability, and the appropriate
-   schema/code cutover. No remote migrations run automatically.
+   `APP_URL`, exact `PRODUCTION_URL`, Qwen model/license/provider availability
+   and the appropriate schema/code cutover. For this OCR candidate, verify
+   `qwen3.7-flash` through the configured DashScope endpoint, plus any explicitly
+   enabled Groq/Cloudflare/GLM fallback, with a non-PII smoke. No remote
+   migrations run automatically.
 5. Production approval, deployment, readiness/SHA receipt and monitoring are
    separate owner actions, not performed by final hardening.
 

@@ -1,25 +1,25 @@
 {
-  "name": "Frigo - Quản lý tủ lạnh & Gợi ý món ăn",
-  "short_name": "Frigo",
+  "name": "Takosan - Quản lý tủ lạnh & Gợi ý món ăn",
+  "short_name": "Takosan",
   "description": "Mở tủ lạnh. Biết ngay hôm nay ăn gì.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FFFDF6",
-  "theme_color": "#22C55E",
+  "background_color": "#FFF8F3",
+  "theme_color": "#2E7D5B",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/frigo/app-icons/icon-192.png",
+      "src": "/takosan/app-icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/frigo/app-icons/icon-512.png",
+      "src": "/takosan/app-icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     },
     {
-      "src": "/frigo/app-icons/icon-maskable-512.png",
+      "src": "/takosan/app-icons/icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
