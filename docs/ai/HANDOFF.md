@@ -5,19 +5,22 @@
 - Repository: `vn-dlo/Frigo-dev` (ID `1368281478`).
 - Application freeze: `5f6853d0ed11415871dca0fd31d4981d60518310`.
 - Historical superseded candidate: `e34ed16777166407acf67b2c76d733d89c7d64ca`.
-- Current PR: #2, base `main`, head `canonical/5f6853d-promotion-ci`.
-- Current pre-docs head: `c8acd0aa5ae746aeed628c6ca730ac26d71c3b4b`.
-- Previous exact-head CI: run `34968469709`, `validate` PASS.
-- Protection: `validate` required, one independent approval required,
-  force-push blocked, branch deletion blocked.
+- Merged PR: #2, base `main`, head `canonical/5f6853d-promotion-ci`.
+- Final reviewed head: `7ede92c73a41da24500746fd0eded892689d8558`.
+- Final canonical main: `a5cfb14cfd5840be23eb16b26a3689f5e2d6e805`.
+- Exact PR CI: run `34972891435`, `validate` PASS.
+- Post-merge main CI: run `34973522150`, `validate` PASS.
+- Protection: strict `validate`, admin enforcement, force-push and branch
+  deletion blocked; approval count zero under the recorded waiver.
 
-Current required action: wait for exact-new-head `validate` PASS, then reduce
-only the approval count to zero under the recorded maintainer decision and use
-a history-preserving merge commit. Do not modify application code, squash,
-rebase, deploy, migrate production, touch production resources or start T14.
+PR #2 used a history-preserving merge commit. Its tree is identical to reviewed
+head `7ede92c`, and production, Qwen, T13, Takosan and application-freeze SHAs
+remain ancestors of canonical `main`. Current required action is only to publish
+this docs-only post-merge receipt. Do not modify application code, deploy,
+migrate production, touch production resources or start T14.
 
 Maintainer decision: external technical review is accepted for this
-consolidation at reviewed head `6ee4529b202510345a70b6fc31ab849d3de8929f`
+consolidation at final reviewed head `7ede92c73a41da24500746fd0eded892689d8558`
 (P0=0, P1=0, P2=0). The GitHub-native collaborator approval may be waived by
 the owner; do not fabricate or impersonate a GitHub review. All other branch
 protections and exact-head CI gates remain required.
@@ -25,6 +28,8 @@ protections and exact-head CI gates remain required.
 Production deployment remains a separate task and is not authorized. The
 rolling-schema compatibility issue around canonical migration `0032` must be
 resolved through the production rollout plan before any direct rollout.
+The automatic post-merge Deploy workflow skipped staging because it is
+unconfigured and skipped production entirely.
 
 # Historical production integration handoff — 2026-09-15
 
@@ -1572,6 +1577,8 @@ status, test evidence, and next step: `docs/ai/inventory-truth/t13/T13R_B_REMEDI
 Findings P2-1/P2-4/P2-5/P2-6 = FIXED (test-backed, NOT certified). No
 freeze created. Main unchanged. See T13R_B_REMEDIATION.md before continuing.
 ## Canonical promotion CLI handoff (2026-09-15)
+
+**HISTORICAL CHECKPOINT — SUPERSEDED BY THE MERGED PR #2 RECEIPT ABOVE.**
 
 The canonical promotion remains intentionally unmerged. GitHub CLI verified
 `vn-dlo/Frigo-dev`, PR #1, base `main`, and promotion head

@@ -13,20 +13,24 @@ PROMOTION_BRANCH=canonical/5f6853d-promotion-ci
 ARCHIVE_BRANCH_SHA=d1b06732f8a80db4e77986df31ff28d9f04641fa
 PR_NUMBER=2
 PR_TITLE=Promote certified Frigo/Takosan integration to canonical main
-CURRENT_PRE_DOCS_HEAD=c8acd0aa5ae746aeed628c6ca730ac26d71c3b4b
-PREVIOUS_HOSTED_CI=34968469709 validate PASS
+FINAL_REVIEWED_HEAD=7ede92c73a41da24500746fd0eded892689d8558
+PR_HOSTED_CI=34972891435 validate PASS
+POST_MERGE_CI=34973522150 validate PASS
 EXTERNAL_TECHNICAL_REVIEW=APPROVED
-REVIEWED_HEAD=6ee4529b202510345a70b6fc31ab849d3de8929f
+REVIEWED_HEAD=7ede92c73a41da24500746fd0eded892689d8558
 REVIEW_FINDINGS=P0=0 P1=0 P2=0
 MAINTAINER_DECISION=External technical review accepted as sufficient for canonical repository consolidation
 GITHUB_NATIVE_COLLABORATOR_APPROVAL=WAIVED BY EXPLICIT MAINTAINER DECISION
 BRANCH_PROTECTION=ENABLED
-REQUIRED_APPROVALS=1
+REQUIRED_APPROVALS=0
 REQUIRED_STATUS=validate
 FORCE_PUSH=BLOCKED
 BRANCH_DELETE=BLOCKED
-FINAL_CANONICAL_MAIN=UNCHANGED d1b06732f8a80db4e77986df31ff28d9f04641fa
-MERGED=NO
+MERGE_COMMIT=a5cfb14cfd5840be23eb16b26a3689f5e2d6e805
+FINAL_CANONICAL_MAIN=a5cfb14cfd5840be23eb16b26a3689f5e2d6e805
+MERGED=YES
+MERGE_TREE_EQUALS_REVIEWED_HEAD=YES
+STAGING_DEPLOYED=NO (staging configuration absent; deploy steps skipped)
 PRODUCTION_DEPLOYED=NO
 REMOTE_PRODUCTION_MIGRATIONS=NO
 T14_STARTED=NO
@@ -34,15 +38,15 @@ T14_STARTED=NO
 
 ## Canonical repository status
 
-**READY FOR INDEPENDENT REVIEW / MERGE.** Application integration is complete
-at immutable freeze `5f6853d0ed11415871dca0fd31ff28d9f04641fa` and promotion
-PR #2 is open. The docs head created after this receipt must receive an exact-
-head `CI / validate` PASS, followed by one independent approving review.
+**CANONICAL REPOSITORY CONSOLIDATION COMPLETE.** PR #2 merged reviewed head `7ede92c` with history-preserving merge commit `a5cfb14`. The merge tree is identical to the reviewed head and all required source SHAs remain ancestors of `main`.
+The exact PR CI run `34972891435` and post-merge main CI run `34973522150`
+passed. The immutable application freeze remains
+`5f6853d0ed11415871dca0fd31d4981d60518310`.
 
 The maintainer has now accepted the external technical review for this
-consolidation: P0=0, P1=0, P2=0, reviewed head `6ee4529...`. This acceptance
-waives only the GitHub-native collaborator approval requirement; CI, PR,
-force-push and branch-deletion protections remain mandatory.
+consolidation: P0=0, P1=0, P2=0. Branch protection still requires strict
+`validate`, blocks force-push and deletion, and enforces admins; approval count
+is zero under the recorded waiver.
 
 ## Production deployment status
 

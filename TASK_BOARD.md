@@ -1,3 +1,16 @@
+## CANONICAL REPOSITORY CONSOLIDATION COMPLETE — 2026-09-15
+
+- `vn-dlo/Frigo-dev` (ID `1368281478`) is now the canonical long-term
+  repository. PR #2 merged reviewed head `7ede92c` into `main` as merge commit
+  `a5cfb14cfd5840be23eb16b26a3689f5e2d6e805`.
+- Merge tree equals the reviewed tree; application freeze `5f6853d`, production
+  `05423f2`, Qwen `da41686`, T13 `32ddbb4`, and Takosan `ff63edf` remain
+  ancestors of canonical main.
+- PR CI `34972891435` and post-merge CI `34973522150` passed. Strict `validate`,
+  force-push/deletion blocks, and admin enforcement remain active.
+- No staging or production deployment occurred. Production migration/D1/KV/R2/
+  queue/PayOS/DNS/T14 work remains blocked and out of scope.
+
 ## T13R CERTIFIED — 2026-09-14
 
 - **T13 REMEDIATION CERTIFIED — READY FOR INDEPENDENT FINAL REVIEW #2.**

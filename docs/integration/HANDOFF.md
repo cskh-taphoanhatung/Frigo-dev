@@ -2,19 +2,25 @@
 
 ## Current canonical consolidation handoff — 2026-09-15
 
-**CANONICAL REPOSITORY STATUS: READY FOR INDEPENDENT REVIEW / MERGE.** Current
-repository is `vn-dlo/Frigo-dev` (ID `1368281478`), application freeze is
-`5f6853d0ed11415871dca0fd31d4981d60518310`, and PR #2 targets `main` from
-`canonical/5f6853d-promotion-ci`. Pre-docs head
-`c8acd0aa5ae746aeed628c6ca730ac26d71c3b4b` passed hosted CI run `34968469709`.
-After this docs update, require exact-new-head `validate` PASS, one independent
-approval, then separate maintainer authorization for history-preserving merge.
+**CANONICAL REPOSITORY STATUS: CONSOLIDATION COMPLETE.** Repository
+`vn-dlo/Frigo-dev` (ID `1368281478`) now has canonical `main` at merge commit
+`a5cfb14cfd5840be23eb16b26a3689f5e2d6e805`. PR #2 merged reviewed head
+`7ede92c73a41da24500746fd0eded892689d8558` with a history-preserving merge;
+both commits have identical trees. Exact PR CI run `34972891435` and post-merge
+main CI run `34973522150` passed. All required source SHAs remain reachable.
+
+Branch protection remains strict: `validate` is required, force-push and branch
+deletion are blocked, admin enforcement remains enabled, and the approval count
+is zero under the recorded maintainer waiver. Archive branch
+`archive/pre-canonical-consolidation` preserves old main at `d1b06732`.
 
 **PRODUCTION DEPLOYMENT STATUS: NOT AUTHORIZED / NOT READY FOR DIRECT ROLLOUT.**
 Repository promotion does not solve the rolling-schema compatibility issue
-around canonical migration `0032`. Do not modify application code, merge,
-squash, rebase, deploy, migrate production, touch D1/KV/R2/queues/PayOS/secrets/
-DNS, or start T14 in this task. `e34ed167` is historical and superseded.
+around canonical migration `0032`. The automatic post-merge Deploy workflow
+created a release manifest but skipped staging because staging is unconfigured;
+its production job was skipped. Do not deploy, migrate production, touch
+D1/KV/R2/queues/PayOS/secrets/DNS, or start T14. `e34ed167` is historical and
+superseded.
 
 ## Historical canonical-consolidation audit handoff — superseded
 

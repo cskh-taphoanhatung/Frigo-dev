@@ -2,11 +2,12 @@
 
 ## Current canonical-consolidation status — 2026-09-15
 
-**CANONICAL REPOSITORY: READY FOR INDEPENDENT REVIEW / MERGE.** The target is
-`vn-dlo/Frigo-dev` (ID `1368281478`), application freeze `5f6853d`, and current
-promotion PR #2. Pre-docs head `c8acd0aa` passed hosted run `34968469709`;
-branch protection requires exact-head `validate` plus one independent approval.
-No merge has occurred.
+**CANONICAL REPOSITORY CONSOLIDATION COMPLETE.** `vn-dlo/Frigo-dev` (ID
+`1368281478`) is the long-term source of truth. PR #2 merged reviewed head
+`7ede92c` into `main` as history-preserving merge commit `a5cfb14`; both trees
+are identical. Exact PR CI `34972891435` and post-merge CI `34973522150` passed.
+Required source lineage remains reachable and old main is retained at
+`archive/pre-canonical-consolidation`.
 
 [`SAFE_PRODUCTION_MERGER_PLAN.md`](SAFE_PRODUCTION_MERGER_PLAN.md) remains the
 separate production rollout plan. Its pre/post-`0032` compatibility blocker is
@@ -14,6 +15,10 @@ still real and must be solved before remote bridge migrations or production
 deployment. **PRODUCTION DEPLOYMENT: NOT AUTHORIZED / NOT READY FOR DIRECT
 ROLLOUT.** Repository readiness does not authorize deployment, remote D1/KV/R2/
 queue changes, PayOS, secrets, DNS or T14.
+
+The automatic post-merge Deploy workflow did not deploy: staging was
+unconfigured and its deployment steps were skipped; the production job was
+also skipped.
 
 The authoritative repository-promotion plan is
 [`CANONICAL_REPOSITORY_CONSOLIDATION_PLAN.md`](CANONICAL_REPOSITORY_CONSOLIDATION_PLAN.md).
