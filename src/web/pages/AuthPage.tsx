@@ -49,6 +49,8 @@ export const AuthPage: React.FC = () => {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [turnstileGeneration, setTurnstileGeneration] = useState(0);
   const handleTurnstileToken = useCallback((token: string | null) => setTurnstileToken(token), []);
+  const [googleStatus, setGoogleStatus] = useState<'idle' | 'loading' | 'ready' | 'unavailable'>('idle');
+  const [googleRetry, setGoogleRetry] = useState(0);
 
   useEffect(() => {
     api
@@ -60,11 +62,23 @@ export const AuthPage: React.FC = () => {
   const otpInputsRef = useRef<(HTMLInputElement | null)[]>([]);
   const googleBtnRef = useRef<HTMLDivElement>(null);
 
-  // Initialize Google Sign-In SDK
+  // Initialize Google Identity Services after its async script is ready. The
+  // browser button is the only production Google auth entry point: it always
+  // supplies a signed credential to the server.
   useEffect(() => {
+    if (mode !== 'login') {
+      setGoogleStatus('idle');
+      return;
+    }
     let active = true;
+    let timer: number | undefined;
+    let attempts = 0;
     const handleGoogleResponse = async (response: any) => {
       if (!active) return;
+      if (typeof response?.credential !== 'string' || response.credential.length === 0) {
+        setErrorMessage('Google không trả về thông tin xác thực hợp lệ. Hãy thử lại hoặc dùng email.');
+        return;
+      }
       const isCurrent = capturePrivateSession();
       setIsLoading(true);
       setErrorMessage(null);
@@ -92,16 +106,29 @@ export const AuthPage: React.FC = () => {
       }
     };
 
-    if (window.google?.accounts?.id) {
+    const initializeGoogle = () => {
+      if (!active) return;
+      const googleId = window.google?.accounts?.id;
+      if (!googleId) {
+        attempts += 1;
+        if (attempts < 24) {
+          timer = window.setTimeout(initializeGoogle, 250);
+          return;
+        }
+        setGoogleStatus('unavailable');
+        return;
+      }
       try {
-        window.google.accounts.id.initialize({
+        setGoogleStatus('ready');
+        googleId.initialize({
           client_id: GOOGLE_CLIENT_ID,
           callback: handleGoogleResponse,
           auto_select: false,
         });
 
-        if (googleBtnRef.current) {
-          window.google.accounts.id.renderButton(googleBtnRef.current, {
+        if (googleBtnRef.current && active) {
+          googleBtnRef.current.replaceChildren();
+          googleId.renderButton(googleBtnRef.current, {
             theme: 'outline',
             size: 'large',
             width: '100%',
@@ -112,10 +139,17 @@ export const AuthPage: React.FC = () => {
         }
       } catch (e) {
         console.warn('Google Sign-In init error:', e);
+        setGoogleStatus('unavailable');
       }
-    }
-    return () => { active = false; };
-  }, [mode]);
+    };
+
+    setGoogleStatus('loading');
+    initializeGoogle();
+    return () => {
+      active = false;
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+  }, [mode, googleRetry]);
 
   // Resend OTP countdown timer
   useEffect(() => {
@@ -398,35 +432,6 @@ export const AuthPage: React.FC = () => {
     }
   };
 
-  // Fallback Google Sign-In for simulation / dev
-  const handleDirectGoogleSignIn = async () => {
-    const isCurrent = capturePrivateSession();
-    setIsLoading(true);
-    setErrorMessage(null);
-    try {
-      const res = await api.loginWithGoogle(undefined, {
-        email: email || 'user@gmail.com',
-        name: name || 'Google User',
-        picture: '/icons/favicon.svg',
-      });
-      if (!isCurrent()) return;
-      if (res.success && res.user) {
-        setAuthSession({
-          id: res.user.id,
-          email: res.user.email,
-          displayName: res.user.displayName,
-          avatarUrl: res.user.avatarUrl,
-          householdId: res.user.householdId,
-        });
-        navigate('/onboarding');
-      }
-    } catch (err: any) {
-      setErrorMessage(err?.message || 'Lỗi đăng nhập Google');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-takosan-cream px-6 py-8 flex flex-col justify-between text-takosan-navy animate-fade-in">
       <div>
@@ -557,22 +562,21 @@ export const AuthPage: React.FC = () => {
             {/* Google Sign In Area */}
             <div className="space-y-2">
               <div ref={googleBtnRef} className="w-full flex justify-center min-h-[44px]" />
-              
-              {/* Fallback button if Google script is slow or blocked */}
-              <button
-                type="button"
-                onClick={handleDirectGoogleSignIn}
-                disabled={isLoading}
-                className="w-full h-11 bg-white border border-slate-200/80 hover:border-slate-300 rounded-xl flex items-center justify-center gap-2.5 font-heading font-semibold text-xs text-slate-800 shadow-xs active:scale-[0.98] transition-all tap-target cursor-pointer"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                </svg>
-                <span>Đăng nhập nhanh với Google</span>
-              </button>
+              {googleStatus === 'loading' && (
+                <p role="status" className="text-center text-xs text-slate-500">Đang kết nối Google…</p>
+              )}
+              {googleStatus === 'unavailable' && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-center text-xs text-amber-900">
+                  <p>Google chưa sẵn sàng. Bạn vẫn có thể đăng nhập bằng email.</p>
+                  <button
+                    type="button"
+                    onClick={() => setGoogleRetry((value) => value + 1)}
+                    className="mt-1 font-semibold underline tap-target"
+                  >
+                    Thử kết nối lại Google
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center my-2">

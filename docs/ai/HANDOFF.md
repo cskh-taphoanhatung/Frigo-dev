@@ -1,5 +1,26 @@
 # Frigo / Takosan current handoff — 2026-09-15
 
+## Auth/OCR production hardening handoff — 2026-09-16
+
+Branch: `codex/auth-ocr-production-fix`.
+
+The live auth error was traced to a frontend-only credential-less Google fallback
+that sent `userInfo` without an ID token; it is removed. GIS initialization now
+waits for the async SDK and provides a safe retry state. A shared
+`ScanProcessingState` gives the upload, fridge review and receipt review screens
+visible pending stages and elapsed-time reassurance while preserving the server
+status contract and review-before-confirm rule.
+
+Checks executed: focused auth/OCR `54/54`; full Vitest `3632/3632` (151 files);
+`pnpm lint`; `pnpm typecheck`; `pnpm check:migrations`; `pnpm build`; and
+`git diff --check` all passed. Known test stderr is expected injected failure or
+KV-degraded limiter logging; no test failed.
+
+No deployment, remote D1 migration, secret/configuration mutation, production
+KV/R2/queue mutation, PayOS change or T14 work occurred. Next action is exact
+branch browser smoke and PR/hosted-CI review. Do not deploy from this branch
+until those gates pass and an explicit maintainer release decision exists.
+
 ## Production rollout handoff — 2026-09-15
 
 Production is serving canonical Worker SHA

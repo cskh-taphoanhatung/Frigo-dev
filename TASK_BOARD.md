@@ -1,3 +1,12 @@
+## Auth/OCR production hardening — 2026-09-16
+
+- [done] Remove the credential-less Google production fallback.
+- [done] Harden async GIS initialization and retry/unavailable UX.
+- [done] Add staged OCR pending UI to upload and review screens.
+- [done] Focused `54/54`, full Vitest `3632/3632`, lint, typecheck,
+  migration smoke, build and diff check pass.
+- [next] Browser smoke, hosted CI and maintainer review; no deployment yet.
+
 ## CANONICAL REPOSITORY CONSOLIDATION COMPLETE — 2026-09-15
 
 - `vn-dlo/Frigo-dev` (ID `1368281478`) is now the canonical long-term

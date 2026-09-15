@@ -624,3 +624,30 @@ remain authoritative. Estimated pricing is operational telemetry, not billing
 truth. The rolling `qwen3.7-flash` alias is canary-only; promotion requires an
 offline golden-dataset comparison and an explicit configuration review. This
 branch changes no canonical `main` code and performs no deployment.
+
+## ADR-022 — Credential-bound Google sign-in and honest OCR pending UX
+
+**Status:** Accepted 2026-09-16 for the auth/OCR production hardening branch.
+
+**Decision:** Production Google sign-in may enter `/auth/google` only through
+Google Identity Services and a signed ID-token credential. Remove any client
+fallback that fabricates `userInfo` or calls the endpoint without a credential.
+The web client waits for the asynchronously loaded GIS SDK, renders the official
+button once, and exposes a retry/unavailable state without pretending that an
+email or synthetic profile is a Google login.
+
+Scan and receipt review screens expose a shared, accessible pending state with
+explicit queue/AI/validation stages, elapsed time and bounded polling context.
+The UI never presents a pending scan as ready and never writes inventory before
+the server reports a terminal review state.
+
+**Rationale:** The production screenshot's HTTP 400 was caused by the old
+credential-less Google fallback, while GIS initialization also had a script-load
+race. Async OCR is expected in production; a visible staged state prevents a
+user from interpreting queue latency as an app freeze without weakening the
+existing Qwen, evidence, ownership or confirmation contracts.
+
+**Release boundary:** This is frontend/auth presentation hardening only. Google
+token verification, sessions, CSRF, Turnstile, queue processing, migrations,
+PayOS and production resources remain unchanged. Promote only after exact-head
+review and browser auth/OCR smoke; no deployment is implied by this branch.

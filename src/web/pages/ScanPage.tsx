@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useScanStore } from '../stores/useScanStore';
 import { api } from '../services/api';
 import { CameraViewfinder } from '../components/scan/CameraViewfinder';
-import { ArrowLeft, Sparkles, AlertCircle } from 'lucide-react';
+import { ScanProcessingState, type ScanProcessingStage } from '../components/scan/ScanProcessingState';
+import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { clsx } from 'clsx';
 import { capturePrivateSession } from '../lib/private-session';
 import { readPrivateImage } from '../lib/private-image';
@@ -51,6 +52,7 @@ export const ScanPage: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<'fridge' | 'food' | 'receipt'>('fridge');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [processingStage, setProcessingStage] = useState<ScanProcessingStage>('uploading');
 
   const tabs = [
     { id: 'fridge' as const, label: 'Tủ lạnh' },
@@ -83,10 +85,12 @@ export const ScanPage: React.FC = () => {
     inFlight.current = true;
     setErrorMsg(null);
     if (activeTab === 'receipt') {
+      setProcessingStage('uploading');
       setProcessing(true, 'Đang quét hóa đơn mua sắm...');
       try {
-        setTimeout(() => { if (isCurrent()) setProcessing(true, 'AI Vision đang nhận diện tên hàng & đơn giá...'); }, 600);
-        setTimeout(() => { if (isCurrent()) setProcessing(true, 'Bóc tách mặt hàng và kiểm tra đối chiếu...'); }, 1200);
+        setTimeout(() => { if (isCurrent()) { setProcessingStage('queued'); setProcessing(true, 'Đã nhận ảnh, đang xếp hàng xử lý...'); } }, 450);
+        setTimeout(() => { if (isCurrent()) { setProcessingStage('analyzing'); setProcessing(true, 'AI Vision đang nhận diện tên hàng & đơn giá...'); } }, 1100);
+        setTimeout(() => { if (isCurrent()) { setProcessingStage('validating'); setProcessing(true, 'Bóc tách mặt hàng và kiểm tra đối chiếu...'); } }, 2200);
 
         const receiptRes = await api.scanReceipt(base64, commandId);
 
@@ -104,9 +108,11 @@ export const ScanPage: React.FC = () => {
     }
 
     setProcessing(true, 'Đang tải ảnh lên...');
+    setProcessingStage('uploading');
     try {
-      setTimeout(() => { if (isCurrent()) setProcessing(true, 'AI Vision đang nhận diện nguyên liệu...'); }, 600);
-      setTimeout(() => { if (isCurrent()) setProcessing(true, 'Chuẩn hóa định lượng & kiểm tra độ tươi...'); }, 1200);
+      setTimeout(() => { if (isCurrent()) { setProcessingStage('queued'); setProcessing(true, 'Đã nhận ảnh, đang xếp hàng xử lý...'); } }, 450);
+      setTimeout(() => { if (isCurrent()) { setProcessingStage('analyzing'); setProcessing(true, 'AI Vision đang nhận diện nguyên liệu...'); } }, 1100);
+      setTimeout(() => { if (isCurrent()) { setProcessingStage('validating'); setProcessing(true, 'Chuẩn hóa định lượng & kiểm tra độ tươi...'); } }, 2200);
 
       const scanRes = await api.scanFridge(base64, activeTab, commandId);
 
@@ -183,12 +189,8 @@ export const ScanPage: React.FC = () => {
           {/* Processing Overlay */}
           {isProcessing && (
             <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-30 rounded-2xl animate-in fade-in duration-300">
-              <div className="relative mb-4">
-                <div className="animate-spin w-14 h-14 border-2 border-takosan-mint border-t-transparent rounded-full" />
-                <Sparkles className="w-6 h-6 text-takosan-coral absolute inset-0 m-auto animate-pulse" />
-              </div>
-              <h4 className="font-heading font-bold text-base text-white">{statusText}</h4>
-              <p className="text-xs text-slate-300 mt-1">Đang phân tích cấu trúc nguyên liệu...</p>
+              <div className="w-full max-w-sm"><ScanProcessingState stage={processingStage} kind={activeTab === 'receipt' ? 'receipt' : 'fridge'} /></div>
+              <p className="sr-only">{statusText}</p>
             </div>
           )}
         </div>

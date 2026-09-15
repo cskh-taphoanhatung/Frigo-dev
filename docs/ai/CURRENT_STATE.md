@@ -1,5 +1,27 @@
 # Frigo / Takosan current authority — 2026-09-15
 
+## Auth/OCR production hardening checkpoint — 2026-09-16
+
+Branch `codex/auth-ocr-production-fix` contains a focused production fix for
+the auth/OCR issues observed on the live Takosan screen. The credential-less
+`Đăng nhập nhanh với Google` fallback was removed; Google Identity Services now
+waits for the async SDK, initializes once, and exposes an honest retry state if
+the provider script is unavailable. The backend's strict Google credential and
+audience checks were not changed.
+
+Scan, fridge review and receipt review now share `ScanProcessingState`, showing
+received/queued/analyzing/validating/review stages, elapsed time and a clear
+promise that results appear only after server processing completes. Existing
+`pending`/`processing`/`ready`/`confirmed`/`failed` contracts and polling remain
+unchanged.
+
+Verification on this branch: focused auth/OCR `54/54`; full Vitest `3632/3632`
+across 151 files; `pnpm lint`, `pnpm typecheck`, `pnpm check:migrations`,
+`pnpm build`, and `git diff --check` passed. No production deployment, remote
+migration, secret/configuration change, PayOS change or production resource
+mutation was performed. Next action: browser smoke on the exact branch/PR,
+then hosted CI and maintainer review before any release.
+
 ## Production rollout receipt — 2026-09-15
 
 The previously blocked rolling-schema release was completed with explicit

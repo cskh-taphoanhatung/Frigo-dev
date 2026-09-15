@@ -1,5 +1,19 @@
 # Frigo / Takosan current task board — 2026-09-15
 
+## Auth/OCR production hardening — 2026-09-16
+
+- [done] Remove credential-less Google fallback and keep production sign-in
+  bound to a real Google Identity Services credential.
+- [done] Make GIS initialization resilient to the async script-load race and
+  show an explicit retry/unavailable state.
+- [done] Add staged OCR pending UX to upload, fridge review and receipt review
+  without changing server status or inventory authority.
+- [done] Add auth and scan-processing regression tests; focused `54/54` and
+  full `3632/3632` Vitest pass.
+- [done] Run lint, typecheck, migration smoke, build and diff check.
+- [next] Run browser auth/OCR smoke against the exact PR head, obtain hosted CI
+  and review, then decide separately whether a production deploy is authorized.
+
 ## Production rollout receipt — COMPLETE
 
 - [done] Production D1 migration applied and verified at `0001`-`0033`.
