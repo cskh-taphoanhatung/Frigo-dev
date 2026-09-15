@@ -1,5 +1,30 @@
 # Frigo / Takosan current task board — 2026-09-15
 
+## Current T14 integration refresh — 2026-09-15 UTC
+
+- [done] Fresh canonical main `055913596acd3bef049aa0eb007bde2873a658a9`
+  verified in `vn-clo/Frigo-dev` (ID `1368281478`).
+- [done] PR #9 Auth/OCR production merge `911db7f` and PR #10 docs-only
+  receipt preserved; deployed Worker recorded as `20bc1f35-6ffe-4085-ba79-d54a0b53da71`.
+- [done] Recipe architecture and migrations unchanged since T14A audit.
+- [done] T14A docs semantically reconciled on current main; fresh frozen install,
+  lint, typecheck, test (151 files / 3633 tests), migration smoke, build and diff
+  check pass; application diff empty and all 33 migration hashes unchanged.
+- [in progress] T14A exact-head hosted CI and protected merge required.
+- [accepted, not integrated] T14B-A safety foundation from PR #8; bring only
+  its approved delta onto the resulting new main after T14A lands.
+- [not started] T14B-B. No migration 0034, data parity write or authority switch.
+- [deferred] Media to T14C; runtime remains static `ALL_RECIPES` (71/59/12).
+- [OPS blocked] Deploy `35031212139`: release success, staging missing-token
+  failure, production skipped; main CI `35030996228` passed. Not a T14 regression.
+- [historical PR] #4 remains open; recommend CLOSE_ARCHIVE, never merge here.
+- Checks and next action: `recipe-catalog/T14_INTEGRATION_REFRESH.md`.
+
+# Historical task boards — superseded as current status
+
+Prior “T14 not started”, production baseline and PR #4 merge recommendations
+below are retained historical evidence, not instructions for this integration.
+
 ## Auth/OCR production hardening — 2026-09-16
 
 - [done] Remove credential-less Google fallback and keep production sign-in
