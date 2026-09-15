@@ -2,24 +2,31 @@
 
 ## Current T14 integration refresh — 2026-09-15 UTC
 
-- [done] Fresh canonical main `fbd14c771070e1b5594532648d79fb60c891747d`
-  verified in `vn-clo/Frigo-dev` (ID `1368281478`).
+- [done] Canonical main before the final docs-only receipt is
+  `a165474a623a8130c9a9ed4f1df096b3ac3b3ae9`, verified in `vn-clo/Frigo-dev`
+  (ID `1368281478`). Final tip is recorded in the receipt PR's post-merge comment.
 - [done] PR #9 Auth/OCR production merge `911db7f` and PR #10 docs-only
   receipt preserved; deployed Worker recorded as `20bc1f35-6ffe-4085-ba79-d54a0b53da71`.
-- [done] Recipe architecture and migrations unchanged since T14A audit.
+- [done] PR #9/#10 left recipe architecture and migrations unchanged; this
+  integration preserves runtime authority while adding the accepted safety library.
 - [done] T14A docs semantically reconciled on current main; fresh frozen install,
   lint, typecheck, test (151 files / 3633 tests), migration smoke, build and diff
   check pass; application diff empty and all 33 migration hashes unchanged.
 - [done] T14A exact-head hosted run `35034318031` passed on `e916d292`;
   PR #11 merged normally as `fbd14c771070e1b5594532648d79fb60c891747d`.
-- [in progress] Accepted T14B-A delta from PR #8 reconciled on the resulting
-  new main; fresh local and exact-head hosted gates required before merge.
+- [done] Accepted T14B-A delta from PR #8 reconciled on resulting new main;
+  PR #12 exact head `3e393741` passed hosted run `35035112092` and all local
+  gates (154 files / 3676 tests), merged as `a165474a` through protected flow.
+- [done] All 15 accepted functional paths, PR #9 protected files, 33 migration
+  hashes and Inventory Truth authority preserved; renderer leaves tree clean.
+- [finalization] Publish this docs-only merge receipt, then record final main /
+  `T14B_B_BASE_MAIN` in its post-merge comment. Integration prerequisites ready.
 - [done] Preserve Auth/OCR ADR-022; renumber imported recipe ADR to ADR-023
   without changing its accepted architecture.
 - [not started] T14B-B. No migration 0034, data parity write or authority switch.
 - [deferred] Media to T14C; runtime remains static `ALL_RECIPES` (71/59/12).
-- [OPS blocked] Deploy `35031212139`: release success, staging missing-token
-  failure, production skipped; main CI `35030996228` passed. Not a T14 regression.
+- [OPS blocked] Deploy `35035612637`: release success, staging missing-token
+  failure, production skipped; main CI `35035415271` passed. Not a T14 regression.
 - [historical PR] #4 remains open; recommend CLOSE_ARCHIVE, never merge here.
 - Checks and next action: `recipe-catalog/T14_INTEGRATION_REFRESH.md`.
 
