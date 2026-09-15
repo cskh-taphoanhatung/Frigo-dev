@@ -1,5 +1,28 @@
 # Frigo / Takosan current authority — 2026-09-15
 
+## T14A production recipe truth audit — 2026-09-15 (docs-only)
+
+Audit report: `docs/ai/recipe-catalog/T14A_PRODUCTION_RECIPE_TRUTH_AUDIT.md`
+on branch `audit/t14a-production-recipe-truth` from `origin/main`
+`345cecf388321a00c96be387744a10e8c98bd9ac`. Verified
+`PRODUCTION_MAIN_APPLICATION_EQUIVALENCE = PASS`: deployed `e6b91956…` differs
+from `main` only by seven documentation paths; live readiness reports the same
+commit. Migration ledger `0001`–`0033` is contiguous with no duplicates;
+`NEXT_AVAILABLE_MIGRATION = 0034` (not created).
+
+Recipe truth: production authority is the static TypeScript `ALL_RECIPES`
+(71 recipes: 59 Vietnamese + 12 global) for `/recipes`, `/recipes/:id`,
+`/recommendations`, Week v1 generation/regeneration/swap, cooking, shopping and
+the offline client. D1 `recipes` holds only the 59-row `0006` seed plus lazily
+inserted 7-column stub rows from cooking/shopping; `readRecipeCatalog` is used
+solely by the flag-disabled T04 planner. `IS_RECIPE_CATALOG_ABSTRACTION_PRESENT
+= YES`, `IS_RECIPE_CATALOG_RUNTIME_AUTHORITY = NO`. All 59 Vietnamese recipe
+images are `images.unsplash.com` URLs blocked by production `img-src`
+(P1, confirmed by live header); 46/71 recipes share an image; `gl-11`
+references a missing local asset. No P0 finding. Recommended T14B strategy:
+**A — static authority, D1 shadow catalog**. No application, migration,
+config, test or production change was made by T14A.
+
 ## Production rollout receipt — 2026-09-15
 
 The previously blocked rolling-schema release was completed with explicit

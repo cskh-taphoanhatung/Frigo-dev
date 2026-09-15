@@ -1,3 +1,14 @@
+## T14A — PRODUCTION RECIPE TRUTH AUDIT COMPLETE (docs-only) — 2026-09-15
+
+- Report: `docs/ai/recipe-catalog/T14A_PRODUCTION_RECIPE_TRUTH_AUDIT.md`.
+  Branch `audit/t14a-production-recipe-truth` from `main` `345cecf`.
+- `PRODUCTION_MAIN_APPLICATION_EQUIVALENCE = PASS`; ledger `0001`–`0033`;
+  next migration `0034` (not created). Runtime recipe authority = static
+  `ALL_RECIPES` (71); D1 = partial shadow. `IS_RECIPE_CATALOG_RUNTIME_AUTHORITY
+  = NO`. P1: Vietnamese recipe images blocked by production CSP.
+- Recommended T14B strategy: A (static authority, D1 shadow). No code,
+  migration, config or production change was made.
+
 ## CANONICAL REPOSITORY CONSOLIDATION COMPLETE — 2026-09-15
 
 - `vn-dlo/Frigo-dev` (ID `1368281478`) is now the canonical long-term

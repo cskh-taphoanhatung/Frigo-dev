@@ -1,5 +1,39 @@
 # Frigo / Takosan current handoff — 2026-09-15
 
+## T14A production recipe truth audit handoff — 2026-09-15
+
+- Task: T14A audit-only. Local branch `audit/t14a-production-recipe-truth`
+  from `origin/main` `345cecf388321a00c96be387744a10e8c98bd9ac`, published
+  remotely as thread branch `hoplite/koroneia-838b0ccc` (identical commit);
+  repository `vn-dlo/Frigo-dev` (ID `1368281478`).
+- Output: `docs/ai/recipe-catalog/T14A_PRODUCTION_RECIPE_TRUTH_AUDIT.md` plus
+  this docs-only state/board/handoff update. No application, migration,
+  config, test, dependency or production change.
+- Verified: deployed Worker `e6b91956484589c088e6d04a9835b3e59a2eb786` (live
+  readiness commit matches) differs from `main` only by documentation ⇒
+  `PRODUCTION_MAIN_APPLICATION_EQUIVALENCE = PASS`. Migrations `0001`–`0033`
+  contiguous, no duplicates, `0023_scan_request_fingerprint.sql` present,
+  `NEXT_AVAILABLE_MIGRATION = 0034` (not created).
+- Executed checks: `pnpm install --frozen-lockfile` (exit 0), `pnpm typecheck`
+  (0), `pnpm lint` (0), `pnpm check:migrations` (`migration-smoke=ok`),
+  `pnpm build` (0), full `vitest run` 149 files / 3630 tests passed, focused
+  recipe/planner/cooking/CSP suite 22 files / 255 tests passed, local sqlite3
+  replay of all 33 migrations (59 recipes / 328 lines / 295 steps seeded),
+  `git diff --check` clean, read-only production smoke
+  (`scripts/post-deploy-smoke.sh`, anonymous `GET /api/v1/recipes`, CSP
+  header). Not run: `schema:check:remote` (credentials; not required).
+- Key findings: P1 external recipe images blocked by `img-src`; P1 static
+  `ALL_RECIPES` is sole runtime authority while D1 is a partial shadow; P2
+  foundation model drops `imageUrl`/`nutrition`/`steps`/`tags`/`category`/
+  `region`; P2 Week v1 snapshots embed full recipe objects; P2 generator test
+  rewrites `migrations/0006` during `pnpm test`; P2 PR #4 (`64ee9ed1`) still
+  open and not on `main`. No P0.
+- Recommendation: T14B Strategy A (static authority, D1 shadow + drift
+  metrics; additive `0034` seeding global recipes; no authority switch).
+- Next action: maintainer review of the audit report; resolve PR #4; then open
+  T14B design packet `docs/ai/tasks/T14B-*.md` following §18 of the report.
+  Do not implement T14B, add migrations, change CSP, or deploy from this branch.
+
 ## Production rollout handoff — 2026-09-15
 
 Production is serving canonical Worker SHA
