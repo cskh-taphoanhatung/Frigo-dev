@@ -1648,3 +1648,14 @@ run `34968012294` passing on `8eb6d2b8d54e5e2fd08c0a11acd9f57a1e068b24`.
 Hosted validate completed lint, typecheck, full Vitest, migration smoke, and
 build successfully. Main protection correctly leaves the PR blocked pending
 one independent approval; no merge or deployment has occurred.
+
+## Current auth handoff (2026-09-16)
+
+Safari showed a blank Google OAuth popup at `accounts.google.com/gsi/transform`.
+The live `/auth` headers included `Cross-Origin-Opener-Policy: same-origin`.
+Hono `secureHeaders` was the effective source because it ran after the custom
+header middleware and overwrote the GIS-compatible value. The fix disables
+that one Hono default and sets COOP by path: SPA `same-origin-allow-popups`, API
+`same-origin`. The regression test is green (`17/17` focused tests), with lint,
+typecheck and diff check green. The code is not deployed; a reviewed release
+must publish it before validating the live Safari flow.

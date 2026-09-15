@@ -1262,3 +1262,21 @@ Playwright 51 passed); certification and freeze not started. Details:
   `8eb6d2b8d54e5e2fd08c0a11acd9f57a1e068b24`; exact hosted CI run
   `34968012294` passed validate, lint, typecheck, Vitest, migration smoke, and
   build. The PR remains blocked only by the required independent approval.
+
+## Google GIS popup blank-page fix (2026-09-16)
+
+- Root cause isolated from the production `/auth` response and Safari symptom:
+  Hono `secureHeaders` was emitting `Cross-Origin-Opener-Policy: same-origin`,
+  which breaks the opener relationship Google Identity Services needs for its
+  popup credential handshake.
+- The Worker now disables Hono's fixed COOP value and applies a path-aware
+  policy after routing: SPA documents use `same-origin-allow-popups`, while
+  `/api/*` responses retain `same-origin` isolation. `public/_headers` matches
+  the SPA policy for static hosting.
+- Regression coverage in `tests/integration/worker-cors.test.mjs` proves both
+  headers and prevents weakening API isolation. Focused auth/COOP tests pass
+  (`17/17`); lint, typecheck and `git diff --check` also pass.
+- This is a code fix only. No Worker deployment, production auth change,
+  secret change, migration, or resource mutation was performed. The fix must
+  still be published through the normal reviewed deployment path before the
+  live `frigo.tungjpstore.net` response changes.

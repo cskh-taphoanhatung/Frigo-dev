@@ -7,6 +7,14 @@
   migration smoke, build and diff check pass.
 - [next] Browser smoke, hosted CI and maintainer review; no deployment yet.
 
+## 2026-09-16 auth popup follow-up
+
+- [done] Fix COOP precedence that broke Google GIS popup opener handshake.
+- [done] Preserve strict `same-origin` on API responses.
+- [done] Add SPA/API regression test; focused `17/17`, lint and typecheck pass.
+- [next] Publish via reviewed deployment, then retest Safari Google sign-in;
+  do not mutate production resources in this checkpoint.
+
 ## CANONICAL REPOSITORY CONSOLIDATION COMPLETE — 2026-09-15
 
 - `vn-dlo/Frigo-dev` (ID `1368281478`) is now the canonical long-term

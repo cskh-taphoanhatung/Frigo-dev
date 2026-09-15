@@ -844,3 +844,13 @@ rolling `qwen3.7-flash` alias is canary-only.
 - [done] Owner-visible PR #2 exact-head CI run `34968012294` passed all hosted
   validation steps on `8eb6d2b8d54e5e2fd08c0a11acd9f57a1e068b24`.
 - [current gate] PR #2 still needs one independent approving review before merge.
+
+## Auth/OAuth production hardening follow-up (2026-09-16)
+
+- [done] Isolate Safari/Google GIS blank popup to Worker COOP precedence.
+- [done] Use `same-origin-allow-popups` for SPA documents and retain
+  `same-origin` for `/api/*` responses.
+- [done] Add regression coverage; focused `17/17`, lint, typecheck and diff
+  check pass.
+- [blocked] Publish/deploy through the reviewed production path; no deployment
+  or production resource mutation was performed in this task.

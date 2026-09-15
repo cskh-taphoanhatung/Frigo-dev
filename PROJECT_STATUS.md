@@ -343,3 +343,15 @@ exact-head hosted CI; deployment and all payment work remain separate owner acti
   93 file, lint, typecheck, migration replay tới `0023` và build. Live-provider
   smoke, readiness và Worker deployment đã PASS; hosted PR #17 CI `34728606704`
   đã PASS. Cảnh báo duy nhất là `CONFIG_PLUS_GRANT_SECRET_MISSING`.
+
+## Auth/OAuth popup hardening (2026-09-16)
+
+- Safari blank Google sign-in popup was traced to `Cross-Origin-Opener-Policy:
+  same-origin` on the SPA. Hono `secureHeaders` was overwriting the intended
+  path-aware header after downstream middleware completed.
+- Fixed in code so SPA documents emit `same-origin-allow-popups` for Google GIS,
+  while `/api/*` remains `same-origin`; static `_headers` is aligned.
+- Regression `tests/integration/worker-cors.test.mjs` passes (`17/17` focused
+  auth/COOP tests), plus lint, typecheck and diff check. No deployment or
+  production resource mutation has been performed; live verification remains
+  the next release-gated action.

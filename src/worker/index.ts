@@ -64,6 +64,9 @@ app.use('*', secureHeaders({
   xFrameOptions: 'DENY',
   xContentTypeOptions: 'nosniff',
   referrerPolicy: 'strict-origin-when-cross-origin',
+  // COOP is path-sensitive: the SPA must keep its opener for Google GIS,
+  // while the middleware below restores strict isolation for API responses.
+  crossOriginOpenerPolicy: false,
 }));
 
 // SEC-7: additional security headers hono's secureHeaders doesn't cover
@@ -71,7 +74,12 @@ app.use('*', async (c, next) => {
   await next();
   c.header('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
   c.header('Permissions-Policy', 'camera=(self), microphone=(), geolocation=(), payment=()');
-  c.header('Cross-Origin-Opener-Policy', 'same-origin');
+  // Google Identity Services uses a popup and needs to retain its opener
+  // relationship while exchanging the signed credential. Keep API responses
+  // isolated, but allow the SPA document to communicate with OAuth popups.
+  c.header('Cross-Origin-Opener-Policy', c.req.path.startsWith('/api/')
+    ? 'same-origin'
+    : 'same-origin-allow-popups');
   c.header('X-DNS-Prefetch-Control', 'off');
   // CSP: API responses get a locked-down policy; the SPA is served from the
   // same worker so it needs the full script/style/img connect allowances.

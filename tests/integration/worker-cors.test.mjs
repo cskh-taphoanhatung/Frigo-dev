@@ -57,3 +57,11 @@ it('does not emit a wildcard when the request has no Origin', async () => {
   const response = await worker.fetch(new Request('https://app.example.com/api/v1/health'), production);
   expect(response.headers.get('Access-Control-Allow-Origin')).toBeNull();
 });
+
+it('allows Google GIS popup handshakes on the SPA without weakening API isolation', async () => {
+  const spa = await worker.fetch(new Request('https://app.example.com/auth'), production);
+  expect(spa.headers.get('Cross-Origin-Opener-Policy')).toBe('same-origin-allow-popups');
+
+  const api = await worker.fetch(new Request('https://app.example.com/api/v1/health'), production);
+  expect(api.headers.get('Cross-Origin-Opener-Policy')).toBe('same-origin');
+});
