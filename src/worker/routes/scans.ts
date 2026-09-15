@@ -17,6 +17,11 @@ import { fetchHouseholdInventoryFromDb } from './inventory';
 import { reserveScanQuota, finalizeScanQuota, type ScanReservationSpec } from '../services/scan-quota';
 import { ensureScanQueueIntent } from '../services/scan-queue';
 import { sha256Hex } from '../utils/session';
+import {
+  runScanSchemaCompatibleBatch,
+  scanConfirmationSetClause,
+  type ScanReviewStateCapability,
+} from '../utils/scan-schema-compat';
 
 export const scanRoutes = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
 
@@ -1332,38 +1337,30 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
     // confirmation therefore turns all stale mutations into no-ops.
     const readyScanPredicate =
       `EXISTS (SELECT 1 FROM scans WHERE id = ? AND household_id = ? AND status = 'ready')`;
-    const batchStatements: any[] = [];
-    if (selectedItems.length > 0) {
-      // Persist the user's reviewed values alongside the confirmation flag so
-      // a later GET of the scan reflects exactly what was imported. Omitted
-      // predictions remain unconfirmed and retain their original AI values.
-      for (const item of selectedItems) {
-        batchStatements.push(
-          db
-            .prepare(
-              `UPDATE scan_items
-               SET raw_name = ?, canonical_id = ?, estimated_quantity = ?, unit = ?,
-                   category = ?, storage = ?, is_confirmed = 1
-               WHERE id = ? AND scan_id = ? AND ${readyScanPredicate}`
-            )
-            .bind(
-              item.name,
-              item.canonicalId,
-              item.quantity,
-              item.unit,
-              item.category,
-              item.storage,
-              item.sourceId,
-              id,
-              id,
-              auth.householdId
-            )
-        );
-      }
-    }
-
+    const selectedScanStatements = (capability: ScanReviewStateCapability): any[] => selectedItems.map((item) =>
+      db
+        .prepare(
+          `UPDATE scan_items
+           SET raw_name = ?, canonical_id = ?, estimated_quantity = ?, unit = ?,
+               ${scanConfirmationSetClause(capability)}
+           WHERE id = ? AND scan_id = ? AND ${readyScanPredicate}`
+        )
+        .bind(
+          item.name,
+          item.canonicalId,
+          item.quantity,
+          item.unit,
+          item.category,
+          item.storage,
+          item.sourceId,
+          id,
+          id,
+          auth.householdId
+        )
+    );
+    const nonScanStatements: any[] = [];
     for (const update of updates.values()) {
-      batchStatements.push(
+      nonScanStatements.push(
         db
           .prepare(
             `UPDATE inventory_items
@@ -1386,7 +1383,7 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
     }
 
     for (const insert of inserts) {
-      batchStatements.push(
+      nonScanStatements.push(
         db
           .prepare(
             `INSERT INTO inventory_items
@@ -1415,7 +1412,7 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
     }
 
     for (const event of events) {
-      batchStatements.push(
+      nonScanStatements.push(
         db
           .prepare(
             `INSERT INTO inventory_events
@@ -1438,7 +1435,7 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
       );
     }
 
-    batchStatements.push(
+    nonScanStatements.push(
       db
         .prepare(
           `UPDATE scans SET status = 'confirmed', updated_at = datetime('now')
@@ -1449,7 +1446,10 @@ scanRoutes.post('/scans/:id/confirm', async (c) => {
 
     // D1 batch executes the state transition, projection, and audit events as
     // one transaction. A failed event insert therefore rolls back the status.
-    const batchResults = await db.batch(batchStatements);
+    const { results: batchResults } = await runScanSchemaCompatibleBatch(db, (capability) => [
+      ...(selectedItems.length > 0 ? selectedScanStatements(capability) : []),
+      ...nonScanStatements,
+    ]);
     assertBatchSucceeded(batchResults);
     const statusResult = batchResults?.[batchResults.length - 1] as any;
     if (statusResult?.meta?.changes !== 1) {
