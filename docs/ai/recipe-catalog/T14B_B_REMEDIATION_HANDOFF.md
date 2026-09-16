@@ -14,8 +14,9 @@ start_main=c1c1c14a2a7dccc883f1030d0dee7043754fb4a9
 safe_checkpoint=d9130b69f3df27f4f071153c9824d66ca3750001
 LAST_KNOWN_SAFE_CHECKPOINT_CI=run 35053041994 / check 104657335468 / validate=SUCCESS (historical once new commits exist)
 continuation_commit_A=19b144a543e1d492d6540e0701eb255f3daae0c7  test(recipes): prove order-sensitive D1 behavioral parity on actual catalog output
-continuation_commit_B=<the docs commit carrying this record; exact SHA in PR #14 body and `git log`>
-final_candidate=<commit B = branch head; exact SHA + hosted CI run recorded in the PR #14 body>
+continuation_commit_B=8c8ea94abff06744fda164415f3ab7a6c21ea73c  docs(t14b-b): finalize ordering remediation evidence (hosted validate SUCCESS run 35065056229 / check 104693398900)
+continuation_commit_C=a68910ad6a23ecf623a360c6e8c87a029d3d5c03  chore(migrations): gate and smoke-check 0034 runtime order and ingredient ordinals
+final_candidate=branch head after commit C + this docs receipt; exact SHA and hosted CI run recorded in the PR #14 body
 ```
 
 | Finding | Final status | Evidence |
@@ -179,7 +180,8 @@ current_head_ci_at_stop=PENDING (run 104657229602 started 2026-09-16T03:45:35Z; 
 | Inventory Truth | no application module changed; `inventory-truth.test.ts` only stops pinning the ledger tip |
 | Runtime order proof | static=71, d1=71, first `vn-canh-01 … vn-canh-06 vn-kho-01 … vn-kho-04`, last `gl-03 … gl-12`, `orderDriftCount=0` |
 | `.hoplite/settings.json` | pre-existing local modification, left uncommitted (never staged) |
-| Hosted CI (exact final head) | recorded in the PR #14 body after push |
+| Hosted CI | `8c8ea94a`: run 35065056229 / check 104693398900 validate=SUCCESS. Final head: recorded in the PR #14 body |
+| Release audit (commit C) | `scripts/d1-schema-gate.sql` now requires `recipe_runtime_ingredient_order` + `runtime_order`/`position` columns; `migration-smoke.sh` asserts 0..70 permutation and one ordinal per ingredient line (negative control: wrong count fails). Deploy ordering: operator applies 0034 remotely before the read-only gate passes (`DEPLOYMENT.md`). No env/secret/workflow/wrangler/dependency change |
 
 Sandbox note: `check:migrations` needs `sqlite3`; the repo's committed `.hoplite/settings.json`
 setup script installs it. This sandbox had skipped setup, so `apt-get install sqlite3` was run
