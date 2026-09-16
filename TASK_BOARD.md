@@ -1,4 +1,9 @@
-## T14D — RECIPE AUTHORITY CUTOVER — 2026-09-16 (dev complete; PR open; NOT merged/deployed)
+## T14D — RECIPE AUTHORITY CUTOVER — 2026-09-16 (MERGED main bb504cce…; main certified; NOT deployed)
+
+- PR #19 merged; main CI green; 163/3801. Production still `4ed98514…` / 0034 / static — OPS sequence in
+  `docs/ai/recipe-catalog/T14D_NEXT_HANDOFF.md`.
+
+## T14D — RECIPE AUTHORITY CUTOVER — 2026-09-16 (development receipt)
 
 - Authority router static|shadow|canary|d1 (fenced), verified D1 snapshot, deterministic canary, config-only rollback;
   no migration. Production still static / 0034. Docs: `docs/ai/recipe-catalog/T14D_RECIPE_AUTHORITY_CUTOVER.md`, ADR-026.
