@@ -5,13 +5,19 @@ import {
   parseRecipeMediaVersion, presentRecipeMedia, resolveRecipeMedia, type RecipeMediaRecord,
 } from '../../packages/recipes/src/recipe-media';
 import {
-  chunkRecipeIds, D1RecipeMediaCatalog, promoteRecipeMediaVersion, RECIPE_MEDIA_LOOKUP_CHUNK_SIZE, rejectRecipeMediaVersion,
-  RecipeMediaWriteError, stageRecipeMediaVersion,
+  chunkRecipeIds, D1RecipeMediaCatalog, promoteRecipeMediaVersion, RECIPE_MEDIA_LOOKUP_CHUNK_SIZE, RECIPE_MEDIA_MAX_VERIFY_BYTES,
+  rejectRecipeMediaVersion, RecipeMediaWriteError, stageRecipeMediaVersion,
 } from '../../packages/db/src/recipe-media';
+import { FakeR2, sha256Hex } from '../helpers/recipe-media-r2';
 import { SqliteD1, type SqliteStatementEvent } from '../helpers/sqlite-d1';
 
 const HASH_A = 'a'.repeat(64);
 const HASH_B = 'b'.repeat(64);
+/** Two distinct fixtures with IDENTICAL length so hash tests cannot pass on size alone. */
+const BYTES_A = new Uint8Array([0x52, 0x49, 0x46, 0x46, 0x1a, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50, 0x01, 0x02, 0x03, 0x04]);
+const BYTES_B = new Uint8Array([0x52, 0x49, 0x46, 0x46, 0x1a, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50, 0x04, 0x03, 0x02, 0x01]);
+const SHA_A = sha256Hex(BYTES_A);
+const SHA_B = sha256Hex(BYTES_B);
 
 const record = (overrides: Partial<RecipeMediaRecord> = {}): RecipeMediaRecord => ({
   id: 'gl-01_media_hero_v2', recipeId: 'gl-01', role: 'hero', version: 2, status: 'ready', sourceType: 'uploaded',
@@ -24,6 +30,15 @@ function stage(db: SqliteD1, recipeId: string, version: number, overrides: Recor
     recipeId, role: 'hero', version, mimeType: 'image/webp', width: 1200, height: 800, contentLength: 100, contentHash: HASH_A, sourceType: 'uploaded', ...overrides,
   } as Parameters<typeof stageRecipeMediaVersion>[1]);
 }
+
+/** Stages real fixture metadata (true length + true SHA-256) and uploads the matching object to the R2 double. */
+async function stageWithObject(db: SqliteD1, r2: FakeR2, recipeId: string, version: number, bytes: Uint8Array, options: { upload?: boolean; objectBytes?: Uint8Array; objectMime?: string | null; overrides?: Record<string, unknown> } = {}) {
+  const staged = await stage(db, recipeId, version, { contentLength: bytes.byteLength, contentHash: sha256Hex(bytes), ...options.overrides });
+  if (options.upload !== false) r2.put(`recipes/${recipeId}/hero/v${version}.webp`, options.objectBytes ?? bytes, options.objectMime === null ? undefined : options.objectMime ?? 'image/webp');
+  return staged;
+}
+
+const statuses = (db: SqliteD1, recipeId: string) => db.query<{ version: number; status: string }>(`SELECT version, status FROM recipe_media WHERE recipe_id = ? ORDER BY version`, recipeId).map((row) => [row.version, row.status]);
 
 describe('T14C — storage key, version and URL contracts', () => {
   it('builds deterministic versioned keys and rejects every unsafe component', () => {
@@ -103,6 +118,8 @@ describe('T14C — RecipeMediaResolver precedence (pure)', () => {
     expect(auditReadyRecipeMediaRecord(record({ width: 0, height: null }))).toEqual(['missing_dimensions']);
     expect(auditReadyRecipeMediaRecord(record({ width: 0 }))).toEqual(['invalid_dimensions']);
     expect(auditReadyRecipeMediaRecord(record({ contentLength: -1 }))).toEqual(['invalid_content_length']);
+    expect(auditReadyRecipeMediaRecord(record({ contentLength: null }))).toEqual(['missing_content_length']);
+    expect(auditReadyRecipeMediaRecord(record({ storageKey: 'recipes/gl-01/hero/v2.foo.webp' }))).toEqual(['untrusted_storage_key']);
     expect(auditReadyRecipeMediaRecord(record({ storageKey: null, mimeType: 'text/html', contentHash: 'zz' }))).toEqual(['missing_storage_key', 'unsupported_mime_type', 'invalid_content_hash']);
   });
 });
@@ -125,8 +142,9 @@ describe('T14C — D1RecipeMediaCatalog (bounded bulk reads, no N+1) and write h
   it('reads current-ready hero rows for all 71 recipes with ONE statement (would fail if per-recipe queries were issued)', async () => {
     const statements: string[] = [];
     const db = database({ beforeStatement: (event) => { if (/recipe_media/.test(event.sql)) statements.push(event.sql); } });
-    await stage(db, 'gl-01', 2); await promoteRecipeMediaVersion(db, 'gl-01', 'hero', 2);
-    await stage(db, 'vn-canh-01', 2); await promoteRecipeMediaVersion(db, 'vn-canh-01', 'hero', 2);
+    const r2 = new FakeR2();
+    await stageWithObject(db, r2, 'gl-01', 2, BYTES_A); await promoteRecipeMediaVersion(db, r2, 'gl-01', 'hero', 2);
+    await stageWithObject(db, r2, 'vn-canh-01', 2, BYTES_A); await promoteRecipeMediaVersion(db, r2, 'vn-canh-01', 'hero', 2);
     statements.length = 0;
     const catalog = new D1RecipeMediaCatalog(db);
     const rows = await catalog.readCurrentReady(ALL_RECIPES.map((recipe) => recipe.id), 'hero');
@@ -165,19 +183,117 @@ describe('T14C — D1RecipeMediaCatalog (bounded bulk reads, no N+1) and write h
     expect(await catalog.readCurrentReady(['gl-01'], 'banner' as never)).toEqual([]);
   });
 
-  it('stage → promote is atomic and never leaves two current-ready versions; old version becomes superseded', async () => {
+  it('verified_object_promotion: stage → verified promote is atomic, never leaves two current-ready versions; old version becomes superseded', async () => {
     const db = database();
+    const r2 = new FakeR2();
     const catalog = new D1RecipeMediaCatalog(db);
     // Completing the seeded pending v1 slot (no INSERT: the row exists with storage_key NULL).
-    const v1 = await stage(db, 'gl-01', 1, { contentHash: HASH_B });
-    expect(v1).toMatchObject({ version: 1, status: 'pending', storageKey: 'recipes/gl-01/hero/v1.webp', contentHash: HASH_B });
-    expect(await promoteRecipeMediaVersion(db, 'gl-01', 'hero', 1)).toMatchObject({ status: 'ready' });
-    await stage(db, 'gl-01', 2);
-    await promoteRecipeMediaVersion(db, 'gl-01', 'hero', 2);
+    const v1 = await stageWithObject(db, r2, 'gl-01', 1, BYTES_B);
+    expect(v1).toMatchObject({ version: 1, status: 'pending', storageKey: 'recipes/gl-01/hero/v1.webp', contentLength: BYTES_B.byteLength, contentHash: SHA_B });
+    expect(await promoteRecipeMediaVersion(db, r2, 'gl-01', 'hero', 1)).toMatchObject({ status: 'ready', contentHash: SHA_B });
+    expect(r2.requestedKeys).toEqual(['recipes/gl-01/hero/v1.webp']); // only the D1-derived key, read once
+    await stageWithObject(db, r2, 'gl-01', 2, BYTES_A);
+    expect(await promoteRecipeMediaVersion(db, r2, 'gl-01', 'hero', 2)).toMatchObject({ status: 'ready', version: 2, contentHash: SHA_A });
     const rows = await catalog.readRecipe('gl-01');
     expect(rows.map((row) => [row.version, row.status])).toEqual([[2, 'ready'], [1, 'superseded']]);
     expect(db.query<{ n: number }>(`SELECT COUNT(*) AS n FROM recipe_media WHERE recipe_id = 'gl-01' AND status = 'ready'`)[0].n).toBe(1);
     expect(await catalog.readCurrentReady(['gl-01'], 'hero')).toMatchObject([{ version: 2 }]);
+  });
+
+  describe('ready integrity: promotion verifies the ACTUAL R2 object (P1 remediation)', () => {
+    it('promote_without_object: valid metadata but no R2 object → OBJECT_MISSING, row stays pending, no ready row appears', async () => {
+      const db = database(); const r2 = new FakeR2();
+      await stageWithObject(db, r2, 'gl-01', 2, BYTES_A, { upload: false });
+      await expect(promoteRecipeMediaVersion(db, r2, 'gl-01', 'hero', 2)).rejects.toMatchObject({ code: 'OBJECT_MISSING' });
+      expect(statuses(db, 'gl-01')).toEqual([[1, 'pending'], [2, 'pending']]);
+      expect(await new D1RecipeMediaCatalog(db).readCurrentReady(['gl-01'], 'hero')).toEqual([]);
+      expect(r2.requestedKeys).toEqual(['recipes/gl-01/hero/v2.webp']);
+    });
+
+    it('promote_wrong_mime: object contentType image/png (or absent) vs metadata image/webp → OBJECT_MIME_MISMATCH, no mutation', async () => {
+      const db = database(); const r2 = new FakeR2();
+      await stageWithObject(db, r2, 'gl-01', 2, BYTES_A, { objectMime: 'image/png' });
+      await expect(promoteRecipeMediaVersion(db, r2, 'gl-01', 'hero', 2)).rejects.toMatchObject({ code: 'OBJECT_MIME_MISMATCH' });
+      r2.put('recipes/gl-01/hero/v2.webp', BYTES_A, undefined); // missing MIME is not silently accepted
+      await expect(promoteRecipeMediaVersion(db, r2, 'gl-01', 'hero', 2)).rejects.toMatchObject({ code: 'OBJECT_MIME_MISMATCH' });
+      expect(statuses(db, 'gl-01')).toEqual([[1, 'pending'], [2, 'pending']]);
+    });
+
+    it('promote_wrong_size: metadata content_length=16 but object has 17 bytes → OBJECT_SIZE_MISMATCH, no mutation', async () => {
+      const db = database(); const r2 = new FakeR2();
+      const longer = new Uint8Array([...BYTES_A, 0xff]);
+      await stageWithObject(db, r2, 'gl-01', 2, BYTES_A, { objectBytes: longer });
+      await expect(promoteRecipeMediaVersion(db, r2, 'gl-01', 'hero', 2)).rejects.toMatchObject({ code: 'OBJECT_SIZE_MISMATCH' });
+      expect(statuses(db, 'gl-01')).toEqual([[1, 'pending'], [2, 'pending']]);
+    });
+
+    it('promote_wrong_hash_same_size: same MIME, same length, different bytes → OBJECT_HASH_MISMATCH (MIME+length are not identity)', async () => {
+      const db = database(); const r2 = new FakeR2();
+      expect(BYTES_A.byteLength).toBe(BYTES_B.byteLength);
+      expect(SHA_A).not.toBe(SHA_B);
+      await stageWithObject(db, r2, 'gl-01', 2, BYTES_A, { objectBytes: BYTES_B });
+      await expect(promoteRecipeMediaVersion(db, r2, 'gl-01', 'hero', 2)).rejects.toMatchObject({ code: 'OBJECT_HASH_MISMATCH' });
+      expect(statuses(db, 'gl-01')).toEqual([[1, 'pending'], [2, 'pending']]);
+      // A staged hash that is well-formed but simply wrong is caught the same way.
+      await stage(db, 'gl-01', 3, { contentLength: BYTES_A.byteLength, contentHash: HASH_A });
+      r2.put('recipes/gl-01/hero/v3.webp', BYTES_A, 'image/webp');
+      await expect(promoteRecipeMediaVersion(db, r2, 'gl-01', 'hero', 3)).rejects.toMatchObject({ code: 'OBJECT_HASH_MISMATCH' });
+    });
+
+    it('failed_new_version_keeps_old_ready: v1 ready, v2 fails verification for every reason → v1 still ready, v2 still pending', async () => {
+      const db = database(); const r2 = new FakeR2();
+      await stageWithObject(db, r2, 'gl-01', 1, BYTES_A);
+      await promoteRecipeMediaVersion(db, r2, 'gl-01', 'hero', 1);
+      await stageWithObject(db, r2, 'gl-01', 2, BYTES_B, { upload: false });
+      const attempts: Array<[string, () => void]> = [
+        ['OBJECT_MISSING', () => r2.objects.delete('recipes/gl-01/hero/v2.webp')],
+        ['OBJECT_MIME_MISMATCH', () => r2.put('recipes/gl-01/hero/v2.webp', BYTES_B, 'image/jpeg')],
+        ['OBJECT_SIZE_MISMATCH', () => r2.put('recipes/gl-01/hero/v2.webp', BYTES_B.slice(0, 8), 'image/webp')],
+        ['OBJECT_HASH_MISMATCH', () => r2.put('recipes/gl-01/hero/v2.webp', BYTES_A, 'image/webp')],
+        ['OBJECT_READ_FAILED', () => { r2.put('recipes/gl-01/hero/v2.webp', BYTES_B, 'image/webp'); r2.failNextGet = new Error('r2 unavailable'); }],
+      ];
+      for (const [code, arrange] of attempts) {
+        arrange();
+        await expect(promoteRecipeMediaVersion(db, r2, 'gl-01', 'hero', 2), code).rejects.toMatchObject({ code });
+        expect(statuses(db, 'gl-01'), code).toEqual([[1, 'ready'], [2, 'pending']]);
+        expect(await new D1RecipeMediaCatalog(db).readCurrentReady(['gl-01'], 'hero'), code).toMatchObject([{ version: 1 }]);
+      }
+      // Once the object is actually correct, the same pending row promotes and v1 is superseded in the same batch.
+      r2.put('recipes/gl-01/hero/v2.webp', BYTES_B, 'image/webp');
+      await promoteRecipeMediaVersion(db, r2, 'gl-01', 'hero', 2);
+      expect(statuses(db, 'gl-01')).toEqual([[1, 'superseded'], [2, 'ready']]);
+    });
+
+    it('objects above the verification bound are refused before any bytes are hashed', async () => {
+      const db = database(); const r2 = new FakeR2();
+      await stage(db, 'gl-01', 2, { contentLength: RECIPE_MEDIA_MAX_VERIFY_BYTES + 1, contentHash: HASH_A });
+      await expect(promoteRecipeMediaVersion(db, r2, 'gl-01', 'hero', 2)).rejects.toMatchObject({ code: 'OBJECT_TOO_LARGE' });
+      expect(r2.requestedKeys).toEqual([]);
+      expect(statuses(db, 'gl-01')).toEqual([[1, 'pending'], [2, 'pending']]);
+    });
+
+    it('a row re-staged between verification and the D1 batch cannot ride an older verification; the current ready row is untouched', async () => {
+      const db = database(); const r2 = new FakeR2();
+      await stageWithObject(db, r2, 'gl-01', 1, BYTES_A);
+      await promoteRecipeMediaVersion(db, r2, 'gl-01', 'hero', 1);
+      await stageWithObject(db, r2, 'gl-01', 2, BYTES_B);
+      // Simulate a concurrent writer replacing the pending row's byte identity after R2 verification, before the batch.
+      db.hooks = { beforeBatch: async () => { db.seed(`UPDATE recipe_media SET content_hash = '${HASH_B}' WHERE id = 'gl-01_media_hero_v2'`); } };
+      await expect(promoteRecipeMediaVersion(db, r2, 'gl-01', 'hero', 2)).rejects.toMatchObject({ code: 'READY_CONFLICT' });
+      expect(statuses(db, 'gl-01')).toEqual([[1, 'ready'], [2, 'pending']]);
+    });
+
+    it('two concurrent promotions of different pending versions for one recipe/role leave exactly one ready row', async () => {
+      const db = database(); const r2 = new FakeR2();
+      await stageWithObject(db, r2, 'gl-01', 2, BYTES_A);
+      await stageWithObject(db, r2, 'gl-01', 3, BYTES_B);
+      const outcomes = await Promise.allSettled([
+        promoteRecipeMediaVersion(db, r2, 'gl-01', 'hero', 2),
+        promoteRecipeMediaVersion(db, r2, 'gl-01', 'hero', 3),
+      ]);
+      expect(outcomes.filter((outcome) => outcome.status === 'fulfilled').length).toBeGreaterThanOrEqual(1);
+      expect(db.query<{ n: number }>(`SELECT COUNT(*) AS n FROM recipe_media WHERE recipe_id = 'gl-01' AND status = 'ready'`)[0].n).toBe(1);
+    });
   });
 
   it('write helpers fail closed: bad input, duplicate version, promoting non-pending, rejecting', async () => {
@@ -186,17 +302,20 @@ describe('T14C — D1RecipeMediaCatalog (bounded bulk reads, no N+1) and write h
     await expect(stage(db, 'gl-01', 2, { width: 0 })).rejects.toMatchObject({ code: 'INVALID_DIMENSIONS' });
     await expect(stage(db, 'gl-01', 2, { contentHash: 'nope' })).rejects.toMatchObject({ code: 'INVALID_CONTENT_HASH' });
     await expect(stage(db, 'gl-01', 2, { contentLength: -1 })).rejects.toMatchObject({ code: 'INVALID_CONTENT_LENGTH' });
+    await expect(stage(db, 'gl-01', 2, { contentLength: null })).rejects.toMatchObject({ code: 'INVALID_CONTENT_LENGTH' });
     await expect(stage(db, 'gl-01', 0)).rejects.toMatchObject({ code: 'INVALID_VERSION' });
     await expect(stage(db, '../x', 2)).rejects.toMatchObject({ code: 'INVALID_RECIPE_ID' });
     await expect(stage(db, 'gl-01', 2, { sourceType: 'scraped' })).rejects.toMatchObject({ code: 'INVALID_SOURCE' });
     await expect(stage(db, 'unknown-recipe', 2)).rejects.toThrow(/FOREIGN KEY/);
-    await stage(db, 'gl-01', 2);
+    const r2 = new FakeR2();
+    await stageWithObject(db, r2, 'gl-01', 2, BYTES_A);
     await expect(stage(db, 'gl-01', 2)).rejects.toMatchObject({ code: 'VERSION_EXISTS' });
-    await promoteRecipeMediaVersion(db, 'gl-01', 'hero', 2);
-    await expect(promoteRecipeMediaVersion(db, 'gl-01', 'hero', 2)).rejects.toMatchObject({ code: 'NOT_PENDING' });
-    await expect(promoteRecipeMediaVersion(db, 'gl-01', 'hero', 9)).rejects.toMatchObject({ code: 'NOT_FOUND' });
-    // The seeded slot has no metadata: promotion is refused rather than fabricating readiness.
-    await expect(promoteRecipeMediaVersion(db, 'gl-02', 'hero', 1)).rejects.toMatchObject({ code: 'READY_CONFLICT' });
+    await promoteRecipeMediaVersion(db, r2, 'gl-01', 'hero', 2);
+    await expect(promoteRecipeMediaVersion(db, r2, 'gl-01', 'hero', 2)).rejects.toMatchObject({ code: 'NOT_PENDING' });
+    await expect(promoteRecipeMediaVersion(db, r2, 'gl-01', 'hero', 9)).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    // The seeded slot has no metadata: promotion is refused before R2 is even consulted.
+    await expect(promoteRecipeMediaVersion(db, r2, 'gl-02', 'hero', 1)).rejects.toMatchObject({ code: 'METADATA_INCOMPLETE' });
+    expect(r2.requestedKeys).toEqual(['recipes/gl-01/hero/v2.webp']);
     await stage(db, 'gl-01', 3);
     await rejectRecipeMediaVersion(db, 'gl-01', 'hero', 3);
     expect((await new D1RecipeMediaCatalog(db).readVersion('gl-01', 'hero', 3))?.status).toBe('rejected');

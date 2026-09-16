@@ -1,6 +1,7 @@
 ## T14C — RECIPE MEDIA LAYER — 2026-09-16 (dev complete; PR open; NOT merged/deployed)
 
 - 0035 `recipe_media` + catalog/resolver/route/frontend fallback; 0034 pinned; gates green locally.
+- Review remediation: promotion verifies the R2 object (MIME/size/SHA-256) before ready; SQL enforces exact storage key.
 - Production still 0034; media population and T14D/T14E deferred. Docs: `docs/ai/recipe-catalog/T14C_RECIPE_MEDIA_LAYER.md`.
 
 ## T14B-B — COMPLETE 2026-09-16 (D1 0034 in production; Worker `56979cb5-…` = main `4ed98514…`)

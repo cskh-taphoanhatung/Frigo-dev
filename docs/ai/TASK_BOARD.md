@@ -7,7 +7,9 @@
   schema gate/smoke/seed-check extended; 0034 pinned; ADR-025; design doc.
 - [not done — by design] media population (71 assets), global prompts (0/12), thumbnail seeding,
   production 0035 apply, deployment. T14D/T14E not started.
-- [next] Independent review of the PR; then rollout: backup → apply 0035 → deploy → populate separately.
+- [done, local-verified] independent-review remediation: R2-verified promotion (existence/MIME/size/SHA-256),
+  exact SQL storage-key CHECK, `content_length` required for ready; 0035 regenerated (no 0036).
+- [next] Independent re-review of PR #17; then rollout: backup → apply 0035 → deploy → populate separately.
 
 ## T14B-B — COMPLETE 2026-09-16 (production D1 0034 applied; Worker deployed)
 

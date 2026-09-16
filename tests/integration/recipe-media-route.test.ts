@@ -10,6 +10,7 @@ import { attachRecipeMedia, resetRecipeMediaDiagnosticsForTests } from '../../sr
 import type { AuthContext, Env } from '../../src/worker/types';
 import { signJwt } from '../../src/worker/utils/jwt';
 import { fetchWorker } from '../helpers/worker-fetch.mjs';
+import { FakeR2, WEBP_FIXTURE_BYTES as WEBP_BYTES, WEBP_FIXTURE_SHA256 as HASH } from '../helpers/recipe-media-r2';
 import { SqliteD1 } from '../helpers/sqlite-d1';
 
 // The Workers-only cloudflare:email module cannot load in Node; no network mail is sent.
@@ -21,25 +22,15 @@ vi.mock('../../src/worker/services/email', () => ({
 const secret = 'media-secret-that-is-definitely-long-enough';
 const USER = 'media-user';
 const HOUSEHOLD = 'media-house';
-const HASH = 'c'.repeat(64);
-const WEBP_BYTES = new Uint8Array([0x52, 0x49, 0x46, 0x46, 0x1a, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50]);
-
-/** Deterministic in-memory R2 double: records every key requested so tests can prove no arbitrary reads. */
-class FakeR2 {
-  readonly objects = new Map<string, { bytes: Uint8Array; contentType?: string }>();
-  readonly requestedKeys: string[] = [];
-  put(key: string, bytes: Uint8Array, contentType?: string) { this.objects.set(key, { bytes, contentType }); }
-  async get(key: string) {
-    this.requestedKeys.push(key);
-    const object = this.objects.get(key);
-    if (!object) return null;
-    return { body: new Blob([object.bytes as BlobPart]).stream(), size: object.bytes.byteLength, httpMetadata: object.contentType ? { contentType: object.contentType } : undefined };
-  }
-}
-
-async function stageReady(db: SqliteD1, recipeId: string, version: number, extra: Record<string, unknown> = {}) {
-  await stageRecipeMediaVersion(db, { recipeId, role: 'hero', version, mimeType: 'image/webp', width: 1200, height: 800, contentLength: WEBP_BYTES.byteLength, contentHash: HASH, sourceType: 'uploaded', ...extra } as never);
-  return promoteRecipeMediaVersion(db, recipeId, 'hero', version);
+/**
+ * Stages metadata for the fixture bytes, uploads them to the R2 double and runs the VERIFIED promotion
+ * (existence + MIME + size + SHA-256 of the actual bytes). `promotionR2` defaults to a private bucket so
+ * serving tests can start from an empty/altered bucket without faking verification.
+ */
+async function stageReady(db: SqliteD1, recipeId: string, version: number, promotionR2 = new FakeR2()) {
+  await stageRecipeMediaVersion(db, { recipeId, role: 'hero', version, mimeType: 'image/webp', width: 1200, height: 800, contentLength: WEBP_BYTES.byteLength, contentHash: HASH, sourceType: 'uploaded' });
+  promotionR2.put(`recipes/${recipeId}/hero/v${version}.webp`, WEBP_BYTES, 'image/webp');
+  return promoteRecipeMediaVersion(db, promotionR2, recipeId, 'hero', version);
 }
 
 describe('T14C — GET /api/v1/recipe-media/:recipeId/:role/:version (secure same-origin serving)', () => {
@@ -62,9 +53,11 @@ describe('T14C — GET /api/v1/recipe-media/:recipeId/:role/:version (secure sam
   });
   afterEach(() => { console.warn = originalWarn; db.close(); });
 
-  it('serves a ready canonical asset without auth, with immutable cache, ETag from content hash, nosniff and exact MIME', async () => {
+  it('serves a ready canonical asset without auth, with immutable cache, ETag from the promotion-verified content hash, nosniff and exact MIME', async () => {
     const response = await get('/api/v1/recipe-media/gl-01/hero/2');
     expect(response.status).toBe(200);
+    // public_GET_rehashes_bytes=NO: the route reads the object once and streams it; hashing happened at promotion.
+    expect(r2.requestedKeys).toEqual(['recipes/gl-01/hero/v2.webp']);
     expect(response.headers.get('content-type')).toBe('image/webp');
     expect(response.headers.get('cache-control')).toBe(RECIPE_MEDIA_IMMUTABLE_CACHE_CONTROL);
     expect(response.headers.get('etag')).toBe(`"${HASH}"`);
@@ -149,16 +142,20 @@ describe('T14C — GET /api/v1/recipe-media/:recipeId/:role/:version (secure sam
     expect(logs.join('\n')).not.toMatch(/recipes\/gl-01\/hero|RIFF|secret/);
   });
 
-  it('metadata tampered after readiness (trigger bypassed by direct status flip) is refused: untrusted key never reaches R2', async () => {
+  it('non-canonical storage keys are now rejected by SQL itself; a status flipped to ready behind the helpers still fails closed at the route', async () => {
     db.seed(`UPDATE recipe_media SET status = 'superseded' WHERE id = 'gl-01_media_hero_v2'`);
-    // Passes the SQL prefix/extension CHECKs but is not the exact derived key; the app-level trust check must still refuse it.
-    db.seed(`UPDATE recipe_media SET storage_key = 'recipes/gl-01/hero/v2.x.webp' WHERE id = 'gl-01_media_hero_v2'`);
+    // Prefix + extension are right but the key is not the exact derivation: SQL refuses it (P2), so no SQL-valid/app-invalid state exists.
+    expect(() => db.seed(`UPDATE recipe_media SET storage_key = 'recipes/gl-01/hero/v2.x.webp' WHERE id = 'gl-01_media_hero_v2'`)).toThrow(/CHECK/);
     r2.put('recipes/gl-01/hero/v2.x.webp', WEBP_BYTES, 'image/webp');
-    expect(() => db.seed(`UPDATE recipe_media SET status = 'ready' WHERE id = 'gl-01_media_hero_v2'`)).not.toThrow();
+    // Someone bypassing promoteRecipeMediaVersion and flipping a pending slot to ready by hand cannot satisfy the SQL ready invariant…
+    expect(() => db.seed(`UPDATE recipe_media SET status = 'ready' WHERE id = 'gl-02_media_hero_v1'`)).toThrow(/CHECK/);
+    // …and even a complete-looking row readied without an object never serves anything but a no-store 404.
+    db.seed(`UPDATE recipe_media SET status = 'ready' WHERE id = 'gl-01_media_hero_v2'`);
+    r2.objects.delete('recipes/gl-01/hero/v2.webp');
     const response = await get('/api/v1/recipe-media/gl-01/hero/2');
-    expect(response.status).toBe(409);
-    expect(await response.json()).toMatchObject({ code: 'RECIPE_MEDIA_METADATA_INVALID' });
-    expect(r2.requestedKeys).toEqual([]);
+    expect(response.status).toBe(404);
+    expect(await response.json()).toMatchObject({ code: 'RECIPE_MEDIA_OBJECT_MISSING' });
+    expect(r2.requestedKeys).toEqual(['recipes/gl-01/hero/v2.webp']);
   });
 
   it('no DB or no IMAGES binding → 503, never 500; D1 read failure → 503 with diagnostic', async () => {

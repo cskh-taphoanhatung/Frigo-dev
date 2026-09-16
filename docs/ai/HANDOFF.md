@@ -18,8 +18,18 @@
   `git diff --check` — exact totals recorded in the PR body.
 - **Limitations:** no production/staging execution; no R2 objects exist (all 71 resolve to legacy
   images exactly as before); `PRAGMA integrity_check` unavailable on hosted D1 (local only).
-- **Next action:** independent review → merge → operator rollout (backup, apply 0035, deploy via
-  `deploy.yml`, smoke) → separate media population task. Do NOT apply 0035 remotely before review.
+- **Independent-review remediation (2026-09-16, forward commit on the same branch):** P1 READY_INTEGRITY —
+  `promoteRecipeMediaVersion(db, images, …)` verifies the actual R2 object (existence / MIME / size /
+  SHA-256 of bytes, bounded 16 MiB) before an atomic guarded D1 batch; typed `OBJECT_*` errors; failure
+  keeps target pending and old ready intact. P2 STORAGE_KEY_SQL_CONTRACT — 0035 renderer regenerated:
+  exact `storage_key` CHECK (`CASE mime_type`), `content_length NOT NULL` for ready. Tests:
+  `tests/helpers/recipe-media-r2.ts` (realistic R2 double), schema 13 / catalog 24 / route 27 /
+  presentation 8. Checks re-executed: `recipe:seed:check`, `typecheck`, `lint`, `check:migrations`,
+  `build`, full `pnpm test`, `git diff --check` — totals in the PR body. Still no production/staging
+  action; 0001–0034 byte-identical; no 0036.
+- **Next action:** independent review of the remediated PR #17 → merge → operator rollout (backup, apply
+  0035, deploy via `deploy.yml`, smoke) → separate media population task (new bytes ⇒ new version ⇒ new
+  key; never overwrite a ready key). Do NOT apply 0035 remotely before review.
 
 # Frigo / Takosan current handoff — 2026-09-15
 

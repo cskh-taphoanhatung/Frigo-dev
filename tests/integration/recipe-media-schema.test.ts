@@ -3,7 +3,10 @@ import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { ALL_RECIPES } from '../../packages/recipes/src/data';
-import { RECIPE_MEDIA_MIGRATION_FILENAME, buildRecipeMediaSeedRows, renderRecipeMediaLayerSql } from '../../packages/recipes/src/recipe-media';
+import {
+  RECIPE_MEDIA_MIGRATION_FILENAME, auditReadyRecipeMediaRecord, buildRecipeMediaSeedRows, buildRecipeMediaStorageKey, isTrustedRecipeMediaStorageKey,
+  renderRecipeMediaLayerSql,
+} from '../../packages/recipes/src/recipe-media';
 import migrationManifest from '../fixtures/migration-sha256.json';
 import { SqliteD1 } from '../helpers/sqlite-d1';
 
@@ -120,9 +123,9 @@ describe('T14C — 0035 recipe media layer: migration, schema invariants, seed',
       expect(() => insert(db, ready({ id: 'x7', version: 1, status: 'pending', storage_key: null, mime_type: null, width: null, height: null, content_hash: null }))).toThrow(/UNIQUE/);
     });
 
-    it('ready invariant: no ready row without storage_key, mime, dimensions and a 64-hex SHA-256; dimensions/length validated', () => {
+    it('ready invariant: no ready row without storage_key, mime, dimensions, content_length and a 64-hex SHA-256; dimensions/length validated', () => {
       const db = database();
-      for (const missing of ['storage_key', 'mime_type', 'width', 'height', 'content_hash']) {
+      for (const missing of ['storage_key', 'mime_type', 'width', 'height', 'content_length', 'content_hash']) {
         expect(() => insert(db, ready({ [missing]: null })), missing).toThrow(/CHECK/);
       }
       expect(() => insert(db, ready({ width: 0 }))).toThrow(/CHECK/);
@@ -132,8 +135,12 @@ describe('T14C — 0035 recipe media layer: migration, schema invariants, seed',
       expect(() => insert(db, ready({ content_hash: 'Z'.repeat(64) }))).toThrow(/CHECK/);
       expect(() => insert(db, ready({ mime_type: 'image/svg+xml', storage_key: 'recipes/gl-01/hero/v2.svg' }))).toThrow(/CHECK/);
       expect(() => insert(db, ready({ mime_type: 'text/html', storage_key: 'recipes/gl-01/hero/v2.html' }))).toThrow(/CHECK/);
-      insert(db, ready({ content_length: null }));
-      expect(db.query<{ n: number }>(`SELECT COUNT(*) AS n FROM recipe_media WHERE status = 'ready'`)[0].n).toBe(1);
+      // ready_missing_content_length: a verified canonical asset always has a known size.
+      expect(() => insert(db, ready({ content_length: null }))).toThrow(/CHECK/);
+      // Pending rows keep truthful nullability: metadata may be absent or partially staged.
+      insert(db, ready({ status: 'pending', content_length: null }));
+      insert(db, ready({ id: 'gl-01_media_hero_v3', version: 3, status: 'pending', storage_key: null, mime_type: null, width: null, height: null, content_length: null, content_hash: null }));
+      expect(db.query<{ n: number }>(`SELECT COUNT(*) AS n FROM recipe_media WHERE status = 'ready'`)[0].n).toBe(0);
     });
 
     it('storage_key contract: traversal, backslash, absolute, query, wrong prefix and MIME/extension mismatch are rejected', () => {
@@ -145,6 +152,73 @@ describe('T14C — 0035 recipe media layer: migration, schema invariants, seed',
       ];
       for (const key of bad) expect(() => insert(db, ready({ storage_key: key })), key).toThrow(/CHECK/);
       expect(() => insert(db, ready({ mime_type: 'image/png' }))).toThrow(/CHECK/); // .webp key with png mime
+    });
+
+    it('noncanonical_SQL_storage_suffix: SQL requires the EXACT deterministic key, not merely prefix + extension (P2 remediation)', () => {
+      const db = database();
+      const nonCanonical = [
+        'recipes/gl-01/hero/v2.foo.webp', 'recipes/gl-01/hero/v2..webp', 'recipes/gl-01/hero/v2.extra.webp', 'recipes/gl-01/hero/v2.jpeg',
+        'recipes/gl-01/hero/v2.webp/', 'recipes/gl-01/hero/v2.webp.webp', 'recipes/gl-01/hero/v2.WEBP', 'recipes/gl-01/hero/v02.webp',
+        'recipes/gl-01/hero/v2.webp ', ' recipes/gl-01/hero/v2.webp', 'Recipes/gl-01/hero/v2.webp', 'recipes/gl-01/hero/2.webp', 'recipes/gl-01/hero/v2',
+      ];
+      for (const key of nonCanonical) {
+        expect(() => insert(db, ready({ storage_key: key })), key).toThrow(/CHECK/);
+        expect(isTrustedRecipeMediaStorageKey(key, 'gl-01', 'hero', 2, 'image/webp'), key).toBe(false);
+      }
+      // A key without a MIME type has no derivable extension and is refused, even on a pending row.
+      expect(() => insert(db, ready({ status: 'pending', mime_type: null }))).toThrow(/CHECK/);
+      expect(() => insert(db, ready({ mime_type: 'image/jpeg', storage_key: 'recipes/gl-01/hero/v2.jpeg' }))).toThrow(/CHECK/); // no alternate .jpeg
+    });
+
+    it('SQL and buildRecipeMediaStorageKey agree exactly for every allow-listed MIME (webp/avif/jpg/png) — contract parity', () => {
+      const db = database();
+      const expected: Record<string, string> = { 'image/webp': 'recipes/gl-01/hero/v2.webp', 'image/avif': 'recipes/gl-01/hero/v2.avif', 'image/jpeg': 'recipes/gl-01/hero/v2.jpg', 'image/png': 'recipes/gl-01/hero/v2.png' };
+      for (const [mime, key] of Object.entries(expected)) {
+        expect(buildRecipeMediaStorageKey('gl-01', 'hero', 2, mime as never)).toBe(key);
+        db.seed(`DELETE FROM recipe_media WHERE id = 'gl-01_media_hero_v2'`);
+        insert(db, ready({ mime_type: mime, storage_key: key }));
+        const row = db.query<{ storage_key: string; mime_type: string }>(`SELECT storage_key, mime_type FROM recipe_media WHERE id = 'gl-01_media_hero_v2'`)[0];
+        expect(row).toEqual({ storage_key: key, mime_type: mime });
+        // Every other MIME's extension is rejected for this mime_type.
+        for (const otherKey of Object.values(expected).filter((candidate) => candidate !== key)) {
+          expect(() => insert(db, ready({ id: 'gl-01_media_hero_v9', version: 9, status: 'pending', mime_type: mime, storage_key: otherKey.replace('/v2.', '/v9.') })), `${mime} ${otherKey}`).toThrow(/CHECK/);
+        }
+      }
+      // Thumbnail role and a Vietnamese id derive and validate identically.
+      insert(db, ready({ id: 'vn-canh-01_media_thumbnail_v5', recipe_id: 'vn-canh-01', role: 'thumbnail', version: 5, storage_key: buildRecipeMediaStorageKey('vn-canh-01', 'thumbnail', 5, 'image/webp') }));
+    });
+
+    it('SQL ready invariant and auditReadyRecipeMediaRecord accept/reject the same core metadata states (app/SQL parity)', () => {
+      const db = database();
+      const cases: Array<[string, Record<string, unknown>]> = [
+        ['complete', {}],
+        ['missing content_length', { content_length: null }],
+        ['missing content_hash', { content_hash: null }],
+        ['missing width', { width: null }],
+        ['missing height', { height: null }],
+        ['zero width', { width: 0 }],
+        ['negative content_length', { content_length: -1 }],
+        ['short hash', { content_hash: 'abc' }],
+        ['extra suffix key', { storage_key: 'recipes/gl-01/hero/v2.foo.webp' }],
+        ['wrong extension key', { storage_key: 'recipes/gl-01/hero/v2.png' }],
+        ['other recipe key', { storage_key: 'recipes/gl-02/hero/v2.webp' }],
+        ['other role key', { storage_key: 'recipes/gl-01/thumbnail/v2.webp' }],
+        ['other version key', { storage_key: 'recipes/gl-01/hero/v3.webp' }],
+        ['avif', { mime_type: 'image/avif', storage_key: 'recipes/gl-01/hero/v2.avif' }],
+        ['jpeg', { mime_type: 'image/jpeg', storage_key: 'recipes/gl-01/hero/v2.jpg' }],
+      ];
+      for (const [label, overrides] of cases) {
+        const columns = ready(overrides);
+        let sqlAccepts = true;
+        try { insert(db, columns); db.seed(`DELETE FROM recipe_media WHERE id = 'gl-01_media_hero_v2'`); } catch { sqlAccepts = false; }
+        const issues = auditReadyRecipeMediaRecord({
+          id: String(columns.id), recipeId: String(columns.recipe_id), role: columns.role as 'hero', version: Number(columns.version), status: 'ready', sourceType: 'uploaded',
+          storageKey: columns.storage_key as string | null, mimeType: columns.mime_type as string | null, width: columns.width as number | null, height: columns.height as number | null,
+          contentLength: columns.content_length as number | null, contentHash: columns.content_hash as string | null,
+          sourceReference: null, generatorProvider: null, generatorModel: null, promptHash: null, createdAt: 't', updatedAt: 't',
+        });
+        expect(issues.length === 0, `${label}: sql=${sqlAccepts} app_issues=${issues.join(',')}`).toBe(sqlAccepts);
+      }
     });
 
     it('at most one current-ready version per recipe/role; superseded/rejected/pending versions may coexist', () => {

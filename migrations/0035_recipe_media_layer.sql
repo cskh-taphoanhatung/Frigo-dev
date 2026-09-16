@@ -8,10 +8,13 @@
 -- Invariants (fail-closed, enforced in SQL):
 --   * version >= 1, role/status/source_type closed vocabularies, UNIQUE(recipe_id, role, version);
 --   * at most ONE current ready version per (recipe_id, role) — partial unique index;
---   * a ready row must carry storage_key, mime_type (allow-listed raster only), width/height > 0
---     and a 64-hex SHA-256 content_hash; content_length, when present, is >= 0;
---   * storage_key never contains "..", "\", a leading "/" or a query string and must start with
---     "recipes/<recipe_id>/<role>/v<version>.".
+--   * a ready row must carry storage_key, mime_type (allow-listed raster only), width/height > 0,
+--     content_length >= 0 and a 64-hex SHA-256 content_hash — the application only sets ready after
+--     verifying the R2 object (existence, MIME, size and SHA-256 of the actual bytes);
+--   * storage_key, when present, is EXACTLY the deterministic key the application derives:
+--     recipes/<recipe_id>/<role>/v<version>.<webp|avif|jpg|png> selected by its own mime_type
+--     (no "..", "\", leading "/", "?" or "#", no extra suffix, no alternate extension);
+--   * ready storage keys are immutable and must never be overwritten with different bytes.
 --
 -- Seed: 71 truthful PENDING hero slots (no source, no bytes). Legacy imageUrl values
 -- remain compatibility fallbacks in application code; they are NOT canonical R2-ready media.
@@ -28,7 +31,6 @@ CREATE TABLE IF NOT EXISTS recipe_media (
     storage_key IS NULL OR (
       length(storage_key) > 0 AND instr(storage_key, '..') = 0 AND instr(storage_key, '\') = 0
       AND instr(storage_key, '?') = 0 AND instr(storage_key, '#') = 0 AND substr(storage_key, 1, 1) <> '/'
-      AND substr(storage_key, 1, length('recipes/' || recipe_id || '/' || role || '/v' || version || '.')) = 'recipes/' || recipe_id || '/' || role || '/v' || version || '.'
     )
   ),
   mime_type TEXT CHECK (mime_type IS NULL OR mime_type IN ('image/webp', 'image/avif', 'image/jpeg', 'image/png')),
@@ -45,13 +47,17 @@ CREATE TABLE IF NOT EXISTS recipe_media (
   UNIQUE (recipe_id, role, version),
   CHECK (
     status <> 'ready' OR (
-      storage_key IS NOT NULL AND mime_type IS NOT NULL AND width IS NOT NULL AND height IS NOT NULL AND content_hash IS NOT NULL
+      storage_key IS NOT NULL AND mime_type IS NOT NULL AND width IS NOT NULL AND height IS NOT NULL
+      AND content_length IS NOT NULL AND content_hash IS NOT NULL
     )
   ),
-  CHECK (mime_type IS NULL OR storage_key IS NULL OR (
-    (mime_type = 'image/webp' AND storage_key LIKE '%.webp') OR (mime_type = 'image/avif' AND storage_key LIKE '%.avif')
-    OR (mime_type = 'image/jpeg' AND storage_key LIKE '%.jpg') OR (mime_type = 'image/png' AND storage_key LIKE '%.png')
-  ))
+  CHECK (
+    storage_key IS NULL OR (
+      mime_type IS NOT NULL AND storage_key = 'recipes/' || recipe_id || '/' || role || '/v' || version || CASE mime_type
+        WHEN 'image/webp' THEN '.webp' WHEN 'image/avif' THEN '.avif' WHEN 'image/jpeg' THEN '.jpg' WHEN 'image/png' THEN '.png'
+      END
+    )
+  )
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_recipe_media_current_ready ON recipe_media(recipe_id, role) WHERE status = 'ready';
 CREATE INDEX IF NOT EXISTS idx_recipe_media_recipe_role_status ON recipe_media(recipe_id, role, status);

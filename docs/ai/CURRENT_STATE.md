@@ -18,6 +18,11 @@ Schema gate/migration smoke extended to 0035. ADR-025; design `recipe-catalog/T1
 write; no deployment; PR not merged (independent review required).** Media audit: 71 recipes, 45 unique
 refs, 59 external (Unsplash, CSP-blocked), 12 same-origin (1 missing asset gl-11), 20 duplicate refs,
 prompts 59/71. Status: see HANDOFF for the exact-head CI receipt.
+**Independent-review remediation (same branch, forward commit):** `promoteRecipeMediaVersion` now takes the
+R2 binding and verifies the object (exists, exact MIME, exact size, SHA-256 of actual bytes) before the
+atomic D1 promotion; 0035 (still the only new migration, no 0036) now requires `content_length` for ready
+and enforces the exact deterministic `storage_key` via `CASE mime_type`; `auditReadyRecipeMediaRecord`
+reports `missing_content_length`. Production D1 remains 0034; nothing deployed; PR #17 not merged.
 
 ## T14B-B — COMPLETE: production D1 0034 applied, Worker deployed — 2026-09-16
 

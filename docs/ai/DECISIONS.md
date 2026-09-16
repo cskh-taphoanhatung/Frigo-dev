@@ -24,17 +24,29 @@ under `users/<userId>/scans/…`.
    exists". SQL enforces: `version >= 1`; `UNIQUE(recipe_id, role, version)`; a partial unique index
    `idx_recipe_media_current_ready (recipe_id, role) WHERE status='ready'` so two current-ready versions
    are impossible; a ready row must carry `storage_key`, allow-listed `mime_type` (`image/webp|avif|jpeg|png`),
-   `width/height > 0` and a 64-hex SHA-256 `content_hash`; `content_length >= 0` when present; the
-   MIME and key extension must agree. The seed writes 71 truthful `pending` hero slots with no source.
+   `width/height > 0`, `content_length >= 0` and a 64-hex SHA-256 `content_hash`. The seed writes 71
+   truthful `pending` hero slots with no source.
+   **Verified promotion (independent-review remediation, 2026-09-16):** `status='ready'` is set only by
+   `promoteRecipeMediaVersion(db, images, …)`, which first verifies the actual R2 object at the D1-derived
+   key — it exists, `httpMetadata.contentType` equals `mime_type` (absent MIME fails), `size` equals
+   `content_length`, and the SHA-256 of the real bytes (one bounded `arrayBuffer()` read, ≤ 16 MiB)
+   equals `content_hash`. Typed failures (`OBJECT_MISSING`, `OBJECT_MIME_MISMATCH`, `OBJECT_SIZE_MISMATCH`,
+   `OBJECT_HASH_MISMATCH`, `OBJECT_TOO_LARGE`, `OBJECT_READ_FAILED`, `METADATA_INCOMPLETE`) leave the target
+   pending and the current ready row untouched. The verification proof is module-private; there is no
+   `markReady` bypass. Hashing happens once at promotion, never per public GET.
 3. **Deterministic, validated storage keys:** `recipes/<recipe-id>/<role>/v<version>.<ext>` via
-   `buildRecipeMediaStorageKey`. SQL rejects `..`, `\`, leading `/`, `?`, `#` and any key not prefixed
-   by the row's own `recipes/<recipe_id>/<role>/v<version>.`; the application additionally requires the
-   stored key to equal the exact derivation (`isTrustedRecipeMediaStorageKey`) before touching R2.
+   `buildRecipeMediaStorageKey`. SQL enforces the **exact** same derivation
+   (`storage_key = 'recipes/' || recipe_id || '/' || role || '/v' || version || CASE mime_type … END`), plus
+   rejection of `..`, `\`, leading `/`, `?`, `#`; a key such as `recipes/gl-01/hero/v2.foo.webp` is invalid in
+   SQL and in the application alike (`isTrustedRecipeMediaStorageKey`), so no SQL-valid/app-invalid state exists.
 4. **Immutable versions.** `trg_recipe_media_ready_immutable_update` forbids changing byte-identity
-   columns of a ready row; replacement is a new version (`stageRecipeMediaVersion` → verify →
-   `promoteRecipeMediaVersion`, which supersedes the old ready row and readies the new one in one D1
-   batch). Versioned URLs therefore carry `Cache-Control: public, max-age=31536000, immutable` and an
-   `ETag` from `content_hash`; unversioned/legacy URLs never get immutable semantics.
+   columns of a ready row; replacement is a new version (`stageRecipeMediaVersion` →
+   `promoteRecipeMediaVersion`, which verifies the object and then supersedes the old ready row and readies
+   the new one in one D1 batch whose two statements share the verified-target predicate). Ready storage keys
+   must never be overwritten with different bytes in R2: new bytes ⇒ new version ⇒ new key. Versioned URLs
+   therefore carry `Cache-Control: public, max-age=31536000, immutable` and `ETag: "<content_hash>"`, which is
+   trustworthy because the hash was verified against actual bytes at promotion; unversioned/legacy URLs never
+   get immutable semantics.
 5. **Same-origin serving only:** `GET|HEAD /api/v1/recipe-media/:recipeId/:role/:version` (public
    read-only, mounted beside `/health`) validates each segment against closed shapes, refuses encoded
    traversal in the raw path, reads trusted metadata from D1, requires `ready` + complete metadata,
