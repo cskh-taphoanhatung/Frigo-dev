@@ -80,6 +80,11 @@ export function toRuntimeRecipe(recipe: Recipe): RuntimeRecipe {
   return RuntimeRecipeSchema.parse(recipe);
 }
 
+/** Deterministic, key-sorted serialization used for field comparison and the catalog fingerprint. */
+export function stableRuntimeJson(value: unknown): string {
+  return stable(value);
+}
+
 function stable(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(stable).join(',')}]`;
   if (value !== null && typeof value === 'object') {

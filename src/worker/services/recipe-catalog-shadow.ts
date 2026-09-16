@@ -6,6 +6,7 @@ import {
   D1RuntimeRecipeCatalog,
   type RecipeCatalogShadowDiagnostics,
 } from '../../../packages/recipes/src/runtime-catalog';
+import { parseRecipeAuthorityMode, type RecipeAuthorityMode } from './recipe-authority';
 
 /**
  * Recipe catalog shadow service (T14B-B).
@@ -18,10 +19,12 @@ import {
  *   emits one structured diagnostic. D1 failure is recorded as `shadow_error`, never as
  *   static "success", and never changes the user-visible response.
  *
- * There is deliberately no `d1` mode: authority cutover is a separate explicit task.
+ * T14D (ADR-026) adds `canary`/`d1` user-visible modes in `recipe-authority.ts`; the mode parser
+ * lives there. This module keeps the shadow comparison only and runs solely when mode is `shadow`.
  */
-export type RecipeCatalogMode = 'static' | 'shadow';
+export type RecipeCatalogMode = RecipeAuthorityMode;
 
+/** @deprecated T14D: use RecipeAuthorityConfigError; kept so existing callers/tests keep their error class. */
 export class RecipeCatalogModeError extends Error {
   constructor(value: unknown) {
     super(`Unsupported RECIPE_CATALOG_MODE: ${String(value)}`);
@@ -29,14 +32,17 @@ export class RecipeCatalogModeError extends Error {
   }
 }
 
+/** Strict parse of RECIPE_CATALOG_MODE (static default; static|shadow|canary|d1; anything else throws). */
 export function resolveRecipeCatalogMode(value: unknown): RecipeCatalogMode {
-  if (value === undefined || value === null || value === '' || value === 'static') return 'static';
-  if (value === 'shadow') return 'shadow';
-  throw new RecipeCatalogModeError(value);
+  try {
+    return parseRecipeAuthorityMode(value);
+  } catch {
+    throw new RecipeCatalogModeError(value);
+  }
 }
 
 export type RecipeCatalogShadowOutcome =
-  | { status: 'skipped'; mode: 'static' }
+  | { status: 'skipped'; mode: Exclude<RecipeCatalogMode, 'shadow'> }
   | { status: 'throttled'; mode: 'shadow'; nextEligibleInMs: number }
   | { status: 'compared'; mode: 'shadow'; diagnostics: RecipeCatalogShadowDiagnostics }
   | { status: 'shadow_error'; mode: 'shadow'; error: string; lookupMs: number };
@@ -95,7 +101,7 @@ export async function runRecipeCatalogShadow(
   mode: RecipeCatalogMode,
   now: () => number = () => Date.now(),
 ): Promise<RecipeCatalogShadowOutcome> {
-  if (mode === 'static') return { status: 'skipped', mode };
+  if (mode !== 'shadow') return { status: 'skipped', mode };
   const started = now();
   if (!db) return { status: 'shadow_error', mode, error: 'D1 binding unavailable', lookupMs: now() - started };
   try {
@@ -170,7 +176,7 @@ export function scheduleRecipeCatalogShadow(
     log(toRecipeCatalogShadowLogRecord(outcome));
     return Promise.resolve(outcome);
   }
-  if (mode === 'static') return null;
+  if (mode !== 'shadow') return null;
   const admission = admitRecipeCatalogShadowRun(resolveRecipeCatalogShadowIntervalMs(env.RECIPE_CATALOG_SHADOW_INTERVAL_MS), now);
   if (!admission.admitted) return Promise.resolve({ status: 'throttled', mode, nextEligibleInMs: admission.nextEligibleInMs });
   const task = runRecipeCatalogShadow(env.DB, mode, now).then((outcome) => {

@@ -23,9 +23,13 @@ export interface Env {
 
   ENVIRONMENT?: string;
   WEEK_SCHEMA_MODE?: WeekSchemaMode;
-  // T14B-B: `static` (default) or `shadow`. Static ALL_RECIPES answers every request in both
-  // modes; shadow only adds an off-response D1 parity comparison. There is no d1 mode.
+  // T14D (ADR-026): `static` (default) | `shadow` | `canary` | `d1`. static/shadow serve ALL_RECIPES;
+  // canary/d1 may serve the VERIFIED D1 catalog and require RECIPE_CATALOG_CUTOVER_ENABLED=true.
   RECIPE_CATALOG_MODE?: string;
+  // Integer 0..100 (default 0): share of households (stable FNV-1a bucket of householdId) served D1 in canary mode.
+  RECIPE_CATALOG_D1_CANARY_PERCENT?: string;
+  // Explicit fence: production rejects canary/d1 unless this is exactly 'true'. Rollback = RECIPE_CATALOG_MODE=static.
+  RECIPE_CATALOG_CUTOVER_ENABLED?: string;
   // Shadow cost bound: minimum milliseconds between two catalog comparisons per isolate (default 60000).
   RECIPE_CATALOG_SHADOW_INTERVAL_MS?: string;
   APP_URL?: string;

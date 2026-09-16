@@ -151,7 +151,7 @@ export const weekApi = {
         }
 
         if (!recipeId && targetSlot) {
-          const alternatives = getSwapAlternatives(targetSlot, []);
+          const alternatives = getSwapAlternatives(targetSlot, [], ALL_RECIPES);
           return { alternatives };
         }
 

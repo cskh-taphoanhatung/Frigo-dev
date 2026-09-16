@@ -9,6 +9,7 @@ export * from './catalog-drift';
 export * from './seed-render';
 export * from './runtime-hydration';
 export * from './runtime-catalog';
+export * from './recipe-authority';
 export * from './recipe-media';
 export * from './requirements';
 export * from './substitutions';

@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { Env, AuthContext } from '../types';
 import { SQL, D1DatabaseBinding } from '@frigo/db';
 import { StandardUnit } from '@frigo/domain';
-import { ALL_RECIPES } from '@frigo/recipes';
+import { resolveRecipeAuthority } from '../services/recipe-authority';
 import { tenancyGuard } from '../middleware/tenancy';
 import { rateLimiter } from '../middleware/rate-limit';
 import { ShoppingItemCreateSchema, ShoppingItemUpdateSchema } from '../validation/schemas';
@@ -144,11 +144,9 @@ shoppingRoutes.post('/shopping-list/items', async (c) => {
       }
     }
 
-    const recipe = ALL_RECIPES.find(
-      (r) =>
-        r.id === (body.sourceRecipeId || body.sourceRecipeTitle) ||
-        r.slug === (body.sourceRecipeId || body.sourceRecipeTitle)
-    );
+    // T14D: source-recipe attribution reads the request's authority snapshot (content only; no inventory path).
+    const sourceRef = body.sourceRecipeId || body.sourceRecipeTitle;
+    const recipe = sourceRef ? (await resolveRecipeAuthority(c.env, { tenantKey: auth.householdId })).snapshot.findByIdOrSlug(String(sourceRef)) : null;
     const recipeId = recipe ? recipe.id : null;
 
     if (recipe) {

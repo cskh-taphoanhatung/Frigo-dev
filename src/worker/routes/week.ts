@@ -16,7 +16,8 @@ import {
   convertUnit,
   StandardUnit,
 } from '@frigo/domain';
-import { ALL_RECIPES } from '@frigo/recipes';
+import type { RecipeAuthoritySnapshot } from '@frigo/recipes';
+import { backgroundExecutorOf, resolveRecipeAuthority } from '../services/recipe-authority';
 import { tenancyGuard } from '../middleware/tenancy';
 import { rateLimiter } from '../middleware/rate-limit';
 import { fetchHouseholdInventoryFromDb } from './inventory';
@@ -763,7 +764,19 @@ async function readShoppingCommand(db: any, commandId: string, householdId: stri
 }
 
 // Helper to reconstruct the authoritative plan snapshot from D1.
-async function getMealPlan(c: any, planId: string, householdId: string): Promise<MealPlan | null> {
+/**
+ * T14D (ADR-026): one recipe authority snapshot per Week operation. Resolved once per handler and
+ * threaded into planner/swap/legacy-rehydration so an operation never mixes static and D1 content.
+ * Stored Week snapshots stay authoritative for history (SNAPSHOT_POLICY=IMMUTABLE_PAYLOAD_AUTHORITATIVE);
+ * the live catalog is consulted only for slots persisted before snapshots existed.
+ */
+function weekRecipeAuthority(c: any): Promise<RecipeAuthoritySnapshot> {
+  let tenantKey: string | null = null;
+  try { tenantKey = c.get('auth')?.householdId ?? null; } catch { tenantKey = null; }
+  return resolveRecipeAuthority(c.env, { tenantKey, backgroundExecutor: backgroundExecutorOf(c) }).then((resolution) => resolution.snapshot);
+}
+
+async function getMealPlan(c: any, planId: string, householdId: string, authority?: Promise<RecipeAuthoritySnapshot>): Promise<MealPlan | null> {
   const db = c.env.DB;
   if (!db) throw new WeekDatabaseError();
 
@@ -802,6 +815,9 @@ async function getMealPlan(c: any, planId: string, householdId: string): Promise
       .bind(planId)
       .all();
 
+    // Legacy relational rows (pre-snapshot) need the live catalog for slots without an embedded recipe.
+    const needsCatalog = (slotsRes.results || []).some((s: any) => !parseJsonRecord(s.snapshot_json)?.recipe);
+    const catalog = needsCatalog ? await (authority ?? weekRecipeAuthority(c)) : null;
     const days = (daysRes.results || []).map((d: any) => {
       const dayOfWeek = normalizeWeekDayOfWeek(d.day_of_week, d.date);
       const dayType = normalizeWeekDayType(d.day_type);
@@ -809,7 +825,7 @@ async function getMealPlan(c: any, planId: string, householdId: string): Promise
         .filter((s: any) => s.day_id === d.id)
         .map((s: any) => {
           const storedSlot = parseJsonRecord(s.snapshot_json);
-          const recipe = storedSlot?.recipe || ALL_RECIPES.find((r) => r.id === s.recipe_id || r.slug === s.recipe_id);
+          const recipe = storedSlot?.recipe || catalog?.findByIdOrSlug(String(s.recipe_id ?? '')) || undefined;
           const availability = Number(storedSlot?.availabilityPercent);
           const incrementalCost = Number(storedSlot?.incrementalCostVnd);
           const slotIngredients = Array.isArray(storedSlot?.ingredients) ? storedSlot.ingredients : [];
@@ -1018,8 +1034,8 @@ weekRoutes.post('/week/plans', async (c) => {
     return c.json({ error: 'Database service unavailable', code: 'DATABASE_UNAVAILABLE' }, 503);
   }
 
-  // Generate plan
-  const plan = generateWeeklyMealPlan(input, inventory, ALL_RECIPES);
+  // Generate plan from the request's single authority snapshot (static or verified D1).
+  const plan = generateWeeklyMealPlan(input, inventory, (await weekRecipeAuthority(c)).list());
 
   // Commit to D1 before publishing a cache entry. KV is never the source of
   // truth and a failed persistence must not look like a successful command.
@@ -1058,7 +1074,8 @@ weekRoutes.get('/week/plans/:id', async (c) => {
 weekRoutes.post('/week/plans/:id/generate', async (c) => {
   const auth = c.get('auth');
   const id = c.req.param('id');
-  const existing = await getMealPlan(c, id, auth.householdId);
+  const authority = weekRecipeAuthority(c);
+  const existing = await getMealPlan(c, id, auth.householdId, authority);
 
   if (!existing || existing.householdId !== auth.householdId) {
     return c.json({ error: 'Thực đơn không tồn tại hoặc bạn không có quyền thao tác', code: 'NOT_FOUND' }, 404);
@@ -1083,7 +1100,7 @@ weekRoutes.post('/week/plans/:id/generate', async (c) => {
       shoppingFrequency: existing.shoppingFrequency,
     },
     inventory,
-    ALL_RECIPES
+    (await authority).list()
   );
 
   try {
@@ -1101,7 +1118,8 @@ weekRoutes.post('/week/plans/:id/meals/:mealId/swap', async (c) => {
   const auth = c.get('auth');
   const planId = c.req.param('id');
   const mealId = c.req.param('mealId');
-  const plan = await getMealPlan(c, planId, auth.householdId);
+  const authority = weekRecipeAuthority(c);
+  const plan = await getMealPlan(c, planId, auth.householdId, authority);
 
   if (!plan || plan.householdId !== auth.householdId) {
     return c.json({ error: 'Thực đơn không tồn tại', code: 'NOT_FOUND' }, 404);
@@ -1140,12 +1158,12 @@ weekRoutes.post('/week/plans/:id/meals/:mealId/swap', async (c) => {
       console.error('Failed loading inventory for meal alternatives:', err);
       return c.json({ error: 'Database service unavailable', code: 'DATABASE_UNAVAILABLE' }, 503);
     }
-    const alternatives = getSwapAlternatives(targetSlot, inventory);
+    const alternatives = getSwapAlternatives(targetSlot, inventory, (await authority).list());
     return c.json({ alternatives });
   }
 
   // Execute swap
-  const newRecipe = ALL_RECIPES.find((r) => r.id === recipeId || r.slug === recipeId);
+  const newRecipe = (await authority).findByIdOrSlug(recipeId);
   if (!newRecipe) {
     return c.json({ error: 'Công thức nấu ăn không tồn tại', code: 'NOT_FOUND' }, 404);
   }

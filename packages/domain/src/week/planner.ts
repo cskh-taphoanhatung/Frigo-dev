@@ -1,4 +1,4 @@
-import { ALL_RECIPES, Recipe } from '@frigo/recipes';
+import { Recipe } from '@frigo/recipes';
 import { InventoryItem, tryConvertUnit } from '../index';
 import {
   MealPlan,
@@ -24,7 +24,8 @@ const DAY_NAMES_VI = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5'
 export function generateWeeklyMealPlan(
   input: MealPlanSetupInput,
   inventory: InventoryItem[],
-  availableRecipes: Recipe[] = ALL_RECIPES,
+  // T14D: the caller's authority snapshot decides recipe content; there is no hidden static default.
+  availableRecipes: Recipe[],
   priceProvider: PriceProvider = defaultPriceProvider,
   config: PlannerConfig = DEFAULT_PLANNER_CONFIG
 ): MealPlan {
@@ -320,7 +321,7 @@ export function generateWeeklyMealPlan(
 export function getSwapAlternatives(
   currentSlot: MealSlotItem,
   inventory: InventoryItem[],
-  availableRecipes: Recipe[] = ALL_RECIPES,
+  availableRecipes: Recipe[],
   priceProvider: PriceProvider = defaultPriceProvider
 ): MealSwapAlternative[] {
   const currentRecipe = currentSlot.recipe;

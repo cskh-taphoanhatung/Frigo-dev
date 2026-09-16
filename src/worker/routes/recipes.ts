@@ -6,13 +6,13 @@ import { compareFefoLots } from '../../../packages/domain/src/inventory-fefo';
 import { toLotQuantity } from '../../../packages/domain/src/inventory-truth';
 import { inventoryAuthorityFailure } from '../utils/inventory-authority';
 import { Env, AuthContext } from '../types';
-import { ALL_RECIPES, rankRecipes, evaluateRecipeMatch, CuisineType } from '@frigo/recipes';
+import { rankRecipes, evaluateRecipeMatch, CuisineType } from '@frigo/recipes';
 import { areUnitsCompatible, convertUnit, findCanonicalIngredient, StandardUnit } from '@frigo/domain';
 import { SQL } from '@frigo/db';
 import { fetchHouseholdInventoryFromDb } from './inventory';
 import { tenancyGuard } from '../middleware/tenancy';
 import { CookingCompleteSchema } from '../validation/schemas';
-import { scheduleRecipeCatalogShadow } from '../services/recipe-catalog-shadow';
+import { backgroundExecutorOf, resolveRecipeAuthority } from '../services/recipe-authority';
 import { enrichRecipesWithMedia } from '../services/recipe-media';
 
 export const recipeRoutes = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
@@ -174,30 +174,26 @@ function storedCookingFingerprint(row: {
 }
 
 /**
- * T14B-B shadow hook: static ALL_RECIPES has already produced (or is producing) the response;
- * this only schedules the off-response D1 parity comparison when RECIPE_CATALOG_MODE=shadow.
- * Without an ExecutionContext (unit tests, local harnesses) the comparison is not awaited.
+ * T14D (ADR-026): ONE recipe authority snapshot per request. The router decides static vs verified
+ * D1 from deployment config (+ deterministic household canary) BEFORE any filtering/ranking; every
+ * recipe read in the handler then uses that same snapshot. In `shadow` mode this also schedules the
+ * T14B-B off-response comparison (not awaited without an ExecutionContext).
  */
-function scheduleCatalogShadow(c: { env: Env; executionCtx: { waitUntil(task: Promise<unknown>): void } }): void {
-  let waitUntil: ((task: Promise<unknown>) => void) | undefined;
-  try {
-    const ctx = c.executionCtx;
-    waitUntil = (task) => ctx.waitUntil(task);
-  } catch {
-    waitUntil = undefined;
-  }
-  scheduleRecipeCatalogShadow(c.env, waitUntil);
+function recipeAuthority(c: { env: Env; executionCtx?: { waitUntil(task: Promise<unknown>): void }; get(key: 'auth'): AuthContext | undefined }) {
+  let tenantKey: string | null = null;
+  try { tenantKey = c.get('auth')?.householdId ?? null; } catch { tenantKey = null; }
+  return resolveRecipeAuthority(c.env, { tenantKey, backgroundExecutor: backgroundExecutorOf(c) });
 }
 
 // GET /api/v1/recipes
 recipeRoutes.get('/recipes', async (c) => {
-  scheduleCatalogShadow(c);
+  const { snapshot } = await recipeAuthority(c);
   const cuisine = c.req.query('cuisine') as CuisineType | undefined;
   const category = c.req.query('category');
   const region = c.req.query('region');
   const search = c.req.query('q')?.toLowerCase();
 
-  let list = ALL_RECIPES;
+  let list = snapshot.list();
   if (cuisine) {
     list = list.filter((r) => r.cuisine === cuisine);
   }
@@ -217,7 +213,7 @@ recipeRoutes.get('/recipes', async (c) => {
     );
   }
 
-  // T14C: media is attached after the static catalog decided content and order; never before.
+  // T14C: media is attached after the authority snapshot decided content and order; never before.
   return c.json({ recipes: await enrichRecipesWithMedia(c.env, list) });
 });
 
@@ -225,7 +221,8 @@ recipeRoutes.get('/recipes', async (c) => {
 recipeRoutes.get('/recipes/:id', async (c) => {
   const idOrSlug = c.req.param('id');
   const auth = c.get('auth');
-  const recipe = ALL_RECIPES.find((r) => r.id === idOrSlug || r.slug === idOrSlug);
+  const { snapshot } = await recipeAuthority(c);
+  const recipe = snapshot.findByIdOrSlug(idOrSlug);
 
   if (!recipe) {
     return c.json({ error: 'Recipe not found' }, 404);
@@ -243,7 +240,7 @@ recipeRoutes.get('/recipes/:id', async (c) => {
 
 // GET /api/v1/recommendations
 recipeRoutes.get('/recommendations', async (c) => {
-  scheduleCatalogShadow(c);
+  const { snapshot } = await recipeAuthority(c);
   const auth = c.get('auth');
   const noBuy = c.req.query('noBuy') === 'true';
   const cuisineQuery = c.req.query('cuisine');
@@ -255,7 +252,7 @@ recipeRoutes.get('/recommendations', async (c) => {
 
   const inventory = await fetchHouseholdInventoryFromDb(c.env.DB, auth.householdId, c.env.CACHE, { actorId: auth.userId });
 
-  let targetRecipes = ALL_RECIPES;
+  let targetRecipes = snapshot.list();
   if (categoryQuery) {
     targetRecipes = targetRecipes.filter((r) => r.category === categoryQuery);
   }
@@ -282,9 +279,10 @@ recipeRoutes.get('/recommendations', async (c) => {
 });
 
 // POST /api/v1/recipes/:id/cook/start
-recipeRoutes.post('/recipes/:id/cook/start', (c) => {
+recipeRoutes.post('/recipes/:id/cook/start', async (c) => {
   const recipeId = c.req.param('id');
-  const recipe = ALL_RECIPES.find((r) => r.id === recipeId || r.slug === recipeId);
+  const { snapshot } = await recipeAuthority(c);
+  const recipe = snapshot.findByIdOrSlug(recipeId);
 
   if (!recipe) {
     return c.json({ error: 'Recipe not found' }, 404);
@@ -318,7 +316,9 @@ recipeRoutes.post('/recipes/:id/cook/complete', tenancyGuard, async (c) => {
   }
 
   const { deductions: rawDeductions, servings, commandId: bodyCommandId } = parseResult.data;
-  const recipe = ALL_RECIPES.find((r) => r.id === recipeId || r.slug === recipeId);
+  // One snapshot resolves ingredients/units for the deduction plan; inventory mutation below is untouched (T09/T11).
+  const { snapshot } = await recipeAuthority(c);
+  const recipe = recipeId ? snapshot.findByIdOrSlug(recipeId) : null;
   if (!recipe) {
     return c.json({ error: 'Recipe not found', code: 'NOT_FOUND' }, 404);
   }

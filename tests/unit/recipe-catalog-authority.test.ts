@@ -3,6 +3,12 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { validateEnvironment } from '../../src/worker/config/validation';
 import {
+  parseRecipeAuthorityMode,
+  RECIPE_CATALOG_MODES,
+  RecipeAuthorityConfigError,
+  resolveRecipeAuthorityConfig,
+} from '../../src/worker/services/recipe-authority';
+import {
   DEFAULT_RECIPE_CATALOG_SHADOW_INTERVAL_MS,
   MAX_RECIPE_CATALOG_SHADOW_INTERVAL_MS,
   MIN_RECIPE_CATALOG_SHADOW_INTERVAL_MS,
@@ -26,82 +32,145 @@ const walk = (dir: string, out: string[] = []): string[] => {
   }
   return out;
 };
+const rel = (file: string) => path.relative(root, file).split(path.sep).join('/');
 
 /**
- * T14B-B authority guard. USER-VISIBLE AUTHORITY = ALL_RECIPES; D1 = shadow/parity capable.
- * These checks are static so a future change that quietly reads recipes from D1 on a response
- * path fails CI before review.
+ * Runtime files allowed to import the static recipe collections directly (T14D reader audit).
+ * Everything else under src/ and packages/domain must read recipes through a RecipeAuthoritySnapshot.
  */
-describe('recipe catalog authority stays static (T14B-B)', () => {
-  it('every production recipe flow still imports ALL_RECIPES from the static package', () => {
-    for (const file of ['src/worker/routes/recipes.ts', 'src/worker/routes/week.ts', 'src/worker/routes/shopping.ts',
-      'src/web/services/recipes.ts', 'src/web/services/week.ts', 'packages/domain/src/week/planner.ts']) {
-      expect(read(file), file).toMatch(/import \{[^}]*\bALL_RECIPES\b[^}]*\} from '@frigo\/recipes'/);
-    }
-    // Response authority never comes from the hydrator/D1 catalog: only the shadow service may import them.
-    const offenders = walk(path.resolve(root, 'src')).filter((file) => {
-      const source = readFileSync(file, 'utf8');
-      return /runtime-hydration|D1RuntimeRecipeCatalog|hydrateRuntimeRecipes|readRecipeContent/.test(source)
-        && !file.endsWith(path.join('services', 'recipe-catalog-shadow.ts'));
-    });
+const APPROVED_DIRECT_STATIC_READERS = new Set([
+  // static definitions / providers / seed & migration renderers / parity oracle
+  'packages/recipes/src/data.ts',
+  'packages/recipes/src/vietnamese-bank.ts',
+  'packages/recipes/src/recipe-authority.ts',
+  'packages/recipes/src/runtime-catalog.ts',
+  'packages/recipes/src/seed-render.ts',
+  'packages/recipes/src/recipe-media.ts',
+  'src/worker/services/recipe-catalog-shadow.ts',
+  // offline browser fallbacks: the client bundle has no D1; when the API is unreachable it degrades to the static bank.
+  'src/web/services/recipes.ts',
+  'src/web/services/week.ts',
+  'src/web/pages/IngredientDetailPage.tsx',
+]);
+const STATIC_COLLECTION_IMPORT = /import\s+(?:type\s+)?\{[^}]*\b(ALL_RECIPES|SEED_RECIPES|VIETNAMESE_RECIPES|GLOBAL_RECIPES)\b[^}]*\}\s+from\s+'(?:@frigo\/recipes|[./]+\/(?:packages\/recipes\/src\/)?data|\.\/data|\.\/vietnamese-bank)'/;
+
+/**
+ * T14D authority guard (ADR-026). USER-VISIBLE AUTHORITY is chosen by the router from deployment
+ * config; production default stays static. These static checks make a new direct runtime reader
+ * of ALL_RECIPES, or a stray D1 mode without the cutover fence, fail CI before review.
+ */
+describe('recipe catalog authority routing (T14D)', () => {
+  it('unknown runtime readers = 0: no src/ or packages/domain file imports the static collections outside the allowlist', () => {
+    const offenders = [...walk(path.resolve(root, 'src')), ...walk(path.resolve(root, 'packages'))]
+      .filter((file) => STATIC_COLLECTION_IMPORT.test(readFileSync(file, 'utf8')))
+      .map(rel)
+      .filter((file) => !APPROVED_DIRECT_STATIC_READERS.has(file));
     expect(offenders).toEqual([]);
-    const shadow = read('src/worker/services/recipe-catalog-shadow.ts');
-    expect(shadow).not.toMatch(/'d1'\s*\)?\s*(?:=>|return)|mode === 'd1'|RecipeCatalogMode = 'static' \| 'shadow' \| 'd1'/);
+    // Migrated runtime readers no longer import the static list at all.
+    for (const file of ['src/worker/routes/recipes.ts', 'src/worker/routes/week.ts', 'src/worker/routes/shopping.ts', 'packages/domain/src/week/planner.ts']) {
+      expect(read(file), file).not.toMatch(/\bALL_RECIPES\b/);
+      expect(read(file), file).not.toMatch(/\.find\(\(r\) => r\.id === [a-zA-Z]+ \|\| r\.slug === [a-zA-Z]+\)/);
+    }
+    // The planner has no hidden static default: callers must pass the operation's recipe list.
+    expect(read('packages/domain/src/week/planner.ts')).not.toMatch(/availableRecipes: Recipe\[\] = /);
+    // Only the authority provider/router may touch the hydrator/content reader on a response path.
+    const d1Readers = walk(path.resolve(root, 'src')).map(rel).filter((file) =>
+      /runtime-hydration|D1RuntimeRecipeCatalog|hydrateRuntimeRecipes|readRecipeContent|D1RecipeAuthority/.test(read(file)));
+    expect(d1Readers.sort()).toEqual(['src/worker/services/recipe-authority.ts', 'src/worker/services/recipe-catalog-shadow.ts']);
+    // No user-controlled authority selection anywhere in the worker.
+    for (const file of walk(path.resolve(root, 'src/worker')).map(rel)) {
+      expect(read(file), file).not.toMatch(/recipeCatalogMode|x-recipe-mode|X-Recipe-Mode|query\(['"]mode['"]\)/);
+    }
   });
 
-  it('resolves RECIPE_CATALOG_MODE with a static default and no d1 value', () => {
-    expect(resolveRecipeCatalogMode(undefined)).toBe('static');
-    expect(resolveRecipeCatalogMode('')).toBe('static');
-    expect(resolveRecipeCatalogMode('static')).toBe('static');
-    expect(resolveRecipeCatalogMode('shadow')).toBe('shadow');
-    expect(() => resolveRecipeCatalogMode('d1')).toThrow(RecipeCatalogModeError);
-    expect(() => resolveRecipeCatalogMode('D1')).toThrow(RecipeCatalogModeError);
+  it('parses RECIPE_CATALOG_MODE strictly: static default, four closed values, typos rejected (never coerced to static)', () => {
+    expect(RECIPE_CATALOG_MODES).toEqual(['static', 'shadow', 'canary', 'd1']);
+    expect(parseRecipeAuthorityMode(undefined)).toBe('static');
+    expect(parseRecipeAuthorityMode('')).toBe('static');
+    for (const mode of RECIPE_CATALOG_MODES) expect(parseRecipeAuthorityMode(mode)).toBe(mode);
+    for (const bad of ['D1', 'dI', 'dl', 'd1-prod', 'static ', 'Shadow', 'canary ', 'true', '1', 0, {}]) {
+      expect(() => parseRecipeAuthorityMode(bad), String(bad)).toThrow(RecipeAuthorityConfigError);
+      expect(() => resolveRecipeCatalogMode(bad), String(bad)).toThrow(RecipeCatalogModeError);
+    }
+    expect(resolveRecipeCatalogMode('d1')).toBe('d1');
   });
 
-  it('production configuration fails closed for any non-static RECIPE_CATALOG_MODE and passes without the var', () => {
+  it('resolves the full authority config: canary percent 0..100 integers only; canary/d1 need the cutover fence', () => {
+    expect(resolveRecipeAuthorityConfig({})).toEqual({ mode: 'static', canaryPercent: 0, cutoverEnabled: false });
+    expect(resolveRecipeAuthorityConfig({ RECIPE_CATALOG_MODE: 'shadow' })).toMatchObject({ mode: 'shadow' });
+    expect(resolveRecipeAuthorityConfig({ RECIPE_CATALOG_MODE: 'canary', RECIPE_CATALOG_D1_CANARY_PERCENT: '5', RECIPE_CATALOG_CUTOVER_ENABLED: 'true' }))
+      .toEqual({ mode: 'canary', canaryPercent: 5, cutoverEnabled: true });
+    expect(resolveRecipeAuthorityConfig({ RECIPE_CATALOG_MODE: 'd1', RECIPE_CATALOG_CUTOVER_ENABLED: 'true' })).toMatchObject({ mode: 'd1', canaryPercent: 0 });
+    for (const percent of ['0', '1', '50', '99', '100']) expect(resolveRecipeAuthorityConfig({ RECIPE_CATALOG_D1_CANARY_PERCENT: percent }).canaryPercent).toBe(Number(percent));
+    for (const bad of ['-1', '101', '5.5', '1e1', '05', 'ten', ' 5 %', 'NaN']) {
+      expect(() => resolveRecipeAuthorityConfig({ RECIPE_CATALOG_D1_CANARY_PERCENT: bad }), bad).toThrow(expect.objectContaining({ code: 'INVALID_CANARY_PERCENT' }));
+    }
+    for (const mode of ['canary', 'd1']) {
+      expect(() => resolveRecipeAuthorityConfig({ RECIPE_CATALOG_MODE: mode }), mode).toThrow(expect.objectContaining({ code: 'CUTOVER_NOT_ENABLED' }));
+      expect(() => resolveRecipeAuthorityConfig({ RECIPE_CATALOG_MODE: mode, RECIPE_CATALOG_CUTOVER_ENABLED: 'TRUE' }), mode).toThrow(expect.objectContaining({ code: 'CUTOVER_NOT_ENABLED' }));
+      expect(() => resolveRecipeAuthorityConfig({ RECIPE_CATALOG_MODE: mode, RECIPE_CATALOG_CUTOVER_ENABLED: '1' }), mode).toThrow(expect.objectContaining({ code: 'CUTOVER_NOT_ENABLED' }));
+    }
+    // shadow never needs the dangerous-mode fence.
+    expect(resolveRecipeAuthorityConfig({ RECIPE_CATALOG_MODE: 'shadow', RECIPE_CATALOG_CUTOVER_ENABLED: 'false' }).mode).toBe('shadow');
+  });
+
+  it('production configuration: static default passes; shadow passes; canary/d1 without the fence are fatal; fenced d1 is a loud warning; wrangler.jsonc stays static', () => {
     const production: Env = {
       ENVIRONMENT: 'production', APP_URL: 'https://frigo.example.com', AI_ENABLED: 'true', AI_QWEN_ONLY: 'true',
       WEEK_SCHEMA_MODE: 'dual', SCAN_QUEUE_MODE: 'async', DB: {} as Env['DB'], JWT_SECRET: 'x'.repeat(64), OTP_HASH_SECRET: 'y'.repeat(64),
       QWEN_API_KEY: 'k', QWEN_BASE_URL: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1', QWEN_MODEL: 'qwen3.7-flash',
     } as unknown as Env;
     const codes = (env: Env) => validateEnvironment(env).fatal.map((issue) => issue.code);
+    const warningCodes = (env: Env) => validateEnvironment(env).warnings.map((issue) => issue.code);
     expect(codes(production)).not.toContain('CONFIG_RECIPE_CATALOG_MODE');
     expect(codes({ ...production, RECIPE_CATALOG_MODE: 'static' })).not.toContain('CONFIG_RECIPE_CATALOG_MODE');
-    expect(codes({ ...production, RECIPE_CATALOG_MODE: 'shadow' })).toContain('CONFIG_RECIPE_CATALOG_MODE');
+    expect(codes({ ...production, RECIPE_CATALOG_MODE: 'shadow' })).not.toContain('CONFIG_RECIPE_CATALOG_MODE');
+    expect(codes({ ...production, RECIPE_CATALOG_MODE: 'canary' })).toContain('CONFIG_RECIPE_CATALOG_MODE');
     expect(codes({ ...production, RECIPE_CATALOG_MODE: 'd1' })).toContain('CONFIG_RECIPE_CATALOG_MODE');
-    // wrangler.jsonc does not opt production into shadow mode.
-    expect(read('wrangler.jsonc')).not.toMatch(/RECIPE_CATALOG_MODE/);
+    expect(codes({ ...production, RECIPE_CATALOG_MODE: 'd1', RECIPE_CATALOG_CUTOVER_ENABLED: 'yes' })).toContain('CONFIG_RECIPE_CATALOG_MODE');
+    expect(codes({ ...production, RECIPE_CATALOG_MODE: 'D1', RECIPE_CATALOG_CUTOVER_ENABLED: 'true' })).toContain('CONFIG_RECIPE_CATALOG_MODE');
+    expect(codes({ ...production, RECIPE_CATALOG_MODE: 'canary', RECIPE_CATALOG_CUTOVER_ENABLED: 'true', RECIPE_CATALOG_D1_CANARY_PERCENT: '250' })).toContain('CONFIG_RECIPE_CATALOG_MODE');
+    const fencedD1 = { ...production, RECIPE_CATALOG_MODE: 'd1', RECIPE_CATALOG_CUTOVER_ENABLED: 'true' };
+    expect(codes(fencedD1)).not.toContain('CONFIG_RECIPE_CATALOG_MODE');
+    expect(warningCodes(fencedD1)).toContain('CONFIG_RECIPE_CATALOG_D1_AUTHORITY');
+    expect(warningCodes({ ...production, RECIPE_CATALOG_MODE: 'canary', RECIPE_CATALOG_CUTOVER_ENABLED: 'true', RECIPE_CATALOG_D1_CANARY_PERCENT: '10' })).toContain('CONFIG_RECIPE_CATALOG_D1_AUTHORITY');
+    expect(warningCodes(production)).not.toContain('CONFIG_RECIPE_CATALOG_D1_AUTHORITY');
+    // Production config is untouched by T14D: no mode, no percent, no fence in wrangler.jsonc.
+    expect(read('wrangler.jsonc')).not.toMatch(/RECIPE_CATALOG_MODE|RECIPE_CATALOG_D1_CANARY_PERCENT|RECIPE_CATALOG_CUTOVER_ENABLED/);
+    // Validation messages never echo the configured value.
+    const messages = validateEnvironment({ ...production, RECIPE_CATALOG_MODE: 'd1-prod-secret' }).fatal.map((issue) => issue.message).join(' ');
+    expect(messages).not.toContain('d1-prod-secret');
   });
 
   it('bounds shadow cost: one comparison per isolate per interval, default 60s, clamped configuration', async () => {
     expect(resolveRecipeCatalogShadowIntervalMs(undefined)).toBe(DEFAULT_RECIPE_CATALOG_SHADOW_INTERVAL_MS);
     expect(resolveRecipeCatalogShadowIntervalMs('abc')).toBe(DEFAULT_RECIPE_CATALOG_SHADOW_INTERVAL_MS);
-    expect(resolveRecipeCatalogShadowIntervalMs('0')).toBe(MIN_RECIPE_CATALOG_SHADOW_INTERVAL_MS);
-    expect(resolveRecipeCatalogShadowIntervalMs('999999999999')).toBe(MAX_RECIPE_CATALOG_SHADOW_INTERVAL_MS);
+    expect(resolveRecipeCatalogShadowIntervalMs('10')).toBe(MIN_RECIPE_CATALOG_SHADOW_INTERVAL_MS);
+    expect(resolveRecipeCatalogShadowIntervalMs(String(10 * MAX_RECIPE_CATALOG_SHADOW_INTERVAL_MS))).toBe(MAX_RECIPE_CATALOG_SHADOW_INTERVAL_MS);
     expect(resolveRecipeCatalogShadowIntervalMs('5000')).toBe(5000);
-
     resetRecipeCatalogShadowThrottle();
-    let clock = 1_000_000;
+    let clock = 1_000;
     const now = () => clock;
     const records: unknown[] = [];
-    const env = { DB: undefined, RECIPE_CATALOG_MODE: 'shadow', RECIPE_CATALOG_SHADOW_INTERVAL_MS: '5000' };
-    const first = await scheduleRecipeCatalogShadow(env, undefined, (record) => records.push(record), now);
-    expect(first?.status).toBe('shadow_error');
-    clock += 100;
-    const second = await scheduleRecipeCatalogShadow(env, undefined, (record) => records.push(record), now);
-    expect(second).toEqual({ status: 'throttled', mode: 'shadow', nextEligibleInMs: 4900 });
-    expect(records).toHaveLength(1);
-    clock += 5000;
-    const third = await scheduleRecipeCatalogShadow(env, undefined, (record) => records.push(record), now);
-    expect(third?.status).toBe('shadow_error');
+    const log = (record: unknown) => records.push(record);
+    const first = scheduleRecipeCatalogShadow({ DB: undefined, RECIPE_CATALOG_MODE: 'shadow', RECIPE_CATALOG_SHADOW_INTERVAL_MS: '5000' }, undefined, log, now);
+    expect(await first).toMatchObject({ status: 'shadow_error', mode: 'shadow' });
+    clock += 1_000;
+    expect(await scheduleRecipeCatalogShadow({ DB: undefined, RECIPE_CATALOG_MODE: 'shadow', RECIPE_CATALOG_SHADOW_INTERVAL_MS: '5000' }, undefined, log, now))
+      .toEqual({ status: 'throttled', mode: 'shadow', nextEligibleInMs: 4000 });
+    clock += 4_000;
+    expect(await scheduleRecipeCatalogShadow({ DB: undefined, RECIPE_CATALOG_MODE: 'shadow', RECIPE_CATALOG_SHADOW_INTERVAL_MS: '5000' }, undefined, log, now))
+      .toMatchObject({ status: 'shadow_error' });
     expect(records).toHaveLength(2);
-    resetRecipeCatalogShadowThrottle();
   });
 
-  it('static mode schedules nothing; shadow without a D1 binding is a recorded shadow_error, never a static success', async () => {
+  it('shadow service: static/canary/d1 schedule no comparison; shadow without a D1 binding is a recorded shadow_error; unknown mode is a logged shadow_error', async () => {
     resetRecipeCatalogShadowThrottle();
     expect(scheduleRecipeCatalogShadow({ DB: undefined, RECIPE_CATALOG_MODE: undefined }, undefined, () => { throw new Error('must not log'); })).toBeNull();
+    expect(scheduleRecipeCatalogShadow({ DB: undefined, RECIPE_CATALOG_MODE: 'd1' }, undefined, () => { throw new Error('must not log'); })).toBeNull();
+    expect(scheduleRecipeCatalogShadow({ DB: undefined, RECIPE_CATALOG_MODE: 'canary' }, undefined, () => { throw new Error('must not log'); })).toBeNull();
     expect(await runRecipeCatalogShadow(undefined, 'static')).toEqual({ status: 'skipped', mode: 'static' });
+    expect(await runRecipeCatalogShadow(undefined, 'd1')).toEqual({ status: 'skipped', mode: 'd1' });
     const outcome = await runRecipeCatalogShadow(undefined, 'shadow', () => 5);
     expect(outcome).toEqual({ status: 'shadow_error', mode: 'shadow', error: 'D1 binding unavailable', lookupMs: 0 });
     expect(toRecipeCatalogShadowLogRecord(outcome)).toMatchObject({
@@ -114,7 +183,7 @@ describe('recipe catalog authority stays static (T14B-B)', () => {
     expect(scheduled).toHaveLength(1);
     expect(records).toHaveLength(1);
     resetRecipeCatalogShadowThrottle();
-    const unknownMode = await scheduleRecipeCatalogShadow({ DB: undefined, RECIPE_CATALOG_MODE: 'd1' }, undefined, (record) => records.push(record));
+    const unknownMode = await scheduleRecipeCatalogShadow({ DB: undefined, RECIPE_CATALOG_MODE: 'dl' }, undefined, (record) => records.push(record));
     expect(unknownMode).toMatchObject({ status: 'shadow_error', error: 'RecipeCatalogModeError' });
   });
 });
