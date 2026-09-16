@@ -24,7 +24,9 @@ NO authority cutover · NO media remediation (T14C) · NO bulk import (T14E) · 
 ## 2. Migration `0034_global_recipe_catalog_parity.sql`
 
 `NEXT_MIGRATION = max(0001..0033) + 1 = 0034`, discovered from the directory, not assumed.
-SHA-256 `05f868eb623f7c0ce06c06503c0cedd9a45643423fecae21b53389a5fab4336d`.
+SHA-256 `23f356458a294b240e683fec14012bc932a8b7e57ad0c932e4fc184329bada4d` (post-remediation render; the original `05f868eb…` render had no
+`runtime_order` column and no `recipe_runtime_ingredient_order` table — 0034 is unmerged and
+undeployed, so it was re-rendered in place rather than adding 0035).
 
 Design (all additive, D1/Wrangler-parser-safe: plain multi-row `INSERT … ON CONFLICT DO UPDATE`,
 `CREATE TABLE IF NOT EXISTS`, no `SELECT CASE … RAISE` trigger bodies, no `.read`/dot commands):
@@ -36,12 +38,21 @@ Design (all additive, D1/Wrangler-parser-safe: plain multi-row `INSERT … ON CO
    entry **without touching** `source_type`/`verification_state`/`version`/`created_at`
    (proved by the populated-0033 upgrade test with a real `cooked_meals` reference).
 2. **`recipe_runtime_fields`** (new table, PK `recipe_id → recipes ON DELETE CASCADE`):
-   `category TEXT` (non-blank), `region TEXT CHECK IN ('bac','trung','nam','toan_quoc')`,
+   `runtime_order INTEGER NOT NULL` (0-based position in `ALL_RECIPES`, `UNIQUE` index —
+   canonical runtime order), `category TEXT` (typed **open** field: any non-empty string,
+   `CHECK length(trim(category)) > 0`), `region TEXT` (**closed** vocabulary:
+   `CHECK IN ('bac','trung','nam','toan_quoc')`),
    `legacy_calories/legacy_protein_g/legacy_fat_g/legacy_carb_g REAL` with an all-or-nothing
    CHECK; partial indexes on `(category, recipe_id)` and `(region, recipe_id)`. One row per
    runtime recipe (71): 59 Vietnamese rows carry category+region, 12 global rows carry `NULL`
-   for both (the static catalog has none — nothing invented), all 71 carry legacy macros.
-3. Nothing else: `0006` and every other historical file are byte-identical; no recipe row that
+   for both (the static catalog has none — nothing invented), all 71 carry legacy macros and a
+   `runtime_order` in `0..70`.
+3. **`recipe_runtime_ingredient_order`** (new table, PK `recipe_ingredient_id → recipe_ingredients
+   ON DELETE CASCADE`, `recipe_id`, `position INTEGER NOT NULL CHECK >= 0`,
+   `UNIQUE(recipe_id, position)`): one explicit 0-based ordinal per persisted ingredient line
+   (385 rows). Ingredient order is therefore carried by data, not by the lexical order of row IDs
+   (`_ing_1, _ing_10, _ing_11, _ing_2 …`).
+4. Nothing else: `0006` and every other historical file are byte-identical; no recipe row that
    existed before is updated (Vietnamese rows/lines/steps are proved byte-equal before/after in
    `scripts/migration-smoke.sh`); no inventory, user, Week or scan table is touched.
 
@@ -60,8 +71,10 @@ and refuses marker-prefixed static tags.
 
 | Field | Representation | Hydration | Truth label |
 | --- | --- | --- | --- |
-| `category` | `recipe_runtime_fields.category` (typed, queryable, indexed) | copied; absent when NULL | authoritative for the persisted catalog; legacy `cat:` markers in `recipes.tags` are stripped and must agree |
-| `region` | `recipe_runtime_fields.region` (closed CHECK vocabulary) | copied; absent when NULL | same; conflict with a `region:` marker fails closed |
+| `category` | `recipe_runtime_fields.category` (typed **open** field: non-empty-string validation, queryable, indexed) | copied; absent when NULL | authoritative for the persisted catalog; legacy `cat:` markers in `recipes.tags` are stripped and must agree |
+| `region` | `recipe_runtime_fields.region` (**closed** vocabulary `bac|trung|nam|toan_quoc`) | copied; absent when NULL | same; conflict with a `region:` marker fails closed |
+| catalog order | `recipe_runtime_fields.runtime_order` (0-based, UNIQUE) | recipes emitted `ORDER BY runtime_order` | canonical; behaviourally significant (ranking ties, planner tie-break, swap candidate subset); missing/invalid/duplicate fails closed |
+| ingredient order | `recipe_runtime_ingredient_order.position` (0-based, `UNIQUE(recipe_id, position)`) | lines emitted by position | explicit ordinal representation; missing/invalid/duplicate/gapped positions fail closed — never a lexical-ID fallback |
 | `imageUrl` | `recipes.image_url` mirror of the static reference | copied verbatim | **LEGACY_MEDIA_COMPATIBILITY_ONLY / MEDIA_AUTHORITY_DEFERRED_TO_T14C**; `NULL`/empty fails closed |
 | `nutrition` | `recipe_runtime_fields.legacy_*` | `{calories, proteinG, fatG, carbG}` when present | **legacy_compatibility** projection of static macros; NOT `nutrition_profiles` (ADR-004/009 untouched); no basis/provenance is claimed |
 | `steps` | `recipe_steps` | `ORDER BY step_number`, `tip`/`timerMinutes` only when non-NULL | lossless; duplicate step numbers fail closed |
@@ -92,23 +105,33 @@ curated/reviewed/verified; no reference was invented. The static catalog has no
 
 ```
 readRecipeContent(db)                      packages/db/src/recipe-content.ts  — ONE batch, 5 SELECTs
-   ↓ D1RecipeContentSnapshot               (recipes, recipe_ingredients, recipe_steps, recipe_nutrition ids, recipe_runtime_fields)
+   ↓ D1RecipeContentSnapshot               (recipes, recipe_ingredients ⟕ recipe_runtime_ingredient_order.position,
+                                             recipe_steps, recipe_nutrition ids, recipe_runtime_fields incl. runtime_order)
 hydrateRuntimeRecipes(snapshot)            packages/recipes/src/runtime-hydration.ts — fail-closed, O(rows)
-   ↓ { recipes: RuntimeRecipe[] (by id), failures[], classifications[] }
+   ↓ { recipes: RuntimeRecipe[] (ORDER BY runtime_order; ingredients by position), failures[], classifications[] }
 RuntimeRecipeCatalog                        packages/recipes/src/runtime-catalog.ts
-   StaticRuntimeRecipeCatalog (ALL_RECIPES)  = production authority
-   D1RuntimeRecipeCatalog (snapshot once/instance) = shadow candidate
-compareRuntimeCatalogs(static, snapshot)   → RecipeCatalogShadowDiagnostics (ID-keyed maps, O(N))
+   StaticRuntimeRecipeCatalog (ALL_RECIPES)  = production authority; preserves input order verbatim (never sorts)
+   D1RuntimeRecipeCatalog (snapshot once/instance) = shadow candidate; emits persisted runtime order,
+                                             never reorders itself by consulting ALL_RECIPES
+compareRuntimeCatalogs(static, snapshot)   → RecipeCatalogShadowDiagnostics (ID-keyed maps, O(N),
+                                             + orderDriftCount/orderDrift over the shared-ID set)
 ```
+
+Order representation: `ALL_RECIPES` source order → renderer → `recipe_runtime_fields.runtime_order`
+→ D1 → `hydrateRuntimeRecipes()` → `D1RuntimeRecipeCatalog`. The D1 view reproduces the static
+order independently; nothing in production or test code re-imposes static order on D1 output.
 
 Fail-closed codes: `fk_stub`, `rejected_entry` (foundation contract: bad servings, unknown
 unit, non-canonical ingredient…), `incomplete_entry` (NULL/blank description, no steps — the
 description is re-checked before assembly so no value is ever defaulted),
 `missing_runtime_fields`, `missing_media_compatibility`, `invalid_tags`,
 `legacy_marker_conflict`, `invalid_region`, `invalid_cuisine`, `duplicate_recipe_id` (both
-rows fail), `duplicate_step_number`, `runtime_contract_violation` (`RuntimeRecipeSchema.strict()`).
-No default is substituted for any field. Query count: **5 per snapshot**, never per recipe;
-comparison is O(N) via `Map<id>`; static→hydrated order is re-imposed only in test harnesses.
+rows fail), `duplicate_step_number`, `missing_runtime_order`, `invalid_runtime_order`,
+`duplicate_runtime_order`, `missing_ingredient_position`, `invalid_ingredient_position`
+(non-integer, negative, out of range, duplicate or gapped positions), `runtime_contract_violation`
+(`RuntimeRecipeSchema.strict()`). No default is substituted for any field and no lexical-ID
+ordering fallback exists. Query count: **5 per snapshot**, never per recipe; comparison is O(N)
+via `Map<id>`. Order is never re-imposed anywhere: the hydrated list is consumed as emitted.
 
 ## 7. Shadow mode (Goals D/E, §19–22)
 
@@ -126,8 +149,11 @@ reads the snapshot once, hydrates, compares and logs one PII-free JSON record
 (`event=recipe_catalog_shadow`, `catalog_source`, `catalog_mode`, `catalog_static_count`,
 `catalog_d1_count`, `catalog_complete_count`, `catalog_hydrated_count`,
 `catalog_static_only_count`, `catalog_d1_only_count`, `catalog_drift_count`,
-`catalog_hydration_failure_count`, `catalog_lookup_ms`, bounded 10-item `drift_sample` /
-`hydration_failure_sample` of IDs+field names/codes). D1 failure → `status=shadow_error`
+`catalog_order_drift_count`, `catalog_hydration_failure_count`, `catalog_lookup_ms`, bounded
+10-item `drift_sample` / `order_drift_sample` (`{id, staticPosition, d1Position}`) /
+`hydration_failure_sample` of IDs+field names/codes). Healthy = `staticOnly = d1Only = drift =
+orderDrift = hydrationFailures = 0` → `level=info`; any non-zero count → `level=warn`
+(order drift alone is enough). D1 failure → `status=shadow_error`
 (warn), never a static "success", never a user-visible change (test-proved with a throwing DB).
 `planner_candidate_count_*` is not emitted at runtime because the planner is not wired to D1;
 the equivalent evidence is the planner parity harness (§9).
@@ -145,7 +171,19 @@ of historical plans; nothing re-interprets them through D1. Any future cutover o
 future candidate resolution and the ID-based fallback, which is why stable IDs/slugs for all 71
 (incl. `gl-01..gl-12`) are regression-tested.
 
-## 9. Parity evidence (fresh, this head)
+## 9. Parity evidence (fresh, remediation head)
+
+**Method.** Behavioural parity is measured on the **actual catalog outputs**:
+`staticRecipes = await new StaticRuntimeRecipeCatalog().listRuntimeRecipes()` and
+`d1Recipes = await new D1RuntimeRecipeCatalog(() => readRecipeContent(db)).listRuntimeRecipes()`.
+The first assertion is `expect(d1Recipes).toStrictEqual(staticRecipes)` with no reordering, and
+`d1Recipes.map(id) === ALL_RECIPES.map(id)` without sorting either side. Both lists are then passed
+**as-is** to `rankRecipes`, `evaluateRecipeMatch`, `isRecipeEligible`, `evaluateWeeklyCandidate`,
+`generateWeeklyMealPlan` (generate + regenerate), `getSwapAlternatives` and `swapMealInPlan`. No
+test maps D1 recipes back through `ALL_RECIPES`, sorts by static IDs or normalises array order;
+only `createdAt/updatedAt` are stripped. A mutation check (hydrator temporarily ID-sorting its
+output) fails 8/11 tests in `recipe-d1-runtime-parity`, proving the suite detects the original
+ordering defect. Negative controls use a deliberately reversed catalog **inside the tests only**.
 
 - **Migration**: fresh 0001→0034 replay → `recipes=71`, `recipe_ingredients=385` (328+57),
   `recipe_steps=341` (295+46), `recipe_runtime_fields=71` (59 with category/region, 71 with
@@ -163,16 +201,48 @@ future candidate resolution and the ID-based fallback, which is why stable IDs/s
   included); ingredients (id/qty/unit/optional), steps, tags, category, region, imageUrl,
   nutrition asserted per recipe; global slugs stable; `StaticRuntimeRecipeCatalog` and
   `D1RuntimeRecipeCatalog` agree on list and ID/slug lookups with exactly one snapshot read.
-- **Recommendation parity**: `rankRecipes`/`evaluateRecipeMatch` `toStrictEqual` across 6
-  inventory fixtures (empty fridge, fully stocked global, partial Vietnamese, partial global,
-  expiring, mixed units) × 5 contexts (default, cuisine preference, max time, no-buy filter,
-  recently cooked): candidate IDs, score, match %, missing required, expiring usage,
-  no-buy status and ordering identical.
-- **Planner parity**: `isRecipeEligible` and `evaluateWeeklyCandidate` for all 71; full
+- **Runtime order**: `d1Recipes.map(id) === ALL_RECIPES.map(id)` (71, begins `vn-canh-01…`, ends
+  `…gl-12`, provably not ID-sorted); `runtime_order` is `0..70` UNIQUE; snapshot row order is
+  irrelevant (reversed read → identical output); global-first ordinals → `orderDriftCount=71`;
+  reversed static list → 70; real ledger → `orderDriftCount=0`.
+- **Ingredient order**: all 71 ingredient arrays strict-equal by catalog position; every
+  `recipe_ingredients` row has exactly one `recipe_runtime_ingredient_order` row (no orphans, no
+  missing), positions are exactly `0..N-1` per recipe; synthetic 12-line recipe `gl-99`
+  (`_ing_1.._ing_12`, lexically `_ing_1,_ing_10,_ing_11,_ing_12,_ing_2…`) round-trips `1..12` and
+  fails closed (`missing_ingredient_position`) when unmapped.
+- **Migration hash manifest**: `tests/fixtures/migration-sha256.json` pins fixed SHA-256 values for
+  0001–0033 captured from canonical main `c1c1c14a…`; the test hashes the working tree against the
+  manifest (never both sides from the same file). 0034 is deliberately not pinned (current feature
+  migration).
+- **Recommendation parity**: `rankRecipes(d1Recipes)` `toStrictEqual` `rankRecipes(staticRecipes)`
+  across 6 inventory fixtures (empty fridge, fully stocked global, partial Vietnamese, partial
+  global, expiring, mixed units) × 5 contexts (default, cuisine preference, max time, no-buy
+  filter, recently cooked); `evaluateRecipeMatch` pairwise by catalog position.
+- **Tie-sensitive ranking**: with an empty fridge the real catalog has ≥5 groups with equal
+  `score|matchPercentage|cookTimeMinutes` (e.g. `25|0|10` = `vn-xao-01, vn-sang-02, gl-03, gl-12`);
+  their final order is input order. D1 reproduces every group exactly; the reversed negative
+  control reverses every tie group (`gl-12, gl-03, vn-sang-02, vn-xao-01`) and a minimal two-recipe
+  fixture (`vn-xao-01`/`gl-03`, identical keys) flips on reversal.
+- **Planner parity**: `isRecipeEligible` and `evaluateWeeklyCandidate` pairwise for all 71; full
   `generateWeeklyMealPlan` (all slots, restrictions, dislikes, cuisine preference, budget) equal
-  after stripping timestamps; regenerate (dinner-only re-generation) equal; `getSwapAlternatives`
-  identical candidate list/order; `swapMealInPlan` equal. Planner randomness is only the plan ID
-  (fixed via `planId`) and `createdAt/updatedAt` (stripped).
+  after stripping timestamps; regenerate (dinner-only) equal; `getSwapAlternatives` from each
+  catalog's own plan/slot strict-equal; `swapMealInPlan` executed with each catalog's returned
+  alternative → equal plans. Planner randomness is only the plan ID (fixed via `planId`) and
+  `createdAt/updatedAt` (stripped).
+- **Planner tie fixture**: empty fridge → 29 recipes share the top weekly score (48); the planner's
+  stable sort picks the first in input order (`vn-canh-01`). D1 picks the same recipe IDs for every
+  slot; the reversed control picks a different (still top-scored) recipe first. A three-recipe
+  equal-score fixture (`vn-canh-01, vn-canh-05, gl-03`) picks `vn-canh-01` from both catalogs and
+  `gl-03` when reversed.
+- **>5 swap alternatives**: `getSwapAlternatives` inspects only `alternatives.slice(0, 5)` before
+  ranking by `matchPercent`, so with 70 valid alternatives the returned set IS the first five
+  non-current recipes in catalog order. D1 returns exactly the static IDs/order/matchPercent/
+  badges/budgetDelta/cookingTimeDelta; the reversed control returns a different subset. An
+  eight-recipe controlled fixture behaves the same. A swap is then executed with the same-rank
+  alternative from each returned set and the resulting plans are equal.
+- **Shadow health**: `runRecipeCatalogShadow(db,'shadow')` on the real ledger →
+  `level=info`, all five counts 0, `order_drift_sample=[]`; a global-first D1 view → `level=warn`,
+  `catalog_order_drift_count=71`, bounded 10-item sample.
 - **Cooking boundary**: `gl-03` and `vn-canh-01` hydrated recipes drive `POST
   /recipes/:id/cook/start|complete` with identical deductions; one `cooked_meals` row, one
   `inventory_events` per deduction, idempotent replay adds none; the 0034 row makes cooking's
@@ -210,6 +280,13 @@ screens lose offline behaviour; documented here, not built.
 | 3 — parity/fail-closed/planner/recommendation/cooking/authority tests | `a210c72fb936a3b92a339cba174e1eab8e3ad972` |
 | 4 — docs/ADR-024 | `330add8bae0d82391e1a58a87a9b4eff1008113b` |
 | 5 — review fixes: per-isolate shadow interval bound, no description default, Inventory Truth test decoupled from ledger tip | `0284a96c33ede25b9206f7b3332f182a651b6d8d` |
+| 6 — docs: PR #14 record | `f8813d50f9edd08b19e0f104817640781dca5f57` |
+| 7 — remediation checkpoint: `runtime_order`, `recipe_runtime_ingredient_order`, hash manifest, order-drift diagnostics | `32593686053857945f4cfc1f09eeba2d543ab72c` |
+| 8 — remediation handoff SHAs (safe checkpoint; hosted validate SUCCESS run 35053041994) | `d9130b69f3df27f4f071153c9824d66ca3750001` |
+| 9 — order-sensitive behavioural parity on actual D1 catalog output (tie, planner tie, >5 swap, negative controls, shadow health) | `19b144a543e1d492d6540e0701eb255f3daae0c7` |
+| 10 — final remediation docs (category/region wording, ADR-024, this doc, handoff) | this docs commit (branch head; exact SHA recorded in the PR #14 body) |
+
+See `T14B_B_REMEDIATION_HANDOFF.md` for the review-remediation record.
 
 ## 13. Remaining work (not started)
 

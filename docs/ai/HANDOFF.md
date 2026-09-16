@@ -1,9 +1,27 @@
 # Frigo / Takosan current handoff — 2026-09-15
 
-## Current handoff — T14B-B remediation SAFE STOP, 2026-09-16
+## Current handoff — T14B-B remediation FINAL (review-ready, not merged), 2026-09-16
+
+- Continued from safe checkpoint `d9130b69…` (hosted validate SUCCESS run 35053041994, now
+  historical). Commit A `19b144a5` rewrites `tests/integration/recipe-d1-runtime-parity.test.ts`
+  to consume `D1RuntimeRecipeCatalog.listRuntimeRecipes()` as emitted (no `byId`/`ALL_RECIPES`
+  re-mapping, no sorting): strict-equal list + unsorted ID order, recommendation parity,
+  tie-sensitive ranking, planner tie fixture, >5-alternative swap regression, executed swap,
+  ingredient-ordinal integrity and shadow health (info at 0 order drift, warn otherwise), each with
+  a reversed-catalog negative control. Mutation check: an ID-sorting hydrator fails 8/11 tests.
+  Commit B finalises docs: category = typed open (non-empty string), region = closed vocabulary;
+  ADR-024 records persisted runtime order, explicit ingredient ordinals and static authority.
+- Focused: `recipe-d1-parity` 12, `recipe-d1-runtime-parity` 11, `recipe-catalog-authority` 5,
+  `recipe-catalog-safety` 6 → 4 files / 34 tests. Full gates and fresh exact-head hosted CI are
+  recorded in `recipe-catalog/T14B_B_REMEDIATION_HANDOFF.md` §10 and the PR #14 body.
+- Authority unchanged: `ALL_RECIPES`; no `d1` mode; production static; shadow throttle unchanged;
+  0001–0033 byte-identical; 0034 re-rendered in place (unmerged). PR #14 NOT merged; PR #4
+  untouched; T14C/T14D/T14E not started. Next action: maintainer review + protected merge of #14.
+
+## Historical — T14B-B remediation SAFE STOP, 2026-09-16
 
 - Work stopped by instruction mid-remediation; nothing discarded, checkpoint pushed to PR #14's
-  branch only. Full state, exact per-finding status and next steps:
+  branch only. Superseded by the FINAL entry above; kept for lineage:
   `recipe-catalog/T14B_B_REMEDIATION_HANDOFF.md`.
 - Implemented and locally verified on the checkpoint tree: persisted canonical `runtime_order`
   (0034, renderer-owned), explicit `recipe_runtime_ingredient_order` positions (reader/hydrator,

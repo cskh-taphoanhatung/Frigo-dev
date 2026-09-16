@@ -1,11 +1,15 @@
-## T14B-B — D1 CATALOG PARITY & SHADOW FOUNDATION — 2026-09-16 (READY FOR REVIEW)
+## T14B-B — D1 CATALOG PARITY & SHADOW FOUNDATION — 2026-09-16 (REMEDIATED, READY FOR REVIEW)
 
 - Migration `0034_global_recipe_catalog_parity.sql`: 12 global recipes persisted, D1 = 71
-  complete, `recipe_runtime_fields` added; `0001–0033` unchanged.
-- D1 → `RuntimeRecipe` hydration is lossless for all 71; recommendation/planner/cooking parity
-  proved. **`ALL_RECIPES` remains production authority**; shadow mode is opt-in and
-  production-rejected. Media → T14C; cutover → T14D; bulk import → T14E.
-- Gates: lint, typecheck, build, `migration-smoke=ok`, seed check, 157 files / 3697 tests; PR #14.
+  complete, `recipe_runtime_fields` (persisted `runtime_order`, typed open `category`, closed
+  `region`, legacy nutrition) + `recipe_runtime_ingredient_order` added; `0001–0033` unchanged
+  (fixed hash manifest).
+- D1 → `RuntimeRecipe` hydration is lossless and order-preserving for all 71; recommendation,
+  tie-sensitive ranking, planner (incl. tie fixture), >5-alternative swap and cooking parity
+  proved on the actual D1 catalog output. **`ALL_RECIPES` remains production authority**; shadow
+  mode is opt-in and production-rejected. Media → T14C; cutover → T14D; bulk import → T14E.
+- Gates: lint, typecheck, build, `migration-smoke=ok`, seed check, full Vitest (totals in
+  `docs/ai/recipe-catalog/T14B_B_REMEDIATION_HANDOFF.md` §10); PR #14 not merged.
 - Details: `docs/ai/recipe-catalog/T14B_B_D1_PARITY_SHADOW.md`, ADR-024.
 
 ## Auth/OCR production hardening — 2026-09-16

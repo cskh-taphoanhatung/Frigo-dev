@@ -1,16 +1,27 @@
 # Frigo / Takosan current authority — 2026-09-15
 
-## T14B-B — D1 catalog parity, runtime view & shadow foundation — 2026-09-16 (READY FOR REVIEW)
+## T14B-B — D1 catalog parity, runtime view & shadow foundation — 2026-09-16 (REMEDIATED, READY FOR REVIEW)
 
 Branch from exact canonical main `c1c1c14a2a7dccc883f1030d0dee7043754fb4a9` (repository
 `vn-clo/Frigo-dev`, ID `1368281478`, protected). Migration
-`0034_global_recipe_catalog_parity.sql` (SHA-256 `05f868eb…4336d`) seeds the 12 static-only
-global recipes `gl-01..gl-12` under their stable IDs/slugs and adds `recipe_runtime_fields`
-(typed `category`/`region` + legacy nutrition compatibility macros). Fresh local replay:
-`recipes=71`, `recipe_ingredients=385`, `recipe_steps=341`, `recipe_runtime_fields=71`,
-`recipe_classifications=0`, `recipe_nutrition=0`; drift `staticOnly=[] d1Only=[]` and every
-core/requirement/unit/step/tag/media dimension `[]`; nutrition `legacy_compatibility`;
-classification `typed_runtime_field`. Migrations `0001–0033` are hash-identical.
+`0034_global_recipe_catalog_parity.sql` (SHA-256 `23f35645…ada4d`, re-rendered in place during
+review remediation — unmerged, no 0035) seeds the 12 static-only global recipes `gl-01..gl-12`
+under their stable IDs/slugs and adds `recipe_runtime_fields` (canonical `runtime_order` 0..70
+UNIQUE; `category` = typed **open** non-empty string; `region` = **closed** vocabulary
+`bac|trung|nam|toan_quoc`; legacy nutrition compatibility macros) plus
+`recipe_runtime_ingredient_order` (explicit 0-based ingredient ordinal, `UNIQUE(recipe_id,
+position)`, 385 rows). Fresh local replay: `recipes=71`, `recipe_ingredients=385`,
+`recipe_steps=341`, `recipe_runtime_fields=71`, `recipe_runtime_ingredient_order=385`,
+`recipe_classifications=0`, `recipe_nutrition=0`; drift `staticOnly=[] d1Only=[]
+orderDrift=0` and every core/requirement/unit/step/tag/media dimension `[]`; nutrition
+`legacy_compatibility`; classification `typed_runtime_field`. Migrations `0001–0033` are
+hash-identical to a fixed manifest pinned from `c1c1c14a…`.
+
+Catalog order is behaviourally significant and persisted: `StaticRuntimeRecipeCatalog`
+preserves `ALL_RECIPES` order, `D1RuntimeRecipeCatalog` reproduces it independently from
+`runtime_order`, and behavioural parity (recommendation, tie-sensitive ranking, planner
+generate/regenerate/tie, >5-alternative swap + executed swap, shadow health) is proved on the
+**actual** D1 catalog output with no test-side reordering and reversed-catalog negative controls.
 
 `hydrateRuntimeRecipes` (fail-closed) + `StaticRuntimeRecipeCatalog`/`D1RuntimeRecipeCatalog` +
 `compareRuntimeCatalogs` give a D1 runtime view that is `toStrictEqual` to all 71 static
