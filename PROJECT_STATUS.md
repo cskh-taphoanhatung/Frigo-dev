@@ -1,6 +1,13 @@
 # Frigo Project Status
 
-## T14C — Recipe Media Layer: development complete, PR open for review (2026-09-16)
+## T14C — Recipe Media Layer: merged to main `3a1e6be6…`, production rollout pending (2026-09-16)
+
+PR #17 merged by normal merge commit; exact-head main CI SUCCESS; 161 files / 3776 tests; staging auto-deploy
+SUCCESS. Production D1 remains at 0034 and the Worker at `4ed98514…` until an operator with Cloudflare
+credentials applies 0035 and dispatches the production deploy (runbook: `docs/ai/recipe-catalog/T14C_MERGE_RECEIPT.md`).
+Status: `T14C_PRODUCTION_MIGRATION_BLOCKED` (credentials), not yet `T14C_COMPLETE`.
+
+## T14C — Recipe Media Layer: development complete (2026-09-16)
 
 Adds D1 `recipe_media` (0035) + R2-backed, same-origin, immutable-versioned recipe media serving with a
 pure resolver and legacy `imageUrl` fallback; recipe authority stays `ALL_RECIPES`; ranking/planner/swap/

@@ -1,6 +1,23 @@
 # Frigo / Takosan current handoff — 2026-09-16
 
-## Current handoff — T14C Recipe Media Layer, development complete pending review
+## Current handoff — T14C merged (main 3a1e6be6…); production 0035 apply + deploy pending operator credentials
+
+- **Done this session:** fresh pre-merge gates (main/PR head unchanged, migrations 35/no 0036/0001–0034 drift 0,
+  ready-integrity + storage-key gates, protected areas untouched); PR #17 merged (`MERGE_SHA=3a1e6be6…`,
+  PR head in main, tree preserved); post-merge main certified locally (seed check 3× ok, typecheck, lint,
+  `migration-smoke=ok`, build, **161 files / 3776 tests**, diff-check clean) and by hosted CI
+  (run 35147336385 / check 104966628291 SUCCESS); automatic staging Deploy run 35147682739 SUCCESS.
+- **Not done — blocked:** production D1 ledger read, backup, `0035` apply, production deploy, production smoke.
+  `wrangler whoami` → not authenticated and no `CLOUDFLARE_API_TOKEN` in the sandbox; the packet's stop
+  condition (Cloudflare identity cannot be proven) applies. Nothing in production was mutated.
+- **Next action (operator with Cloudflare access):** follow the 10-step runbook in
+  `recipe-catalog/T14C_MERGE_RECEIPT.md` — identity → ledger (expect 34 / tip 0034) → export backup →
+  aggregate baseline → plan (exactly 0035) → apply → verify 71 pending / 0 ready, FK/quick_check, schema gate →
+  dispatch `Deploy` for `3a1e6be6…` (production, confirm_production, approval) → smoke → write
+  `T14C_FINAL_COMPLETION.md` + `T14C_NEXT_HANDOFF.md`, mark `T14C_COMPLETE`, freeze final main.
+  Do NOT deploy before 0035 is applied; do NOT populate media; do NOT start T14D/T14E.
+
+## Previous handoff — T14C Recipe Media Layer, development complete pending review
 
 - **Branch/base:** `feat/t14c-recipe-media-layer` from `8d3ebc444bbaa577893dd88a9d21f308a24f0cf5`
   (exact `origin/main` at start; unchanged). Final head/PR/CI receipt: see the PR body and the
