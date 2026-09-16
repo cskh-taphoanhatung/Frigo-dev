@@ -1,6 +1,15 @@
 # Frigo / Takosan current authority — 2026-09-15
 
-## T14C — Recipe Media Layer — development on `feat/t14c-recipe-media-layer` (2026-09-16)
+## T14C — MERGED into main `3a1e6be610085d7f9cfed8a53f43ef6ea006ed5c`; production rollout pending operator (2026-09-16)
+
+PR #17 (head `7b37325f…`) merged by normal merge commit; exact-head main CI validate=SUCCESS
+(run 35147336385 / check 104966628291); local certification 161 files / 3776 tests. Automatic staging deploy
+run 35147682739 SUCCESS (staging D1/R2 only). **Production is unchanged:** D1 `frigo-db` ledger tip still
+`0034_global_recipe_catalog_parity.sql` (not read — no Cloudflare credentials in this session), Worker still
+`4ed98514…`. Status `T14C_PRODUCTION_MIGRATION_BLOCKED` (credentials), not `T14C_COMPLETE`. Runbook and
+receipt: `recipe-catalog/T14C_MERGE_RECEIPT.md`. Recipe authority remains `ALL_RECIPES`; T14D/T14E not started.
+
+## T14C — Recipe Media Layer — development history (`feat/t14c-recipe-media-layer`, 2026-09-16)
 
 Base `8d3ebc444bbaa577893dd88a9d21f308a24f0cf5` (T14C_CANONICAL_BASE_MAIN). Adds migration
 `0035_recipe_media_layer.sql` (rendered by `renderRecipeMediaLayerSql`; `recipe_media` with closed

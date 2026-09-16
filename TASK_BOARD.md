@@ -1,4 +1,9 @@
-## T14C — RECIPE MEDIA LAYER — 2026-09-16 (dev complete; PR open; NOT merged/deployed)
+## T14C — RECIPE MEDIA LAYER — 2026-09-16 (MERGED main 3a1e6be6…; production 0035/deploy pending operator)
+
+- PR #17 merged; main CI green; staging auto-deploy green. Production D1 still 0034, Worker still 4ed98514… —
+  operator runbook: `docs/ai/recipe-catalog/T14C_MERGE_RECEIPT.md`.
+
+## T14C — RECIPE MEDIA LAYER — 2026-09-16 (development receipt)
 
 - 0035 `recipe_media` + catalog/resolver/route/frontend fallback; 0034 pinned; gates green locally.
 - Review remediation: promotion verifies the R2 object (MIME/size/SHA-256) before ready; SQL enforces exact storage key.

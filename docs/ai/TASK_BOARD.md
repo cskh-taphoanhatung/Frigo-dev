@@ -1,6 +1,14 @@
 # Frigo / Takosan current task board — 2026-09-15
 
-## T14C — Recipe Media Layer — 2026-09-16 (development; PR open for independent review)
+## T14C — Recipe Media Layer — 2026-09-16 (MERGED to main 3a1e6be6…; production rollout pending operator)
+
+- [done] PR #17 merged (normal merge, head 7b37325f… in ancestry); main exact-head CI SUCCESS
+  (35147336385); local certification 161/3776; automatic staging deploy SUCCESS (35147682739).
+- [blocked — credentials] production D1 backup + 0035 apply + production deploy + smoke; runbook in
+  `recipe-catalog/T14C_MERGE_RECEIPT.md`. Production remains 0034 / Worker 4ed98514….
+- [not started] T14C_FINAL_COMPLETION.md, T14C_NEXT_HANDOFF.md (after rollout); media population; T14D; T14E.
+
+## T14C — Recipe Media Layer — 2026-09-16 (development; PR #17 — merged, see above)
 
 - [done, local-verified] 0035 + `recipe_media` schema/invariants/seed; catalog (no N+1) + resolver;
   secure same-origin media route; additive API `media.hero`; frontend resolver on 7 surfaces;
