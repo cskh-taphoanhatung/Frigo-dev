@@ -27,10 +27,23 @@ export interface D1RecipeContentRow {
   provenance: { sourceType: string; sourceReference: string | null; verificationState: string; version: number };
 }
 export interface D1RecipeRequirementRow {
+  /** Row primary key; line order within a recipe is `ORDER BY id` (seed IDs are `<recipe>_ing_<n>`). */
+  id: string;
   recipeId: string; ingredientId: string; name: string; requiredQuantity: number; unit: string; isOptional: boolean;
 }
 export interface D1RecipeStepRow {
   recipeId: string; stepNumber: number; instruction: string; tip: string | null; timerMinutes: number | null;
+}
+/**
+ * One `recipe_runtime_fields` row (migration 0034): the typed home for runtime-only fields the
+ * foundation `RecipeDefinition` omits. `legacyNutrition` is a LEGACY compatibility projection of
+ * the static macros, not `nutrition_profiles` evidence (ADR-004); it is all-or-nothing by CHECK.
+ */
+export interface D1RecipeRuntimeFieldsRow {
+  recipeId: string;
+  category: string | null;
+  region: string | null;
+  legacyNutrition: { calories: number; proteinG: number; fatG: number; carbG: number } | null;
 }
 /** Read-only projection of the D1 recipe tables needed for a full-contract drift audit. */
 export interface D1RecipeContentSnapshot {
@@ -39,9 +52,23 @@ export interface D1RecipeContentSnapshot {
   steps: D1RecipeStepRow[];
   /** Recipe IDs that have at least one `recipe_nutrition` link. */
   nutritionRecipeIds: string[];
+  runtimeFields: D1RecipeRuntimeFieldsRow[];
 }
 
-export type ClassificationRepresentation = 'equal' | 'missing_in_d1' | 'represented_through_legacy_tags' | 'unsupported_by_catalog_model';
+/**
+ * How a static category/region is represented in D1:
+ * - `typed_runtime_field`: equal value in `recipe_runtime_fields` (T14B-B, authoritative representation);
+ * - `represented_through_legacy_tags`: only the 0006 `cat:`/`region:` marker in `recipes.tags` matches;
+ * - `missing_in_d1`: neither representation carries a value;
+ * - `unsupported_by_catalog_model`: D1 carries a DIFFERENT value (a real drift).
+ */
+export type ClassificationRepresentation = 'typed_runtime_field' | 'missing_in_d1' | 'represented_through_legacy_tags' | 'unsupported_by_catalog_model';
+/**
+ * Nutrition: `legacy_compatibility` when every static macro set is mirrored in
+ * `recipe_runtime_fields.legacy_*`; `unsupported_by_catalog_model` when the projection is absent.
+ * Neither claims `nutrition_profiles` evidence (ADR-004).
+ */
+export type NutritionRepresentation = 'legacy_compatibility' | 'unsupported_by_catalog_model';
 
 export interface RecipeCoreDrift { id: string; fields: string[] }
 export interface RecipeSlugDrift { id: string; staticSlug: string; d1Slug: string }
@@ -61,7 +88,7 @@ export interface CatalogDriftReport {
   content: {
     /** Rows without steps are `incomplete`, so only complete rows can show step drift. */
     steps: { changed: string[] };
-    nutrition: { representation: 'unsupported_by_catalog_model'; missingInD1: string[] };
+    nutrition: { representation: NutritionRepresentation; missingInD1: string[]; changed: string[] };
     tags: { changed: string[] };
     classification: RecipeClassificationDrift[];
     media: { missingInD1: string[]; changed: string[] };
@@ -100,12 +127,21 @@ function tagMarker(tags: readonly string[] | null, prefix: 'cat:' | 'region:'): 
   const marker = (tags ?? []).find((tag) => tag.startsWith(prefix));
   return marker ? marker.slice(prefix.length) : null;
 }
-function classificationDrift(id: string, field: 'category' | 'region', staticValue: string | null, d1Tags: string[] | null): RecipeClassificationDrift | null {
-  const d1Value = tagMarker(d1Tags, field === 'category' ? 'cat:' : 'region:');
-  if (staticValue === null && d1Value === null) return null;
-  if (d1Value === null) return { id, field, representation: 'missing_in_d1', staticValue, d1Value };
-  if (staticValue === d1Value) return { id, field, representation: 'represented_through_legacy_tags', staticValue, d1Value };
-  return { id, field, representation: 'unsupported_by_catalog_model', staticValue, d1Value };
+function classificationDrift(
+  id: string, field: 'category' | 'region', staticValue: string | null, d1Tags: string[] | null,
+  typedValue: string | null | undefined,
+): RecipeClassificationDrift | null {
+  const legacyValue = tagMarker(d1Tags, field === 'category' ? 'cat:' : 'region:');
+  if (typedValue !== undefined) {
+    if (staticValue === null && typedValue === null) return null;
+    if (typedValue === null) return { id, field, representation: 'missing_in_d1', staticValue, d1Value: legacyValue };
+    if (staticValue === typedValue) return { id, field, representation: 'typed_runtime_field', staticValue, d1Value: typedValue };
+    return { id, field, representation: 'unsupported_by_catalog_model', staticValue, d1Value: typedValue };
+  }
+  if (staticValue === null && legacyValue === null) return null;
+  if (legacyValue === null) return { id, field, representation: 'missing_in_d1', staticValue, d1Value: legacyValue };
+  if (staticValue === legacyValue) return { id, field, representation: 'represented_through_legacy_tags', staticValue, d1Value: legacyValue };
+  return { id, field, representation: 'unsupported_by_catalog_model', staticValue, d1Value: legacyValue };
 }
 function foundationShape(row: D1RecipeContentRow, lines: readonly D1RecipeRequirementRow[]): Record<string, unknown> {
   return {
@@ -127,6 +163,7 @@ export function auditCatalogDrift(staticRecipes: readonly Recipe[], d1: D1Recipe
   const stepsByRecipe = new Map<string, D1RecipeStepRow[]>();
   for (const step of d1.steps) stepsByRecipe.set(step.recipeId, [...(stepsByRecipe.get(step.recipeId) ?? []), step]);
   const nutritionIds = new Set(d1.nutritionRecipeIds);
+  const runtimeFieldsByRecipe = new Map(d1.runtimeFields.map((row) => [row.recipeId, row]));
 
   const incompleteRows: CatalogEntryClassification[] = [];
   const rejectedRows: CatalogEntryClassification[] = [];
@@ -144,7 +181,7 @@ export function auditCatalogDrift(staticRecipes: readonly Recipe[], d1: D1Recipe
     staticCount: staticRecipes.length, d1RowCount: d1.recipes.length, d1CompleteCount: completeById.size,
     identity: { staticOnly: [], d1Only: [], slugMismatch: [] },
     core: { changed: [] }, requirements: { changed: [] }, units: { changed: [] },
-    content: { steps: { changed: [] }, nutrition: { representation: 'unsupported_by_catalog_model', missingInD1: [] },
+    content: { steps: { changed: [] }, nutrition: { representation: 'unsupported_by_catalog_model', missingInD1: [], changed: [] },
       tags: { changed: [] }, classification: [], media: { missingInD1: [], changed: [] } },
     incompleteRows: byId(incompleteRows.filter((row): row is CatalogEntryClassification & { id: string } => row.id !== undefined)),
     rejectedRows: rejectedRows.sort((a, b) => compare(a.id ?? '', b.id ?? '')),
@@ -160,7 +197,7 @@ export function auditCatalogDrift(staticRecipes: readonly Recipe[], d1: D1Recipe
 
     const staticLines = requirementLines(s.ingredients.map((line) => ({ ingredientId: line.ingredientId, name: line.name,
       requiredQuantity: line.requiredQuantity, unit: line.unit, isOptional: line.isOptional ?? false })));
-    const d1Lines = requirementLines((linesByRecipe.get(id) ?? []).map(({ recipeId: _r, ...line }) => line));
+    const d1Lines = requirementLines((linesByRecipe.get(id) ?? []).map(({ id: _id, recipeId: _r, ...line }) => line));
     if (stable(staticLines) !== stable(d1Lines)) {
       report.requirements.changed.push({ id, staticOnly: multisetDifference(staticLines, d1Lines), d1Only: multisetDifference(d1Lines, staticLines) });
     }
@@ -176,18 +213,31 @@ export function auditCatalogDrift(staticRecipes: readonly Recipe[], d1: D1Recipe
       .map((step) => ({ stepNumber: step.stepNumber, instruction: step.instruction, tip: step.tip, timerMinutes: step.timerMinutes }));
     if (stable(staticSteps) !== stable(d1Steps)) report.content.steps.changed.push(id);
 
-    if (s.nutrition && !nutritionIds.has(id)) report.content.nutrition.missingInD1.push(id);
+    // Nutrition truth: a `recipe_nutrition` link OR the legacy compatibility macros count as
+    // "represented"; the representation label says which. Differing macros are real drift.
+    const legacy = runtimeFieldsByRecipe.get(id)?.legacyNutrition ?? null;
+    if (s.nutrition) {
+      if (legacy === null && !nutritionIds.has(id)) report.content.nutrition.missingInD1.push(id);
+      else if (legacy !== null && stable(legacy) !== stable(s.nutrition)) report.content.nutrition.changed.push(id);
+    } else if (legacy !== null) {
+      report.content.nutrition.changed.push(id);
+    }
 
     const d1Tags = (d.tags ?? []).filter((tag) => !tag.startsWith('cat:') && !tag.startsWith('region:'));
     if (stable([...s.tags].sort(compare)) !== stable([...d1Tags].sort(compare))) report.content.tags.changed.push(id);
+    const typed = runtimeFieldsByRecipe.get(id);
     for (const field of ['category', 'region'] as const) {
-      const drift = classificationDrift(id, field, s[field] ?? null, d.tags);
+      const drift = classificationDrift(id, field, s[field] ?? null, d.tags, typed ? typed[field] : undefined);
       if (drift) report.content.classification.push(drift);
     }
     if (d.imageUrl === null) report.content.media.missingInD1.push(id);
     else if (d.imageUrl !== s.imageUrl) report.content.media.changed.push(id);
   }
   report.content.classification.sort((a, b) => compare(a.id, b.id) || compare(a.field, b.field));
+  const sharedWithMacros = [...staticById.keys()].filter((id) => completeById.has(id) && staticById.get(id)!.nutrition);
+  if (sharedWithMacros.length > 0 && sharedWithMacros.every((id) => runtimeFieldsByRecipe.get(id)?.legacyNutrition)) {
+    report.content.nutrition.representation = 'legacy_compatibility';
+  }
   return report;
 }
 

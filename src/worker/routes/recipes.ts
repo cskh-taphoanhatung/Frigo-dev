@@ -12,6 +12,7 @@ import { SQL } from '@frigo/db';
 import { fetchHouseholdInventoryFromDb } from './inventory';
 import { tenancyGuard } from '../middleware/tenancy';
 import { CookingCompleteSchema } from '../validation/schemas';
+import { scheduleRecipeCatalogShadow } from '../services/recipe-catalog-shadow';
 
 export const recipeRoutes = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
 
@@ -171,8 +172,25 @@ function storedCookingFingerprint(row: {
   }
 }
 
+/**
+ * T14B-B shadow hook: static ALL_RECIPES has already produced (or is producing) the response;
+ * this only schedules the off-response D1 parity comparison when RECIPE_CATALOG_MODE=shadow.
+ * Without an ExecutionContext (unit tests, local harnesses) the comparison is not awaited.
+ */
+function scheduleCatalogShadow(c: { env: Env; executionCtx: { waitUntil(task: Promise<unknown>): void } }): void {
+  let waitUntil: ((task: Promise<unknown>) => void) | undefined;
+  try {
+    const ctx = c.executionCtx;
+    waitUntil = (task) => ctx.waitUntil(task);
+  } catch {
+    waitUntil = undefined;
+  }
+  scheduleRecipeCatalogShadow(c.env, waitUntil);
+}
+
 // GET /api/v1/recipes
 recipeRoutes.get('/recipes', (c) => {
+  scheduleCatalogShadow(c);
   const cuisine = c.req.query('cuisine') as CuisineType | undefined;
   const category = c.req.query('category');
   const region = c.req.query('region');
@@ -222,6 +240,7 @@ recipeRoutes.get('/recipes/:id', async (c) => {
 
 // GET /api/v1/recommendations
 recipeRoutes.get('/recommendations', async (c) => {
+  scheduleCatalogShadow(c);
   const auth = c.get('auth');
   const noBuy = c.req.query('noBuy') === 'true';
   const cuisineQuery = c.req.query('cuisine');

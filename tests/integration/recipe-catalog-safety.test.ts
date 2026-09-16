@@ -8,10 +8,15 @@ import { SqliteD1, type SqliteStatementEvent } from '../helpers/sqlite-d1';
 
 const GLOBAL_IDS = ['gl-01', 'gl-02', 'gl-03', 'gl-04', 'gl-05', 'gl-06', 'gl-07', 'gl-08', 'gl-09', 'gl-10', 'gl-11', 'gl-12'];
 
-/** Byte-identical to the FK anchor cooking-complete and shopping-list routes insert today. */
+/**
+ * Byte-identical to the FK anchor cooking-complete and shopping-list routes insert today. Since
+ * 0034 every runtime recipe is seeded, so the stub is planted under a synthetic ID that only a
+ * future recipe could own; the classifier/hydrator must still treat it as an anchor, not content.
+ */
+const STUB_ID = 'gl-99';
 function insertFkStub(db: SqliteD1, recipe = ALL_RECIPES.find((item) => item.id === 'gl-01')!) {
   db.seed(`INSERT OR IGNORE INTO recipes (id, slug, title, cuisine, cook_time_minutes, servings, difficulty)
-    VALUES ('${recipe.id}', '${recipe.slug}', '${recipe.title.replace(/'/g, "''")}', '${recipe.cuisine}',
+    VALUES ('${STUB_ID}', 'future-anchor-only', '${recipe.title.replace(/'/g, "''")}', '${recipe.cuisine}',
       ${recipe.cookTimeMinutes}, ${recipe.servings}, '${recipe.difficulty}')`);
 }
 
@@ -62,31 +67,33 @@ describe('static ↔ D1 drift audit against the real migration ledger', () => {
     db.hooks.beforeBatch = (statements) => { events.push(...statements); };
     const before = db.query<{ n: number }>('SELECT COUNT(*) AS n FROM recipes');
     await readRecipeContent(db);
-    expect(events).toHaveLength(4);
+    expect(events).toHaveLength(5);
     expect(events.every((event) => event.sql.trimStart().toUpperCase().startsWith('SELECT'))).toBe(true);
     expect(db.query<{ n: number }>('SELECT COUNT(*) AS n FROM recipes')).toEqual(before);
   });
 
-  it('reports the truthful current drift: 71 static, 59 complete D1, 12 globals static-only, media/nutrition gaps', async () => {
+  it('reports the truthful current drift after 0034: 71 static, 71 complete D1, no static-only, typed classification, legacy nutrition', async () => {
     const report = auditCatalogDrift(ALL_RECIPES, await readRecipeContent(database()));
 
     expect(report.staticCount).toBe(71);
-    expect(report.d1RowCount).toBe(59);
-    expect(report.d1CompleteCount).toBe(59);
-    expect(report.identity).toEqual({ staticOnly: GLOBAL_IDS, d1Only: [], slugMismatch: [] });
+    expect(report.d1RowCount).toBe(71);
+    expect(report.d1CompleteCount).toBe(71);
+    expect(report.identity).toEqual({ staticOnly: [], d1Only: [], slugMismatch: [] });
     expect(report.core.changed).toEqual([]);
     expect(report.requirements.changed).toEqual([]);
     expect(report.units.changed).toEqual([]);
     expect(report.incompleteRows).toEqual([]);
     expect(report.rejectedRows).toEqual([]);
 
-    // Content truth (do not weaken): steps and image URLs match; nutrition is not represented in D1.
+    // Content truth (do not weaken): steps, tags and legacy image references match; nutrition is a
+    // LEGACY compatibility projection (never nutrition_profiles evidence); category/region are typed.
     expect(report.content.steps).toEqual({ changed: [] });
     expect(report.content.media).toEqual({ missingInD1: [], changed: [] });
     expect(report.content.tags.changed).toEqual([]);
-    expect(report.content.nutrition.missingInD1).toHaveLength(59);
+    expect(report.content.nutrition).toEqual({ representation: 'legacy_compatibility', missingInD1: [], changed: [] });
     expect(report.content.classification).toHaveLength(59 * 2);
-    expect(report.content.classification.every((item) => item.representation === 'represented_through_legacy_tags')).toBe(true);
+    expect(report.content.classification.every((item) => item.representation === 'typed_runtime_field')).toBe(true);
+    expect(GLOBAL_IDS.every((id) => !report.content.classification.some((item) => item.id === id))).toBe(true);
 
     expect(UNAUDITED_RUNTIME_FIELDS).toEqual([]);
     expect(JSON.parse(JSON.stringify(report))).toEqual(report);
@@ -95,23 +102,23 @@ describe('static ↔ D1 drift audit against the real migration ledger', () => {
   it('never counts an FK stub as a catalog entry, does not repair it, and the foundation reader excludes it too', async () => {
     const db = database();
     insertFkStub(db);
-    const rowBefore = db.query('SELECT * FROM recipes WHERE id = ?', 'gl-01');
+    const rowBefore = db.query('SELECT * FROM recipes WHERE id = ?', STUB_ID);
 
     const report = auditCatalogDrift(ALL_RECIPES, await readRecipeContent(db));
-    expect(report.d1RowCount).toBe(60);
-    expect(report.d1CompleteCount).toBe(59);
-    expect(report.identity.staticOnly).toEqual(GLOBAL_IDS);
+    expect(report.d1RowCount).toBe(72);
+    expect(report.d1CompleteCount).toBe(71);
+    expect(report.identity.staticOnly).toEqual([]);
     expect(report.identity.d1Only).toEqual([]);
     expect(report.incompleteRows).toEqual([
-      { id: 'gl-01', state: 'incomplete', fkStub: true, reasons: ['fk_anchor_shape', 'no_description', 'no_requirements'] },
+      { id: STUB_ID, state: 'incomplete', fkStub: true, reasons: ['fk_anchor_shape', 'no_description', 'no_requirements'] },
     ]);
 
     // The existing planner catalog reader already excludes the stub (min(1) ingredients).
     const foundation = await readRecipeCatalog(db);
-    expect(foundation.recipes.some((recipe) => recipe.id === 'gl-01')).toBe(false);
+    expect(foundation.recipes.some((recipe) => recipe.id === STUB_ID)).toBe(false);
     expect(foundation.diagnostics.some((item) => item.code === 'invalid_recipe')).toBe(true);
 
-    expect(db.query('SELECT * FROM recipes WHERE id = ?', 'gl-01')).toEqual(rowBefore);
+    expect(db.query('SELECT * FROM recipes WHERE id = ?', STUB_ID)).toEqual(rowBefore);
     // Static authority still serves the canonical recipe untouched.
     expect(ALL_RECIPES.find((recipe) => recipe.id === 'gl-01')?.ingredients.length).toBeGreaterThan(0);
   });
@@ -140,6 +147,9 @@ describe('static ↔ D1 drift audit against the real migration ledger', () => {
         .map((step) => (step.recipeId === 'vn-kho-03' ? { ...step, recipeId: 'd1-only' } : step))
         .map((step) => (step.recipeId === 'vn-canh-01' && step.stepNumber === 1 ? { ...step, tip: 'new tip' } : step)),
       nutritionRecipeIds: ['vn-canh-01'],
+      // Synthetic legacy-only snapshot: no typed runtime fields, so classification falls back to the
+      // 0006 tag markers and nutrition is judged unsupported except for the linked profile.
+      runtimeFields: [],
     };
     const staticSubset = ALL_RECIPES.filter((recipe) => ['vn-canh-01', 'vn-canh-02', 'vn-canh-03', 'vn-kho-01', 'vn-kho-02', 'gl-01'].includes(recipe.id));
     const report = auditCatalogDrift(staticSubset, d1);

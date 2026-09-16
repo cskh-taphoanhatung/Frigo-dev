@@ -2,12 +2,16 @@ import type { D1RecipeContentSnapshot } from '../../recipes/src/catalog-drift';
 import type { D1DatabaseBinding, D1PreparedStatement, D1Result } from './index';
 
 /**
- * Read-only projection of D1 recipe CONTENT tables (image_url, tags, steps, nutrition links)
- * for the T14B-A drift audit. It has no write path and is not used by any production
- * request; the foundation `readRecipeCatalog` remains the planner's catalog reader.
+ * Read-only projection of D1 recipe CONTENT tables (image_url, tags, steps, nutrition links,
+ * T14B-B runtime fields) for the drift audit and the shadow runtime hydrator. It has no write
+ * path and no production request path consumes it while `ALL_RECIPES` remains authority; the
+ * foundation `readRecipeCatalog` remains the planner's catalog reader.
+ *
+ * Exactly five bulk SELECTs in one D1 batch, whatever the catalog size: never one query per
+ * recipe. Mapping is O(rows); grouping by recipe happens in the consumers via ID-keyed maps.
  */
 
-export const RECIPE_CONTENT_READ_STATEMENT_COUNT = 4;
+export const RECIPE_CONTENT_READ_STATEMENT_COUNT = 5;
 
 export function prepareRecipeContentRead(db: D1DatabaseBinding): D1PreparedStatement[] {
   return [
@@ -17,7 +21,7 @@ export function prepareRecipeContentRead(db: D1DatabaseBinding): D1PreparedState
        FROM recipes ORDER BY id`,
     ),
     db.prepare(
-      `SELECT recipe_id, ingredient_id, name, required_quantity, unit, is_optional
+      `SELECT id, recipe_id, ingredient_id, name, required_quantity, unit, is_optional
        FROM recipe_ingredients ORDER BY recipe_id, id`,
     ),
     db.prepare(
@@ -25,6 +29,10 @@ export function prepareRecipeContentRead(db: D1DatabaseBinding): D1PreparedState
        FROM recipe_steps ORDER BY recipe_id, step_number, id`,
     ),
     db.prepare('SELECT DISTINCT recipe_id FROM recipe_nutrition ORDER BY recipe_id'),
+    db.prepare(
+      `SELECT recipe_id, category, region, legacy_calories, legacy_protein_g, legacy_fat_g, legacy_carb_g
+       FROM recipe_runtime_fields ORDER BY recipe_id`,
+    ),
   ];
 }
 
@@ -54,8 +62,8 @@ export function mapRecipeContentRead(results: readonly D1Result<unknown>[]): D1R
   if (results.length !== RECIPE_CONTENT_READ_STATEMENT_COUNT) {
     throw new Error('Recipe content batch returned an unexpected result count');
   }
-  const [recipeRows, lineRows, stepRows, nutritionRows] = results.map((result, index) =>
-    rowsOf(result, ['recipes', 'recipe ingredients', 'recipe steps', 'recipe nutrition'][index]));
+  const [recipeRows, lineRows, stepRows, nutritionRows, runtimeFieldRows] = results.map((result, index) =>
+    rowsOf(result, ['recipes', 'recipe ingredients', 'recipe steps', 'recipe nutrition', 'recipe runtime fields'][index]));
   return {
     recipes: recipeRows.map((row) => ({
       id: text(row.id), slug: text(row.slug), title: text(row.title), description: textOrNull(row.description),
@@ -68,7 +76,7 @@ export function mapRecipeContentRead(results: readonly D1Result<unknown>[]): D1R
       },
     })),
     requirements: lineRows.map((row) => ({
-      recipeId: text(row.recipe_id), ingredientId: text(row.ingredient_id), name: text(row.name),
+      id: text(row.id), recipeId: text(row.recipe_id), ingredientId: text(row.ingredient_id), name: text(row.name),
       requiredQuantity: num(row.required_quantity), unit: text(row.unit),
       isOptional: row.is_optional === 1 || row.is_optional === true,
     })),
@@ -77,6 +85,13 @@ export function mapRecipeContentRead(results: readonly D1Result<unknown>[]): D1R
       tip: textOrNull(row.tip), timerMinutes: numOrNull(row.timer_minutes),
     })),
     nutritionRecipeIds: nutritionRows.map((row) => text(row.recipe_id)),
+    runtimeFields: runtimeFieldRows.map((row) => ({
+      recipeId: text(row.recipe_id), category: textOrNull(row.category), region: textOrNull(row.region),
+      legacyNutrition: row.legacy_calories === null || row.legacy_calories === undefined ? null : {
+        calories: num(row.legacy_calories), proteinG: num(row.legacy_protein_g),
+        fatG: num(row.legacy_fat_g), carbG: num(row.legacy_carb_g),
+      },
+    })),
   };
 }
 

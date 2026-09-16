@@ -7,6 +7,8 @@ export * from './runtime-recipe';
 export * from './catalog-entry';
 export * from './catalog-drift';
 export * from './seed-render';
+export * from './runtime-hydration';
+export * from './runtime-catalog';
 export * from './requirements';
 export * from './substitutions';
 export * from './families';
