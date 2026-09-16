@@ -1,6 +1,15 @@
 # Frigo Project Status
 
-## T14B-B — D1 recipe catalog parity & shadow foundation — REMEDIATED, READY FOR REVIEW (2026-09-16)
+## T14B-B — MERGED TO MAIN; production rollout blocked by existing OPS secret (2026-09-16)
+
+PR #14 merged into canonical main as `c7455160bfc8d279d38bc7ca4c0751542012a3c5` with exact-head main
+CI green and fresh local gates green. Migration 0034 is in the repository ledger but **not yet applied
+to production D1**, and the production Worker still serves the pre-T14B-B lineage: the automatic Deploy
+fails at the staging step for the known missing `CLOUDFLARE_API_TOKEN` (OPS, not code). Static
+`ALL_RECIPES` remains the production recipe authority. T14C has not started.
+Receipt: `docs/ai/recipe-catalog/T14B_B_MERGE_RECEIPT.md`.
+
+## T14B-B — D1 recipe catalog parity & shadow foundation — merged (details, 2026-09-16)
 
 From canonical main `c1c1c14a…`, migration `0034` brings the persisted catalog to the full
 71-recipe runtime set (12 globals added under stable IDs; persisted canonical `runtime_order`,

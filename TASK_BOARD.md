@@ -1,4 +1,11 @@
-## T14B-B — D1 CATALOG PARITY & SHADOW FOUNDATION — 2026-09-16 (REMEDIATED, READY FOR REVIEW)
+## T14B-B — MERGED TO MAIN 2026-09-16; PRODUCTION ROLLOUT BLOCKED (OPS SECRET)
+
+- PR #14 merged as `c7455160`; main CI green; fresh main gates green (157 files / 3704 tests).
+- Blocked on OPS: production D1 0034 apply + Cloudflare deploy secrets (`CLOUDFLARE_API_TOKEN` missing
+  in GitHub staging env; Deploy run 35073197948 failed there). Production app unchanged.
+- T14C not started. Receipt: `docs/ai/recipe-catalog/T14B_B_MERGE_RECEIPT.md`.
+
+## T14B-B — D1 CATALOG PARITY & SHADOW FOUNDATION — 2026-09-16 (merged; details)
 
 - Migration `0034_global_recipe_catalog_parity.sql`: 12 global recipes persisted, D1 = 71
   complete, `recipe_runtime_fields` (persisted `runtime_order`, typed open `category`, closed

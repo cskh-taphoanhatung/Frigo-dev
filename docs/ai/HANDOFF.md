@@ -1,6 +1,19 @@
 # Frigo / Takosan current handoff — 2026-09-15
 
-## Current handoff — T14B-B remediation FINAL (review-ready, not merged), 2026-09-16
+## Current handoff — T14B-B MERGED to main; production rollout blocked by existing OPS secret, 2026-09-16
+
+- PR #14 (head `004e5a32`) merged into `main` as `c7455160bfc8d279d38bc7ca4c0751542012a3c5` (normal
+  merge commit; PR content byte-identical in main). Main CI `validate` SUCCESS (run 35072991882);
+  fresh main gates: typecheck, lint, seed check, `migration-smoke=ok`, build, 157 files / 3704 tests.
+- Production D1 (`frigo-db`, `f975ec39-…`) still needs 0034 applied by an operator with Cloudflare
+  credentials (none available here); the auto Deploy run 35073197948 failed at "Deploy to Cloudflare
+  staging" with `CLOUDFLARE_API_TOKEN` missing — the known OPS blocker. Production application is
+  unchanged (pre-T14B-B lineage). Read-only prod probe healthy (71 static recipes served).
+- Status: `T14B_B_ROLLOUT_BLOCKED`; T14C NOT started (no handoff written until rollout closes).
+  Receipt: `recipe-catalog/T14B_B_MERGE_RECEIPT.md`. Next: operator applies 0034 remotely, verifies
+  ledger/counts/integrity, sets the staging/production Cloudflare secrets, dispatches Deploy.
+
+## Historical — T14B-B remediation FINAL (review-ready), 2026-09-16
 
 - Continued from safe checkpoint `d9130b69…` (hosted validate SUCCESS run 35053041994, now
   historical). Commit A `19b144a5` rewrites `tests/integration/recipe-d1-runtime-parity.test.ts`

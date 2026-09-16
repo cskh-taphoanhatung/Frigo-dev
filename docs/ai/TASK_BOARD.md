@@ -1,6 +1,17 @@
 # Frigo / Takosan current task board — 2026-09-15
 
-## T14B-B remediation — FINAL 2026-09-16 (PR #14 review-ready, NOT merged)
+## T14B-B — MERGED 2026-09-16; production rollout BLOCKED (existing OPS secret)
+
+- [done] PR #14 merged → main `c7455160bfc8d279d38bc7ca4c0751542012a3c5`; main CI validate SUCCESS
+  (run 35072991882); fresh main gates green (157 files / 3704 tests). Receipt:
+  `recipe-catalog/T14B_B_MERGE_RECEIPT.md`.
+- [blocked-OPS] Apply 0034 to production `frigo-db` (`pnpm wrangler d1 migrations apply frigo-db
+  --remote` after ledger read + backup), verify 71/71/385 + integrity; set `CLOUDFLARE_API_TOKEN` /
+  `CLOUDFLARE_ACCOUNT_ID` in the GitHub staging/production environments; dispatch Deploy. Auto
+  Deploy run 35073197948 failed on the missing staging token (not a code failure).
+- [not started] T14C handoff/implementation — only after rollout closes. T14D/T14E not started.
+
+## Historical — T14B-B remediation FINAL (review-ready)
 
 - [done, local-verified] Persisted canonical `runtime_order`; explicit ingredient positions
   (`recipe_runtime_ingredient_order`); hydrator/static catalog order parity; shadow `orderDrift`;

@@ -1,6 +1,17 @@
 # Frigo / Takosan current authority — 2026-09-15
 
-## T14B-B — D1 catalog parity, runtime view & shadow foundation — 2026-09-16 (REMEDIATED, READY FOR REVIEW)
+## T14B-B — MERGED to canonical main 2026-09-16; production rollout blocked by existing OPS secret
+
+Canonical main is now `c7455160bfc8d279d38bc7ca4c0751542012a3c5` (merge of PR #14 head `004e5a32…`
+onto `c1c1c14a…`; normal merge commit; exact-head main `validate` SUCCESS run 35072991882; fresh
+main gates green, 157 files / 3704 tests). Production D1 `frigo-db` has **not** yet received 0034 and
+the production Worker still runs the pre-T14B-B lineage: the automatic Deploy (run 35073197948)
+failed at the staging step because `CLOUDFLARE_API_TOKEN` is not configured in the GitHub `staging`
+environment (`T14B_B_PRODUCTION_DEPLOY_BLOCKED_BY_EXISTING_OPS_SECRET`), and this session had no
+Cloudflare credentials to apply the migration. Status `T14B_B_ROLLOUT_BLOCKED`; T14C not started.
+Receipt: `recipe-catalog/T14B_B_MERGE_RECEIPT.md`.
+
+## T14B-B — D1 catalog parity, runtime view & shadow foundation — 2026-09-16 (merged; details)
 
 Branch from exact canonical main `c1c1c14a2a7dccc883f1030d0dee7043754fb4a9` (repository
 `vn-clo/Frigo-dev`, ID `1368281478`, protected). Migration
