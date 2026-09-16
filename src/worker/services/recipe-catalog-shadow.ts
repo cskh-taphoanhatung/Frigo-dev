@@ -37,6 +37,7 @@ export function resolveRecipeCatalogMode(value: unknown): RecipeCatalogMode {
 
 export type RecipeCatalogShadowOutcome =
   | { status: 'skipped'; mode: 'static' }
+  | { status: 'throttled'; mode: 'shadow'; nextEligibleInMs: number }
   | { status: 'compared'; mode: 'shadow'; diagnostics: RecipeCatalogShadowDiagnostics }
   | { status: 'shadow_error'; mode: 'shadow'; error: string; lookupMs: number };
 
@@ -62,6 +63,29 @@ export interface RecipeCatalogShadowLogRecord {
 }
 
 const SAMPLE_LIMIT = 10;
+
+/**
+ * Cost bound: at most one full catalog read + comparison per isolate per interval. The catalog
+ * changes only by migration, so comparing it on every request would be pure waste; one sample
+ * per minute per isolate is enough to observe drift, and with 5,000 recipes that is still one
+ * five-statement batch, not 5,000×N requests.
+ */
+export const DEFAULT_RECIPE_CATALOG_SHADOW_INTERVAL_MS = 60_000;
+export const MIN_RECIPE_CATALOG_SHADOW_INTERVAL_MS = 1_000;
+export const MAX_RECIPE_CATALOG_SHADOW_INTERVAL_MS = 24 * 60 * 60 * 1000;
+let lastShadowStartedAt: number | null = null;
+
+export function resolveRecipeCatalogShadowIntervalMs(value: unknown): number {
+  if (value === undefined || value === null || value === '') return DEFAULT_RECIPE_CATALOG_SHADOW_INTERVAL_MS;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return DEFAULT_RECIPE_CATALOG_SHADOW_INTERVAL_MS;
+  return Math.min(MAX_RECIPE_CATALOG_SHADOW_INTERVAL_MS, Math.max(MIN_RECIPE_CATALOG_SHADOW_INTERVAL_MS, Math.floor(parsed)));
+}
+
+/** Test seam: forget the isolate's last shadow run. */
+export function resetRecipeCatalogShadowThrottle(): void {
+  lastShadowStartedAt = null;
+}
 
 /** Runs the shadow comparison once for a request scope; safe to call from `waitUntil`. */
 export async function runRecipeCatalogShadow(
@@ -112,15 +136,27 @@ export function toRecipeCatalogShadowLogRecord(outcome: RecipeCatalogShadowOutco
   };
 }
 
+/** Throttle decision for the current isolate; records the start time when a run is admitted. */
+export function admitRecipeCatalogShadowRun(intervalMs: number, now: () => number = () => Date.now()): { admitted: true } | { admitted: false; nextEligibleInMs: number } {
+  const current = now();
+  if (lastShadowStartedAt !== null && current - lastShadowStartedAt < intervalMs) {
+    return { admitted: false, nextEligibleInMs: intervalMs - (current - lastShadowStartedAt) };
+  }
+  lastShadowStartedAt = current;
+  return { admitted: true };
+}
+
 /**
- * Schedules the shadow comparison off the response path when the mode is `shadow`. The
- * response is never awaited on it; without an executor (tests/local) the promise is simply
- * returned so callers can await it explicitly.
+ * Schedules the shadow comparison off the response path when the mode is `shadow`, at most once
+ * per `RECIPE_CATALOG_SHADOW_INTERVAL_MS` per isolate (throttled requests return `throttled`
+ * without touching D1 and without logging). The response is never awaited on it; without an
+ * executor (tests/local) the promise is simply returned so callers can await it explicitly.
  */
 export function scheduleRecipeCatalogShadow(
-  env: { DB?: D1DatabaseBinding; RECIPE_CATALOG_MODE?: string },
+  env: { DB?: D1DatabaseBinding; RECIPE_CATALOG_MODE?: string; RECIPE_CATALOG_SHADOW_INTERVAL_MS?: string },
   backgroundExecutor?: (task: Promise<unknown>) => void,
   log: (record: RecipeCatalogShadowLogRecord) => void = (record) => console.log(JSON.stringify(record)),
+  now: () => number = () => Date.now(),
 ): Promise<RecipeCatalogShadowOutcome> | null {
   let mode: RecipeCatalogMode;
   try {
@@ -132,7 +168,9 @@ export function scheduleRecipeCatalogShadow(
     return Promise.resolve(outcome);
   }
   if (mode === 'static') return null;
-  const task = runRecipeCatalogShadow(env.DB, mode).then((outcome) => {
+  const admission = admitRecipeCatalogShadowRun(resolveRecipeCatalogShadowIntervalMs(env.RECIPE_CATALOG_SHADOW_INTERVAL_MS), now);
+  if (!admission.admitted) return Promise.resolve({ status: 'throttled', mode, nextEligibleInMs: admission.nextEligibleInMs });
+  const task = runRecipeCatalogShadow(env.DB, mode, now).then((outcome) => {
     log(toRecipeCatalogShadowLogRecord(outcome));
     return outcome;
   });

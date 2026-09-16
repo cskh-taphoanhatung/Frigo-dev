@@ -3,8 +3,13 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { validateEnvironment } from '../../src/worker/config/validation';
 import {
+  DEFAULT_RECIPE_CATALOG_SHADOW_INTERVAL_MS,
+  MAX_RECIPE_CATALOG_SHADOW_INTERVAL_MS,
+  MIN_RECIPE_CATALOG_SHADOW_INTERVAL_MS,
   RecipeCatalogModeError,
+  resetRecipeCatalogShadowThrottle,
   resolveRecipeCatalogMode,
+  resolveRecipeCatalogShadowIntervalMs,
   runRecipeCatalogShadow,
   scheduleRecipeCatalogShadow,
   toRecipeCatalogShadowLogRecord,
@@ -68,7 +73,33 @@ describe('recipe catalog authority stays static (T14B-B)', () => {
     expect(read('wrangler.jsonc')).not.toMatch(/RECIPE_CATALOG_MODE/);
   });
 
+  it('bounds shadow cost: one comparison per isolate per interval, default 60s, clamped configuration', async () => {
+    expect(resolveRecipeCatalogShadowIntervalMs(undefined)).toBe(DEFAULT_RECIPE_CATALOG_SHADOW_INTERVAL_MS);
+    expect(resolveRecipeCatalogShadowIntervalMs('abc')).toBe(DEFAULT_RECIPE_CATALOG_SHADOW_INTERVAL_MS);
+    expect(resolveRecipeCatalogShadowIntervalMs('0')).toBe(MIN_RECIPE_CATALOG_SHADOW_INTERVAL_MS);
+    expect(resolveRecipeCatalogShadowIntervalMs('999999999999')).toBe(MAX_RECIPE_CATALOG_SHADOW_INTERVAL_MS);
+    expect(resolveRecipeCatalogShadowIntervalMs('5000')).toBe(5000);
+
+    resetRecipeCatalogShadowThrottle();
+    let clock = 1_000_000;
+    const now = () => clock;
+    const records: unknown[] = [];
+    const env = { DB: undefined, RECIPE_CATALOG_MODE: 'shadow', RECIPE_CATALOG_SHADOW_INTERVAL_MS: '5000' };
+    const first = await scheduleRecipeCatalogShadow(env, undefined, (record) => records.push(record), now);
+    expect(first?.status).toBe('shadow_error');
+    clock += 100;
+    const second = await scheduleRecipeCatalogShadow(env, undefined, (record) => records.push(record), now);
+    expect(second).toEqual({ status: 'throttled', mode: 'shadow', nextEligibleInMs: 4900 });
+    expect(records).toHaveLength(1);
+    clock += 5000;
+    const third = await scheduleRecipeCatalogShadow(env, undefined, (record) => records.push(record), now);
+    expect(third?.status).toBe('shadow_error');
+    expect(records).toHaveLength(2);
+    resetRecipeCatalogShadowThrottle();
+  });
+
   it('static mode schedules nothing; shadow without a D1 binding is a recorded shadow_error, never a static success', async () => {
+    resetRecipeCatalogShadowThrottle();
     expect(scheduleRecipeCatalogShadow({ DB: undefined, RECIPE_CATALOG_MODE: undefined }, undefined, () => { throw new Error('must not log'); })).toBeNull();
     expect(await runRecipeCatalogShadow(undefined, 'static')).toEqual({ status: 'skipped', mode: 'static' });
     const outcome = await runRecipeCatalogShadow(undefined, 'shadow', () => 5);
@@ -82,6 +113,7 @@ describe('recipe catalog authority stays static (T14B-B)', () => {
     await task;
     expect(scheduled).toHaveLength(1);
     expect(records).toHaveLength(1);
+    resetRecipeCatalogShadowThrottle();
     const unknownMode = await scheduleRecipeCatalogShadow({ DB: undefined, RECIPE_CATALOG_MODE: 'd1' }, undefined, (record) => records.push(record));
     expect(unknownMode).toMatchObject({ status: 'shadow_error', error: 'RecipeCatalogModeError' });
   });

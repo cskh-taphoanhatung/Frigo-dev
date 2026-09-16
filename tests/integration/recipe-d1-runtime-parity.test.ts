@@ -11,6 +11,7 @@ import { hydrateRuntimeRecipes } from '../../packages/recipes/src/runtime-hydrat
 import type { Recipe, RecipeScoringContext } from '../../packages/recipes/src/types';
 import { authMiddleware } from '../../src/worker/middleware/auth';
 import { recipeRoutes } from '../../src/worker/routes/recipes';
+import { resetRecipeCatalogShadowThrottle } from '../../src/worker/services/recipe-catalog-shadow';
 import type { AuthContext, Env } from '../../src/worker/types';
 import { signJwt } from '../../src/worker/utils/jwt';
 import { SqliteD1 } from '../helpers/sqlite-d1';
@@ -163,6 +164,7 @@ describe('T14B-B — cooking boundary with hydrated recipes (legacy inventory au
         ('p-pineapple', '${HOUSEHOLD}', 'PINEAPPLE', 'Dứa', 3, 'piece', 'fruit', 'fridge', 'fresh', 'manual');`);
     token = await signJwt({ sub: USER, hid: HOUSEHOLD, typ: 'access', exp: Math.floor(Date.now() / 1000) + 3600 }, secret);
     logs.length = 0;
+    resetRecipeCatalogShadowThrottle();
     console.log = (line?: unknown) => { logs.push(String(line)); };
   });
   afterEach(() => { console.log = originalLog; db.close(); });
@@ -229,6 +231,13 @@ describe('T14B-B — cooking boundary with hydrated recipes (legacy inventory au
     });
     expect(typeof records[0].catalog_lookup_ms).toBe('number');
     expect(JSON.stringify(records[0])).not.toMatch(/Trứng|p-eggs|parity-house/);
+
+    // Cost bound: a second shadow request inside the interval touches neither D1 nor the log.
+    const throttled = await request('GET', '/recipes?cuisine=korean', undefined, {}, { RECIPE_CATALOG_MODE: 'shadow' });
+    expect(throttled.json).toEqual(base.json);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(logs.filter((line) => line.includes('recipe_catalog_shadow'))).toHaveLength(1);
+    resetRecipeCatalogShadowThrottle();
 
     // D1 failure in shadow mode is observable, never a static "success", and never a user-visible error.
     const broken = { prepare: () => { throw new Error('boom'); }, batch: () => { throw new Error('boom'); } } as unknown as Env['DB'];

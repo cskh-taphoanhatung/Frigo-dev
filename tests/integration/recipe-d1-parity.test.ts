@@ -218,6 +218,7 @@ describe('T14B-B — D1 → RuntimeRecipe hydration parity', () => {
         // Malformed content: servings 0 fails the foundation contract → rejected.
         { ...pick('gl-02'), id: 'bad-servings', slug: 'bad-servings', servings: 0 },
         { ...pick('gl-03'), id: 'no-steps', slug: 'no-steps' },
+        { ...pick('gl-03'), id: 'blank-description', slug: 'blank-description', description: '   ' },
         { ...pick('gl-04'), id: 'no-media', slug: 'no-media', imageUrl: null },
         { ...pick('gl-05'), id: 'no-fields', slug: 'no-fields' },
         { ...pick('vn-canh-01'), id: 'marker-conflict', slug: 'marker-conflict' },
@@ -233,6 +234,7 @@ describe('T14B-B — D1 → RuntimeRecipe hydration parity', () => {
       requirements: [
         ...lines('gl-02').map((line) => ({ ...line, recipeId: 'bad-servings' })),
         ...lines('gl-03').map((line) => ({ ...line, recipeId: 'no-steps' })),
+        ...lines('gl-03').map((line) => ({ ...line, recipeId: 'blank-description' })),
         ...lines('gl-04').map((line) => ({ ...line, recipeId: 'no-media' })),
         ...lines('gl-05').map((line) => ({ ...line, recipeId: 'no-fields' })),
         ...lines('vn-canh-01').map((line) => ({ ...line, recipeId: 'marker-conflict' })),
@@ -246,6 +248,7 @@ describe('T14B-B — D1 → RuntimeRecipe hydration parity', () => {
       ],
       steps: [
         ...steps('gl-02').map((step) => ({ ...step, recipeId: 'bad-servings' })),
+        ...steps('gl-03').map((step) => ({ ...step, recipeId: 'blank-description' })),
         ...steps('gl-04').map((step) => ({ ...step, recipeId: 'no-media' })),
         ...steps('gl-05').map((step) => ({ ...step, recipeId: 'no-fields' })),
         ...steps('vn-canh-01').map((step) => ({ ...step, recipeId: 'marker-conflict' })),
@@ -262,6 +265,7 @@ describe('T14B-B — D1 → RuntimeRecipe hydration parity', () => {
         { ...fields('gl-01'), recipeId: 'stub-01' },
         { ...fields('gl-02'), recipeId: 'bad-servings' },
         { ...fields('gl-03'), recipeId: 'no-steps' },
+        { ...fields('gl-03'), recipeId: 'blank-description' },
         { ...fields('gl-04'), recipeId: 'no-media' },
         // Typed row says region 'bac' while the 0006 tag marker still says 'nam' → conflict, not a silent pick.
         { ...fields('vn-canh-01'), recipeId: 'marker-conflict', region: 'bac' },
@@ -282,6 +286,7 @@ describe('T14B-B — D1 → RuntimeRecipe hydration parity', () => {
       ['bad-region', 'invalid_region'],
       ['bad-servings', 'rejected_entry'],
       ['bad-unit', 'rejected_entry'],
+      ['blank-description', 'incomplete_entry'],
       ['dup', 'duplicate_recipe_id'],
       ['dup-step', 'duplicate_step_number'],
       ['dup-tag', 'invalid_tags'],
@@ -299,7 +304,7 @@ describe('T14B-B — D1 → RuntimeRecipe hydration parity', () => {
     expect(synthetic.recipes.find((row) => row.id === 'stub-01')?.description).toBeNull();
     // Shadow diagnostics surface the failures without inventing recipes.
     const diagnostics = compareRuntimeCatalogs(GLOBAL_RECIPES, synthetic);
-    expect(diagnostics.hydrationFailureCount).toBe(12);
+    expect(diagnostics.hydrationFailureCount).toBe(13);
     expect(diagnostics.staticOnly).toEqual(GLOBAL_IDS.filter((id) => id !== 'gl-12'));
   });
 

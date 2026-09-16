@@ -109,6 +109,9 @@ export function hydrateRuntimeRecipes(snapshot: D1RecipeContentSnapshot): Runtim
 
     const fields = runtimeFieldsByRecipe.get(row.id);
     if (!fields) { fail(row.id, 'missing_runtime_fields', ['no_recipe_runtime_fields_row']); continue; }
+    // classifyCatalogEntry already treats a missing/blank description as incomplete; re-check here so
+    // the runtime candidate is never built from a defaulted value.
+    if (row.description === null || row.description.trim().length === 0) { fail(row.id, 'incomplete_entry', ['no_description']); continue; }
     if (row.imageUrl === null || row.imageUrl.length === 0) { fail(row.id, 'missing_media_compatibility', ['image_url_null']); continue; }
     if (row.tags === null) { fail(row.id, 'invalid_tags', ['tags_not_json_string_array']); continue; }
     if (new Set(row.tags).size !== row.tags.length) { fail(row.id, 'invalid_tags', ['duplicate_tag']); continue; }
@@ -128,7 +131,7 @@ export function hydrateRuntimeRecipes(snapshot: D1RecipeContentSnapshot): Runtim
     if (new Set(stepNumbers).size !== stepNumbers.length) { fail(row.id, 'duplicate_step_number', ['duplicate_step_number']); continue; }
 
     const candidate: Record<string, unknown> = {
-      id: row.id, slug: row.slug, title: row.title, description: row.description ?? '', cuisine: row.cuisine,
+      id: row.id, slug: row.slug, title: row.title, description: row.description, cuisine: row.cuisine,
       cookTimeMinutes: row.cookTimeMinutes, servings: row.servings, difficulty: row.difficulty,
       // LEGACY_MEDIA_COMPATIBILITY_ONLY — recipes.image_url mirrors the static reference; media authority is T14C.
       imageUrl: row.imageUrl,

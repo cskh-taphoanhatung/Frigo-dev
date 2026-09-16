@@ -25,8 +25,9 @@ foundation `RecipeDefinition` omits `category`, `region`, `imageUrl`, `nutrition
    conflict, unknown region/cuisine, duplicate IDs/step numbers); it never defaults or
    fabricates. `StaticRuntimeRecipeCatalog` and `D1RuntimeRecipeCatalog` share one interface.
 4. `RECIPE_CATALOG_MODE` is `static` (default) or `shadow`; there is no `d1` value. Shadow runs
-   an off-response, request-scoped D1 comparison and emits one PII-free diagnostic; D1 failure is a
-   recorded `shadow_error`. Production configuration rejects any non-static value.
+   an off-response D1 comparison at most once per isolate per
+   `RECIPE_CATALOG_SHADOW_INTERVAL_MS` (default 60 s) and emits one PII-free diagnostic; D1
+   failure is a recorded `shadow_error`. Production configuration rejects any non-static value.
 5. Historical Week slot snapshots (full recipe payloads) remain authoritative for historical
    plans; D1 never re-interprets them (`SNAPSHOT_POLICY=IMMUTABLE_PAYLOAD_AUTHORITATIVE`).
 

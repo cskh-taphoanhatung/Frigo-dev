@@ -16,8 +16,9 @@ classification `typed_runtime_field`. Migrations `0001–0033` are hash-identica
 `compareRuntimeCatalogs` give a D1 runtime view that is `toStrictEqual` to all 71 static
 recipes; recommendation, planner generate/regenerate/swap and cooking (`gl-03`, `vn-canh-01`)
 are proved identical on the hydrated view. **User-visible authority remains `ALL_RECIPES`.**
-`RECIPE_CATALOG_MODE` = `static` (default) | `shadow` (off-response comparison + PII-free
-diagnostic); no `d1` mode exists; production config rejects non-static.
+`RECIPE_CATALOG_MODE` = `static` (default) | `shadow` (off-response comparison, at most one per
+isolate per `RECIPE_CATALOG_SHADOW_INTERVAL_MS`, PII-free diagnostic); no `d1` mode exists;
+production config rejects non-static.
 `SNAPSHOT_POLICY=IMMUTABLE_PAYLOAD_AUTHORITATIVE`; media `DEFERRED_TO_T14C`; cuisine taxonomy
 deferred; Inventory Truth, Qwen, PayOS untouched; no production D1/deploy. Details and
 evidence: `recipe-catalog/T14B_B_D1_PARITY_SHADOW.md`, ADR-024. Hosted exact-head CI: pending PR.

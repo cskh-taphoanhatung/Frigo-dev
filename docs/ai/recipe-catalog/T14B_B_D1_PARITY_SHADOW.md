@@ -102,7 +102,8 @@ compareRuntimeCatalogs(static, snapshot)   → RecipeCatalogShadowDiagnostics (I
 ```
 
 Fail-closed codes: `fk_stub`, `rejected_entry` (foundation contract: bad servings, unknown
-unit, non-canonical ingredient…), `incomplete_entry` (no description/steps),
+unit, non-canonical ingredient…), `incomplete_entry` (NULL/blank description, no steps — the
+description is re-checked before assembly so no value is ever defaulted),
 `missing_runtime_fields`, `missing_media_compatibility`, `invalid_tags`,
 `legacy_marker_conflict`, `invalid_region`, `invalid_cuisine`, `duplicate_recipe_id` (both
 rows fail), `duplicate_step_number`, `runtime_contract_violation` (`RuntimeRecipeSchema.strict()`).
@@ -117,9 +118,11 @@ production config gate (`src/worker/config/validation.ts`) fails closed with
 `CONFIG_RECIPE_CATALOG_MODE` for anything but `static`. `wrangler.jsonc` does not set the var.
 
 In `shadow`, `GET /recipes` and `GET /recommendations` (`src/worker/routes/recipes.ts`) still
-answer from `ALL_RECIPES`; `scheduleRecipeCatalogShadow` runs once per request via
-`executionCtx.waitUntil` (detached, never awaited by the response), reads the snapshot once,
-hydrates, compares and logs one PII-free JSON record
+answer from `ALL_RECIPES`; `scheduleRecipeCatalogShadow` is invoked per request but **admits at
+most one comparison per isolate per `RECIPE_CATALOG_SHADOW_INTERVAL_MS`** (default 60 000 ms,
+clamped to 1 s–24 h; throttled requests return `throttled` and touch neither D1 nor the log).
+An admitted run executes via `executionCtx.waitUntil` (detached, never awaited by the response),
+reads the snapshot once, hydrates, compares and logs one PII-free JSON record
 (`event=recipe_catalog_shadow`, `catalog_source`, `catalog_mode`, `catalog_static_count`,
 `catalog_d1_count`, `catalog_complete_count`, `catalog_hydrated_count`,
 `catalog_static_only_count`, `catalog_d1_only_count`, `catalog_drift_count`,
@@ -193,7 +196,8 @@ screens lose offline behaviour; documented here, not built.
   `gl-11` missing asset, CSP: untouched.
 - Inventory Truth: T09 writer / T11 reader authority unchanged; the only files touched under
   `src/worker/routes/recipes.ts` add the off-response shadow hook (no SQL change); no
-  `packages/db/src/inventory-*` change.
+  `packages/db/src/inventory-*` change. `tests/integration/inventory-truth.test.ts` no longer
+  pins the ledger tip (it asserts 0033 is applied); ledger length/tip live in the migration suites.
 - Qwen/AI, PayOS, DNS, secrets, PR #4: untouched. No production D1 migration, Worker deploy or
   resource mutation; local SQLite only.
 
@@ -204,7 +208,8 @@ screens lose offline behaviour; documented here, not built.
 | 1 — 0034 parity migration, renderer, smoke/gate, ledger tests | `724ed3fb0065c2e164a03458895c1ca1eae2e94d` |
 | 2 — hydrator, runtime catalog, drift audit typed fields, shadow service, config gate | `550eef0dda7448bf3e49dcedefd3560549a1a712` |
 | 3 — parity/fail-closed/planner/recommendation/cooking/authority tests | `a210c72fb936a3b92a339cba174e1eab8e3ad972` |
-| 4 — docs/ADR-024 | recorded in `HANDOFF.md` / PR after commit |
+| 4 — docs/ADR-024 | `330add8bae0d82391e1a58a87a9b4eff1008113b` |
+| 5 — review fixes: per-isolate shadow interval bound, no description default, Inventory Truth test decoupled from ledger tip | recorded in PR #14 after commit |
 
 ## 13. Remaining work (not started)
 
