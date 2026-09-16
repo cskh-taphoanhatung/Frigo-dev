@@ -1,9 +1,17 @@
-## T14B-B — MERGED TO MAIN 2026-09-16; PRODUCTION ROLLOUT BLOCKED (OPS SECRET)
+## T14B-B — COMPLETE 2026-09-16 (D1 0034 in production; Worker `56979cb5-…` = main `4ed98514…`)
+
+- Ledger 33→34 after backup; catalog certified; schema gate PASS; Deploy 35101845374 (staging) and
+  35102115354 (production) SUCCESS; smoke green. Details: `docs/ai/recipe-catalog/T14B_B_FINAL_COMPLETION.md`.
+- T14C ready to start (`docs/ai/recipe-catalog/T14C_HANDOFF.md`, branch `feat/t14c-recipe-media-layer`).
+
+## T14B-B — MERGED TO MAIN 2026-09-16; PRODUCTION ROLLOUT BLOCKED (OPS SECRET) — historical
 
 - PR #14 merged as `c7455160`; main CI green; fresh main gates green (157 files / 3704 tests).
 - Blocked on OPS: production D1 0034 apply + Cloudflare deploy secrets (`CLOUDFLARE_API_TOKEN` missing
   in GitHub staging env; Deploy run 35073197948 failed there). Production app unchanged.
 - T14C not started. Receipt: `docs/ai/recipe-catalog/T14B_B_MERGE_RECEIPT.md`.
+
+## T14B-B — MERGED TO MAIN 2026-09-16; PRODUCTION ROLLOUT BLOCKED (OPS SECRET)
 
 ## T14B-B — D1 CATALOG PARITY & SHADOW FOUNDATION — 2026-09-16 (merged; details)
 

@@ -1,5 +1,15 @@
 # Frigo / Takosan current task board — 2026-09-15
 
+## T14B-B — COMPLETE 2026-09-16 (production D1 0034 applied; Worker deployed)
+
+- [done] Cloudflare identity verified (account `ef250a88…0218`, D1 `frigo-db` `f975ec39-…`); ledger 33→34;
+  backup exported (SHA-256 `ab082dd4…343c`); `0034` applied; catalog/ordinal/integrity/schema-gate certified.
+- [done] GitHub env secrets `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID` (staging+production), production
+  required reviewer, `STAGING_URL`/`PRODUCTION_URL` vars; Deploy runs 35101845374 (staging) and
+  35102115354 (production) SUCCESS; Worker `56979cb5-…` serves `4ed98514…`; smoke green.
+- [not started] T14C recipe media layer — handoff `recipe-catalog/T14C_HANDOFF.md`; branch
+  `feat/t14c-recipe-media-layer` from the frozen `T14C_CANONICAL_BASE_MAIN`. T14D/T14E not started.
+
 ## T14B-B — MERGED 2026-09-16; production rollout BLOCKED (existing OPS secret)
 
 - [done] PR #14 merged → main `c7455160bfc8d279d38bc7ca4c0751542012a3c5`; main CI validate SUCCESS
