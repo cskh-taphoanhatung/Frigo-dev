@@ -1,5 +1,29 @@
 # Frigo / Takosan current handoff — 2026-09-15
 
+## Current handoff — T14B-B D1 parity & shadow, 2026-09-16
+
+- Task: T14B-B (D1 catalog parity, runtime view, shadow foundation). NOT the authority cutover.
+- Repository: `vn-clo/Frigo-dev`, ID `1368281478`; start main `c1c1c14a2a7dccc883f1030d0dee7043754fb4a9`.
+- Branch: `hoplite/poteidaia-c88481ca-integrate-t14b-a-current-main-t14-canonical-merge-receipt-t14b-b-d1-recipe-parity-shadow`.
+  Commits: `724ed3fb` (0034 + renderer + smoke/gate), `550eef0d` (hydrator, runtime catalog,
+  drift typed fields, shadow service, config gate), `a210c72f` (parity/fail-closed/planner/
+  recommendation/cooking/authority tests), then this docs/ADR-024 checkpoint.
+- Migration: `0034_global_recipe_catalog_parity.sql`; `0001–0033` hash drift NONE; fresh replay
+  and populated-0033 upgrade (FK stub + cooked meal) pass in tests and `pnpm check:migrations`.
+- Checks executed (this head): `pnpm install --frozen-lockfile`, `pnpm recipe:seed:check` (0006 +
+  0034 ok), `pnpm typecheck`, `pnpm lint`, `pnpm check:migrations` (`migration-smoke=ok`),
+  `pnpm build`, `pnpm test` → **157 files / 3696 tests passed**, `git diff --check` clean.
+  Focused: `recipe-d1-parity` 10/10, `recipe-d1-runtime-parity` 6/6, `recipe-catalog-authority`
+  4/4, `recipe-catalog-safety` 6/6. Remote schema gate not run (no credentials; not required).
+- Truth: static 71 (59+12); D1 71 complete, staticOnly `[]`, d1Only `[]`, all drift `[]`;
+  nutrition `legacy_compatibility`; category/region `typed_runtime_field`; media legacy compat only.
+- Authority: `ALL_RECIPES` on every route/web/planner path (static guard test); shadow mode is
+  opt-in, off-response, production-rejected; no `d1` mode.
+- Not done / deferred: T14C media, T14D cutover, T14E bulk import; PR #4 untouched
+  (`CLOSE_ARCHIVE` recommended); Deploy staging token blocker remains an OPS issue.
+- Next action: open PR against `main`, obtain exact-head hosted `validate`, review ADR-024 and
+  `recipe-catalog/T14B_B_D1_PARITY_SHADOW.md`. Do not enable shadow in production or deploy.
+
 ## Current handoff — T14 integration refresh, 2026-09-15 UTC
 
 - Task: reconcile T14A then accepted T14B-A; no redesign or T14B-B.

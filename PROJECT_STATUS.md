@@ -1,5 +1,14 @@
 # Frigo Project Status
 
+## T14B-B — D1 recipe catalog parity & shadow foundation — READY FOR REVIEW (2026-09-16)
+
+From canonical main `c1c1c14a…`, migration `0034` brings the persisted catalog to the full
+71-recipe runtime set (12 globals added under stable IDs; typed category/region and legacy
+nutrition compatibility in `recipe_runtime_fields`). A fail-closed hydrator rebuilds the exact
+`RuntimeRecipe` from D1 and a static-default shadow mode can compare both without changing any
+response. Static `ALL_RECIPES` stays the production authority; no deploy or production D1
+change. Full local gates pass (157 files / 3696 tests). Hosted exact-head CI pending PR.
+
 ## Current canonical / production status — 2026-09-15 UTC
 
 Canonical `vn-clo/Frigo-dev` (ID `1368281478`) main before this docs-only receipt

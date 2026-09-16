@@ -1,5 +1,46 @@
 # Architecture Decisions
 
+## ADR-024 — Typed runtime fields, fail-closed D1 hydration and static-default shadow mode (T14B-B)
+
+**Status:** Accepted 2026-09-16 (T14B-B parity/shadow foundation; no authority change)
+
+**Context:** T14B-A proved D1 held 59 complete recipes while runtime served 71, and that the
+foundation `RecipeDefinition` omits `category`, `region`, `imageUrl`, `nutrition`, `steps`,
+`tags`. 0006 smuggled category/region into `recipes.tags` as `cat:`/`region:` markers.
+
+**Decision:**
+1. Migration `0034_global_recipe_catalog_parity.sql` (rendered by the pure
+   `renderGlobalRecipeParitySql`, checked by `pnpm recipe:seed:check`) seeds exactly the 12
+   static-only global recipes under their stable static IDs/slugs with `ON CONFLICT DO UPDATE`
+   so an existing cooking/shopping FK anchor is upgraded in place, never duplicated or
+   re-identified. Provenance stays at the schema defaults `legacy/unverified/1`.
+2. `recipe_runtime_fields` is the typed, queryable, indexed home for runtime-only fields:
+   `category`, `region` (closed CHECK vocabulary) and `legacy_*` nutrition macros. The macros are a
+   **legacy compatibility projection**, not `nutrition_profiles` evidence (ADR-004/ADR-009 remain
+   the authoritative model). `recipes.image_url` stays `LEGACY_MEDIA_COMPATIBILITY_ONLY`
+   (media authority deferred to T14C). Category/region are never hidden in JSON or in
+   `recipe_classifications`.
+3. `hydrateRuntimeRecipes` reconstructs `RuntimeRecipe` from one five-statement read-only batch
+   and fails closed per row (FK stub, foundation-invalid, missing steps/media/fields, marker
+   conflict, unknown region/cuisine, duplicate IDs/step numbers); it never defaults or
+   fabricates. `StaticRuntimeRecipeCatalog` and `D1RuntimeRecipeCatalog` share one interface.
+4. `RECIPE_CATALOG_MODE` is `static` (default) or `shadow`; there is no `d1` value. Shadow runs
+   an off-response, request-scoped D1 comparison and emits one PII-free diagnostic; D1 failure is a
+   recorded `shadow_error`. Production configuration rejects any non-static value.
+5. Historical Week slot snapshots (full recipe payloads) remain authoritative for historical
+   plans; D1 never re-interprets them (`SNAPSHOT_POLICY=IMMUTABLE_PAYLOAD_AUTHORITATIVE`).
+
+**Rationale:** Parity must be measurable before any cutover. Typed columns keep category/region
+queryable at 5,000+ recipes without a second taxonomy; the compatibility nutrition table avoids
+inventing provenance; fail-closed hydration prevents invalid persisted state from looking like a
+recipe; a static-only production mode keeps user-visible behaviour byte-identical.
+
+**Consequences:** Drift report reaches 71/71 with `nutrition.representation=legacy_compatibility`
+and classification `typed_runtime_field`. Recommendation, planner (generate/regenerate/swap) and
+cooking paths are proved equivalent on the hydrated view but stay wired to `ALL_RECIPES`. Offline
+reads remain bundle-resident; a cutover (T14D) must provide an offline source. Cuisine taxonomy
+stays deferred (`LONG_TAIL_CUISINE_TAXONOMY_DEFERRED`) before T14E.
+
 ## ADR-023 — Runtime recipe contract, catalog completeness and immutable seeds (T14B-A)
 
 **Status:** Accepted 2026-09-15 (T14B-A safety foundation; no runtime change).

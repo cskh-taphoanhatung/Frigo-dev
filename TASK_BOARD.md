@@ -1,3 +1,13 @@
+## T14B-B — D1 CATALOG PARITY & SHADOW FOUNDATION — 2026-09-16 (READY FOR REVIEW)
+
+- Migration `0034_global_recipe_catalog_parity.sql`: 12 global recipes persisted, D1 = 71
+  complete, `recipe_runtime_fields` added; `0001–0033` unchanged.
+- D1 → `RuntimeRecipe` hydration is lossless for all 71; recommendation/planner/cooking parity
+  proved. **`ALL_RECIPES` remains production authority**; shadow mode is opt-in and
+  production-rejected. Media → T14C; cutover → T14D; bulk import → T14E.
+- Gates: lint, typecheck, build, `migration-smoke=ok`, seed check, 157 files / 3696 tests.
+- Details: `docs/ai/recipe-catalog/T14B_B_D1_PARITY_SHADOW.md`, ADR-024.
+
 ## Auth/OCR production hardening — 2026-09-16
 
 - [done] Remove the credential-less Google production fallback.

@@ -1,5 +1,27 @@
 # Frigo / Takosan current authority — 2026-09-15
 
+## T14B-B — D1 catalog parity, runtime view & shadow foundation — 2026-09-16 (READY FOR REVIEW)
+
+Branch from exact canonical main `c1c1c14a2a7dccc883f1030d0dee7043754fb4a9` (repository
+`vn-clo/Frigo-dev`, ID `1368281478`, protected). Migration
+`0034_global_recipe_catalog_parity.sql` (SHA-256 `05f868eb…4336d`) seeds the 12 static-only
+global recipes `gl-01..gl-12` under their stable IDs/slugs and adds `recipe_runtime_fields`
+(typed `category`/`region` + legacy nutrition compatibility macros). Fresh local replay:
+`recipes=71`, `recipe_ingredients=385`, `recipe_steps=341`, `recipe_runtime_fields=71`,
+`recipe_classifications=0`, `recipe_nutrition=0`; drift `staticOnly=[] d1Only=[]` and every
+core/requirement/unit/step/tag/media dimension `[]`; nutrition `legacy_compatibility`;
+classification `typed_runtime_field`. Migrations `0001–0033` are hash-identical.
+
+`hydrateRuntimeRecipes` (fail-closed) + `StaticRuntimeRecipeCatalog`/`D1RuntimeRecipeCatalog` +
+`compareRuntimeCatalogs` give a D1 runtime view that is `toStrictEqual` to all 71 static
+recipes; recommendation, planner generate/regenerate/swap and cooking (`gl-03`, `vn-canh-01`)
+are proved identical on the hydrated view. **User-visible authority remains `ALL_RECIPES`.**
+`RECIPE_CATALOG_MODE` = `static` (default) | `shadow` (off-response comparison + PII-free
+diagnostic); no `d1` mode exists; production config rejects non-static.
+`SNAPSHOT_POLICY=IMMUTABLE_PAYLOAD_AUTHORITATIVE`; media `DEFERRED_TO_T14C`; cuisine taxonomy
+deferred; Inventory Truth, Qwen, PayOS untouched; no production D1/deploy. Details and
+evidence: `recipe-catalog/T14B_B_D1_PARITY_SHADOW.md`, ADR-024. Hosted exact-head CI: pending PR.
+
 ## Current T14 integration refresh — 2026-09-15 UTC
 
 Canonical repository: `vn-clo/Frigo-dev` (ID `1368281478`). Verified main before
