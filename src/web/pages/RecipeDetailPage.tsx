@@ -10,6 +10,7 @@ import { useCookingStore } from '../stores/useCookingStore';
 import { getIngredientImage } from '../lib/ingredient-images';
 import { Clock, Users, ChefHat, Check, ShoppingBag, ArrowRight, SearchX } from 'lucide-react';
 import { clsx } from 'clsx';
+import { resolveRecipeImage, recipeImageErrorHandler } from '../lib/recipe-media';
 
 export const RecipeDetailPage: React.FC = () => {
   const { slug, id } = useParams<{ slug?: string; id?: string }>();
@@ -116,11 +117,12 @@ export const RecipeDetailPage: React.FC = () => {
       {/* Cover Image */}
       <div className="relative w-full h-56 overflow-hidden bg-slate-100">
         <img
-          src={recipe.imageUrl}
+          src={resolveRecipeImage(recipe).src}
           alt={recipe.title}
           width={448}
           height={224}
           className="w-full h-full object-cover"
+          onError={recipeImageErrorHandler(resolveRecipeImage(recipe).fallbackSrc)}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4 text-white">
           <div className="flex items-center gap-2 mb-1.5 flex-wrap">

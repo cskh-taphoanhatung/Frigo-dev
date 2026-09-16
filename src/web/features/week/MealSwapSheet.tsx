@@ -3,6 +3,7 @@ import { useWeekStore } from '../../stores/useWeekStore';
 import { X, ArrowRightLeft, Clock, Check } from 'lucide-react';
 import { clsx } from 'clsx';
 import { InlineError } from '../../components/common/AsyncState';
+import { resolveRecipeImage, recipeImageErrorHandler } from '../../lib/recipe-media';
 
 export const MealSwapSheet: React.FC = () => {
   const {
@@ -85,9 +86,11 @@ export const MealSwapSheet: React.FC = () => {
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <img
-                      src={alt.recipe.imageUrl}
+                      src={resolveRecipeImage(alt.recipe).src}
                       alt={alt.recipe.title}
                       className="w-14 h-14 rounded-lg object-cover shrink-0 border border-slate-100"
+                      loading="lazy"
+                      onError={recipeImageErrorHandler(resolveRecipeImage(alt.recipe).fallbackSrc)}
                     />
 
                     <div className="min-w-0">

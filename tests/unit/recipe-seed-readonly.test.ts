@@ -84,8 +84,8 @@ describe('Vietnamese recipe seed validation is read-only', () => {
     expect(existsSync(path.resolve(root, 'tests/unit/generate-migration.test.ts'))).toBe(false);
 
     const numbers = readdirSync(migrationsDir).filter((name) => name.endsWith('.sql')).map((name) => name.slice(0, 4)).sort();
-    expect(numbers).toHaveLength(34);
-    expect(numbers.at(-1)).toBe('0034');
-    expect(new Set(numbers).size).toBe(34);
+    expect(numbers).toHaveLength(35);
+    expect(numbers.at(-1)).toBe('0035');
+    expect(new Set(numbers).size).toBe(35);
   });
 });

@@ -36,7 +36,8 @@ required_migrations(name) AS (
     ('0031_inventory_observation_reconciliation.sql'),
     ('0032_scan_evidence_retention.sql'),
     ('0033_scan_evidence_completeness.sql'),
-    ('0034_global_recipe_catalog_parity.sql')
+    ('0034_global_recipe_catalog_parity.sql'),
+    ('0035_recipe_media_layer.sql')
 ),
 required_tables(name) AS (
   VALUES
@@ -72,6 +73,7 @@ required_tables(name) AS (
     ,('recipe_classifications')
     ,('recipe_runtime_fields')
     ,('recipe_runtime_ingredient_order')
+    ,('recipe_media')
     ,('household_ranking_preferences')
     ,('member_ranking_preferences')
     ,('recipe_feedback_events')
@@ -159,10 +161,25 @@ required_columns(table_name, column_name) AS (
     -- T14B-B (0034): persisted canonical runtime order and explicit ingredient ordinals.
     ,('recipe_runtime_fields', 'runtime_order')
     ,('recipe_runtime_ingredient_order', 'position')
+    -- T14C (0035): versioned media metadata; bytes live in R2 under the trusted storage_key.
+    ,('recipe_media', 'role')
+    ,('recipe_media', 'version')
+    ,('recipe_media', 'status')
+    ,('recipe_media', 'storage_key')
+    ,('recipe_media', 'content_hash')
+),
+required_indexes(name) AS (
+  VALUES
+    -- T14C (0035): at most one current-ready version per recipe/role; bounded bulk lookups.
+    ('idx_recipe_media_current_ready'),
+    ('idx_recipe_media_recipe_role_status'),
+    ('idx_recipe_media_content_hash')
 ),
 required_triggers(name) AS (
   VALUES
     ('trg_meal_plans_household_immutable'),
+    -- T14C (0035): ready media versions are immutable.
+    ('trg_recipe_media_ready_immutable_update'),
     -- T13 (0031): CONFIRMED review state and is_confirmed must stay one fact.
     ('trg_scan_items_review_state_insert'),
     ('trg_scan_items_review_state_update'),
@@ -236,6 +253,13 @@ WHERE NOT EXISTS (
   SELECT 1
   FROM pragma_table_info(required.table_name) column_info
   WHERE column_info.name = required.column_name
+)
+UNION ALL
+SELECT 'missing_index', required.name
+FROM required_indexes required
+WHERE NOT EXISTS (
+  SELECT 1 FROM sqlite_master
+  WHERE type = 'index' AND name = required.name
 )
 UNION ALL
 SELECT 'missing_trigger', required.name

@@ -31,6 +31,7 @@ export * from './queries';
 export * from './catalog';
 export * from './recipe-catalog';
 export * from './recipe-content';
+export * from './recipe-media';
 export * from './personalization';
 export * from './ranking-nutrition';
 export * from './meal-planning';

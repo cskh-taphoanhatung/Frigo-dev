@@ -27,11 +27,11 @@ describe('T14B-B — 0034 parity migration', () => {
   const database = (options?: { migrate?: boolean }) => { const db = new SqliteD1(options); databases.push(db); return db; };
   afterEach(() => { for (const db of databases.splice(0)) db.close(); });
 
-  it('is the 34th contiguous migration and renders byte-for-byte from the static catalog (order data included)', () => {
+  it('is the 34th migration (35 contiguous) and renders byte-for-byte from the static catalog (order data included)', () => {
     const files = migrationFiles();
-    expect(files).toHaveLength(34);
-    expect(files.at(-1)).toBe(GLOBAL_PARITY_MIGRATION_FILENAME);
-    expect(files.map((name) => name.slice(0, 4))).toEqual(Array.from({ length: 34 }, (_, i) => String(i + 1).padStart(4, '0')));
+    expect(files).toHaveLength(35);
+    expect(files[33]).toBe(GLOBAL_PARITY_MIGRATION_FILENAME);
+    expect(files.map((name) => name.slice(0, 4))).toEqual(Array.from({ length: 35 }, (_, i) => String(i + 1).padStart(4, '0')));
     const rendered = renderGlobalRecipeParitySql(GLOBAL_RECIPES, ALL_RECIPES);
     expect(readFileSync(path.join('migrations', GLOBAL_PARITY_MIGRATION_FILENAME), 'utf8')).toBe(rendered);
     // The renderer, not a hand-maintained list, owns runtime_order and ingredient positions.
@@ -41,23 +41,24 @@ describe('T14B-B — 0034 parity migration', () => {
     expect(readFileSync('migrations/0006_vietnamese_recipe_bank.sql', 'utf8')).not.toContain('gl-01');
   });
 
-  it('0001-0033 match the fixed fingerprints pinned from canonical main (not the working tree)', () => {
+  it('0001-0034 match the fixed fingerprints pinned from canonical main (not the working tree)', () => {
     const pinned = migrationManifest.migrations as Record<string, string>;
-    expect(Object.keys(pinned)).toHaveLength(33);
+    expect(Object.keys(pinned)).toHaveLength(34);
     expect(migrationManifest.pinnedFromMain).toBe('c1c1c14a2a7dccc883f1030d0dee7043754fb4a9');
     for (const [name, expected] of Object.entries(pinned)) {
       expect(sha256(path.join('migrations', name)), name).toBe(expected);
     }
-    // 0034 is the current, not-yet-applied T14B-B migration: verified via the renderer above, never pinned here.
-    expect(pinned).not.toHaveProperty(GLOBAL_PARITY_MIGRATION_FILENAME);
+    // 0034 was applied to production on 2026-09-16 and is pinned; 0035 (T14C) is verified via its renderer, never pinned yet.
+    expect(pinned).toHaveProperty(GLOBAL_PARITY_MIGRATION_FILENAME, '23f356458a294b240e683fec14012bc932a8b7e57ad0c932e4fc184329bada4d');
+    expect(pinned).not.toHaveProperty('0035_recipe_media_layer.sql');
     // Guard the guard: a mutated byte would be detected.
     expect(createHash('sha256').update(readFileSync('migrations/0006_vietnamese_recipe_bank.sql', 'utf8') + ' ').digest('hex'))
       .not.toBe(pinned['0006_vietnamese_recipe_bank.sql']);
   });
 
-  it('fresh replay 0001→0034: 71 complete rows, 12 globals under stable IDs, no orphans, no FK failures', () => {
+  it('fresh replay 0001→0035: 71 complete rows, 12 globals under stable IDs, no orphans, no FK failures', () => {
     const db = database();
-    expect(db.migrations.at(-1)).toBe(GLOBAL_PARITY_MIGRATION_FILENAME);
+    expect(db.migrations[33]).toBe(GLOBAL_PARITY_MIGRATION_FILENAME);
     const totalLines = ALL_RECIPES.reduce((sum, recipe) => sum + recipe.ingredients.length, 0);
     const counts = db.query<{ recipes: number; lines: number; steps: number; fields: number; classifications: number; positions: number }>(
       `SELECT (SELECT COUNT(*) FROM recipes) AS recipes, (SELECT COUNT(*) FROM recipe_ingredients) AS lines,

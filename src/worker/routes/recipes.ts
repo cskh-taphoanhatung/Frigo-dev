@@ -13,6 +13,7 @@ import { fetchHouseholdInventoryFromDb } from './inventory';
 import { tenancyGuard } from '../middleware/tenancy';
 import { CookingCompleteSchema } from '../validation/schemas';
 import { scheduleRecipeCatalogShadow } from '../services/recipe-catalog-shadow';
+import { enrichRecipesWithMedia } from '../services/recipe-media';
 
 export const recipeRoutes = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
 
@@ -189,7 +190,7 @@ function scheduleCatalogShadow(c: { env: Env; executionCtx: { waitUntil(task: Pr
 }
 
 // GET /api/v1/recipes
-recipeRoutes.get('/recipes', (c) => {
+recipeRoutes.get('/recipes', async (c) => {
   scheduleCatalogShadow(c);
   const cuisine = c.req.query('cuisine') as CuisineType | undefined;
   const category = c.req.query('category');
@@ -216,7 +217,8 @@ recipeRoutes.get('/recipes', (c) => {
     );
   }
 
-  return c.json({ recipes: list });
+  // T14C: media is attached after the static catalog decided content and order; never before.
+  return c.json({ recipes: await enrichRecipesWithMedia(c.env, list) });
 });
 
 // GET /api/v1/recipes/:id
@@ -231,9 +233,10 @@ recipeRoutes.get('/recipes/:id', async (c) => {
 
   const inventory = await fetchHouseholdInventoryFromDb(c.env.DB, auth.householdId, c.env.CACHE, { actorId: auth.userId });
   const evaluation = evaluateRecipeMatch(recipe, { inventory });
+  const [recipeWithMedia] = await enrichRecipesWithMedia(c.env, [recipe]);
 
   return c.json({
-    recipe,
+    recipe: recipeWithMedia,
     match: evaluation,
   });
 });
@@ -267,10 +270,14 @@ recipeRoutes.get('/recommendations', async (c) => {
     onlyNoBuyNeeded: noBuy,
   });
 
+  // T14C: ranking is final above; media only decorates each already-ranked entry's recipe.
+  const recipesWithMedia = await enrichRecipesWithMedia(c.env, ranked.map((entry) => entry.recipe));
+  const recommendations = ranked.map((entry, index) => ({ ...entry, recipe: recipesWithMedia[index] }));
+
   return c.json({
     total: ranked.length,
     noBuyFilterActive: noBuy,
-    recommendations: ranked,
+    recommendations,
   });
 });
 

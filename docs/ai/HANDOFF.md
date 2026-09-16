@@ -1,3 +1,26 @@
+# Frigo / Takosan current handoff — 2026-09-16
+
+## Current handoff — T14C Recipe Media Layer, development complete pending review
+
+- **Branch/base:** `feat/t14c-recipe-media-layer` from `8d3ebc444bbaa577893dd88a9d21f308a24f0cf5`
+  (exact `origin/main` at start; unchanged). Final head/PR/CI receipt: see the PR body and the
+  post-publication comment; not embeddable here (a handoff cannot contain its own commit).
+- **Implementation:** `migrations/0035_recipe_media_layer.sql`; `packages/recipes/src/recipe-media.ts`;
+  `packages/db/src/recipe-media.ts`; `src/worker/routes/recipe-media.ts`; `src/worker/services/recipe-media.ts`;
+  `src/worker/routes/recipes.ts` (post-ranking enrichment only); `src/worker/index.ts` (public mount);
+  `src/web/lib/recipe-media.ts` + 7 surfaces; `scripts/d1-schema-gate.{sql,sh}`, `scripts/migration-smoke.sh`,
+  `scripts/render-recipe-seed.mjs` (media render/check); `tests/fixtures/migration-sha256.json` (0034 pinned).
+- **Database state:** local fresh replay 0001→0035 = 35 migrations, `recipe_media` 71 pending hero
+  slots, 0 ready; production untouched at 0034.
+- **Checks executed:** `pnpm recipe:seed:check` (3× ok), `pnpm check:migrations` (`migration-smoke=ok`,
+  incl. 0034→0035 upgrade + idempotent re-read), `pnpm typecheck`, `pnpm lint`, `pnpm build`,
+  focused Vitest (schema 10 / catalog 16 / route+API 27 / presentation 8), full `pnpm test`,
+  `git diff --check` — exact totals recorded in the PR body.
+- **Limitations:** no production/staging execution; no R2 objects exist (all 71 resolve to legacy
+  images exactly as before); `PRAGMA integrity_check` unavailable on hosted D1 (local only).
+- **Next action:** independent review → merge → operator rollout (backup, apply 0035, deploy via
+  `deploy.yml`, smoke) → separate media population task. Do NOT apply 0035 remotely before review.
+
 # Frigo / Takosan current handoff — 2026-09-15
 
 ## Current handoff — T14B-B COMPLETE; T14C ready to start, 2026-09-16

@@ -13,6 +13,7 @@ import { ALL_RECIPES } from '@frigo/recipes';
 import { getIngredientImage } from '../lib/ingredient-images';
 import { Clock, ChefHat, Calendar, Layers, ArrowRight, PackageOpen, Receipt } from 'lucide-react';
 import { clsx } from 'clsx';
+import { resolveRecipeImage, recipeImageErrorHandler } from '../lib/recipe-media';
 
 const EXPIRY_TONE_CLASS: Record<string, string> = {
   unknown: 'bg-slate-100 text-slate-700 border-slate-200',
@@ -385,7 +386,7 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
                 onClick={() => navigate(`/recipes/${recipe.slug}`)}
                 className="bg-white rounded-xl p-3 flex items-center gap-3.5 border border-slate-200/80 shadow-xs cursor-pointer hover:border-takosan-green/40 active:scale-[0.99] transition-all"
               >
-                <img src={recipe.imageUrl} alt={recipe.title} className="w-14 h-14 rounded-lg object-cover shrink-0 border border-slate-100" />
+                <img src={resolveRecipeImage(recipe).src} alt={recipe.title} className="w-14 h-14 rounded-lg object-cover shrink-0 border border-slate-100" loading="lazy" onError={recipeImageErrorHandler(resolveRecipeImage(recipe).fallbackSrc)} />
                 <div className="flex-1 min-w-0">
                   <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep/60 uppercase">
                     {recipe.cuisine}

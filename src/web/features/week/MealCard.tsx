@@ -2,6 +2,7 @@ import React from 'react';
 import { MealSlotItem } from '@frigo/domain';
 import { Clock, Users, ArrowRightLeft, Sparkles, Utensils, Check } from 'lucide-react';
 import { clsx } from 'clsx';
+import { resolveRecipeImage, recipeImageErrorHandler } from '../../lib/recipe-media';
 
 interface MealCardProps {
   slot: MealSlotItem;
@@ -107,10 +108,11 @@ export const MealCard: React.FC<MealCardProps> = ({ slot, onClick, onSwapClick }
         {/* Recipe Thumbnail */}
         <div className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0 bg-slate-100 shadow-xs">
           <img
-            src={recipe.imageUrl}
+            src={resolveRecipeImage(recipe).src}
             alt={recipe.title}
             className="w-full h-full object-cover"
             loading="lazy"
+            onError={recipeImageErrorHandler(resolveRecipeImage(recipe).fallbackSrc)}
           />
           <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-black/65 backdrop-blur text-[8px] font-bold text-white uppercase">
             {recipe.cuisine}
