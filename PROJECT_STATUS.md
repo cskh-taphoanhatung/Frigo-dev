@@ -1,5 +1,14 @@
 # Frigo Project Status
 
+## T14B-B — COMPLETE: production D1 0034 applied, Worker deployed (2026-09-16)
+
+Production D1 `frigo-db` now has migration 0034 (ledger tip `0034_global_recipe_catalog_parity.sql`, backup
+taken first), certified 71/59/12 recipes with persisted runtime order and ingredient ordinals. GitHub
+`staging`/`production` environments carry the Cloudflare deploy secrets; Deploy run 35102115354 shipped main
+`4ed98514f65ddd3b3d83007cd726fd7c2e2136e6` as Worker version `56979cb5-…` to `https://frigo.tungjpstore.net`.
+Static `ALL_RECIPES` remains the recipe authority. T14C (media) is ready to start, not started.
+Evidence: `docs/ai/recipe-catalog/T14B_B_FINAL_COMPLETION.md`; handoff: `docs/ai/recipe-catalog/T14C_HANDOFF.md`.
+
 ## T14B-B — MERGED TO MAIN; production rollout blocked by existing OPS secret (2026-09-16)
 
 PR #14 merged into canonical main as `c7455160bfc8d279d38bc7ca4c0751542012a3c5` with exact-head main

@@ -1,5 +1,22 @@
 # Frigo / Takosan current handoff — 2026-09-15
 
+## Current handoff — T14B-B COMPLETE; T14C ready to start, 2026-09-16
+
+- **Implementation state:** no application code changed; this checkpoint is OPS + docs. Production D1
+  ledger tip `0034`; production Worker `56979cb5-e1a8-4241-8a4c-2432d41cc439` = main `4ed98514…`.
+- **Executed checks (hosted/production):** `wrangler whoami`; `d1 list/info`; ledger SELECTs before/after;
+  `d1 export` (SHA-256 `ab082dd4…343c`); `d1 migrations apply --remote` (0034 ✅); catalog/ordinal/FK/
+  quick_check SQL; `scripts/d1-schema-gate.sh remote` PASS; Deploy runs 35101845374 + 35102115354 SUCCESS
+  (production job ran lint/typecheck/test/check:migrations/build + schema gate + smoke on the runner);
+  curl smoke of health/ready/recipes/auth-config/CORS/SPA; `wrangler tail` 25 s: 0 exceptions.
+- **Not executed locally in this session:** `pnpm check` (docs-only change; hosted `validate` on the PR head
+  is the gate). `PRAGMA integrity_check` is refused by hosted D1 (SQLITE_AUTH) — recorded.
+- **Limitations:** backup lives in the thread sandbox (`/tmp/d1-backup/…`), copy out if retention needed;
+  `CONFIG_PLUS_GRANT_SECRET_MISSING` readiness warning pre-exists; Wrangler 3.x outdated.
+- **Next action:** merge this docs-only PR → freeze `T14C_CANONICAL_BASE_MAIN` = resulting main SHA →
+  start T14C on `feat/t14c-recipe-media-layer` per `recipe-catalog/T14C_HANDOFF.md`. Do not enable
+  `RECIPE_CATALOG_MODE=shadow` in production without a separate decision.
+
 ## Current handoff — T14B-B MERGED to main; production rollout blocked by existing OPS secret, 2026-09-16
 
 - PR #14 (head `004e5a32`) merged into `main` as `c7455160bfc8d279d38bc7ca4c0751542012a3c5` (normal

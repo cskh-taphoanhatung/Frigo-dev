@@ -1,5 +1,22 @@
 # Frigo / Takosan current authority — 2026-09-15
 
+## T14B-B — COMPLETE: production D1 0034 applied, Worker deployed — 2026-09-16
+
+Status `T14B_B_COMPLETE`. Production D1 `frigo-db` (`f975ec39-…`) ledger tip is now
+`0034_global_recipe_catalog_parity.sql` (34 rows; applied after export backup SHA-256
+`ab082dd4…343c`); certified 71/59/12 recipes, 385 ingredients, 341 steps, 71 runtime-field rows
+(`runtime_order` 0..70 unique), 385 contiguous ingredient ordinals, `foreign_key_check=[]`,
+`quick_check=ok`, remote schema gate PASS, zero drift in non-recipe aggregates.
+GitHub environments `staging`/`production` now hold `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID`
+(production has a required-reviewer gate); Deploy staging run 35101845374 SUCCESS, production run
+35102115354 SUCCESS (owner-approved). Production Worker version `56979cb5-e1a8-4241-8a4c-2432d41cc439`
+serves `4ed98514f65ddd3b3d83007cd726fd7c2e2136e6`; readiness reports `commit=4ed98514…`, recipes 71/59/12 in
+static order, auth config 200, CORS preflight 204. Pre-existing `CONFIG_PLUS_GRANT_SECRET_MISSING`
+warning unchanged. Recipe authority remains static `ALL_RECIPES` (`RECIPE_CATALOG_MODE` unset; no `d1` mode).
+Evidence: `recipe-catalog/T14B_B_FINAL_COMPLETION.md`. T14C: `READY_TO_START`, not started —
+`recipe-catalog/T14C_HANDOFF.md`; `T14C_CANONICAL_BASE_MAIN` = the merge SHA of this docs PR (recorded in
+its post-merge comment). The section below ("blocked by existing OPS secret") is historical.
+
 ## T14B-B — MERGED to canonical main 2026-09-16; production rollout blocked by existing OPS secret
 
 Canonical main is now `c7455160bfc8d279d38bc7ca4c0751542012a3c5` (merge of PR #14 head `004e5a32…`
