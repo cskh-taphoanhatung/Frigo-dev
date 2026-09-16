@@ -1,5 +1,86 @@
 # Architecture Decisions
 
+## ADR-025 — Recipe Media Authority, Immutable Versioning and R2 Serving (T14C)
+
+**Status:** Accepted 2026-09-16 (T14C media layer infrastructure; no recipe-authority change, no production rollout)
+
+**Context:** After T14B-B, `recipes.image_url` and `Recipe.imageUrl` are `LEGACY_MEDIA_COMPATIBILITY_ONLY`:
+59 Vietnamese recipes point at `images.unsplash.com` (blocked by the production CSP `img-src`, only 45
+unique references for 71 recipes, 20 duplicates), 12 global recipes point at `/frigo/recipes/global/*`
+(one target, `carbonara.webp`, does not exist; several share a file). `scripts/generate-recipe-images.ts`
+is a 59-entry Vietnamese prompt manifest with no global coverage and nothing generated. The R2
+`IMAGES` binding (`frigo-images` / `frigo-images-staging`) exists but serves only private scan images
+under `users/<userId>/scans/…`.
+
+**Decision:**
+1. **Media metadata in D1, bytes in R2, never bytes in D1.** Migration `0035_recipe_media_layer.sql`
+   (rendered by the pure `renderRecipeMediaLayerSql`, checked by `pnpm recipe:seed:check`) creates
+   `recipe_media(id, recipe_id → recipes ON DELETE CASCADE, role, version, status, source_type,
+   storage_key, mime_type, width, height, content_length, content_hash, source_reference,
+   generator_provider, generator_model, prompt_hash, created_at, updated_at)`. Roles are the closed
+   set `hero | thumbnail`; statuses `pending | ready | rejected | superseded`; provenance
+   `legacy_static | legacy_external | generated | uploaded | derived | NULL`.
+2. **`ready` means "the canonical R2 object is serveable"** — never "a prompt/filename/legacy URL
+   exists". SQL enforces: `version >= 1`; `UNIQUE(recipe_id, role, version)`; a partial unique index
+   `idx_recipe_media_current_ready (recipe_id, role) WHERE status='ready'` so two current-ready versions
+   are impossible; a ready row must carry `storage_key`, allow-listed `mime_type` (`image/webp|avif|jpeg|png`),
+   `width/height > 0`, `content_length >= 0` and a 64-hex SHA-256 `content_hash`. The seed writes 71
+   truthful `pending` hero slots with no source.
+   **Verified promotion (independent-review remediation, 2026-09-16):** `status='ready'` is set only by
+   `promoteRecipeMediaVersion(db, images, …)`, which first verifies the actual R2 object at the D1-derived
+   key — it exists, `httpMetadata.contentType` equals `mime_type` (absent MIME fails), `size` equals
+   `content_length`, and the SHA-256 of the real bytes (one bounded `arrayBuffer()` read, ≤ 16 MiB)
+   equals `content_hash`. Typed failures (`OBJECT_MISSING`, `OBJECT_MIME_MISMATCH`, `OBJECT_SIZE_MISMATCH`,
+   `OBJECT_HASH_MISMATCH`, `OBJECT_TOO_LARGE`, `OBJECT_READ_FAILED`, `METADATA_INCOMPLETE`) leave the target
+   pending and the current ready row untouched. The verification proof is module-private; there is no
+   `markReady` bypass. Hashing happens once at promotion, never per public GET.
+3. **Deterministic, validated storage keys:** `recipes/<recipe-id>/<role>/v<version>.<ext>` via
+   `buildRecipeMediaStorageKey`. SQL enforces the **exact** same derivation
+   (`storage_key = 'recipes/' || recipe_id || '/' || role || '/v' || version || CASE mime_type … END`), plus
+   rejection of `..`, `\`, leading `/`, `?`, `#`; a key such as `recipes/gl-01/hero/v2.foo.webp` is invalid in
+   SQL and in the application alike (`isTrustedRecipeMediaStorageKey`), so no SQL-valid/app-invalid state exists.
+4. **Immutable versions.** `trg_recipe_media_ready_immutable_update` forbids changing byte-identity
+   columns of a ready row; replacement is a new version (`stageRecipeMediaVersion` →
+   `promoteRecipeMediaVersion`, which verifies the object and then supersedes the old ready row and readies
+   the new one in one D1 batch whose two statements share the verified-target predicate). Ready storage keys
+   must never be overwritten with different bytes in R2: new bytes ⇒ new version ⇒ new key. Versioned URLs
+   therefore carry `Cache-Control: public, max-age=31536000, immutable` and `ETag: "<content_hash>"`, which is
+   trustworthy because the hash was verified against actual bytes at promotion; unversioned/legacy URLs never
+   get immutable semantics.
+5. **Same-origin serving only:** `GET|HEAD /api/v1/recipe-media/:recipeId/:role/:version` (public
+   read-only, mounted beside `/health`) validates each segment against closed shapes, refuses encoded
+   traversal in the raw path, reads trusted metadata from D1, requires `ready` + complete metadata,
+   fetches the D1-derived key from `IMAGES`, and rejects object MIME/size disagreement (415/409). No
+   request input is ever passed to `IMAGES.get`; there is no generic proxy, no bucket listing, no
+   public write route, and no CSP change (`public/_headers` unchanged).
+6. **Media is presentation, not content authority.** `RecipeMediaResolver` (`resolveRecipeMedia`) is
+   pure with fixed precedence: current ready canonical R2 → audited same-origin legacy static →
+   legacy external `imageUrl` → missing. `GET /recipes`, `/recipes/:id` and `/recommendations` attach an
+   additive `media.hero {url, source, version, width, height}` **after** `ALL_RECIPES` filtering and
+   `rankRecipes` ranking, in one bounded bulk D1 read (`IN (...)` chunks of 90, batched — never N+1).
+   `Recipe.imageUrl` is kept. A D1 media failure degrades to legacy presentation with one bounded
+   diagnostic; it never changes recipe ids/order/scores or returns 500. Planner, swap, cooking, Week
+   snapshots (`IMMUTABLE_PAYLOAD_AUTHORITATIVE`) and Inventory Truth are untouched.
+7. **Frontend has one fallback point,** `src/web/lib/recipe-media.ts` (`resolveRecipeImage` +
+   `recipeImageErrorHandler`): canonical hero → legacy `imageUrl` → placeholder, applied to every
+   recipe image surface; private scan images (`private-image.ts`) remain a separate trust domain.
+8. **Generate/import once, serve many.** Population (generation/import, validation, hashing, upload,
+   promotion) is a separate offline/admin workflow; nothing generates or fetches media during user
+   requests. The prompt manifest stays a pure typed module and is validated against canonical IDs.
+
+**Rationale:** D1 keeps per-version truth queryable and indexable at 5,000+ recipes (`(recipe_id,
+role, status)`, partial ready index, `content_hash` for dedupe) while R2 holds bytes cheaply;
+same-origin serving fixes the CSP problem without broadening `img-src` to third parties; deterministic
+keys plus trust checks make the route incapable of acting as a bucket browser; immutable versions make
+aggressive caching safe; keeping `imageUrl` and a fail-safe resolver means the layer can ship before a
+single image is populated.
+
+**Consequences:** Production rollout is `0034 → backup → 0035 → deploy → populate separately`; until
+population, every recipe still renders its legacy image (12 static, 59 external — the external ones
+remain CSP-blocked exactly as today). `PRAGMA integrity_check` cannot run on hosted D1 (SQLITE_AUTH);
+`quick_check` + FK check + the extended schema gate stand in. T14D (authority cutover) and T14E (bulk
+import) remain unstarted; 0034 is now pinned in `tests/fixtures/migration-sha256.json`.
+
 ## ADR-024 — Typed runtime fields, fail-closed D1 hydration and static-default shadow mode (T14B-B)
 
 **Status:** Accepted 2026-09-16 (T14B-B parity/shadow foundation; no authority change)

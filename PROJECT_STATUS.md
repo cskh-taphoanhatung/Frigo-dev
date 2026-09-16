@@ -1,5 +1,14 @@
 # Frigo Project Status
 
+## T14C — Recipe Media Layer: development complete, PR open for review (2026-09-16)
+
+Adds D1 `recipe_media` (0035) + R2-backed, same-origin, immutable-versioned recipe media serving with a
+pure resolver and legacy `imageUrl` fallback; recipe authority stays `ALL_RECIPES`; ranking/planner/swap/
+cooking/Inventory Truth unchanged. Independent-review remediation: `ready` now requires a verified R2 object
+(existence, MIME, size, SHA-256 of actual bytes) and SQL enforces the exact deterministic storage key.
+Production remains at 0034 / Worker `56979cb5-…`; nothing deployed.
+Details: `docs/ai/recipe-catalog/T14C_RECIPE_MEDIA_LAYER.md`, ADR-025.
+
 ## T14B-B — COMPLETE: production D1 0034 applied, Worker deployed (2026-09-16)
 
 Production D1 `frigo-db` now has migration 0034 (ledger tip `0034_global_recipe_catalog_parity.sql`, backup

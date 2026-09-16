@@ -1,3 +1,36 @@
+# Frigo / Takosan current handoff — 2026-09-16
+
+## Current handoff — T14C Recipe Media Layer, development complete pending review
+
+- **Branch/base:** `feat/t14c-recipe-media-layer` from `8d3ebc444bbaa577893dd88a9d21f308a24f0cf5`
+  (exact `origin/main` at start; unchanged). Final head/PR/CI receipt: see the PR body and the
+  post-publication comment; not embeddable here (a handoff cannot contain its own commit).
+- **Implementation:** `migrations/0035_recipe_media_layer.sql`; `packages/recipes/src/recipe-media.ts`;
+  `packages/db/src/recipe-media.ts`; `src/worker/routes/recipe-media.ts`; `src/worker/services/recipe-media.ts`;
+  `src/worker/routes/recipes.ts` (post-ranking enrichment only); `src/worker/index.ts` (public mount);
+  `src/web/lib/recipe-media.ts` + 7 surfaces; `scripts/d1-schema-gate.{sql,sh}`, `scripts/migration-smoke.sh`,
+  `scripts/render-recipe-seed.mjs` (media render/check); `tests/fixtures/migration-sha256.json` (0034 pinned).
+- **Database state:** local fresh replay 0001→0035 = 35 migrations, `recipe_media` 71 pending hero
+  slots, 0 ready; production untouched at 0034.
+- **Checks executed:** `pnpm recipe:seed:check` (3× ok), `pnpm check:migrations` (`migration-smoke=ok`,
+  incl. 0034→0035 upgrade + idempotent re-read), `pnpm typecheck`, `pnpm lint`, `pnpm build`,
+  focused Vitest (schema 10 / catalog 16 / route+API 27 / presentation 8), full `pnpm test`,
+  `git diff --check` — exact totals recorded in the PR body.
+- **Limitations:** no production/staging execution; no R2 objects exist (all 71 resolve to legacy
+  images exactly as before); `PRAGMA integrity_check` unavailable on hosted D1 (local only).
+- **Independent-review remediation (2026-09-16, forward commit on the same branch):** P1 READY_INTEGRITY —
+  `promoteRecipeMediaVersion(db, images, …)` verifies the actual R2 object (existence / MIME / size /
+  SHA-256 of bytes, bounded 16 MiB) before an atomic guarded D1 batch; typed `OBJECT_*` errors; failure
+  keeps target pending and old ready intact. P2 STORAGE_KEY_SQL_CONTRACT — 0035 renderer regenerated:
+  exact `storage_key` CHECK (`CASE mime_type`), `content_length NOT NULL` for ready. Tests:
+  `tests/helpers/recipe-media-r2.ts` (realistic R2 double), schema 13 / catalog 24 / route 27 /
+  presentation 8. Checks re-executed: `recipe:seed:check`, `typecheck`, `lint`, `check:migrations`,
+  `build`, full `pnpm test`, `git diff --check` — totals in the PR body. Still no production/staging
+  action; 0001–0034 byte-identical; no 0036.
+- **Next action:** independent review of the remediated PR #17 → merge → operator rollout (backup, apply
+  0035, deploy via `deploy.yml`, smoke) → separate media population task (new bytes ⇒ new version ⇒ new
+  key; never overwrite a ready key). Do NOT apply 0035 remotely before review.
+
 # Frigo / Takosan current handoff — 2026-09-15
 
 ## Current handoff — T14B-B COMPLETE; T14C ready to start, 2026-09-16

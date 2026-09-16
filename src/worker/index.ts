@@ -14,6 +14,7 @@ import { inventoryRoutes } from './routes/inventory';
 import { inventoryTruthRoutes } from './routes/inventory-truth';
 import { scanRoutes } from './routes/scans';
 import { recipeRoutes } from './routes/recipes';
+import { recipeMediaRoutes } from './routes/recipe-media';
 import { shoppingRoutes } from './routes/shopping';
 import { preferencesRoutes } from './routes/preferences';
 import { notificationRoutes } from './routes/notifications';
@@ -132,6 +133,8 @@ app.onError((err, c) => {
 
 // 5. Public observability (no auth): liveness, readiness, public config.
 app.route('/api/v1', healthRoutes);
+// T14C: public read-only canonical recipe media (same-origin, D1-trusted keys, allow-listed MIME).
+app.route('/api/v1', recipeMediaRoutes);
 
 // 6. API v1 Router (auth-protected)
 const api = new Hono<WorkerApp>();

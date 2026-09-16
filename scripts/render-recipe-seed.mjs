@@ -5,6 +5,7 @@
 //   node scripts/render-recipe-seed.mjs --check                    compare in-memory renders with committed 0006 + 0034 (read-only)
 //   node scripts/render-recipe-seed.mjs --out <file>               write the 0006 render beneath .artifacts/recipe-seed/ ONLY
 //   node scripts/render-recipe-seed.mjs --seed parity --out <file> write the 0034 render beneath .artifacts/recipe-seed/ ONLY
+//   node scripts/render-recipe-seed.mjs --seed media --out <file>  write the 0035 render beneath .artifacts/recipe-seed/ ONLY
 //
 // It NEVER writes anywhere except `.artifacts/recipe-seed/` (see recipe-seed-output-policy.mjs):
 // applied migrations and tracked source are immutable. Future seed changes must ship as a
@@ -20,8 +21,8 @@ const outIndex = args.indexOf('--out');
 const outPath = outIndex >= 0 ? args[outIndex + 1] : null;
 const seedIndex = args.indexOf('--seed');
 const seed = seedIndex >= 0 ? args[seedIndex + 1] : 'vietnamese';
-if ((!check && !outPath) || !['vietnamese', 'parity'].includes(seed)) {
-  console.error('usage: render-recipe-seed.mjs --check | [--seed vietnamese|parity] --out <path beneath .artifacts/recipe-seed/>');
+if ((!check && !outPath) || !['vietnamese', 'parity', 'media'].includes(seed)) {
+  console.error('usage: render-recipe-seed.mjs --check | [--seed vietnamese|parity|media] --out <path beneath .artifacts/recipe-seed/>');
   process.exit(2);
 }
 
@@ -51,6 +52,7 @@ try {
     renderVietnameseRecipeSeedSql, renderGlobalRecipeParitySql,
     VIETNAMESE_SEED_MIGRATION_FILENAME, GLOBAL_PARITY_MIGRATION_FILENAME,
   } = await vite.ssrLoadModule('/packages/recipes/src/seed-render.ts');
+  const { renderRecipeMediaLayerSql, RECIPE_MEDIA_MIGRATION_FILENAME } = await vite.ssrLoadModule('/packages/recipes/src/recipe-media.ts');
 
   const renders = {
     vietnamese: {
@@ -62,6 +64,11 @@ try {
       file: GLOBAL_PARITY_MIGRATION_FILENAME,
       sql: renderGlobalRecipeParitySql(GLOBAL_RECIPES, ALL_RECIPES),
       summary: `${GLOBAL_RECIPES.length} global recipes + ${ALL_RECIPES.length} runtime field rows`,
+    },
+    media: {
+      file: RECIPE_MEDIA_MIGRATION_FILENAME,
+      sql: renderRecipeMediaLayerSql(ALL_RECIPES),
+      summary: `${ALL_RECIPES.length} pending hero media slots`,
     },
   };
 

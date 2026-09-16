@@ -10,6 +10,7 @@ import { queryKeys } from '../lib/queryKeys';
 import { api } from '../services/api';
 import { Clock, Users, ChefHat, ArrowRightLeft, Check, Sparkles } from 'lucide-react';
 import { clsx } from 'clsx';
+import { resolveRecipeImage, recipeImageErrorHandler } from '../lib/recipe-media';
 
 export const MealDetailPage: React.FC = () => {
   const { planId, mealId } = useParams<{ planId: string; mealId: string }>();
@@ -89,9 +90,10 @@ export const MealDetailPage: React.FC = () => {
         {/* Hero Recipe Photo & Quick Specs */}
         <div className="relative w-full h-56 rounded-2xl overflow-hidden bg-slate-100 shadow-xs border border-slate-200/60">
           <img
-            src={recipe.imageUrl}
+            src={resolveRecipeImage(recipe).src}
             alt={recipe.title}
             className="w-full h-full object-cover"
+            onError={recipeImageErrorHandler(resolveRecipeImage(recipe).fallbackSrc)}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/20 to-transparent" />
 

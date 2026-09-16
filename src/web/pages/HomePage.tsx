@@ -25,6 +25,7 @@ import {
   CalendarDays,
 } from 'lucide-react';
 import { clsx } from 'clsx';
+import { resolveRecipeImage, recipeImageErrorHandler } from '../lib/recipe-media';
 
 const SLOT_LABELS: Record<MealSlotItem['slotType'], string> = {
   breakfast: 'Bữa sáng hôm nay',
@@ -177,14 +178,12 @@ export const HomePage: React.FC = () => {
                 <div className="absolute inset-0 rounded-full bg-takosan-coral/40 blur-xl scale-110" />
                 <div className="relative w-24 h-24 rounded-full overflow-hidden border-[3px] border-white/30 ring-4 ring-white/10 shadow-lg">
                   <img
-                    src={todayMeal.recipe.imageUrl}
+                    src={resolveRecipeImage(todayMeal.recipe, TAKOSAN_BRAND.symbol).src}
                     alt={todayMeal.recipe.title}
                     width={96}
                     height={96}
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = TAKOSAN_BRAND.symbol;
-                    }}
+                    onError={recipeImageErrorHandler(resolveRecipeImage(todayMeal.recipe, TAKOSAN_BRAND.symbol).fallbackSrc)}
                   />
                 </div>
               </div>

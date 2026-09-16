@@ -1,5 +1,16 @@
 # Frigo / Takosan current task board — 2026-09-15
 
+## T14C — Recipe Media Layer — 2026-09-16 (development; PR open for independent review)
+
+- [done, local-verified] 0035 + `recipe_media` schema/invariants/seed; catalog (no N+1) + resolver;
+  secure same-origin media route; additive API `media.hero`; frontend resolver on 7 surfaces;
+  schema gate/smoke/seed-check extended; 0034 pinned; ADR-025; design doc.
+- [not done — by design] media population (71 assets), global prompts (0/12), thumbnail seeding,
+  production 0035 apply, deployment. T14D/T14E not started.
+- [done, local-verified] independent-review remediation: R2-verified promotion (existence/MIME/size/SHA-256),
+  exact SQL storage-key CHECK, `content_length` required for ready; 0035 regenerated (no 0036).
+- [next] Independent re-review of PR #17; then rollout: backup → apply 0035 → deploy → populate separately.
+
 ## T14B-B — COMPLETE 2026-09-16 (production D1 0034 applied; Worker deployed)
 
 - [done] Cloudflare identity verified (account `ef250a88…0218`, D1 `frigo-db` `f975ec39-…`); ledger 33→34;

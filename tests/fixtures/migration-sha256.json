@@ -1,5 +1,5 @@
 {
-  "$comment": "Immutable SHA-256 fingerprints of applied migrations, captured from canonical main c1c1c14a2a7dccc883f1030d0dee7043754fb4a9 (33/33 blobs verified identical before pinning). Tests hash the working-tree files and compare to these fixed values; a mismatch means an applied migration was edited. Extend by APPENDING the next migration's hash after it has merged and been applied; never rewrite an existing entry.",
+  "$comment": "Immutable SHA-256 fingerprints of applied migrations, captured from canonical main c1c1c14a2a7dccc883f1030d0dee7043754fb4a9 (33/33 blobs verified identical before pinning). Tests hash the working-tree files and compare to these fixed values; a mismatch means an applied migration was edited. Extend by APPENDING the next migration's hash after it has merged and been applied; never rewrite an existing entry. T14C: 0034 pinned after it was applied to production frigo-db on 2026-09-16 (Deploy run 35102115354); it is now a fixed historical migration.",
   "pinnedFromMain": "c1c1c14a2a7dccc883f1030d0dee7043754fb4a9",
   "migrations": {
     "0001_initial_schema.sql": "eb97de6170cc73b12c7b83eec3be8082b4434c5f8952616bd4cb64be3f2a3328",
@@ -34,6 +34,7 @@
     "0030_inventory_fefo_backfill_compatibility.sql": "eb5e6fc959ad96f3127540578b0d40972fb4b40f450bfdccb5bf7afda3662316",
     "0031_inventory_observation_reconciliation.sql": "c4f6c8e0a26c4063164157e38ec55d39522f666cfdafaedacbbd919f55d4eb25",
     "0032_scan_evidence_retention.sql": "fae72602ac7f3128155329a8abc60184609dd589e264cfec9bae1e3c961bc206",
-    "0033_scan_evidence_completeness.sql": "18ed8d75d5bcaeb4e9a12b96535f603401bf42b1492201864f81e312cdef1975"
+    "0033_scan_evidence_completeness.sql": "18ed8d75d5bcaeb4e9a12b96535f603401bf42b1492201864f81e312cdef1975",
+    "0034_global_recipe_catalog_parity.sql": "23f356458a294b240e683fec14012bc932a8b7e57ad0c932e4fc184329bada4d"
   }
 }

@@ -1,5 +1,29 @@
 # Frigo / Takosan current authority — 2026-09-15
 
+## T14C — Recipe Media Layer — development on `feat/t14c-recipe-media-layer` (2026-09-16)
+
+Base `8d3ebc444bbaa577893dd88a9d21f308a24f0cf5` (T14C_CANONICAL_BASE_MAIN). Adds migration
+`0035_recipe_media_layer.sql` (rendered by `renderRecipeMediaLayerSql`; `recipe_media` with closed
+role/status/source vocabularies, `UNIQUE(recipe_id, role, version)`, partial-unique current-ready index,
+ready invariant, storage-key/MIME CHECKs, immutable-ready trigger, 71 truthful `pending` hero slots),
+`packages/recipes/src/recipe-media.ts` (types, `buildRecipeMediaStorageKey`, `resolveRecipeMedia`
+precedence canonical_r2 → legacy_static → legacy_external → missing), `packages/db/src/recipe-media.ts`
+(`D1RecipeMediaCatalog` bulk IN-chunk reads — no N+1; stage/promote/reject write helpers),
+`src/worker/routes/recipe-media.ts` (public read-only `GET|HEAD /api/v1/recipe-media/:id/:role/:version`,
+D1-trusted key only, allow-listed MIME, immutable cache + ETag), additive `media.hero` on `/recipes`,
+`/recipes/:id`, `/recommendations` attached AFTER filtering/ranking, and `src/web/lib/recipe-media.ts`
+as the single frontend fallback point for all 7 image surfaces. 0034 is now pinned in the hash manifest.
+Schema gate/migration smoke extended to 0035. ADR-025; design `recipe-catalog/T14C_RECIPE_MEDIA_LAYER.md`.
+**Recipe authority remains `ALL_RECIPES`; no `d1` mode; production D1 stays at 0034; no production R2
+write; no deployment; PR not merged (independent review required).** Media audit: 71 recipes, 45 unique
+refs, 59 external (Unsplash, CSP-blocked), 12 same-origin (1 missing asset gl-11), 20 duplicate refs,
+prompts 59/71. Status: see HANDOFF for the exact-head CI receipt.
+**Independent-review remediation (same branch, forward commit):** `promoteRecipeMediaVersion` now takes the
+R2 binding and verifies the object (exists, exact MIME, exact size, SHA-256 of actual bytes) before the
+atomic D1 promotion; 0035 (still the only new migration, no 0036) now requires `content_length` for ready
+and enforces the exact deterministic `storage_key` via `CASE mime_type`; `auditReadyRecipeMediaRecord`
+reports `missing_content_length`. Production D1 remains 0034; nothing deployed; PR #17 not merged.
+
 ## T14B-B — COMPLETE: production D1 0034 applied, Worker deployed — 2026-09-16
 
 Status `T14B_B_COMPLETE`. Production D1 `frigo-db` (`f975ec39-…`) ledger tip is now

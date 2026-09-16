@@ -349,5 +349,47 @@ INSERT INTO assert_zero SELECT COUNT(*) FROM (SELECT * FROM smoke_vn_steps EXCEP
 INSERT INTO assert_one SELECT COUNT(*) = 328 + 57 FROM recipe_ingredients;
 INSERT INTO assert_one SELECT COUNT(*) = 295 + 46 FROM recipe_steps;
 
+-- T14C (0035): production really is at 0034 with 71 recipes; this is the exact upgrade path.
+-- Snapshot every non-media table population so the media layer provably touches nothing else.
+CREATE TEMP TABLE smoke_pre_media_counts AS
+  SELECT 'users' AS t, COUNT(*) AS n FROM users UNION ALL SELECT 'households', COUNT(*) FROM households
+  UNION ALL SELECT 'inventory_items', COUNT(*) FROM inventory_items UNION ALL SELECT 'inventory_lots', COUNT(*) FROM inventory_lots
+  UNION ALL SELECT 'inventory_events', COUNT(*) FROM inventory_events UNION ALL SELECT 'inventory_commands', COUNT(*) FROM inventory_commands
+  UNION ALL SELECT 'meal_plans', COUNT(*) FROM meal_plans UNION ALL SELECT 'scans', COUNT(*) FROM scans
+  UNION ALL SELECT 'cooked_meals', COUNT(*) FROM cooked_meals UNION ALL SELECT 'recipes', COUNT(*) FROM recipes
+  UNION ALL SELECT 'recipe_ingredients', COUNT(*) FROM recipe_ingredients UNION ALL SELECT 'recipe_steps', COUNT(*) FROM recipe_steps
+  UNION ALL SELECT 'recipe_runtime_fields', COUNT(*) FROM recipe_runtime_fields
+  UNION ALL SELECT 'recipe_runtime_ingredient_order', COUNT(*) FROM recipe_runtime_ingredient_order;
+CREATE TEMP TABLE smoke_pre_media_recipes AS SELECT * FROM recipes;
+
+.read migrations/0035_recipe_media_layer.sql
+
+INSERT INTO assert_zero SELECT COUNT(*) FROM pragma_foreign_key_check;
+INSERT INTO assert_zero SELECT COUNT(*) FROM pragma_integrity_check WHERE integrity_check <> 'ok';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'recipe_media';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'index' AND name = 'idx_recipe_media_current_ready';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name = 'trg_recipe_media_ready_immutable_update';
+INSERT INTO assert_one SELECT COUNT(*) = 71 FROM recipe_media;
+INSERT INTO assert_one SELECT COUNT(*) = 71 FROM recipe_media WHERE role = 'hero' AND version = 1 AND status = 'pending' AND storage_key IS NULL AND source_type IS NULL;
+INSERT INTO assert_zero SELECT COUNT(*) FROM recipe_media WHERE status = 'ready';
+INSERT INTO assert_zero SELECT COUNT(*) FROM recipe_media m WHERE NOT EXISTS (SELECT 1 FROM recipes r WHERE r.id = m.recipe_id);
+INSERT INTO assert_zero SELECT COUNT(*) FROM recipes r WHERE NOT EXISTS (SELECT 1 FROM recipe_media m WHERE m.recipe_id = r.id AND m.role = 'hero');
+-- Nothing outside recipe_media changed.
+INSERT INTO assert_zero SELECT COUNT(*) FROM (
+  SELECT 'users' AS t, COUNT(*) AS n FROM users UNION ALL SELECT 'households', COUNT(*) FROM households
+  UNION ALL SELECT 'inventory_items', COUNT(*) FROM inventory_items UNION ALL SELECT 'inventory_lots', COUNT(*) FROM inventory_lots
+  UNION ALL SELECT 'inventory_events', COUNT(*) FROM inventory_events UNION ALL SELECT 'inventory_commands', COUNT(*) FROM inventory_commands
+  UNION ALL SELECT 'meal_plans', COUNT(*) FROM meal_plans UNION ALL SELECT 'scans', COUNT(*) FROM scans
+  UNION ALL SELECT 'cooked_meals', COUNT(*) FROM cooked_meals UNION ALL SELECT 'recipes', COUNT(*) FROM recipes
+  UNION ALL SELECT 'recipe_ingredients', COUNT(*) FROM recipe_ingredients UNION ALL SELECT 'recipe_steps', COUNT(*) FROM recipe_steps
+  UNION ALL SELECT 'recipe_runtime_fields', COUNT(*) FROM recipe_runtime_fields
+  UNION ALL SELECT 'recipe_runtime_ingredient_order', COUNT(*) FROM recipe_runtime_ingredient_order
+  EXCEPT SELECT * FROM smoke_pre_media_counts);
+INSERT INTO assert_zero SELECT COUNT(*) FROM (SELECT * FROM smoke_pre_media_recipes EXCEPT SELECT * FROM recipes);
+INSERT INTO assert_zero SELECT COUNT(*) FROM (SELECT * FROM recipes EXCEPT SELECT * FROM smoke_pre_media_recipes);
+-- Idempotent re-read (operator re-run after an interrupted apply) adds nothing.
+.read migrations/0035_recipe_media_layer.sql
+INSERT INTO assert_one SELECT COUNT(*) = 71 FROM recipe_media;
+
 SELECT 'migration-smoke=ok';
 SQL
