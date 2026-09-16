@@ -62,7 +62,7 @@ describe('Vietnamese recipe seed validation is read-only', () => {
     expect(renderVietnameseRecipeSeedSql(mutated, VIETNAMESE_DISH_IMAGES)).not.toBe(readFileSync(seedPath, 'utf8'));
   });
 
-  it('has no test that writes into migrations/ or recipe source, and the migration ledger ends at 0033', () => {
+  it('has no test that writes into migrations/ or recipe source, and the migration ledger ends at 0034', () => {
     const testFiles: string[] = [];
     const walk = (dir: string) => {
       for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -84,8 +84,8 @@ describe('Vietnamese recipe seed validation is read-only', () => {
     expect(existsSync(path.resolve(root, 'tests/unit/generate-migration.test.ts'))).toBe(false);
 
     const numbers = readdirSync(migrationsDir).filter((name) => name.endsWith('.sql')).map((name) => name.slice(0, 4)).sort();
-    expect(numbers).toHaveLength(33);
-    expect(numbers.at(-1)).toBe('0033');
-    expect(new Set(numbers).size).toBe(33);
+    expect(numbers).toHaveLength(34);
+    expect(numbers.at(-1)).toBe('0034');
+    expect(new Set(numbers).size).toBe(34);
   });
 });

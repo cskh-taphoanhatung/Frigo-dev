@@ -139,6 +139,12 @@ export function validateEnvironment(env: Env): ConfigValidationResult {
     );
   }
 
+  if (env.RECIPE_CATALOG_MODE !== undefined && env.RECIPE_CATALOG_MODE !== '' && env.RECIPE_CATALOG_MODE !== 'static') {
+    fatalIssues.push(
+      fatal('CONFIG_RECIPE_CATALOG_MODE', 'RECIPE_CATALOG_MODE must be static in production; the D1 recipe catalog is shadow/parity-only and its shadow path needs a separately authorized rollout.')
+    );
+  }
+
   if (env.SCAN_QUEUE_MODE && env.SCAN_QUEUE_MODE !== 'async') {
     fatalIssues.push(
       fatal('CONFIG_SCAN_QUEUE_MODE', 'SCAN_QUEUE_MODE must be async in production; sync mode bypasses the durable queue.')

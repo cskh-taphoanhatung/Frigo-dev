@@ -23,6 +23,11 @@ export interface Env {
 
   ENVIRONMENT?: string;
   WEEK_SCHEMA_MODE?: WeekSchemaMode;
+  // T14B-B: `static` (default) or `shadow`. Static ALL_RECIPES answers every request in both
+  // modes; shadow only adds an off-response D1 parity comparison. There is no d1 mode.
+  RECIPE_CATALOG_MODE?: string;
+  // Shadow cost bound: minimum milliseconds between two catalog comparisons per isolate (default 60000).
+  RECIPE_CATALOG_SHADOW_INTERVAL_MS?: string;
   APP_URL?: string;
   AI_MOCK_MODE?: string;
   MEAL_PLANNER_ENABLED?: string;

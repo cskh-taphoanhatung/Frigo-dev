@@ -1,5 +1,63 @@
 # Architecture Decisions
 
+## ADR-024 — Typed runtime fields, fail-closed D1 hydration and static-default shadow mode (T14B-B)
+
+**Status:** Accepted 2026-09-16 (T14B-B parity/shadow foundation; no authority change)
+
+**Context:** T14B-A proved D1 held 59 complete recipes while runtime served 71, and that the
+foundation `RecipeDefinition` omits `category`, `region`, `imageUrl`, `nutrition`, `steps`,
+`tags`. 0006 smuggled category/region into `recipes.tags` as `cat:`/`region:` markers.
+
+**Decision:**
+1. Migration `0034_global_recipe_catalog_parity.sql` (rendered by the pure
+   `renderGlobalRecipeParitySql`, checked by `pnpm recipe:seed:check`) seeds exactly the 12
+   static-only global recipes under their stable static IDs/slugs with `ON CONFLICT DO UPDATE`
+   so an existing cooking/shopping FK anchor is upgraded in place, never duplicated or
+   re-identified. Provenance stays at the schema defaults `legacy/unverified/1`.
+2. `recipe_runtime_fields` is the typed, queryable, indexed home for runtime-only fields:
+   `category` (typed **open** field: any non-empty string, CHECK `length(trim(category)) > 0`),
+   `region` (**closed** vocabulary: CHECK `IN ('bac','trung','nam','toan_quoc')`), the canonical
+   `runtime_order` (0-based position in `ALL_RECIPES`, UNIQUE, NOT NULL) and `legacy_*` nutrition
+   macros. The macros are a **legacy compatibility projection**, not `nutrition_profiles` evidence
+   (ADR-004/ADR-009 remain the authoritative model). `recipes.image_url` stays
+   `LEGACY_MEDIA_COMPATIBILITY_ONLY` (media authority deferred to T14C). Category/region are never
+   hidden in JSON or in `recipe_classifications`.
+3. Catalog order is **behaviourally significant** (`rankRecipes` ties, the weekly planner's stable
+   score sort and `getSwapAlternatives`' first-five candidate subset all resolve by input order),
+   so it is persisted, not inferred: `StaticRuntimeRecipeCatalog` preserves `ALL_RECIPES` source
+   order verbatim (never sorts), and `D1RuntimeRecipeCatalog` emits recipes by persisted
+   `runtime_order` — it never reorders itself by consulting the static list. Ingredient order uses
+   an explicit ordinal representation, `recipe_runtime_ingredient_order(recipe_ingredient_id PK,
+   recipe_id, position)` with `UNIQUE(recipe_id, position)`, 0-based; lexical row IDs
+   (`_ing_1, _ing_10, _ing_2…`) are never an ordering source.
+4. `hydrateRuntimeRecipes` reconstructs `RuntimeRecipe` from one five-statement read-only batch
+   and fails closed per row (FK stub, foundation-invalid, missing steps/media/fields, marker
+   conflict, unknown region/cuisine, duplicate IDs/step numbers, missing/invalid/duplicate
+   `runtime_order`, missing/invalid/duplicate ingredient `position`); it never defaults or
+   fabricates. `StaticRuntimeRecipeCatalog` and `D1RuntimeRecipeCatalog` share one interface.
+5. `RECIPE_CATALOG_MODE` is `static` (default) or `shadow`; there is no `d1` value. Shadow runs
+   an off-response D1 comparison at most once per isolate per
+   `RECIPE_CATALOG_SHADOW_INTERVAL_MS` (default 60 s, clamped 1 s–24 h) and emits one PII-free
+   diagnostic. Healthy requires `staticOnly = d1Only = drift = orderDrift = hydrationFailures = 0`;
+   any non-zero count (including order drift) logs at `warn`. D1 failure is a recorded
+   `shadow_error`. Production configuration rejects any non-static value.
+6. Historical Week slot snapshots (full recipe payloads) remain authoritative for historical
+   plans; D1 never re-interprets them (`SNAPSHOT_POLICY=IMMUTABLE_PAYLOAD_AUTHORITATIVE`).
+
+**Rationale:** Parity must be measurable before any cutover. Typed columns keep category/region
+queryable at 5,000+ recipes without a second taxonomy; the compatibility nutrition table avoids
+inventing provenance; fail-closed hydration prevents invalid persisted state from looking like a
+recipe; a static-only production mode keeps user-visible behaviour byte-identical.
+
+**Consequences:** Drift report reaches 71/71 with `nutrition.representation=legacy_compatibility`,
+classification `typed_runtime_field` and `orderDriftCount = 0`. Recommendation, planner
+(generate/regenerate/swap, including tie-sensitive and >5-alternative swap fixtures) and cooking
+paths are proved equivalent on the **actual** `D1RuntimeRecipeCatalog.listRuntimeRecipes()`
+output — with no test-side reordering — but stay wired to `ALL_RECIPES` (static remains the
+production authority). Offline
+reads remain bundle-resident; a cutover (T14D) must provide an offline source. Cuisine taxonomy
+stays deferred (`LONG_TAIL_CUISINE_TAXONOMY_DEFERRED`) before T14E.
+
 ## ADR-023 — Runtime recipe contract, catalog completeness and immutable seeds (T14B-A)
 
 **Status:** Accepted 2026-09-15 (T14B-A safety foundation; no runtime change).

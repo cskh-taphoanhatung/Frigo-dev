@@ -84,14 +84,15 @@ describe('production 0023 to T13 migration bridge', () => {
     expect(db.query('PRAGMA integrity_check')).toEqual([{ integrity_check: 'ok' }]);
   });
 
-  it('uses 33 unique contiguous migration numbers with production fingerprint at 0023', () => {
+  it('uses 34 unique contiguous migration numbers with production fingerprint at 0023', () => {
     const files = migrationFiles();
     const numbers = files.map((name) => name.slice(0, 4));
-    expect(files).toHaveLength(33);
-    expect(new Set(numbers).size).toBe(33);
-    expect(numbers).toEqual(Array.from({ length: 33 }, (_, index) => String(index + 1).padStart(4, '0')));
+    expect(files).toHaveLength(34);
+    expect(new Set(numbers).size).toBe(34);
+    expect(numbers).toEqual(Array.from({ length: 34 }, (_, index) => String(index + 1).padStart(4, '0')));
     expect(files[22]).toBe('0023_scan_request_fingerprint.sql');
     expect(files[23]).toBe('0024_inventory_truth_foundation.sql');
-    expect(files.at(-1)).toBe('0033_scan_evidence_completeness.sql');
+    expect(files[32]).toBe('0033_scan_evidence_completeness.sql');
+    expect(files.at(-1)).toBe('0034_global_recipe_catalog_parity.sql');
   });
 });

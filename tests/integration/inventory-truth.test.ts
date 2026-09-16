@@ -24,10 +24,11 @@ describe('T08 inventory truth persistence and legacy backfill', () => {
   };
   afterEach(() => { for (const db of databases.splice(0)) db.close(); });
 
-  it('replays all 33 migrations on a fresh database with no automatic lot cutover', () => {
+  it('replays the full migration ledger on a fresh database with no automatic lot cutover', () => {
     const db = database();
-    expect(db.migrations).toHaveLength(33);
-    expect(db.migrations.at(-1)).toBe('0033_scan_evidence_completeness.sql');
+    // Ledger length/tip are asserted by the migration-specific suites; Inventory Truth only needs
+    // every inventory migration applied and no implicit lot cutover.
+    expect(db.migrations).toContain('0033_scan_evidence_completeness.sql');
     expect(db.query('SELECT * FROM inventory_lots')).toEqual([]);
     expect(db.query('SELECT * FROM storage_locations')).toEqual([]);
     expect(db.query('PRAGMA foreign_key_check')).toEqual([]);

@@ -35,7 +35,8 @@ required_migrations(name) AS (
     ('0030_inventory_fefo_backfill_compatibility.sql'),
     ('0031_inventory_observation_reconciliation.sql'),
     ('0032_scan_evidence_retention.sql'),
-    ('0033_scan_evidence_completeness.sql')
+    ('0033_scan_evidence_completeness.sql'),
+    ('0034_global_recipe_catalog_parity.sql')
 ),
 required_tables(name) AS (
   VALUES
@@ -69,6 +70,8 @@ required_tables(name) AS (
     ,('recipe_family_options')
     ,('recipe_nutrition')
     ,('recipe_classifications')
+    ,('recipe_runtime_fields')
+    ,('recipe_runtime_ingredient_order')
     ,('household_ranking_preferences')
     ,('member_ranking_preferences')
     ,('recipe_feedback_events')
@@ -153,6 +156,9 @@ required_columns(table_name, column_name) AS (
     ,('scan_items', 'ocr_storage')
     ,('scan_items', 'reviewed_expiry_date')
     ,('scan_items', 'reviewed_expiry_kind')
+    -- T14B-B (0034): persisted canonical runtime order and explicit ingredient ordinals.
+    ,('recipe_runtime_fields', 'runtime_order')
+    ,('recipe_runtime_ingredient_order', 'position')
 ),
 required_triggers(name) AS (
   VALUES

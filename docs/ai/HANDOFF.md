@@ -1,5 +1,69 @@
 # Frigo / Takosan current handoff — 2026-09-15
 
+## Current handoff — T14B-B remediation FINAL (review-ready, not merged), 2026-09-16
+
+- Continued from safe checkpoint `d9130b69…` (hosted validate SUCCESS run 35053041994, now
+  historical). Commit A `19b144a5` rewrites `tests/integration/recipe-d1-runtime-parity.test.ts`
+  to consume `D1RuntimeRecipeCatalog.listRuntimeRecipes()` as emitted (no `byId`/`ALL_RECIPES`
+  re-mapping, no sorting): strict-equal list + unsorted ID order, recommendation parity,
+  tie-sensitive ranking, planner tie fixture, >5-alternative swap regression, executed swap,
+  ingredient-ordinal integrity and shadow health (info at 0 order drift, warn otherwise), each with
+  a reversed-catalog negative control. Mutation check: an ID-sorting hydrator fails 8/11 tests.
+  Commit B finalises docs: category = typed open (non-empty string), region = closed vocabulary;
+  ADR-024 records persisted runtime order, explicit ingredient ordinals and static authority.
+- Focused: `recipe-d1-parity` 12, `recipe-d1-runtime-parity` 11, `recipe-catalog-authority` 5,
+  `recipe-catalog-safety` 6 → 4 files / 34 tests. Full gates and fresh exact-head hosted CI are
+  recorded in `recipe-catalog/T14B_B_REMEDIATION_HANDOFF.md` §10 and the PR #14 body.
+- Authority unchanged: `ALL_RECIPES`; no `d1` mode; production static; shadow throttle unchanged;
+  0001–0033 byte-identical; 0034 re-rendered in place (unmerged). PR #14 NOT merged; PR #4
+  untouched; T14C/T14D/T14E not started. Next action: maintainer review + protected merge of #14.
+
+## Historical — T14B-B remediation SAFE STOP, 2026-09-16
+
+- Work stopped by instruction mid-remediation; nothing discarded, checkpoint pushed to PR #14's
+  branch only. Superseded by the FINAL entry above; kept for lineage:
+  `recipe-catalog/T14B_B_REMEDIATION_HANDOFF.md`.
+- Implemented and locally verified on the checkpoint tree: persisted canonical `runtime_order`
+  (0034, renderer-owned), explicit `recipe_runtime_ingredient_order` positions (reader/hydrator,
+  fail-closed), `StaticRuntimeRecipeCatalog` preserves input order, shadow `orderDrift`
+  diagnostics, and the 33/33 migration fingerprint manifest pinned from `c1c1c14a…`.
+- Not finished: rewrite `tests/integration/recipe-d1-runtime-parity.test.ts` without the
+  ALL_RECIPES-reordering workaround (tie + >5-alternative swap tests), correct category wording
+  (typed open, not closed) in ADR-024/PR body, rerun full gates, obtain fresh exact-head CI.
+- Tree at stop: typecheck/lint/seed-check/migration-smoke/build/full test (157 files / 3699
+  tests) all exit 0; `git diff --check` clean; hosted CI on the checkpoint SHA NOT_RUN; last
+  known green head `f8813d50…` (run 35050720485).
+- Authority unchanged: `ALL_RECIPES`; no `d1` mode; production static; no deploy/production
+  mutation. PR #14 and PR #4 remain unmerged. Do not start T14C/T14D/T14E.
+
+## Current handoff — T14B-B D1 parity & shadow, 2026-09-16
+
+- Task: T14B-B (D1 catalog parity, runtime view, shadow foundation). NOT the authority cutover.
+- Repository: `vn-clo/Frigo-dev`, ID `1368281478`; start main `c1c1c14a2a7dccc883f1030d0dee7043754fb4a9`.
+- Branch: `hoplite/poteidaia-c88481ca-integrate-t14b-a-current-main-t14-canonical-merge-receipt-t14b-b-d1-recipe-parity-shadow`.
+  Commits: `724ed3fb` (0034 + renderer + smoke/gate), `550eef0d` (hydrator, runtime catalog,
+  drift typed fields, shadow service, config gate), `a210c72f` (parity/fail-closed/planner/
+  recommendation/cooking/authority tests), `330add8b` (docs/ADR-024), `0284a96c` (review fixes:
+  per-isolate shadow interval bound, no description default, Inventory Truth test decoupled).
+  PR #14 against `main`; exact-head hosted `validate` passed on `71e338a1` (run 104647097626);
+  the rerun on `0284a96c` is recorded in the PR.
+- Migration: `0034_global_recipe_catalog_parity.sql`; `0001–0033` hash drift NONE; fresh replay
+  and populated-0033 upgrade (FK stub + cooked meal) pass in tests and `pnpm check:migrations`.
+- Checks executed (this head): `pnpm install --frozen-lockfile`, `pnpm recipe:seed:check` (0006 +
+  0034 ok), `pnpm typecheck`, `pnpm lint`, `pnpm check:migrations` (`migration-smoke=ok`),
+  `pnpm build`, `pnpm test` → **157 files / 3697 tests passed**, `git diff --check` clean.
+  Focused: `recipe-d1-parity` 10/10, `recipe-d1-runtime-parity` 6/6, `recipe-catalog-authority`
+  5/5, `recipe-catalog-safety` 6/6. Remote schema gate not run (no credentials; not required).
+- Truth: static 71 (59+12); D1 71 complete, staticOnly `[]`, d1Only `[]`, all drift `[]`;
+  nutrition `legacy_compatibility`; category/region `typed_runtime_field`; media legacy compat only.
+- Authority: `ALL_RECIPES` on every route/web/planner path (static guard test); shadow mode is
+  opt-in, off-response, production-rejected; no `d1` mode.
+- Not done / deferred: T14C media, T14D cutover, T14E bulk import; PR #4 untouched
+  (`CLOSE_ARCHIVE` recommended); Deploy staging token blocker remains an OPS issue.
+- Next action: maintainer review of PR #14 (ADR-024, `recipe-catalog/T14B_B_D1_PARITY_SHADOW.md`)
+  with exact-head hosted `validate` green, then normal protected merge. Do not enable shadow in
+  production or deploy. T14C/T14D/T14E remain separate packets.
+
 ## Current handoff — T14 integration refresh, 2026-09-15 UTC
 
 - Task: reconcile T14A then accepted T14B-A; no redesign or T14B-B.

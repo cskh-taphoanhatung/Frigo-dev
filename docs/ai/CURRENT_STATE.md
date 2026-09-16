@@ -1,5 +1,40 @@
 # Frigo / Takosan current authority — 2026-09-15
 
+## T14B-B — D1 catalog parity, runtime view & shadow foundation — 2026-09-16 (REMEDIATED, READY FOR REVIEW)
+
+Branch from exact canonical main `c1c1c14a2a7dccc883f1030d0dee7043754fb4a9` (repository
+`vn-clo/Frigo-dev`, ID `1368281478`, protected). Migration
+`0034_global_recipe_catalog_parity.sql` (SHA-256 `23f35645…ada4d`, re-rendered in place during
+review remediation — unmerged, no 0035) seeds the 12 static-only global recipes `gl-01..gl-12`
+under their stable IDs/slugs and adds `recipe_runtime_fields` (canonical `runtime_order` 0..70
+UNIQUE; `category` = typed **open** non-empty string; `region` = **closed** vocabulary
+`bac|trung|nam|toan_quoc`; legacy nutrition compatibility macros) plus
+`recipe_runtime_ingredient_order` (explicit 0-based ingredient ordinal, `UNIQUE(recipe_id,
+position)`, 385 rows). Fresh local replay: `recipes=71`, `recipe_ingredients=385`,
+`recipe_steps=341`, `recipe_runtime_fields=71`, `recipe_runtime_ingredient_order=385`,
+`recipe_classifications=0`, `recipe_nutrition=0`; drift `staticOnly=[] d1Only=[]
+orderDrift=0` and every core/requirement/unit/step/tag/media dimension `[]`; nutrition
+`legacy_compatibility`; classification `typed_runtime_field`. Migrations `0001–0033` are
+hash-identical to a fixed manifest pinned from `c1c1c14a…`.
+
+Catalog order is behaviourally significant and persisted: `StaticRuntimeRecipeCatalog`
+preserves `ALL_RECIPES` order, `D1RuntimeRecipeCatalog` reproduces it independently from
+`runtime_order`, and behavioural parity (recommendation, tie-sensitive ranking, planner
+generate/regenerate/tie, >5-alternative swap + executed swap, shadow health) is proved on the
+**actual** D1 catalog output with no test-side reordering and reversed-catalog negative controls.
+
+`hydrateRuntimeRecipes` (fail-closed) + `StaticRuntimeRecipeCatalog`/`D1RuntimeRecipeCatalog` +
+`compareRuntimeCatalogs` give a D1 runtime view that is `toStrictEqual` to all 71 static
+recipes; recommendation, planner generate/regenerate/swap and cooking (`gl-03`, `vn-canh-01`)
+are proved identical on the hydrated view. **User-visible authority remains `ALL_RECIPES`.**
+`RECIPE_CATALOG_MODE` = `static` (default) | `shadow` (off-response comparison, at most one per
+isolate per `RECIPE_CATALOG_SHADOW_INTERVAL_MS`, PII-free diagnostic); no `d1` mode exists;
+production config rejects non-static.
+`SNAPSHOT_POLICY=IMMUTABLE_PAYLOAD_AUTHORITATIVE`; media `DEFERRED_TO_T14C`; cuisine taxonomy
+deferred; Inventory Truth, Qwen, PayOS untouched; no production D1/deploy. Details and
+evidence: `recipe-catalog/T14B_B_D1_PARITY_SHADOW.md`, ADR-024. PR #14 open against `main`;
+exact-head hosted `validate` recorded there.
+
 ## Current T14 integration refresh — 2026-09-15 UTC
 
 Canonical repository: `vn-clo/Frigo-dev` (ID `1368281478`). Verified main before

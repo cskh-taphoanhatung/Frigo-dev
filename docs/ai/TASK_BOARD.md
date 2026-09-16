@@ -1,5 +1,36 @@
 # Frigo / Takosan current task board — 2026-09-15
 
+## T14B-B remediation — FINAL 2026-09-16 (PR #14 review-ready, NOT merged)
+
+- [done, local-verified] Persisted canonical `runtime_order`; explicit ingredient positions
+  (`recipe_runtime_ingredient_order`); hydrator/static catalog order parity; shadow `orderDrift`;
+  migration fingerprint manifest (`tests/fixtures/migration-sha256.json`, 33/33 pinned from
+  `c1c1c14a…`); 0034 re-rendered and adopted (checkpoint `d9130b69…`).
+- [done] `recipe-d1-runtime-parity` rewritten on actual `D1RuntimeRecipeCatalog` output (no
+  reordering): strict-equal list, recommendation, tie-sensitive ranking, planner tie fixture,
+  >5-alternative swap regression + executed swap, shadow health; reversed-catalog negative
+  controls; mutation check fails 8/11 with an ID-sorting hydrator (`19b144a5`).
+- [done] Docs: category = typed open non-empty string, region = closed vocabulary; ADR-024,
+  design doc, handoff, PR #14 body updated.
+- [next] Maintainer review + protected merge of PR #14 after fresh exact-head hosted `validate`
+  (recorded in the PR body). Do not enable shadow in production; no deploy.
+- [not started] T14C media · T14D authority cutover · T14E bulk import.
+
+## T14B-B — D1 catalog parity, runtime view & shadow — 2026-09-16 (READY FOR REVIEW)
+
+- [done] Fresh baseline verified: main `c1c1c14a…`, protected, 33 migrations, 71/59/12, D1 59.
+- [done] Goal A: `0034` seeds `gl-01..gl-12` (stable IDs) → D1 complete 71, staticOnly `[]`.
+- [done] Goal B: fail-closed `hydrateRuntimeRecipes` → 71 `RuntimeRecipe` strict-equal to static.
+- [done] Goal C: `recipe_runtime_fields` (typed category/region, legacy nutrition compat);
+  image URL legacy-compat only; steps/tags lossless; provenance legacy/unverified/1.
+- [done] Goal D: `compareRuntimeCatalogs` + `RECIPE_CATALOG_MODE=shadow` diagnostics; no d1 mode.
+- [done] Goal E: recommendation/planner/regenerate/swap/cooking/snapshot compatibility proved.
+- [done] Full gates: lint, typecheck, build, migration smoke, seed check, 157 files / 3697 tests.
+- [done] Independent review findings (shadow cost bound, description default, Inventory Truth
+  test scope) fixed in `0284a96c`.
+- [next] PR #14: exact-head hosted `validate`, maintainer review of ADR-024, protected merge.
+- [not started] T14C media · T14D authority cutover · T14E bulk import.
+
 ## Current T14 integration refresh — 2026-09-15 UTC
 
 - [done] Canonical main before the final docs-only receipt is
