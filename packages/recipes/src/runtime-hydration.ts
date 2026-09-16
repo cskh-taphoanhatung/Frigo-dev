@@ -15,7 +15,13 @@ import { LEGACY_CATEGORY_TAG_PREFIX, LEGACY_REGION_TAG_PREFIX } from './seed-ren
  * column mapping is stripping the historical 0006 `cat:`/`region:` tag markers, whose values
  * now live typed in `recipe_runtime_fields` (and must agree when both exist).
  *
- * Complexity: O(rows) grouping into ID-keyed maps plus O(N) recipe assembly; no per-recipe
+ * ORDER IS SEMANTIC. `rankRecipes`, the Week planner and `getSwapAlternatives` resolve ties and
+ * pick candidates by input order, so the hydrated list is ordered by the persisted
+ * `recipe_runtime_fields.runtime_order` (0-based canonical position, unique) and each recipe's
+ * ingredients by `recipe_runtime_ingredient_order.position` — never by ID and never by
+ * consulting `ALL_RECIPES`. Missing, duplicate or non-integer ordinals fail closed.
+ *
+ * Complexity: O(rows) grouping into ID-keyed maps plus O(N log N) ordering; no per-recipe
  * queries (the snapshot is one five-statement batch) and no static×D1 cross product.
  */
 
@@ -31,6 +37,11 @@ export type RuntimeHydrationFailureCode =
   | 'invalid_cuisine'
   | 'duplicate_recipe_id'
   | 'duplicate_step_number'
+  | 'missing_runtime_order'
+  | 'invalid_runtime_order'
+  | 'duplicate_runtime_order'
+  | 'missing_ingredient_position'
+  | 'invalid_ingredient_position'
   | 'runtime_contract_violation';
 
 export interface RuntimeHydrationFailure {
@@ -41,7 +52,7 @@ export interface RuntimeHydrationFailure {
 }
 
 export interface RuntimeHydrationResult {
-  /** Sorted by recipe ID so shadow comparisons are order-independent. */
+  /** In persisted canonical runtime order (`runtime_order` ascending). */
   recipes: RuntimeRecipe[];
   failures: RuntimeHydrationFailure[];
   /** Row-level classification of every D1 recipe row, including the ones that hydrated. */
@@ -81,8 +92,14 @@ export function hydrateRuntimeRecipes(snapshot: D1RecipeContentSnapshot): Runtim
     if (bucket) bucket.push(step); else stepsByRecipe.set(step.recipeId, [step]);
   }
   const runtimeFieldsByRecipe = new Map(snapshot.runtimeFields.map((row) => [row.recipeId, row]));
+  const orderOwners = new Map<number, string[]>();
+  for (const row of snapshot.runtimeFields) {
+    if (row.runtimeOrder === null) continue;
+    const owners = orderOwners.get(row.runtimeOrder);
+    if (owners) owners.push(row.recipeId); else orderOwners.set(row.runtimeOrder, [row.recipeId]);
+  }
 
-  const recipes: RuntimeRecipe[] = [];
+  const ordered: Array<{ order: number; recipe: RuntimeRecipe }> = [];
   const failures: RuntimeHydrationFailure[] = [];
   const classifications: CatalogEntryClassification[] = [];
   const idCounts = new Map<string, number>();
@@ -91,10 +108,11 @@ export function hydrateRuntimeRecipes(snapshot: D1RecipeContentSnapshot): Runtim
   const fail = (id: string, code: RuntimeHydrationFailureCode, reasons: string[]) =>
     failures.push({ id, code, reasons: [...new Set(reasons)].sort(compare) });
 
+  // Iteration order only affects diagnostics; recipe output order comes from runtime_order below.
   for (const row of [...snapshot.recipes].sort((a, b) => compare(a.id, b.id) || compare(a.slug, b.slug))) {
-    // Line order is the reader's `ORDER BY recipe_id, id`, re-imposed here so hydration never
-    // depends on array order. Steps sort by step_number below.
-    const lines = [...(linesByRecipe.get(row.id) ?? [])].sort((a, b) => compare(a.id, b.id));
+    const rawLines = linesByRecipe.get(row.id) ?? [];
+    // Classification/validation are position-independent; ordering is enforced after completeness.
+    const lines = [...rawLines].sort((a, b) => (a.position ?? Number.MAX_SAFE_INTEGER) - (b.position ?? Number.MAX_SAFE_INTEGER) || compare(a.id, b.id));
     const steps = stepsByRecipe.get(row.id) ?? [];
     const classification = classifyCatalogEntry({ recipe: foundationShape(row, lines), stepCount: steps.length });
     classifications.push(classification);
@@ -109,6 +127,18 @@ export function hydrateRuntimeRecipes(snapshot: D1RecipeContentSnapshot): Runtim
 
     const fields = runtimeFieldsByRecipe.get(row.id);
     if (!fields) { fail(row.id, 'missing_runtime_fields', ['no_recipe_runtime_fields_row']); continue; }
+    if (fields.runtimeOrder === null) { fail(row.id, 'missing_runtime_order', ['runtime_order_null']); continue; }
+    if (!Number.isInteger(fields.runtimeOrder) || fields.runtimeOrder < 0) { fail(row.id, 'invalid_runtime_order', [`runtime_order:${String(fields.runtimeOrder)}`]); continue; }
+    if ((orderOwners.get(fields.runtimeOrder) ?? []).length > 1) {
+      fail(row.id, 'duplicate_runtime_order', [`runtime_order:${fields.runtimeOrder}`]); continue;
+    }
+    // Every line needs exactly one explicit position and the positions must be exactly 0..N-1.
+    const missingPositions = rawLines.filter((line) => line.position === null).map((line) => line.ingredientId);
+    if (missingPositions.length) { fail(row.id, 'missing_ingredient_position', missingPositions); continue; }
+    const positions = rawLines.map((line) => line.position as number);
+    const invalidPositions = positions.some((position) => !Number.isInteger(position) || position < 0 || position >= rawLines.length)
+      || new Set(positions).size !== positions.length;
+    if (invalidPositions) { fail(row.id, 'invalid_ingredient_position', positions.map((position) => `position:${String(position)}`)); continue; }
     // classifyCatalogEntry already treats a missing/blank description as incomplete; re-check here so
     // the runtime candidate is never built from a defaulted value.
     if (row.description === null || row.description.trim().length === 0) { fail(row.id, 'incomplete_entry', ['no_description']); continue; }
@@ -158,11 +188,11 @@ export function hydrateRuntimeRecipes(snapshot: D1RecipeContentSnapshot): Runtim
       fail(row.id, code, paths.map((path) => `invalid:${path}`));
       continue;
     }
-    recipes.push(parsed.data);
+    ordered.push({ order: fields.runtimeOrder, recipe: parsed.data });
   }
 
   return {
-    recipes,
+    recipes: ordered.sort((a, b) => a.order - b.order).map((item) => item.recipe),
     failures: failures.sort((a, b) => compare(a.id, b.id) || compare(a.code, b.code)),
     classifications: classifications.sort((a, b) => compare(a.id ?? '', b.id ?? '')),
   };

@@ -54,10 +54,12 @@ export interface RecipeCatalogShadowLogRecord {
   catalog_static_only_count: number | null;
   catalog_d1_only_count: number | null;
   catalog_drift_count: number | null;
+  catalog_order_drift_count: number | null;
   catalog_hydration_failure_count: number | null;
   catalog_lookup_ms: number;
   /** Bounded sample of recipe IDs/field names only; never inventory or user data. */
   drift_sample: Array<{ id: string; fields: string[] }>;
+  order_drift_sample: Array<{ id: string; staticPosition: number; d1Position: number }>;
   hydration_failure_sample: Array<{ id: string; code: string }>;
   error?: string;
 }
@@ -115,23 +117,24 @@ export function toRecipeCatalogShadowLogRecord(outcome: RecipeCatalogShadowOutco
   };
   if (outcome.status === 'compared') {
     const d = outcome.diagnostics;
-    const healthy = d.driftCount === 0 && d.staticOnlyCount === 0 && d.d1OnlyCount === 0 && d.hydrationFailureCount === 0;
+    const healthy = d.driftCount === 0 && d.orderDriftCount === 0 && d.staticOnlyCount === 0 && d.d1OnlyCount === 0 && d.hydrationFailureCount === 0;
     return {
       ...base, level: healthy ? 'info' : 'warn',
       catalog_d1_count: d.d1RowCount, catalog_complete_count: d.d1CompleteCount, catalog_hydrated_count: d.hydratedCount,
       catalog_static_only_count: d.staticOnlyCount, catalog_d1_only_count: d.d1OnlyCount,
-      catalog_drift_count: d.driftCount, catalog_hydration_failure_count: d.hydrationFailureCount,
+      catalog_drift_count: d.driftCount, catalog_order_drift_count: d.orderDriftCount, catalog_hydration_failure_count: d.hydrationFailureCount,
       catalog_lookup_ms: d.lookupMs,
       drift_sample: d.drift.slice(0, SAMPLE_LIMIT).map((item) => ({ id: item.id, fields: item.fields })),
+      order_drift_sample: d.orderDrift.slice(0, SAMPLE_LIMIT).map((item) => ({ id: item.id, staticPosition: item.staticPosition, d1Position: item.d1Position })),
       hydration_failure_sample: d.hydrationFailures.slice(0, SAMPLE_LIMIT).map((item) => ({ id: item.id, code: item.code })),
     };
   }
   return {
     ...base, level: outcome.status === 'shadow_error' ? 'warn' : 'info',
     catalog_d1_count: null, catalog_complete_count: null, catalog_hydrated_count: null,
-    catalog_static_only_count: null, catalog_d1_only_count: null, catalog_drift_count: null,
+    catalog_static_only_count: null, catalog_d1_only_count: null, catalog_drift_count: null, catalog_order_drift_count: null,
     catalog_hydration_failure_count: null, catalog_lookup_ms: outcome.status === 'shadow_error' ? outcome.lookupMs : 0,
-    drift_sample: [], hydration_failure_sample: [],
+    drift_sample: [], order_drift_sample: [], hydration_failure_sample: [],
     ...(outcome.status === 'shadow_error' ? { error: outcome.error } : {}),
   };
 }

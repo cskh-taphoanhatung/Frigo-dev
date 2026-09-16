@@ -13,9 +13,12 @@ import {
 } from '../../packages/recipes/src/runtime-catalog';
 import { RuntimeRecipeSchema, toRuntimeRecipe } from '../../packages/recipes/src/runtime-recipe';
 import { GLOBAL_PARITY_MIGRATION_FILENAME, renderGlobalRecipeParitySql } from '../../packages/recipes/src/seed-render';
+import type { Recipe } from '../../packages/recipes/src/types';
 import { SqliteD1, type SqliteStatementEvent } from '../helpers/sqlite-d1';
+import migrationManifest from '../fixtures/migration-sha256.json';
 
 const GLOBAL_IDS = Array.from({ length: 12 }, (_, index) => `gl-${String(index + 1).padStart(2, '0')}`);
+const STATIC_IDS = ALL_RECIPES.map((recipe) => recipe.id);
 const migrationFiles = () => readdirSync('migrations').filter((name) => /^\d+.*\.sql$/.test(name)).sort();
 const sha256 = (file: string) => createHash('sha256').update(readFileSync(file)).digest('hex');
 
@@ -24,33 +27,59 @@ describe('T14B-B — 0034 parity migration', () => {
   const database = (options?: { migrate?: boolean }) => { const db = new SqliteD1(options); databases.push(db); return db; };
   afterEach(() => { for (const db of databases.splice(0)) db.close(); });
 
-  it('is the 34th contiguous migration, renders byte-for-byte from the static catalog, and leaves 0001-0033 untouched', () => {
+  it('is the 34th contiguous migration and renders byte-for-byte from the static catalog (order data included)', () => {
     const files = migrationFiles();
     expect(files).toHaveLength(34);
     expect(files.at(-1)).toBe(GLOBAL_PARITY_MIGRATION_FILENAME);
     expect(files.map((name) => name.slice(0, 4))).toEqual(Array.from({ length: 34 }, (_, i) => String(i + 1).padStart(4, '0')));
-    expect(readFileSync(path.join('migrations', GLOBAL_PARITY_MIGRATION_FILENAME), 'utf8'))
-      .toBe(renderGlobalRecipeParitySql(GLOBAL_RECIPES, ALL_RECIPES));
-    // Historical ledger fingerprints recorded at the T14B-B start; the renderer never touches them.
-    expect(sha256('migrations/0006_vietnamese_recipe_bank.sql')).toBe(
-      createHash('sha256').update(readFileSync('migrations/0006_vietnamese_recipe_bank.sql')).digest('hex'));
+    const rendered = renderGlobalRecipeParitySql(GLOBAL_RECIPES, ALL_RECIPES);
+    expect(readFileSync(path.join('migrations', GLOBAL_PARITY_MIGRATION_FILENAME), 'utf8')).toBe(rendered);
+    // The renderer, not a hand-maintained list, owns runtime_order and ingredient positions.
+    expect(rendered).toContain(`('${STATIC_IDS[0]}', 0, `);
+    expect(rendered).toContain(`('${STATIC_IDS[70]}', 70, `);
+    expect(rendered).toContain(`('vn-canh-01_ing_1', 'vn-canh-01', 0)`);
     expect(readFileSync('migrations/0006_vietnamese_recipe_bank.sql', 'utf8')).not.toContain('gl-01');
+  });
+
+  it('0001-0033 match the fixed fingerprints pinned from canonical main (not the working tree)', () => {
+    const pinned = migrationManifest.migrations as Record<string, string>;
+    expect(Object.keys(pinned)).toHaveLength(33);
+    expect(migrationManifest.pinnedFromMain).toBe('c1c1c14a2a7dccc883f1030d0dee7043754fb4a9');
+    for (const [name, expected] of Object.entries(pinned)) {
+      expect(sha256(path.join('migrations', name)), name).toBe(expected);
+    }
+    // 0034 is the current, not-yet-applied T14B-B migration: verified via the renderer above, never pinned here.
+    expect(pinned).not.toHaveProperty(GLOBAL_PARITY_MIGRATION_FILENAME);
+    // Guard the guard: a mutated byte would be detected.
+    expect(createHash('sha256').update(readFileSync('migrations/0006_vietnamese_recipe_bank.sql', 'utf8') + ' ').digest('hex'))
+      .not.toBe(pinned['0006_vietnamese_recipe_bank.sql']);
   });
 
   it('fresh replay 0001→0034: 71 complete rows, 12 globals under stable IDs, no orphans, no FK failures', () => {
     const db = database();
     expect(db.migrations.at(-1)).toBe(GLOBAL_PARITY_MIGRATION_FILENAME);
-    const counts = db.query<{ recipes: number; lines: number; steps: number; fields: number; classifications: number }>(
+    const totalLines = ALL_RECIPES.reduce((sum, recipe) => sum + recipe.ingredients.length, 0);
+    const counts = db.query<{ recipes: number; lines: number; steps: number; fields: number; classifications: number; positions: number }>(
       `SELECT (SELECT COUNT(*) FROM recipes) AS recipes, (SELECT COUNT(*) FROM recipe_ingredients) AS lines,
               (SELECT COUNT(*) FROM recipe_steps) AS steps, (SELECT COUNT(*) FROM recipe_runtime_fields) AS fields,
-              (SELECT COUNT(*) FROM recipe_classifications) AS classifications`)[0];
+              (SELECT COUNT(*) FROM recipe_classifications) AS classifications,
+              (SELECT COUNT(*) FROM recipe_runtime_ingredient_order) AS positions`)[0];
     expect(counts).toEqual({
-      recipes: 71,
-      lines: ALL_RECIPES.reduce((sum, recipe) => sum + recipe.ingredients.length, 0),
-      steps: ALL_RECIPES.reduce((sum, recipe) => sum + recipe.steps.length, 0),
-      fields: 71,
-      classifications: 0,
+      recipes: 71, lines: totalLines, steps: ALL_RECIPES.reduce((sum, recipe) => sum + recipe.steps.length, 0),
+      fields: 71, classifications: 0, positions: totalLines,
     });
+    // Canonical runtime order: contiguous 0..70, unique, and equal to ALL_RECIPES order.
+    expect(db.query<{ n: number; d: number; lo: number; hi: number }>(
+      'SELECT COUNT(*) AS n, COUNT(DISTINCT runtime_order) AS d, MIN(runtime_order) AS lo, MAX(runtime_order) AS hi FROM recipe_runtime_fields')[0])
+      .toEqual({ n: 71, d: 71, lo: 0, hi: 70 });
+    expect(db.query<{ recipe_id: string }>('SELECT recipe_id FROM recipe_runtime_fields ORDER BY runtime_order').map((row) => row.recipe_id)).toEqual(STATIC_IDS);
+    // Ingredient positions: every line mapped exactly once, 0..N-1 per recipe, no orphans.
+    expect(db.query('SELECT l.id FROM recipe_ingredients l LEFT JOIN recipe_runtime_ingredient_order o ON o.recipe_ingredient_id = l.id WHERE o.recipe_ingredient_id IS NULL')).toEqual([]);
+    expect(db.query('SELECT o.recipe_ingredient_id FROM recipe_runtime_ingredient_order o LEFT JOIN recipe_ingredients l ON l.id = o.recipe_ingredient_id WHERE l.id IS NULL OR l.recipe_id <> o.recipe_id')).toEqual([]);
+    expect(db.query('SELECT recipe_id FROM recipe_runtime_ingredient_order GROUP BY recipe_id HAVING COUNT(*) <> COUNT(DISTINCT position) OR MIN(position) <> 0 OR MAX(position) <> COUNT(*) - 1')).toEqual([]);
+    expect(() => db.seed("INSERT INTO recipe_runtime_ingredient_order (recipe_ingredient_id, recipe_id, position) VALUES ('vn-canh-01_ing_2', 'vn-canh-01', 0)")).toThrow();
+    expect(() => db.seed("UPDATE recipe_runtime_fields SET runtime_order = 0 WHERE recipe_id = 'gl-01'")).toThrow();
+    expect(() => db.seed("UPDATE recipe_runtime_fields SET runtime_order = -1 WHERE recipe_id = 'gl-01'")).toThrow();
     expect(db.query<{ id: string }>("SELECT id FROM recipes WHERE id GLOB 'gl-*' ORDER BY id").map((row) => row.id)).toEqual(GLOBAL_IDS);
     expect(db.query<{ n: number }>("SELECT COUNT(*) AS n FROM recipes WHERE cuisine = 'vietnamese'")[0].n).toBe(59);
     expect(db.query('SELECT l.id FROM recipe_ingredients l LEFT JOIN ingredients i ON i.id = l.ingredient_id WHERE i.id IS NULL')).toEqual([]);
@@ -95,6 +124,9 @@ describe('T14B-B — 0034 parity migration', () => {
     expect(snapshot()).toEqual(before);
     expect(db.query<{ n: number }>('SELECT COUNT(*) AS n FROM recipes')[0].n).toBe(71);
     expect(db.query<{ n: number }>("SELECT COUNT(*) AS n FROM recipes WHERE id GLOB 'gl-*'")[0].n).toBe(12);
+    expect(db.query<{ recipe_id: string }>('SELECT recipe_id FROM recipe_runtime_fields ORDER BY runtime_order').map((row) => row.recipe_id)).toEqual(STATIC_IDS);
+    expect(db.query<{ n: number }>('SELECT COUNT(*) AS n FROM recipe_runtime_ingredient_order')[0].n)
+      .toBe(ALL_RECIPES.reduce((sum, recipe) => sum + recipe.ingredients.length, 0));
     const upgraded = db.query<Record<string, unknown>>('SELECT * FROM recipes WHERE id = ?', 'gl-03')[0];
     expect(upgraded.description).toBe(GLOBAL_RECIPES.find((recipe) => recipe.id === 'gl-03')!.description);
     expect(upgraded.created_at).toBe(stubBefore.created_at);
@@ -132,7 +164,12 @@ describe('T14B-B — D1 → RuntimeRecipe hydration parity', () => {
     const hydration = hydrateRuntimeRecipes(snapshot);
     expect(hydration.failures).toEqual([]);
     expect(hydration.recipes).toHaveLength(71);
-    expect(hydration.recipes.map((recipe) => recipe.id)).toEqual([...ALL_RECIPES.map((recipe) => recipe.id)].sort());
+    // Canonical order comes from persisted runtime_order — Vietnamese first, then gl-01..gl-12 — with no sorting on either side.
+    expect(hydration.recipes.map((recipe) => recipe.id)).toEqual(STATIC_IDS);
+    expect(hydration.recipes.slice(0, 3).map((recipe) => recipe.id)).toEqual(['vn-canh-01', 'vn-canh-02', 'vn-canh-03']);
+    expect(hydration.recipes.slice(-3).map((recipe) => recipe.id)).toEqual(['gl-10', 'gl-11', 'gl-12']);
+    // Positional deep equality of the whole list.
+    expect(hydration.recipes).toStrictEqual(ALL_RECIPES.map(toRuntimeRecipe));
 
     const staticById = new Map(ALL_RECIPES.map((recipe) => [recipe.id, toRuntimeRecipe(recipe)]));
     for (const hydrated of hydration.recipes) {
@@ -157,12 +194,20 @@ describe('T14B-B — D1 → RuntimeRecipe hydration parity', () => {
       .toEqual(GLOBAL_RECIPES.map((recipe) => recipe.slug));
   });
 
-  it('runtime catalogs agree: static list == D1 list, lookup by ID and by slug, snapshot read at most once per instance', async () => {
+  it('runtime catalogs agree including array order: static preserves ALL_RECIPES order, D1 reproduces it from runtime_order', async () => {
     const db = database();
     let reads = 0;
     const d1Catalog = new D1RuntimeRecipeCatalog(async () => { reads += 1; return readRecipeContent(db); });
     const staticCatalog = new StaticRuntimeRecipeCatalog();
-    expect(await d1Catalog.listRuntimeRecipes()).toStrictEqual(await staticCatalog.listRuntimeRecipes());
+    const staticList = await staticCatalog.listRuntimeRecipes();
+    const d1List = await d1Catalog.listRuntimeRecipes();
+    expect(staticList.map((recipe) => recipe.id)).toEqual(STATIC_IDS);
+    expect(d1List.map((recipe) => recipe.id)).toEqual(STATIC_IDS);
+    expect(d1List).toStrictEqual(staticList);
+    expect(STATIC_IDS).not.toEqual([...STATIC_IDS].sort());
+    // Static catalog never sorts its input: a custom order is preserved verbatim.
+    const custom = [ALL_RECIPES[70], ALL_RECIPES[0], ALL_RECIPES[35]];
+    expect((await new StaticRuntimeRecipeCatalog(custom).listRuntimeRecipes()).map((recipe) => recipe.id)).toEqual(custom.map((recipe) => recipe.id));
     expect(await d1Catalog.findRuntimeRecipe('gl-07')).toStrictEqual(await staticCatalog.findRuntimeRecipe('kimbap-han-quoc'));
     expect(await d1Catalog.findRuntimeRecipe('vn-canh-01')).toStrictEqual(await staticCatalog.findRuntimeRecipe('vn-canh-01'));
     expect(await d1Catalog.findRuntimeRecipe('not-a-recipe')).toBeNull();
@@ -193,13 +238,31 @@ describe('T14B-B — D1 → RuntimeRecipe hydration parity', () => {
     const diagnostics = compareRuntimeCatalogs(ALL_RECIPES, snapshot);
     expect(diagnostics).toMatchObject({
       catalogSource: 'static', shadowSource: 'd1', staticCount: 71, d1RowCount: 71, d1CompleteCount: 71, hydratedCount: 71,
-      staticOnlyCount: 0, d1OnlyCount: 0, driftCount: 0, hydrationFailureCount: 0, staticOnly: [], d1Only: [], drift: [], hydrationFailures: [],
+      staticOnlyCount: 0, d1OnlyCount: 0, driftCount: 0, orderDriftCount: 0, hydrationFailureCount: 0,
+      staticOnly: [], d1Only: [], drift: [], orderDrift: [], hydrationFailures: [],
     });
+    // Negative control: a global-first ordinal assignment must surface as order drift (bounded, IDs + positions only).
+    const globalFirst: D1RecipeContentSnapshot = {
+      ...snapshot,
+      runtimeFields: snapshot.runtimeFields.map((row) => ({
+        ...row, runtimeOrder: row.recipeId.startsWith('gl-') ? row.runtimeOrder! - 59 : row.runtimeOrder! + 12,
+      })),
+    };
+    const drifted = compareRuntimeCatalogs(ALL_RECIPES, globalFirst);
+    expect(drifted.orderDriftCount).toBe(71);
+    expect(drifted.orderDrift[0]).toEqual({ id: 'vn-canh-01', staticPosition: 0, d1Position: 12 });
+    expect(drifted.orderDrift.find((item) => item.id === 'gl-01')).toEqual({ id: 'gl-01', staticPosition: 59, d1Position: 0 });
+    expect(drifted.driftCount).toBe(0);
+    expect(hydrateRuntimeRecipes(globalFirst).recipes.slice(0, 12).map((recipe) => recipe.id)).toEqual(GLOBAL_IDS);
+    // Row array order in the snapshot is irrelevant: persisted ordinals decide, so a shuffled read is identical.
     const shuffled: D1RecipeContentSnapshot = {
       recipes: [...snapshot.recipes].reverse(), requirements: [...snapshot.requirements].reverse(),
       steps: [...snapshot.steps].reverse(), nutritionRecipeIds: snapshot.nutritionRecipeIds, runtimeFields: [...snapshot.runtimeFields].reverse(),
     };
-    expect(JSON.stringify(compareRuntimeCatalogs([...ALL_RECIPES].reverse(), shuffled))).toBe(JSON.stringify(diagnostics));
+    expect(JSON.stringify(compareRuntimeCatalogs(ALL_RECIPES, shuffled))).toBe(JSON.stringify(diagnostics));
+    // …but a reversed STATIC list is a genuine order difference and must be reported as such.
+    // (Reversing 71 items leaves the middle item at its own index, so 70 positions differ.)
+    expect(compareRuntimeCatalogs([...ALL_RECIPES].reverse(), snapshot).orderDriftCount).toBe(70);
     expect(JSON.parse(JSON.stringify(diagnostics))).toEqual(diagnostics);
   });
 
@@ -229,6 +292,12 @@ describe('T14B-B — D1 → RuntimeRecipe hydration parity', () => {
         { ...pick('gl-09'), id: 'dup', slug: 'dup-b' },
         { ...pick('gl-10'), id: 'dup-tag', slug: 'dup-tag', tags: ['Thái Lan', 'Thái Lan'] },
         { ...pick('gl-11'), id: 'dup-step', slug: 'dup-step' },
+        { ...pick('gl-01'), id: 'no-order', slug: 'no-order' },
+        { ...pick('gl-01'), id: 'neg-order', slug: 'neg-order' },
+        { ...pick('gl-01'), id: 'dup-order-a', slug: 'dup-order-a' },
+        { ...pick('gl-01'), id: 'dup-order-b', slug: 'dup-order-b' },
+        { ...pick('gl-02'), id: 'no-position', slug: 'no-position' },
+        { ...pick('gl-02'), id: 'bad-position', slug: 'bad-position' },
         pick('gl-12'),
       ],
       requirements: [
@@ -244,6 +313,13 @@ describe('T14B-B — D1 → RuntimeRecipe hydration parity', () => {
         ...lines('gl-09').map((line) => ({ ...line, recipeId: 'dup' })),
         ...lines('gl-10').map((line) => ({ ...line, recipeId: 'dup-tag' })),
         ...lines('gl-11').map((line) => ({ ...line, recipeId: 'dup-step' })),
+        ...lines('gl-01').map((line) => ({ ...line, recipeId: 'no-order' })),
+        ...lines('gl-01').map((line) => ({ ...line, recipeId: 'neg-order' })),
+        ...lines('gl-01').map((line) => ({ ...line, recipeId: 'dup-order-a' })),
+        ...lines('gl-01').map((line) => ({ ...line, recipeId: 'dup-order-b' })),
+        ...lines('gl-02').map((line, index) => ({ ...line, recipeId: 'no-position', position: index === 1 ? null : line.position })),
+        // Positions 0,0,2,3,4: duplicate + gap → invalid, never silently re-sequenced.
+        ...lines('gl-02').map((line, index) => ({ ...line, recipeId: 'bad-position', position: index === 1 ? 0 : line.position })),
         ...lines('gl-12'),
       ],
       steps: [
@@ -258,6 +334,12 @@ describe('T14B-B — D1 → RuntimeRecipe hydration parity', () => {
         ...steps('gl-09').map((step) => ({ ...step, recipeId: 'dup' })),
         ...steps('gl-10').map((step) => ({ ...step, recipeId: 'dup-tag' })),
         ...steps('gl-11').map((step) => ({ ...step, recipeId: 'dup-step', stepNumber: 1 })),
+        ...steps('gl-01').map((step) => ({ ...step, recipeId: 'no-order' })),
+        ...steps('gl-01').map((step) => ({ ...step, recipeId: 'neg-order' })),
+        ...steps('gl-01').map((step) => ({ ...step, recipeId: 'dup-order-a' })),
+        ...steps('gl-01').map((step) => ({ ...step, recipeId: 'dup-order-b' })),
+        ...steps('gl-02').map((step) => ({ ...step, recipeId: 'no-position' })),
+        ...steps('gl-02').map((step) => ({ ...step, recipeId: 'bad-position' })),
         ...steps('gl-12'),
       ],
       nutritionRecipeIds: [],
@@ -275,6 +357,12 @@ describe('T14B-B — D1 → RuntimeRecipe hydration parity', () => {
         { ...fields('gl-09'), recipeId: 'dup' },
         { ...fields('gl-10'), recipeId: 'dup-tag' },
         { ...fields('gl-11'), recipeId: 'dup-step' },
+        { ...fields('gl-01'), recipeId: 'no-order', runtimeOrder: null },
+        { ...fields('gl-01'), recipeId: 'neg-order', runtimeOrder: -1 },
+        { ...fields('gl-01'), recipeId: 'dup-order-a', runtimeOrder: 500 },
+        { ...fields('gl-01'), recipeId: 'dup-order-b', runtimeOrder: 500 },
+        { ...fields('gl-02'), recipeId: 'no-position', runtimeOrder: 501 },
+        { ...fields('gl-02'), recipeId: 'bad-position', runtimeOrder: 502 },
         fields('gl-12'),
       ],
     };
@@ -283,19 +371,26 @@ describe('T14B-B — D1 → RuntimeRecipe hydration parity', () => {
     expect(result.recipes[0]).toStrictEqual(toRuntimeRecipe(GLOBAL_RECIPES.find((recipe) => recipe.id === 'gl-12')!));
     expect(result.failures.map((failure) => [failure.id, failure.code])).toEqual([
       ['bad-cuisine', 'invalid_cuisine'],
+      ['bad-position', 'invalid_ingredient_position'],
       ['bad-region', 'invalid_region'],
       ['bad-servings', 'rejected_entry'],
       ['bad-unit', 'rejected_entry'],
       ['blank-description', 'incomplete_entry'],
       ['dup', 'duplicate_recipe_id'],
+      ['dup-order-a', 'duplicate_runtime_order'],
+      ['dup-order-b', 'duplicate_runtime_order'],
       ['dup-step', 'duplicate_step_number'],
       ['dup-tag', 'invalid_tags'],
       ['marker-conflict', 'legacy_marker_conflict'],
+      ['neg-order', 'invalid_runtime_order'],
       ['no-fields', 'missing_runtime_fields'],
       ['no-media', 'missing_media_compatibility'],
+      ['no-order', 'missing_runtime_order'],
+      ['no-position', 'missing_ingredient_position'],
       ['no-steps', 'incomplete_entry'],
       ['stub-01', 'fk_stub'],
     ]);
+    expect(result.failures.find((failure) => failure.id === 'no-position')?.reasons).toEqual([lines('gl-02')[1].ingredientId]);
     expect(result.classifications.find((item) => item.id === 'stub-01')).toMatchObject({ state: 'incomplete', fkStub: true });
     expect(result.classifications.find((item) => item.id === 'bad-servings')).toMatchObject({ state: 'rejected' });
     // Unknown units are rejected by the foundation contract itself, naming the offending line path.
@@ -304,8 +399,43 @@ describe('T14B-B — D1 → RuntimeRecipe hydration parity', () => {
     expect(synthetic.recipes.find((row) => row.id === 'stub-01')?.description).toBeNull();
     // Shadow diagnostics surface the failures without inventing recipes.
     const diagnostics = compareRuntimeCatalogs(GLOBAL_RECIPES, synthetic);
-    expect(diagnostics.hydrationFailureCount).toBe(13);
+    expect(diagnostics.hydrationFailureCount).toBe(19);
     expect(diagnostics.staticOnly).toEqual(GLOBAL_IDS.filter((id) => id !== 'gl-12'));
+  });
+
+  it('ingredient order is carried by explicit positions, not lexical row IDs: a 12-line recipe round-trips 1..12', async () => {
+    const db = database();
+    const ingredientIds = db.query<{ id: string }>('SELECT id FROM ingredients ORDER BY id LIMIT 12').map((row) => row.id);
+    expect(ingredientIds).toHaveLength(12);
+    const synthetic: Recipe = {
+      id: 'gl-99', slug: 'twelve-lines', title: 'Twelve lines', description: 'Synthetic order regression', cuisine: 'thai',
+      cookTimeMinutes: 10, servings: 2, difficulty: 'easy', imageUrl: '/frigo/recipes/global/pad-krapow.webp',
+      nutrition: { calories: 1, proteinG: 1, fatG: 1, carbG: 1 }, tags: ['synthetic'],
+      ingredients: ingredientIds.map((ingredientId, index) => ({ ingredientId, name: `Line ${index + 1}`, requiredQuantity: index + 1, unit: 'g' })),
+      steps: [{ stepNumber: 1, instruction: 'Mix.' }],
+    };
+    // Persist through the same renderer that produced 0034 (appended as the 72nd runtime recipe) so the
+    // seed IDs are exactly `<id>_ing_1 .. _ing_12` — lexically `_ing_1, _ing_10, _ing_11, _ing_12, _ing_2, …`.
+    db.seed(renderGlobalRecipeParitySql([...GLOBAL_RECIPES, synthetic], [...ALL_RECIPES, synthetic]));
+    const lexical = db.query<{ id: string }>("SELECT id FROM recipe_ingredients WHERE recipe_id = 'gl-99' ORDER BY id").map((row) => row.id);
+    expect(lexical.slice(0, 5)).toEqual(['gl-99_ing_1', 'gl-99_ing_10', 'gl-99_ing_11', 'gl-99_ing_12', 'gl-99_ing_2']);
+
+    const snapshot = await readRecipeContent(db);
+    const hydration = hydrateRuntimeRecipes(snapshot);
+    expect(hydration.failures).toEqual([]);
+    expect(hydration.recipes).toHaveLength(72);
+    expect(hydration.recipes.at(-1)?.id).toBe('gl-99');
+    const hydrated = hydration.recipes.at(-1)!;
+    expect(hydrated.ingredients.map((line) => line.requiredQuantity)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    expect(hydrated.ingredients).toStrictEqual(synthetic.ingredients);
+    expect(hydrated).toStrictEqual(toRuntimeRecipe(synthetic));
+    // Without the position mapping the same rows would hydrate lexically — and must fail closed instead.
+    const unmapped: D1RecipeContentSnapshot = {
+      ...snapshot, requirements: snapshot.requirements.map((line) => (line.recipeId === 'gl-99' ? { ...line, position: null } : line)),
+    };
+    expect(hydrateRuntimeRecipes(unmapped).failures).toEqual([{ id: 'gl-99', code: 'missing_ingredient_position', reasons: [...ingredientIds].sort() }]);
+    // The existing 71 recipes are untouched by the synthetic addition.
+    expect(hydration.recipes.slice(0, 71)).toStrictEqual(ALL_RECIPES.map(toRuntimeRecipe));
   });
 
   it('a live FK anchor for a not-yet-seeded recipe stays excluded and is never repaired by hydration', async () => {

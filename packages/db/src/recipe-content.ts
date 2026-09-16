@@ -8,7 +8,9 @@ import type { D1DatabaseBinding, D1PreparedStatement, D1Result } from './index';
  * foundation `readRecipeCatalog` remains the planner's catalog reader.
  *
  * Exactly five bulk SELECTs in one D1 batch, whatever the catalog size: never one query per
- * recipe. Mapping is O(rows); grouping by recipe happens in the consumers via ID-keyed maps.
+ * recipe. The recipe-line statement joins the explicit position table so ingredient order is
+ * carried by data, not by lexical row IDs. Mapping is O(rows); grouping by recipe happens in
+ * the consumers via ID-keyed maps.
  */
 
 export const RECIPE_CONTENT_READ_STATEMENT_COUNT = 5;
@@ -21,8 +23,10 @@ export function prepareRecipeContentRead(db: D1DatabaseBinding): D1PreparedState
        FROM recipes ORDER BY id`,
     ),
     db.prepare(
-      `SELECT id, recipe_id, ingredient_id, name, required_quantity, unit, is_optional
-       FROM recipe_ingredients ORDER BY recipe_id, id`,
+      `SELECT l.id, l.recipe_id, l.ingredient_id, l.name, l.required_quantity, l.unit, l.is_optional, o.position
+       FROM recipe_ingredients l
+       LEFT JOIN recipe_runtime_ingredient_order o ON o.recipe_ingredient_id = l.id AND o.recipe_id = l.recipe_id
+       ORDER BY l.recipe_id, o.position, l.id`,
     ),
     db.prepare(
       `SELECT recipe_id, step_number, instruction, tip, timer_minutes
@@ -30,8 +34,8 @@ export function prepareRecipeContentRead(db: D1DatabaseBinding): D1PreparedState
     ),
     db.prepare('SELECT DISTINCT recipe_id FROM recipe_nutrition ORDER BY recipe_id'),
     db.prepare(
-      `SELECT recipe_id, category, region, legacy_calories, legacy_protein_g, legacy_fat_g, legacy_carb_g
-       FROM recipe_runtime_fields ORDER BY recipe_id`,
+      `SELECT recipe_id, runtime_order, category, region, legacy_calories, legacy_protein_g, legacy_fat_g, legacy_carb_g
+       FROM recipe_runtime_fields ORDER BY runtime_order, recipe_id`,
     ),
   ];
 }
@@ -79,6 +83,7 @@ export function mapRecipeContentRead(results: readonly D1Result<unknown>[]): D1R
       id: text(row.id), recipeId: text(row.recipe_id), ingredientId: text(row.ingredient_id), name: text(row.name),
       requiredQuantity: num(row.required_quantity), unit: text(row.unit),
       isOptional: row.is_optional === 1 || row.is_optional === true,
+      position: numOrNull(row.position),
     })),
     steps: stepRows.map((row) => ({
       recipeId: text(row.recipe_id), stepNumber: num(row.step_number), instruction: text(row.instruction),
@@ -86,7 +91,8 @@ export function mapRecipeContentRead(results: readonly D1Result<unknown>[]): D1R
     })),
     nutritionRecipeIds: nutritionRows.map((row) => text(row.recipe_id)),
     runtimeFields: runtimeFieldRows.map((row) => ({
-      recipeId: text(row.recipe_id), category: textOrNull(row.category), region: textOrNull(row.region),
+      recipeId: text(row.recipe_id), runtimeOrder: numOrNull(row.runtime_order),
+      category: textOrNull(row.category), region: textOrNull(row.region),
       legacyNutrition: row.legacy_calories === null || row.legacy_calories === undefined ? null : {
         calories: num(row.legacy_calories), proteinG: num(row.legacy_protein_g),
         fatG: num(row.legacy_fat_g), carbG: num(row.legacy_carb_g),

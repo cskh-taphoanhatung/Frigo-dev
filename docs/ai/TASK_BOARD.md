@@ -1,5 +1,17 @@
 # Frigo / Takosan current task board — 2026-09-15
 
+## T14B-B remediation — SAFE STOP 2026-09-16 (checkpoint on PR #14 branch)
+
+- [done, local-verified] Persisted canonical `runtime_order`; explicit ingredient positions
+  (`recipe_runtime_ingredient_order`); hydrator/static catalog order parity; shadow `orderDrift`;
+  migration fingerprint manifest (`tests/fixtures/migration-sha256.json`, 33/33 pinned from
+  `c1c1c14a…`); 0034 re-rendered and adopted; full tree gates pass (157 files / 3699 tests).
+- [next] Remove the ALL_RECIPES-reordering workaround from
+  `tests/integration/recipe-d1-runtime-parity.test.ts`; add tie + >5-alternative swap tests;
+  correct category wording (typed open) in ADR-024/PR body; rerun gates; fresh exact-head CI.
+- [blocked-on-review] PR #14 merge (do not merge until remediation verified). T14C/T14D/T14E not
+  started. Details: `recipe-catalog/T14B_B_REMEDIATION_HANDOFF.md`.
+
 ## T14B-B — D1 catalog parity, runtime view & shadow — 2026-09-16 (READY FOR REVIEW)
 
 - [done] Fresh baseline verified: main `c1c1c14a…`, protected, 33 migrations, 71/59/12, D1 59.

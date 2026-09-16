@@ -11,8 +11,11 @@ import type { Recipe } from './types';
  * - `D1RuntimeRecipeCatalog` hydrates a read-only D1 content snapshot — shadow/parity capable,
  *   never a response source. Cutover is a separate, explicit future task.
  *
- * Both list recipes in stable ID order and resolve by ID or slug, mirroring how routes look
- * recipes up today. No implementation writes anything.
+ * Both resolve by ID or slug, mirroring how routes look recipes up today, and both list recipes
+ * in CANONICAL RUNTIME ORDER: the static catalog preserves its input order (`ALL_RECIPES`), the
+ * D1 catalog emits the persisted `runtime_order`. Order is semantic (ranking/planner/swap ties
+ * resolve by input order), so the D1 view must reproduce it independently — it never reorders
+ * itself by consulting the static list. No implementation writes anything.
  */
 export type RuntimeRecipeCatalogSource = 'static' | 'd1';
 
@@ -23,13 +26,13 @@ export interface RuntimeRecipeCatalog {
 }
 
 const compare = (left: string, right: string) => (left < right ? -1 : left > right ? 1 : 0);
-const byId = (recipes: readonly RuntimeRecipe[]) => [...recipes].sort((a, b) => compare(a.id, b.id));
 
 export class StaticRuntimeRecipeCatalog implements RuntimeRecipeCatalog {
   readonly source = 'static' as const;
   private readonly recipes: RuntimeRecipe[];
   constructor(recipes: readonly Recipe[] = ALL_RECIPES) {
-    this.recipes = byId(recipes.map(toRuntimeRecipe));
+    // Input order IS the production order; never sort.
+    this.recipes = recipes.map(toRuntimeRecipe);
   }
   async listRuntimeRecipes(): Promise<RuntimeRecipe[]> { return [...this.recipes]; }
   async findRuntimeRecipe(idOrSlug: string): Promise<RuntimeRecipe | null> {
@@ -61,6 +64,8 @@ export class D1RuntimeRecipeCatalog implements RuntimeRecipeCatalog {
 
 /** Per-recipe runtime-field differences between the static authority and the hydrated view. */
 export interface RuntimeRecipeDrift { id: string; fields: string[] }
+/** A recipe whose position differs between the static list and the hydrated list (both 0-based). */
+export interface RuntimeOrderDrift { id: string; staticPosition: number; d1Position: number }
 
 /**
  * Structured, PII-free shadow diagnostics. Counts are over the full runtime contract; the
@@ -77,10 +82,13 @@ export interface RecipeCatalogShadowDiagnostics {
   staticOnlyCount: number;
   d1OnlyCount: number;
   driftCount: number;
+  /** Recipes present in both lists whose position differs; healthy shadow requires 0. */
+  orderDriftCount: number;
   hydrationFailureCount: number;
   staticOnly: string[];
   d1Only: string[];
   drift: RuntimeRecipeDrift[];
+  orderDrift: RuntimeOrderDrift[];
   hydrationFailures: RuntimeHydrationResult['failures'];
   report: CatalogDriftReport;
   /** Wall-clock milliseconds spent reading + hydrating + comparing; filled by the caller. */
@@ -108,12 +116,22 @@ export function compareRuntimeCatalogs(
     const fields = runtimeRecipeFieldDifferences(staticById.get(id)!, hydrated);
     if (fields.length) drift.push({ id, fields: [...fields] });
   }
+  // Order parity over the shared set: compare each shared recipe's rank among shared recipes so
+  // a single missing recipe does not cascade into N spurious order drifts.
+  const sharedStatic = staticRecipes.map((recipe) => recipe.id).filter((id) => hydratedById.has(id));
+  const sharedD1 = hydration.recipes.map((recipe) => recipe.id).filter((id) => staticById.has(id));
+  const d1Position = new Map(sharedD1.map((id, index) => [id, index]));
+  const orderDrift: RuntimeOrderDrift[] = [];
+  sharedStatic.forEach((id, staticPosition) => {
+    const position = d1Position.get(id)!;
+    if (position !== staticPosition) orderDrift.push({ id, staticPosition, d1Position: position });
+  });
   const report = auditCatalogDrift(staticRecipes, snapshot);
   return {
     catalogSource: 'static', shadowSource: 'd1',
     staticCount: staticRecipes.length, d1RowCount: snapshot.recipes.length, d1CompleteCount: report.d1CompleteCount,
     hydratedCount: hydration.recipes.length, staticOnlyCount: staticOnly.length, d1OnlyCount: d1Only.length,
-    driftCount: drift.length, hydrationFailureCount: hydration.failures.length,
-    staticOnly, d1Only, drift, hydrationFailures: hydration.failures, report, lookupMs,
+    driftCount: drift.length, orderDriftCount: orderDrift.length, hydrationFailureCount: hydration.failures.length,
+    staticOnly, d1Only, drift, orderDrift, hydrationFailures: hydration.failures, report, lookupMs,
   };
 }

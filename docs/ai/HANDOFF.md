@@ -1,5 +1,23 @@
 # Frigo / Takosan current handoff — 2026-09-15
 
+## Current handoff — T14B-B remediation SAFE STOP, 2026-09-16
+
+- Work stopped by instruction mid-remediation; nothing discarded, checkpoint pushed to PR #14's
+  branch only. Full state, exact per-finding status and next steps:
+  `recipe-catalog/T14B_B_REMEDIATION_HANDOFF.md`.
+- Implemented and locally verified on the checkpoint tree: persisted canonical `runtime_order`
+  (0034, renderer-owned), explicit `recipe_runtime_ingredient_order` positions (reader/hydrator,
+  fail-closed), `StaticRuntimeRecipeCatalog` preserves input order, shadow `orderDrift`
+  diagnostics, and the 33/33 migration fingerprint manifest pinned from `c1c1c14a…`.
+- Not finished: rewrite `tests/integration/recipe-d1-runtime-parity.test.ts` without the
+  ALL_RECIPES-reordering workaround (tie + >5-alternative swap tests), correct category wording
+  (typed open, not closed) in ADR-024/PR body, rerun full gates, obtain fresh exact-head CI.
+- Tree at stop: typecheck/lint/seed-check/migration-smoke/build/full test (157 files / 3699
+  tests) all exit 0; `git diff --check` clean; hosted CI on the checkpoint SHA NOT_RUN; last
+  known green head `f8813d50…` (run 35050720485).
+- Authority unchanged: `ALL_RECIPES`; no `d1` mode; production static; no deploy/production
+  mutation. PR #14 and PR #4 remain unmerged. Do not start T14C/T14D/T14E.
+
 ## Current handoff — T14B-B D1 parity & shadow, 2026-09-16
 
 - Task: T14B-B (D1 catalog parity, runtime view, shadow foundation). NOT the authority cutover.

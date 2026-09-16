@@ -27,9 +27,11 @@ export interface D1RecipeContentRow {
   provenance: { sourceType: string; sourceReference: string | null; verificationState: string; version: number };
 }
 export interface D1RecipeRequirementRow {
-  /** Row primary key; line order within a recipe is `ORDER BY id` (seed IDs are `<recipe>_ing_<n>`). */
+  /** Row primary key. Never used for ordering: `_ing_10` sorts before `_ing_2`. */
   id: string;
   recipeId: string; ingredientId: string; name: string; requiredQuantity: number; unit: string; isOptional: boolean;
+  /** 0-based position from `recipe_runtime_ingredient_order`; `null` when no mapping row exists. */
+  position: number | null;
 }
 export interface D1RecipeStepRow {
   recipeId: string; stepNumber: number; instruction: string; tip: string | null; timerMinutes: number | null;
@@ -41,6 +43,8 @@ export interface D1RecipeStepRow {
  */
 export interface D1RecipeRuntimeFieldsRow {
   recipeId: string;
+  /** 0-based canonical runtime position (unique per catalog); `null` when the column is absent/invalid. */
+  runtimeOrder: number | null;
   category: string | null;
   region: string | null;
   legacyNutrition: { calories: number; proteinG: number; fatG: number; carbG: number } | null;
@@ -197,7 +201,7 @@ export function auditCatalogDrift(staticRecipes: readonly Recipe[], d1: D1Recipe
 
     const staticLines = requirementLines(s.ingredients.map((line) => ({ ingredientId: line.ingredientId, name: line.name,
       requiredQuantity: line.requiredQuantity, unit: line.unit, isOptional: line.isOptional ?? false })));
-    const d1Lines = requirementLines((linesByRecipe.get(id) ?? []).map(({ id: _id, recipeId: _r, ...line }) => line));
+    const d1Lines = requirementLines((linesByRecipe.get(id) ?? []).map(({ id: _id, recipeId: _r, position: _p, ...line }) => line));
     if (stable(staticLines) !== stable(d1Lines)) {
       report.requirements.changed.push({ id, staticOnly: multisetDifference(staticLines, d1Lines), d1Only: multisetDifference(d1Lines, staticLines) });
     }
