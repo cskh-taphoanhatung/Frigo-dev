@@ -158,6 +158,11 @@ orderDrift = hydrationFailures = 0` → `level=info`; any non-zero count → `le
 `planner_candidate_count_*` is not emitted at runtime because the planner is not wired to D1;
 the equivalent evidence is the planner parity harness (§9).
 
+Schema gate / smoke: `scripts/d1-schema-gate.sql` requires 0034 in the ledger plus
+`recipe_runtime_fields.runtime_order` and `recipe_runtime_ingredient_order.position`;
+`scripts/migration-smoke.sh` asserts `runtime_order` is a complete `0..70` permutation and that
+every `recipe_ingredients` row has exactly one ordinal with per-recipe positions `0..N-1`.
+
 ## 8. Snapshot policy (§24)
 
 Discovered behaviour: Week v1 (`routes/week.ts`) persists `JSON.stringify(slot)` into

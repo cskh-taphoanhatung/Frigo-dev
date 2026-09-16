@@ -316,6 +316,7 @@ CREATE TEMP TABLE smoke_vn_steps AS SELECT * FROM recipe_steps;
 INSERT INTO assert_zero SELECT COUNT(*) FROM pragma_foreign_key_check;
 INSERT INTO assert_zero SELECT COUNT(*) FROM pragma_integrity_check WHERE integrity_check <> 'ok';
 INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'recipe_runtime_fields';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'recipe_runtime_ingredient_order';
 INSERT INTO assert_one SELECT COUNT(*) = 71 FROM recipes;
 INSERT INTO assert_one SELECT COUNT(*) = 59 FROM recipes WHERE cuisine = 'vietnamese';
 INSERT INTO assert_one SELECT COUNT(*) = 12 FROM recipes WHERE id GLOB 'gl-[0-9][0-9]';
@@ -329,6 +330,12 @@ INSERT INTO assert_zero SELECT COUNT(*) FROM recipes r WHERE NOT EXISTS (SELECT 
 INSERT INTO assert_zero SELECT COUNT(*) FROM recipes r WHERE NOT EXISTS (SELECT 1 FROM recipe_steps s WHERE s.recipe_id = r.id);
 INSERT INTO assert_zero SELECT COUNT(*) FROM recipe_ingredients l WHERE NOT EXISTS (SELECT 1 FROM ingredients i WHERE i.id = l.ingredient_id);
 INSERT INTO assert_zero SELECT COUNT(*) FROM recipe_runtime_fields f WHERE NOT EXISTS (SELECT 1 FROM recipes r WHERE r.id = f.recipe_id);
+-- Canonical runtime order is a complete 0..70 permutation; every ingredient line has exactly one ordinal.
+INSERT INTO assert_one SELECT COUNT(DISTINCT runtime_order) = 71 AND MIN(runtime_order) = 0 AND MAX(runtime_order) = 70 FROM recipe_runtime_fields;
+INSERT INTO assert_one SELECT COUNT(*) = 328 + 57 FROM recipe_runtime_ingredient_order;
+INSERT INTO assert_zero SELECT COUNT(*) FROM recipe_ingredients l WHERE NOT EXISTS (SELECT 1 FROM recipe_runtime_ingredient_order o WHERE o.recipe_ingredient_id = l.id);
+INSERT INTO assert_zero SELECT COUNT(*) FROM recipe_runtime_ingredient_order o WHERE NOT EXISTS (SELECT 1 FROM recipe_ingredients l WHERE l.id = o.recipe_ingredient_id AND l.recipe_id = o.recipe_id);
+INSERT INTO assert_zero SELECT COUNT(*) FROM (SELECT recipe_id FROM recipe_runtime_ingredient_order GROUP BY recipe_id HAVING MIN(position) <> 0 OR MAX(position) <> COUNT(*) - 1);
 -- Vietnamese rows, lines and steps are byte-for-byte what 0006 left.
 INSERT INTO assert_zero SELECT COUNT(*) FROM (
   SELECT id, slug, title, description, cuisine, cook_time_minutes, servings, difficulty, image_url, tags,

@@ -71,6 +71,7 @@ required_tables(name) AS (
     ,('recipe_nutrition')
     ,('recipe_classifications')
     ,('recipe_runtime_fields')
+    ,('recipe_runtime_ingredient_order')
     ,('household_ranking_preferences')
     ,('member_ranking_preferences')
     ,('recipe_feedback_events')
@@ -155,6 +156,9 @@ required_columns(table_name, column_name) AS (
     ,('scan_items', 'ocr_storage')
     ,('scan_items', 'reviewed_expiry_date')
     ,('scan_items', 'reviewed_expiry_kind')
+    -- T14B-B (0034): persisted canonical runtime order and explicit ingredient ordinals.
+    ,('recipe_runtime_fields', 'runtime_order')
+    ,('recipe_runtime_ingredient_order', 'position')
 ),
 required_triggers(name) AS (
   VALUES
