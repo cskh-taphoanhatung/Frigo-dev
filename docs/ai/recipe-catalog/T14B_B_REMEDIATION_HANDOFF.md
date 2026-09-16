@@ -13,7 +13,7 @@ repository_id=1368281478
 branch=hoplite/poteidaia-c88481ca-integrate-t14b-a-current-main-t14-canonical-merge-receipt-t14b-b-d1-recipe-parity-shadow
 origin_main=c1c1c14a2a7dccc883f1030d0dee7043754fb4a9        (verified unchanged; PR contains it, behind=0)
 checkpoint_base_head=f8813d50f9edd08b19e0f104817640781dca5f57  (last published/remotely green head)
-final_checkpoint_head=<see §9 — the wip commit created by this handoff>
+final_checkpoint_head=32593686053857945f4cfc1f09eeba2d543ab72c
 PR=14 (open, base=main, mergeable)
 ```
 
@@ -122,10 +122,10 @@ Then resume at §4 item 1. Read the remediation packet sections §7–§21 (orde
 ```text
 checkpoint_created=YES
 checkpoint_message=wip(t14b-b): checkpoint ordering remediation (runtime_order + ingredient positions + hash manifest)
-checkpoint_sha=<filled by the safe-stop report>
+checkpoint_sha=32593686053857945f4cfc1f09eeba2d543ab72c
 remote_head_after_push=<same as checkpoint_sha>
 local_remote_match=YES
 last_known_green_head=f8813d50f9edd08b19e0f104817640781dca5f57
 last_known_green_run=35050720485 (validate=SUCCESS)
-current_head_ci_at_stop=NOT_RUN
+current_head_ci_at_stop=PENDING (run 104657229602 started 2026-09-16T03:45:35Z; result must be checked by the next agent — NOT counted as green)
 ```
