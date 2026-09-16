@@ -209,7 +209,7 @@ screens lose offline behaviour; documented here, not built.
 | 2 — hydrator, runtime catalog, drift audit typed fields, shadow service, config gate | `550eef0dda7448bf3e49dcedefd3560549a1a712` |
 | 3 — parity/fail-closed/planner/recommendation/cooking/authority tests | `a210c72fb936a3b92a339cba174e1eab8e3ad972` |
 | 4 — docs/ADR-024 | `330add8bae0d82391e1a58a87a9b4eff1008113b` |
-| 5 — review fixes: per-isolate shadow interval bound, no description default, Inventory Truth test decoupled from ledger tip | recorded in PR #14 after commit |
+| 5 — review fixes: per-isolate shadow interval bound, no description default, Inventory Truth test decoupled from ledger tip | `0284a96c33ede25b9206f7b3332f182a651b6d8d` |
 
 ## 13. Remaining work (not started)
 

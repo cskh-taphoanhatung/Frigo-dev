@@ -21,7 +21,8 @@ isolate per `RECIPE_CATALOG_SHADOW_INTERVAL_MS`, PII-free diagnostic); no `d1` m
 production config rejects non-static.
 `SNAPSHOT_POLICY=IMMUTABLE_PAYLOAD_AUTHORITATIVE`; media `DEFERRED_TO_T14C`; cuisine taxonomy
 deferred; Inventory Truth, Qwen, PayOS untouched; no production D1/deploy. Details and
-evidence: `recipe-catalog/T14B_B_D1_PARITY_SHADOW.md`, ADR-024. Hosted exact-head CI: pending PR.
+evidence: `recipe-catalog/T14B_B_D1_PARITY_SHADOW.md`, ADR-024. PR #14 open against `main`;
+exact-head hosted `validate` recorded there.
 
 ## Current T14 integration refresh — 2026-09-15 UTC
 

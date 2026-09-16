@@ -5,7 +5,7 @@
 - D1 → `RuntimeRecipe` hydration is lossless for all 71; recommendation/planner/cooking parity
   proved. **`ALL_RECIPES` remains production authority**; shadow mode is opt-in and
   production-rejected. Media → T14C; cutover → T14D; bulk import → T14E.
-- Gates: lint, typecheck, build, `migration-smoke=ok`, seed check, 157 files / 3696 tests.
+- Gates: lint, typecheck, build, `migration-smoke=ok`, seed check, 157 files / 3697 tests; PR #14.
 - Details: `docs/ai/recipe-catalog/T14B_B_D1_PARITY_SHADOW.md`, ADR-024.
 
 ## Auth/OCR production hardening — 2026-09-16

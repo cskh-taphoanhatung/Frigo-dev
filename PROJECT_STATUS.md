@@ -7,7 +7,7 @@ From canonical main `c1c1c14a…`, migration `0034` brings the persisted catalog
 nutrition compatibility in `recipe_runtime_fields`). A fail-closed hydrator rebuilds the exact
 `RuntimeRecipe` from D1 and a static-default shadow mode can compare both without changing any
 response. Static `ALL_RECIPES` stays the production authority; no deploy or production D1
-change. Full local gates pass (157 files / 3696 tests). Hosted exact-head CI pending PR.
+change. Full local gates pass (157 files / 3697 tests); PR #14 carries exact-head hosted CI.
 
 ## Current canonical / production status — 2026-09-15 UTC
 

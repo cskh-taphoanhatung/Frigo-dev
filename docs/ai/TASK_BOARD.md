@@ -9,8 +9,10 @@
   image URL legacy-compat only; steps/tags lossless; provenance legacy/unverified/1.
 - [done] Goal D: `compareRuntimeCatalogs` + `RECIPE_CATALOG_MODE=shadow` diagnostics; no d1 mode.
 - [done] Goal E: recommendation/planner/regenerate/swap/cooking/snapshot compatibility proved.
-- [done] Full gates: lint, typecheck, build, migration smoke, seed check, 157 files / 3696 tests.
-- [next] PR to `main`; exact-head hosted `validate`; maintainer review of ADR-024.
+- [done] Full gates: lint, typecheck, build, migration smoke, seed check, 157 files / 3697 tests.
+- [done] Independent review findings (shadow cost bound, description default, Inventory Truth
+  test scope) fixed in `0284a96c`.
+- [next] PR #14: exact-head hosted `validate`, maintainer review of ADR-024, protected merge.
 - [not started] T14C media · T14D authority cutover · T14E bulk import.
 
 ## Current T14 integration refresh — 2026-09-15 UTC
