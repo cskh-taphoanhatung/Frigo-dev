@@ -1,6 +1,21 @@
 # Frigo / Takosan current handoff — 2026-09-16
 
-## Current handoff — T14D recipe authority cutover architecture, development complete pending review
+## Current handoff — T14D merged and certified on main (bb504cce…); production rollout deferred to OPS
+
+- **Done this packet:** fresh pre-merge gates (main/PR head unchanged; diff within T14D scope; migrations 35 / no 0036 /
+  0001–0035 unchanged; modes + fence + no user-controlled mode; readiness codes; canary determinism; Inventory Truth
+  files untouched; legacy recipe FK anchors pre-existing); PR #19 merged (`MERGE_SHA=bb504cce…`, PR head in main,
+  tree preserved); post-merge main certified locally (seed 3×ok, typecheck, lint, `migration-smoke=ok`, build,
+  **163 files / 3801 tests**, focused 131, diff-check clean) and by hosted CI (35157739716 / 105001075798 SUCCESS);
+  incidental auto-staging Deploy 35158032832 SUCCESS (staging only). Docs closure: `T14D_MERGE_RECEIPT.md`,
+  `T14D_NEXT_HANDOFF.md`, state docs.
+- **Not done — by design:** Cloudflare login, 0035 production apply, any deploy, enabling shadow/canary/d1, T14E,
+  media population. Production remains `4ed98514…` / 0034 / static.
+- **Next action:** freeze `T14D_FINAL_CANONICAL_MAIN` (docs-closure merge SHA, exact-head CI green) as the only base
+  for the next task; choose a track from `recipe-catalog/T14D_NEXT_HANDOFF.md` §6 (A: T14E import factory, B: media
+  population, C: other) or run the Codex OPS sequence (§4) when Cloudflare access is available.
+
+## Previous handoff — T14D recipe authority cutover architecture, development complete pending review
 
 - **Branch/base:** `feat/t14d-recipe-authority-cutover` from `d0856b48e043c72d1793002e7c6047a186ac890d` (exact
   `origin/main` at start). Final head/PR/CI receipt: PR body + post-publication comment.

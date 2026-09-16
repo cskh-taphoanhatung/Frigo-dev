@@ -1,6 +1,15 @@
 # Frigo / Takosan current authority — 2026-09-15
 
-## T14D — Recipe Catalog Authority Cutover Architecture — development on `feat/t14d-recipe-authority-cutover` (2026-09-16)
+## T14D — MERGED into main `bb504cce7476927249b3c6e4d5bc634600a45883`; main certified; production rollout DEFERRED (2026-09-16)
+
+PR #19 (head `f2831805…`) merged by normal merge commit; exact-head main CI validate=SUCCESS (run 35157739716 /
+check 105001075798); fresh local certification 163 files / 3801 tests, focused 131. Status
+`T14D_DEVELOPMENT_COMPLETE` · `T14D_MAIN_CERTIFIED` · `PRODUCTION_ROLLOUT_DEFERRED`. **Production unchanged:**
+application `4ed98514…`, D1 tip 0034 (0035 pending), recipe authority static, no cutover fence set. Receipt:
+`recipe-catalog/T14D_MERGE_RECEIPT.md`; next-phase state + OPS sequence: `recipe-catalog/T14D_NEXT_HANDOFF.md`.
+`T14D_FINAL_CANONICAL_MAIN` = the merge SHA of the docs-closure PR carrying these files (recorded in its post-merge comment).
+
+## T14D — Recipe Catalog Authority Cutover Architecture — development history (2026-09-16)
 
 Base `d0856b48e043c72d1793002e7c6047a186ac890d`. Adds `packages/recipes/src/recipe-authority.ts`
 (RecipeAuthoritySnapshot, StaticRecipeAuthority, D1RecipeAuthority reusing T14B-B hydration, SHA-256 catalog
