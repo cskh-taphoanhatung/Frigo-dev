@@ -1,5 +1,18 @@
 # Frigo / Takosan current authority — 2026-09-15
 
+## T14D — Recipe Catalog Authority Cutover Architecture — development on `feat/t14d-recipe-authority-cutover` (2026-09-16)
+
+Base `d0856b48e043c72d1793002e7c6047a186ac890d`. Adds `packages/recipes/src/recipe-authority.ts`
+(RecipeAuthoritySnapshot, StaticRecipeAuthority, D1RecipeAuthority reusing T14B-B hydration, SHA-256 catalog
+fingerprint, strict readiness codes, FNV-1a canary bucketing) and `src/worker/services/recipe-authority.ts`
+(modes `static|shadow|canary|d1`, `RECIPE_CATALOG_CUTOVER_ENABLED` fence, `RECIPE_CATALOG_D1_CANARY_PERCENT`,
+30 s/5 min bounded cache with singleflight, canary/d1 fallbacks, PII-free events + counters). Every runtime recipe
+reader (`/recipes`, `/recipes/:id`, `/recommendations`, cook start/complete, week create/regenerate/swap, shopping
+attribution, planner defaults) now uses ONE authority snapshot per operation; unknown runtime readers = 0 (guarded).
+**No migration (tip stays 0035, no 0036). Production untouched: application `4ed98514…`, D1 tip 0034, recipe mode
+static; T14C 0035 rollout still pending; nothing deployed.** ADR-026; design `recipe-catalog/T14D_RECIPE_AUTHORITY_CUTOVER.md`.
+Status: `T14D_DEVELOPMENT_COMPLETE` / `PRODUCTION_ROLLOUT_DEFERRED` pending review of the PR.
+
 ## T14C — MERGED into main `3a1e6be610085d7f9cfed8a53f43ef6ea006ed5c`; production rollout pending operator (2026-09-16)
 
 PR #17 (head `7b37325f…`) merged by normal merge commit; exact-head main CI validate=SUCCESS

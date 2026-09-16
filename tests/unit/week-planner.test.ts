@@ -12,7 +12,7 @@ import {
   InventoryItem,
   StandardUnit,
 } from '@frigo/domain';
-import { Recipe } from '@frigo/recipes';
+import { ALL_RECIPES, Recipe } from '@frigo/recipes';
 
 describe('Frigo Week — Portion Scaling Engine', () => {
   it('scales ingredients deterministically based on household servings', () => {
@@ -339,7 +339,8 @@ describe('Frigo Week — End-to-End Plan Generation & Swap', () => {
           freshness: 'expiring',
           updatedAt: new Date().toISOString(),
         },
-      ]
+      ],
+      ALL_RECIPES
     );
 
     expect(plan.days.length).toBe(7);

@@ -1,5 +1,6 @@
 import { Env } from '../types';
 import { applicationOrigin } from './origins';
+import { RecipeAuthorityConfigError, resolveRecipeAuthorityConfig, USER_VISIBLE_D1_MODES } from '../services/recipe-authority';
 
 /**
  * Centralized configuration validation. Production must fail loudly when the
@@ -139,9 +140,21 @@ export function validateEnvironment(env: Env): ConfigValidationResult {
     );
   }
 
-  if (env.RECIPE_CATALOG_MODE !== undefined && env.RECIPE_CATALOG_MODE !== '' && env.RECIPE_CATALOG_MODE !== 'static') {
+  // T14D (ADR-026): static|shadow|canary|d1 are the only modes; canary/d1 are user-visible D1 authority and
+  // are fenced behind RECIPE_CATALOG_CUTOVER_ENABLED=true so a stray value can never flip authority.
+  try {
+    const authority = resolveRecipeAuthorityConfig(env);
+    if (USER_VISIBLE_D1_MODES.includes(authority.mode)) {
+      warnings.push(warning('CONFIG_RECIPE_CATALOG_D1_AUTHORITY', 'RECIPE_CATALOG_MODE enables user-visible D1 recipe content authority (canary or d1); the cutover fence is satisfied. Rollback is RECIPE_CATALOG_MODE=static.'));
+    }
+  } catch (error) {
+    const code = error instanceof RecipeAuthorityConfigError ? error.code : 'INVALID_MODE';
     fatalIssues.push(
-      fatal('CONFIG_RECIPE_CATALOG_MODE', 'RECIPE_CATALOG_MODE must be static in production; the D1 recipe catalog is shadow/parity-only and its shadow path needs a separately authorized rollout.')
+      fatal('CONFIG_RECIPE_CATALOG_MODE', code === 'CUTOVER_NOT_ENABLED'
+        ? 'RECIPE_CATALOG_MODE=canary|d1 requires RECIPE_CATALOG_CUTOVER_ENABLED=true in production; without the fence the D1 recipe authority stays disabled.'
+        : code === 'INVALID_CANARY_PERCENT'
+          ? 'RECIPE_CATALOG_D1_CANARY_PERCENT must be an integer 0..100.'
+          : 'RECIPE_CATALOG_MODE must be one of static, shadow, canary, d1 (static is the production default).')
     );
   }
 

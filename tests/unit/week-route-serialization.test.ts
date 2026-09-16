@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { generateWeeklyMealPlan } from '@frigo/domain';
+import { ALL_RECIPES } from '@frigo/recipes';
 import {
   normalizeWeekDayOfWeek,
   parseMealPlanSnapshot,
@@ -171,7 +172,8 @@ describe('Frigo Week relational read model', () => {
         shoppingFrequency: 'once',
         schedule: [{ date: '2026-09-08', dayType: 'eat_out' }],
       },
-      []
+      [],
+      ALL_RECIPES
     );
 
     const row = { id: plan.id, household_id: plan.householdId };

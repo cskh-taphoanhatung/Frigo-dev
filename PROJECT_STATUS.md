@@ -1,5 +1,12 @@
 # Frigo Project Status
 
+## T14D — Recipe Catalog Authority Cutover: development complete, PR open for review (2026-09-16)
+
+Adds a single recipe-authority boundary (`static | shadow | canary | d1`) with a verified D1 snapshot (count/ID/order/
+fingerprint parity gate), deterministic per-household canary, bounded cache, explicit fallbacks and config-only rollback.
+Every runtime recipe consumer uses one snapshot per operation. No migration. Production remains static at `4ed98514…` /
+D1 0034; T14C 0035 rollout still pending; nothing deployed. Details: `docs/ai/recipe-catalog/T14D_RECIPE_AUTHORITY_CUTOVER.md`, ADR-026.
+
 ## T14C — Recipe Media Layer: merged to main `3a1e6be6…`, production rollout pending (2026-09-16)
 
 PR #17 merged by normal merge commit; exact-head main CI SUCCESS; 161 files / 3776 tests; staging auto-deploy

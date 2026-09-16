@@ -1,5 +1,60 @@
 # Architecture Decisions
 
+## ADR-026 — Recipe Catalog Authority Routing, Verified D1 Authority, Deterministic Canary and Config-only Rollback (T14D)
+
+**Status:** Accepted 2026-09-16 (architecture merged for review; production remains `static`; no deployment)
+
+**Context:** After T14B-B the D1 recipe catalog is proven parity-equivalent to `ALL_RECIPES` (71 recipes, semantic
+`runtime_order`, ingredient ordinals) but only as a shadow oracle; every runtime consumer (`/recipes`, detail,
+recommendations, cooking, Week planner/swap, shopping attribution) imported `ALL_RECIPES` directly and the planner had a
+hidden `= ALL_RECIPES` default. A future cutover therefore had no single switch, no readiness gate, no canary and no
+observable fallback. T14C's production rollout (0035) is still pending and must not be a prerequisite for designing this.
+
+**Decision:**
+1. **One authority snapshot per operation.** `RecipeAuthoritySnapshot` (`packages/recipes/src/recipe-authority.ts`:
+   `source`, `fingerprint`, `loadedAt`, `size`, `list()`, `findById()`, `findByIdOrSlug()`, id/slug indexes) is resolved
+   once per request by `resolveRecipeAuthority(env, { tenantKey })` (`src/worker/services/recipe-authority.ts`) and
+   passed to every recipe read in that operation. No route or domain function reads `ALL_RECIPES` directly any more;
+   `generateWeeklyMealPlan`/`getSwapAlternatives` require the caller's recipe list. A static guard test keeps
+   *unknown runtime readers = 0* (allowlist: static definitions, seed/migration renderers, shadow oracle, browser
+   offline fallbacks).
+2. **Static remains the rollback oracle and production default.** `StaticRecipeAuthority` serves `ALL_RECIPES` in exact
+   order; `RECIPE_CATALOG_MODE` unset/`static` never touches D1 for content. Rollback from any mode is
+   `RECIPE_CATALOG_MODE=static` — read routing only, no migration, no data change, no revert.
+3. **D1 becomes a selectable authority only when verified.** `D1RecipeAuthority` reuses the T14B-B reader
+   (`readRecipeContent`, one five-statement batch) and hydrator (`hydrateRuntimeRecipes`); a snapshot is produced only
+   when `assessD1Readiness` passes: zero hydration diagnostics, same count, same IDs, same order, same fields ⇒ same
+   fingerprint. Reason codes: `CATALOG_DIAGNOSTICS | COUNT_DRIFT | ID_DRIFT | ORDER_DRIFT | FINGERPRINT_DRIFT |
+   D1_READ_FAILED`. T14D is a cutover of authority, not of content: `D1 == ALL_RECIPES` is the contract until a later
+   explicit divergence policy (T14E).
+4. **Parity fingerprint.** `fingerprintRecipes` = SHA-256 over the canonical, key-sorted projection of the ordered
+   `RuntimeRecipe` contract (`RUNTIME_RECIPE_FIELDS`, incl. the legacy `imageUrl` string); stray keys are rejected, and
+   `recipe_media`/R2/timestamps are never included — media (ADR-025) is independent and never influences authority.
+5. **Modes are a closed set with a fence.** `static | shadow | canary | d1`; typos are `INVALID_MODE`, never coerced.
+   `canary`/`d1` require `RECIPE_CATALOG_CUTOVER_ENABLED=true`; `shadow` (T14B-B compare, unchanged) does not.
+   Production validation makes invalid/unfenced configuration fatal (`CONFIG_RECIPE_CATALOG_MODE`) and fenced D1
+   authority a visible warning (`CONFIG_RECIPE_CATALOG_D1_AUTHORITY`); at request time invalid config serves static with
+   an error-level `recipe_catalog_config_invalid` event rather than a 500. Mode is never user-controlled.
+6. **Deterministic canary.** `bucket = FNV-1a32("recipe-catalog-canary:" + householdId) % 10000 < percent × 100`
+   (`RECIPE_CATALOG_D1_CANARY_PERCENT`, integer 0..100, default 0). Stable per household, monotonic in percent, no
+   randomness, no server-side assignment state; diagnostics record the decision, not the id.
+7. **Bounded cache and explicit failure policy.** One verified D1 snapshot per isolate, 30 s TTL, singleflight refresh,
+   ≤5 min stale grace when a refresh fails (`recipe_catalog_d1_stale_served`). Canary: any non-verified state ⇒ static +
+   `recipe_catalog_canary_fallback` (warn). Full d1: emergency static fallback + `recipe_catalog_d1_fallback` (error) —
+   availability over purity, never silent. `selectedSource`/`actualSource` always tell the truth.
+8. **No migration, no writes, no admin API.** Authority selection is deployment configuration; `recipes*` tables are
+   read-only at runtime; `wrangler.jsonc` is unchanged (production stays static until a separate OPS rollout).
+
+**Rationale:** a single typed boundary turns cutover into a config rollout and rollback into a config revert; the
+readiness gate makes "D1 is authoritative" mean "D1 is provably the same catalog" rather than "rows exist"; a
+deterministic tenant canary gives a real user-visible experiment with a per-household stable experience and a safe
+fallback; explicit `actualSource` observability prevents a silent static-while-claiming-D1 state.
+
+**Consequences:** production behaviour is byte-identical today (static). The OPS sequence becomes: apply 0035 →
+deploy (static) → `shadow` → fenced `canary` at a small percent → widen → `d1`, each step human-controlled and
+reversible by `RECIPE_CATALOG_MODE=static`. Intentional catalog growth beyond `ALL_RECIPES` (T14E) will need a new
+readiness policy because the current gate requires exact parity.
+
 ## ADR-025 — Recipe Media Authority, Immutable Versioning and R2 Serving (T14C)
 
 **Status:** Accepted 2026-09-16 (T14C media layer infrastructure; no recipe-authority change, no production rollout)
