@@ -293,24 +293,8 @@ describe('read-only recipe catalog adapters', () => {
     expect(d1Snapshot.source).toBe('d1');
     expect(audit).toEqual({
       ingredientIds: { staticOnly: [], d1Only: [] },
-      recipeIds: {
-        staticOnly: [
-          'gl-01',
-          'gl-02',
-          'gl-03',
-          'gl-04',
-          'gl-05',
-          'gl-06',
-          'gl-07',
-          'gl-08',
-          'gl-09',
-          'gl-10',
-          'gl-11',
-          'gl-12',
-        ],
-        d1Only: [],
-        changed: [],
-      },
+      // T14B-B (0034) seeded the 12 global recipes: full identity parity, no drift.
+      recipeIds: { staticOnly: [], d1Only: [], changed: [] },
       units: { staticOnly: [], d1Only: [], requirementDifferences: [] },
       requirements: [],
       diagnostics: [],

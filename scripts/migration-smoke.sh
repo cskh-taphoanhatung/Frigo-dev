@@ -298,5 +298,49 @@ INSERT INTO assert_one SELECT COUNT(*) FROM scan_items
   WHERE id = 'migration_smoke_t13r_a_new' AND ocr_canonical_id = 'CHICKEN_EGG' AND ocr_category = 'egg' AND ocr_storage = 'fridge';
 INSERT INTO assert_zero SELECT COUNT(*) FROM pragma_foreign_key_check;
 
+-- T14B-B (0034): a cooking/shopping FK anchor for a global recipe may already
+-- exist on a populated 0033 database. The parity migration must upgrade it in
+-- place (same stable ID, provenance defaults untouched) and reach 71 complete
+-- recipes with typed runtime fields, without altering the 59 Vietnamese rows.
+INSERT OR IGNORE INTO recipes (id, slug, title, cuisine, cook_time_minutes, servings, difficulty)
+VALUES ('gl-03', 'tomato-egg-stir-fry', 'Cà chua xào trứng Trung Hoa', 'chinese', 10, 2, 'easy');
+CREATE TEMP TABLE smoke_vn_recipes AS
+  SELECT id, slug, title, description, cuisine, cook_time_minutes, servings, difficulty, image_url, tags,
+    source_type, source_reference, verification_state, version
+  FROM recipes WHERE cuisine = 'vietnamese';
+CREATE TEMP TABLE smoke_vn_lines AS SELECT * FROM recipe_ingredients;
+CREATE TEMP TABLE smoke_vn_steps AS SELECT * FROM recipe_steps;
+
+.read migrations/0034_global_recipe_catalog_parity.sql
+
+INSERT INTO assert_zero SELECT COUNT(*) FROM pragma_foreign_key_check;
+INSERT INTO assert_zero SELECT COUNT(*) FROM pragma_integrity_check WHERE integrity_check <> 'ok';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'recipe_runtime_fields';
+INSERT INTO assert_one SELECT COUNT(*) = 71 FROM recipes;
+INSERT INTO assert_one SELECT COUNT(*) = 59 FROM recipes WHERE cuisine = 'vietnamese';
+INSERT INTO assert_one SELECT COUNT(*) = 12 FROM recipes WHERE id GLOB 'gl-[0-9][0-9]';
+INSERT INTO assert_one SELECT COUNT(*) = 71 FROM recipe_runtime_fields;
+INSERT INTO assert_one SELECT COUNT(*) = 59 FROM recipe_runtime_fields WHERE category IS NOT NULL AND region IS NOT NULL;
+INSERT INTO assert_one SELECT COUNT(*) = 12 FROM recipe_runtime_fields WHERE category IS NULL AND region IS NULL;
+INSERT INTO assert_one SELECT COUNT(*) = 71 FROM recipe_runtime_fields WHERE legacy_calories IS NOT NULL;
+INSERT INTO assert_one SELECT COUNT(*) FROM recipes
+  WHERE id = 'gl-03' AND description IS NOT NULL AND source_type = 'legacy' AND verification_state = 'unverified' AND version = 1;
+INSERT INTO assert_zero SELECT COUNT(*) FROM recipes r WHERE NOT EXISTS (SELECT 1 FROM recipe_ingredients l WHERE l.recipe_id = r.id);
+INSERT INTO assert_zero SELECT COUNT(*) FROM recipes r WHERE NOT EXISTS (SELECT 1 FROM recipe_steps s WHERE s.recipe_id = r.id);
+INSERT INTO assert_zero SELECT COUNT(*) FROM recipe_ingredients l WHERE NOT EXISTS (SELECT 1 FROM ingredients i WHERE i.id = l.ingredient_id);
+INSERT INTO assert_zero SELECT COUNT(*) FROM recipe_runtime_fields f WHERE NOT EXISTS (SELECT 1 FROM recipes r WHERE r.id = f.recipe_id);
+-- Vietnamese rows, lines and steps are byte-for-byte what 0006 left.
+INSERT INTO assert_zero SELECT COUNT(*) FROM (
+  SELECT id, slug, title, description, cuisine, cook_time_minutes, servings, difficulty, image_url, tags,
+    source_type, source_reference, verification_state, version FROM recipes WHERE cuisine = 'vietnamese'
+  EXCEPT SELECT * FROM smoke_vn_recipes);
+INSERT INTO assert_zero SELECT COUNT(*) FROM (SELECT * FROM smoke_vn_recipes EXCEPT
+  SELECT id, slug, title, description, cuisine, cook_time_minutes, servings, difficulty, image_url, tags,
+    source_type, source_reference, verification_state, version FROM recipes WHERE cuisine = 'vietnamese');
+INSERT INTO assert_zero SELECT COUNT(*) FROM (SELECT * FROM smoke_vn_lines EXCEPT SELECT * FROM recipe_ingredients);
+INSERT INTO assert_zero SELECT COUNT(*) FROM (SELECT * FROM smoke_vn_steps EXCEPT SELECT * FROM recipe_steps);
+INSERT INTO assert_one SELECT COUNT(*) = 328 + 57 FROM recipe_ingredients;
+INSERT INTO assert_one SELECT COUNT(*) = 295 + 46 FROM recipe_steps;
+
 SELECT 'migration-smoke=ok';
 SQL
