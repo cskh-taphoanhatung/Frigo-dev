@@ -1,5 +1,13 @@
 # Frigo / Takosan current task board — 2026-09-15
 
+## T14D — Recipe Catalog Authority Cutover — 2026-09-16 (development; PR open for independent review)
+
+- [done, local-verified] authority snapshot abstraction + static/D1 providers (T14B-B hydration reused); fingerprint +
+  strict readiness; modes static|shadow|canary|d1 with cutover fence; deterministic household canary; bounded cache;
+  fallbacks + diagnostics; all runtime readers migrated (unknown = 0, guarded); HTTP parity static/d1/canary.
+- [not done — by design] production deploy, enabling shadow/canary/d1 in production, T14C 0035 rollout, T14E, media population.
+- [next] Independent review → merge → OPS sequence (0035 → deploy static → shadow → canary → d1, config-only).
+
 ## T14C — Recipe Media Layer — 2026-09-16 (MERGED to main 3a1e6be6…; production rollout pending operator)
 
 - [done] PR #17 merged (normal merge, head 7b37325f… in ancestry); main exact-head CI SUCCESS

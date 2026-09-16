@@ -1,5 +1,23 @@
 # Frigo / Takosan current handoff — 2026-09-16
 
+## Current handoff — T14D recipe authority cutover architecture, development complete pending review
+
+- **Branch/base:** `feat/t14d-recipe-authority-cutover` from `d0856b48e043c72d1793002e7c6047a186ac890d` (exact
+  `origin/main` at start). Final head/PR/CI receipt: PR body + post-publication comment.
+- **Implementation:** `packages/recipes/src/recipe-authority.ts`; `src/worker/services/recipe-authority.ts`;
+  `src/worker/services/recipe-catalog-shadow.ts` (mode parser delegated; shadow unchanged); `src/worker/config/validation.ts`
+  (fence/percent validation); `src/worker/types.ts`; routes `recipes.ts`, `week.ts`, `shopping.ts`;
+  `packages/domain/src/week/planner.ts` (no hidden static default). Tests: `tests/unit/recipe-authority.test.ts`,
+  `tests/unit/recipe-catalog-authority.test.ts` (reader guard), `tests/integration/recipe-authority-routing.test.ts`.
+- **Database state:** no schema change; local replay still 35 migrations; production D1 remains 0034 (0035 pending OPS).
+- **Checks executed:** `pnpm recipe:seed:check`, `pnpm typecheck`, `pnpm lint`, `pnpm check:migrations`, `pnpm build`,
+  focused suites, full `pnpm test`, `git diff --check` — exact totals in the PR body.
+- **Limitations:** no Cloudflare action by design; production remains static; canary/d1 exercised only against the
+  in-memory D1 harness. Readiness requires exact D1 == ALL_RECIPES parity (T14E growth needs a new policy).
+- **Next action:** independent review → merge → Codex OPS: apply 0035, deploy static, then config-only progression
+  `shadow → canary (fenced, small %) → d1` per `recipe-catalog/T14D_RECIPE_AUTHORITY_CUTOVER.md` §12. Do NOT enable
+  canary/d1 in production without `RECIPE_CATALOG_CUTOVER_ENABLED=true` and operator approval. T14E / media population not started.
+
 ## Current handoff — T14C merged (main 3a1e6be6…); production 0035 apply + deploy pending operator credentials
 
 - **Done this session:** fresh pre-merge gates (main/PR head unchanged, migrations 35/no 0036/0001–0034 drift 0,

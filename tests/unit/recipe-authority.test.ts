@@ -76,7 +76,7 @@ function changeStep(snapshot: D1RecipeContentSnapshot, id: string): D1RecipeCont
   }) };
 }
 function changeTag(snapshot: D1RecipeContentSnapshot, id: string): D1RecipeContentSnapshot {
-  return { ...snapshot, recipes: snapshot.recipes.map((row) => (row.id === id ? { ...row, tags: [...row.tags, 'extra-tag'] } : row)) };
+  return { ...snapshot, recipes: snapshot.recipes.map((row) => (row.id === id ? { ...row, tags: [...(row.tags ?? []), 'extra-tag'] } : row)) };
 }
 
 describe('T14D — catalog fingerprint and D1 readiness (pure)', () => {
@@ -229,7 +229,7 @@ describe('T14D — authority router: modes, fallback, cache/singleflight, observ
 
   it('static (default) and shadow serve ALL_RECIPES without touching D1 for content; shadow schedules the comparison off-response', async () => {
     const statements: SqliteStatementEvent[] = [];
-    db.hooks = { beforeStatement: (event) => statements.push(event), beforeBatch: (batch) => statements.push(...batch) };
+    db.hooks = { beforeStatement: (event) => { statements.push(event); }, beforeBatch: (batch) => { statements.push(...batch); } };
     const resolution = await resolveRecipeAuthority(env(), { tenantKey: 'hh', now, log });
     expect(resolution).toMatchObject({ configuredMode: 'static', selectedSource: 'static', actualSource: 'static', canaryTenant: false, fallbackReason: null, diagnostics: [] });
     expect(resolution.snapshot.source).toBe('static');
@@ -248,7 +248,7 @@ describe('T14D — authority router: modes, fallback, cache/singleflight, observ
   it('d1 mode serves the verified D1 snapshot with exactly one five-statement batch, then hits the cache within the TTL', async () => {
     const batches: number[] = [];
     const single: string[] = [];
-    db.hooks = { beforeBatch: (batch) => batches.push(batch.length), beforeStatement: (event) => single.push(event.sql) };
+    db.hooks = { beforeBatch: (batch) => { batches.push(batch.length); }, beforeStatement: (event) => { single.push(event.sql); } };
     const first = await resolveRecipeAuthority(d1Env(), { tenantKey: 'hh', now, log });
     expect(first).toMatchObject({ configuredMode: 'd1', selectedSource: 'd1', actualSource: 'd1', fallbackReason: null });
     expect(first.snapshot.source).toBe('d1');
@@ -360,7 +360,7 @@ describe('T14D — authority router: modes, fallback, cache/singleflight, observ
     const before = db.query('SELECT id, title FROM recipes ORDER BY id');
     await resolveRecipeAuthority(d1Env(), { tenantKey: 'hh', now, log });
     const statements: string[] = [];
-    db.hooks = { beforeStatement: (event) => statements.push(event.sql), beforeBatch: (batch) => statements.push(...batch.map((event) => event.sql)) };
+    db.hooks = { beforeStatement: (event) => { statements.push(event.sql); }, beforeBatch: (batch) => { statements.push(...batch.map((event) => event.sql)); } };
     const rolledBack = await resolveRecipeAuthority(env({ RECIPE_CATALOG_MODE: 'static' }), { tenantKey: 'hh', now, log });
     expect(rolledBack).toMatchObject({ configuredMode: 'static', actualSource: 'static' });
     expect(ids(rolledBack.snapshot.list())).toEqual(ids(ALL_RECIPES));
