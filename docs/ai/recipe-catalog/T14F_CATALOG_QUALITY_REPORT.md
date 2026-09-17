@@ -3,7 +3,10 @@
 ## Scope and provenance
 
 This report covers the existing reviewed pilot, not the unstarted 399-recipe scale batch.
-Pilot certification is **blocked** by two full-suite routing-fixture failures.
+T14F-A resolves the historical routing-fixture failures; all local pilot gates and
+implementation CI pass (171 files / 3911 tests). Final exact-head certification is
+bound by the [PR #25 receipt](https://github.com/frigo-4/Frigo-dev/pull/25#issuecomment-5714709031)
+and `T14F_NEXT_HANDOFF.md`. No scale preflight or Batch B was started.
 The takeover did not author, regenerate, or alter recipe data or review decisions.
 
 - Source: `data/recipe-import/t14f/pilot-30.jsonl`.

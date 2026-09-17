@@ -1,14 +1,20 @@
-## Current T14F takeover — PILOT_BLOCKED — 2026-09-17
+## Current T14F-A — PILOT_CERTIFIED / SCALE_NOT_STARTED — 2026-09-17
 
-- Exact recovery `aa7ca6a…` on `hoplite/massalia-c2862d7c`; PR #25 remains draft/unmerged.
-- Forward timestamp-comparison fix `486409c…`; focused 21/21 PASS twice. Pilot/0036 unchanged;
-  manifest `rel-193ac2b16c64a260` 101/1 batch; static 71; complete 101; order 0..100; reader 5 statements.
-- Seed/import/typecheck/lint/migration smoke/build/diff PASS; QA and Worker bundle accounting completed.
-- Full `pnpm test` FAIL: 170/171 files, 3908/3910 tests pass. `recipe-authority-routing.test.ts:114,247`
-  fails alone too (5/7): 0035/71 fixture + shipped 101 manifest ⇒ static COUNT_DRIFT fallback/no D1 cache.
-- Stop honored: no further code fix, ingredient preflight, Batch B, 0037 or 500 manifest.
-  Next: resume test-local fixture/release alignment, preserve selection/cache checks, rerun pilot gates.
-- Exact handoff: `docs/ai/recipe-catalog/T14F_NEXT_HANDOFF.md`. No production/media/T14G action; no merge.
+- Repository ID 1368281478; unchanged main; forward-only `hoplite/massalia-c2862d7c`;
+  PR #25 draft/unmerged. Inherited routing fix `8079a37`, verification commit `2ee6f5cc…`.
+- Original 5/7 failure independently reproduced: strict 71/101 COUNT_DRIFT is correct.
+  Generated test-local 71 release now proves real D1/canary, null fallback, `[5]`/`[]` cache,
+  invalid-drift rejection and cleanup; no runtime, pilot, manifest or migration change.
+- Routing 8/8, growth 21/21, combined 29/29 twice, non-isolated 29/29, subsystem 383/383 PASS.
+  Executed seed/import/typecheck/lint/migration smoke/build/test/diff: all PASS;
+  full suite **171 files / 3911 tests**. Exact implementation CI **35223589293 / 105209475052 SUCCESS**.
+- Final documentation SHA + hosted CI SUCCESS are bound in the [certification receipt](https://github.com/frigo-4/Frigo-dev/pull/25#issuecomment-5714709031).
+  That final certified SHA, not the implementation commit, is the only valid future T14F-B base.
+- Pilot 30 + legacy 71 = 101, complete 101/order 0..100, five statements/no N+1;
+  replay, authority modes, imported HTTP flows and Inventory Truth regressions PASS.
+- **STOP.** Await separately authorized T14F-B. No ingredient scale preflight, Batch B, 0037,
+  500 manifest, production/media/T14G action or merge. Overall T14F is not complete.
+- Exact commands/hashes: `docs/ai/recipe-catalog/T14F_NEXT_HANDOFF.md`. Local-only settings preserved.
 
 ## Historical T14F — WIP SAFE STOP — 2026-09-17 (superseded by takeover above)
 

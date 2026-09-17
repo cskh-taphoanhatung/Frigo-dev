@@ -1,23 +1,31 @@
 # Frigo / Takosan current handoff — 2026-09-17
 
-## Current T14F takeover — T14F_PILOT_BLOCKED (supersedes the historical handoffs below)
+## Current T14F-A — T14F_PILOT_CERTIFIED / T14F_SCALE_NOT_STARTED
 
-- Recovery: exact `aa7ca6a…` on `hoplite/massalia-c2862d7c`; repository ID 1368281478,
-  current name `frigo-4/Frigo-dev`; main remains certified `f0c229f2…`. PR #25 draft/unmerged.
-- Forward fix `486409c5155fde337380a5ff5f912c709226da96`: recipe timestamp exclusion with all
-  deterministic columns/regression controls; focused 21/21 PASS twice; no data/migration changes.
-- Pilot: reviewed 30 + legacy 71 = 101 READY locally; static/shadow 71, canary 71/101, D1 101;
-  complete 101, order 0..100, reader 5 statements; imported HTTP flows PASS.
-- Executed seed/import/typecheck/lint/migration smoke/build/diff PASS. Full `pnpm test` FAIL:
-  170/171 files, 3908/3910 tests pass. Routing suite alone FAIL 5/7 at lines 114 and 247;
-  0035/71 fixture uses shipped 101 manifest ⇒ COUNT_DRIFT fallback, D1 counter 0, no D1 cache.
-- Stop honored: no additional code fix, ingredient preflight, Batch B, 0037 or 500 manifest.
-  No production write/deploy/authority activation, no media population, no T14G.
-- Next: resume legacy test-local fixture/release alignment without weakening readiness or
-  selection/cache checks; rerun all pilot gates before ingredient preflight. Exact recovery,
-  commands, hashes, QA and bundle evidence: `recipe-catalog/T14F_NEXT_HANDOFF.md`,
-  `T14F_REAL_CATALOG_GROWTH.md`, `T14F_CATALOG_QUALITY_REPORT.md`.
-  Pre-existing `.hoplite/settings.json` delta preserved and intentionally not committed.
+- Recovery: repository ID 1368281478; `frigo-4/Frigo-dev`; `hoplite/massalia-c2862d7c`;
+  main `f0c229f2…` unchanged; start `8079a37` inspected as a compatible test-only fix.
+- Implementation: `2ee6f5cc0e144e5c522ce91bd005ab61dc124ed5`. The legacy routing suite uses
+  a generated test-local 71 release, verifies actual D1/canary selection and null fallback,
+  retains first batch `[5]` / cached `[]`, rejects and does not cache semantic drift,
+  and cleans up its mock. Timestamp fix `486409c…` and production semantics preserved.
+- Failure history: reproduced pre-remediation 5/7; independent 71/101 mismatch diagnostics
+  confirm correct COUNT_DRIFT/static fallback. Both stale-fixture failures are resolved.
+- Verification: routing 8/8, growth 21/21, combined 29/29 twice, focused subsystem 383/383;
+  independent serial/non-isolated 29/29; no P0/P1/P2 review blocker. Executed seed/import,
+  typecheck, lint, migration smoke, build, full `pnpm test`, diff: all PASS;
+  full suite 171/171 files, 3911/3911 tests. Exact commands are in the next handoff.
+- Hosted implementation validate **35223589293 / 105209475052 SUCCESS**. The
+  [final certification receipt](https://github.com/frigo-4/Frigo-dev/pull/25#issuecomment-5714709031)
+  binds the final documentation head to its own hosted SUCCESS; required for a valid T14F-B base.
+- Pilot remains 30 + legacy 71 = 101 READY, complete 101/order 0..100, five statements/no N+1;
+  fresh/staged replay, authority modes, imported HTTP flows and inventory regressions pass.
+  Pilot sources/review/registry/manifest, 0036 hash and all historical migration bytes unchanged.
+- Next action: **STOP.** Await separate T14F-B authorization; start only from the final SHA
+  in the receipt, not an earlier implementation SHA. No ingredient scale preflight, Batch B,
+  0037, 500 manifest, production mutation/deploy/switch, media population or T14G.
+  PR #25 stays draft/unmerged and auto-fix subscribed. Pre-existing local settings delta preserved.
+- Durable recovery, exact commands and hashes: `recipe-catalog/T14F_NEXT_HANDOFF.md`;
+  full history: `T14F_REAL_CATALOG_GROWTH.md`; pilot quality: `T14F_CATALOG_QUALITY_REPORT.md`.
 
 ## Historical handoffs (not current T14F status)
 

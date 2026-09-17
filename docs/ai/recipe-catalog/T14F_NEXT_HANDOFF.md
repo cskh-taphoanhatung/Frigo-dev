@@ -1,124 +1,151 @@
-# T14F next handoff — pilot blocked after takeover
+# T14F-A next handoff — certified pilot; scale not started
+
+## Scope and certification boundary
+
+**T14F_PILOT_CERTIFIED · T14F_SCALE_NOT_STARTED.** This is a pilot-only checkpoint,
+not T14F development completion, a 500-recipe release, or production authorization.
+The T14F-A packet supersedes the earlier instruction to continue into scale work.
+**STOP after pilot certification. No ingredient scale preflight or Batch B in T14F-A.**
+
+The final exact-head certificate is the [PR #25 certification receipt](https://github.com/frigo-4/Frigo-dev/pull/25#issuecomment-5714709031).
+A committed handoff cannot contain its own commit hash. Therefore that stable receipt
+records `T14F_PILOT_CERTIFIED_HEAD`, final validate run/check, and `SUCCESS` **after**
+this documentation checkpoint is published and its hosted CI passes. Until the receipt
+contains those exact final-head values, certification is not valid for a T14F-B handoff.
+Do not substitute an earlier implementation SHA or an unchecked moving PR head.
 
 ```text
-classification=T14F_PILOT_BLOCKED
-scale=T14F_SCALE_NOT_STARTED
 repository_id=1368281478
 repository_full_name=frigo-4/Frigo-dev
 origin_main=f0c229f2e2b134904a8c0e355479394cbf53c954
 branch=hoplite/massalia-c2862d7c
-takeover_resume_head=aa7ca6ae426eb784cf5d1e9d04f753c04074a23f
-verified_implementation_commit=486409c5155fde337380a5ff5f912c709226da96
+requested_blocked_checkpoint=585e718f4452155f6dae060e894c7fe5e0fd5d26
+T14F_A_actual_start_head=8079a3717f9f6996ae4c98eb375c32fc1ca3e946
+routing_fix_commit=8079a3717f9f6996ae4c98eb375c32fc1ca3e946
+verified_implementation_head=2ee6f5cc0e144e5c522ce91bd005ab61dc124ed5
+implementation_validate_run=35223589293
+implementation_validate_check=105209475052
+implementation_validate_result=SUCCESS
 PR=25
 draft=YES
 merged=NO
 ```
 
-This handoff is committed after the verified implementation commit. It cannot
-contain its own hash: recover the current remote PR head and verify that both
-`aa7ca6a…` and `486409c…` are ancestors. Do not reset to either historical commit.
+The only intervening commit beyond the requested blocked checkpoint was the
+compatible automated routing-test fix `8079a37`. Inspected it before continuing:
+no application, catalog, migration, or production configuration change. All commits
+remain forward descendants of `aa7ca6a…`, `486409c…`, and `585e718f…`; no reset,
+rebase, force push, or main write occurred. Numeric repository metadata was fetched
+from `/repositories/1368281478`; explicit main/head refs were fetched through the broker.
 
-## Completed in takeover
+## Reproduction and remediation
 
-- Verified numeric repository identity and exact requested branch/base/head.
-- Linked existing draft PR #25; auto-fix updates enabled; no duplicate PR.
-- Reproduced the original timestamp failure **standalone**, not in the two combined
-  pre-fix invocations, both of which passed. Diagnosed exact values across all
-  seven tables: only SQLite wall-clock timestamps differed.
-- Forward-only test fix `486409c…`: explicit 16-column recipe semantic projection,
-  schema guard, deterministic timestamp-exclusion and title-mutation controls.
-  Other five tables retain all columns; existing media projection preserved.
-- Two focused invocations each passed 21/21; independent test-diff review found no
-  blocking issue. Pilot data and all migration bytes unchanged by takeover.
-- Fresh/staged 101 replay, completeness, FK/quick_check, static/shadow/canary/D1,
-  five-statement reader and imported HTTP recommendation/planner/swap/cooking
-  checks passed. This is local SQLite/Worker-handler evidence, not browser or
-  production evidence.
-- QA report and Worker dry-run bundle/response accounting completed; see
-  `T14F_CATALOG_QUALITY_REPORT.md` and `T14F_REAL_CATALOG_GROWTH.md`.
+- Reproduced the pre-fix file from a disposable archive of `585e718f…`, without
+  moving the live checkout: **5/7 pass**, failures at lines 114 (D1 counter 0)
+  and 247 (second read `[5]`, expected `[]`). The archive was removed afterward.
+- Independent unmocked SQLite/Vite diagnostics: fixture 71 vs shipped manifest 101;
+  configured/selected `d1`, actual `static`, readiness/fallback `COUNT_DRIFT`;
+  two attempts produced batches `[5,5]`, D1 counter 0, static/fallback counters 2.
+  Correct fail-closed behavior; no verified snapshot was cached.
+- `tests/integration/recipe-authority-routing.test.ts` alone changes for T14F-A.
+  Its file-local JSON module mock calls the real
+  `composeCatalogRelease(ALL_RECIPES, [])`; generated legacy/expected count 71,
+  zero import batches, exact `ALL_RECIPES` ID order, both fingerprints
+  `9ae153e64d34b30d72bb985d4070d8e210201219c0e8f8998ce8f99057fc7c3f`.
+- HTTP source counters prove parity is not static fallback. Direct resolution
+  assertions verify configured/selected/actual D1, null fallback, and exactly the
+  `recipe_catalog_authority_selected` diagnostic; inside-canary uses D1 and outside
+  stays static without a content read. First content batch `[5]`, cached request `[]`.
+- Added negative semantic-drift coverage: `LEGACY_BASELINE_DRIFT`, actual static,
+  fallback diagnostic, and repeated `[5,5]` reads prove rejected snapshots are uncached.
+  It adds one test; the expected original 7/28/3910 totals become **8/29/3911**.
+- Cache/counters reset after each test; the release mock is removed with
+  `vi.doUnmock` and module cache reset after the file. Real growth tests are unmocked.
+  Independent review found no P0/P1/P2 blocker and passed a serial `--no-isolate` run.
+- Timestamp-comparison fix `486409c…` is preserved. Production readiness/runtime,
+  shipped manifest, pilot data/review/registry, and migrations are untouched.
 
-## Executed gates and stop reason
+## Exact checks executed on the implementation checkpoint
 
-```text
-pnpm recipe:seed:check=PASS
-pnpm recipe:import:check=PASS
-pnpm typecheck=PASS
-pnpm lint=PASS
-pnpm check:migrations=PASS (migration-smoke=ok)
-pnpm build=PASS
-pnpm test=FAIL (171 files: 170 pass, 1 fail; 3910 tests: 3908 pass, 2 fail)
-git diff --check=PASS
+```sh
+pnpm vitest run tests/integration/recipe-authority-routing.test.ts
+# 1 file / 8 tests PASS
+pnpm vitest run tests/integration/recipe-catalog-growth.test.ts tests/integration/recipe-catalog-growth-authority.test.ts
+# 2 files / 21 tests PASS
+pnpm vitest run tests/integration/recipe-authority-routing.test.ts tests/integration/recipe-catalog-growth.test.ts tests/integration/recipe-catalog-growth-authority.test.ts
+# 3 files / 29 tests PASS; executed twice
+pnpm vitest run --no-isolate --no-file-parallelism --maxWorkers=1 tests/integration/recipe-authority-routing.test.ts tests/integration/recipe-catalog-growth.test.ts tests/integration/recipe-catalog-growth-authority.test.ts
+# Independent reviewer: 3 files / 29 tests PASS
+pnpm vitest run tests/unit/recipe-authority.test.ts tests/integration/recipe-catalog-release-readiness.test.ts tests/integration/recipe-d1-parity.test.ts tests/integration/recipe-d1-runtime-parity.test.ts tests/integration/recipe-media-catalog.test.ts tests/integration/recipe-media-schema.test.ts tests/integration/recipe-media-route.test.ts tests/unit/recipe-import-provenance.test.ts tests/unit/recipe-import-output-policy.test.mjs tests/integration/inventory-lot-commands.test.ts tests/integration/inventory-read-authority.test.ts tests/integration/inventory-truth.test.ts
+# 12 files / 383 tests PASS
+pnpm recipe:seed:check
+pnpm recipe:import:check
+pnpm typecheck
+pnpm lint
+pnpm check:migrations
+pnpm build
+pnpm test
+# Every gate PASS. Full suite: 171/171 files, 3911/3911 tests.
+git diff --check
+# PASS
+git status --short
+# Only pre-existing, deliberately uncommitted .hoplite/settings.json delta.
 ```
 
-The exact full run started 2026-09-17 12:23:10 UTC and lasted 374.51 seconds.
-Implementation-head CI run **35221142005**, validate job/check **105201308074**,
-also failed with the same two tests and totals at `486409c5155fde337380a5ff5f912c709226da96`.
-The failed file is `tests/integration/recipe-authority-routing.test.ts`:
-line 114 expects D1 counter > 0, receives 0; line 247 expects cache-hit reads `[]`,
-receives `[5]`. Running that file alone reproduced both failures (5/7 pass).
+Also executed `pnpm exec tsc -p tsconfig.json --noEmit` (PASS). Full local test run
+started **2026-09-17 12:53:15 UTC**, duration **389.75 seconds**. Local logs are
+ignored under `.hoplite/artifacts/t14f-a/`; durable facts are recorded here.
+Hosted implementation validate **35223589293 / 105209475052** passed lint,
+typecheck, tests, migration smoke and build at exact `2ee6f5cc…`.
+The final documentation head must also have hosted `SUCCESS`, recorded in the receipt.
 
-**Confirmed fixture mismatch:** this historical T14D suite builds a 0035-tip
-71-recipe database but uses the shipped 101 manifest. The actual authority returns
-static/COUNT_DRIFT and does not cache a rejected D1 snapshot. A diagnostic of two
-resolutions confirmed batches `[5,5]`, D1 counter 0, static counter 2, fallbacks 2.
-The real 101-recipe growth authority suite passes. Do not mistake legacy parity
-responses returned through fallback for certified D1 responses.
-
-Per the user's explicit stop rule, additional failure remediation was **not**
-attempted. Pilot is NOT certified. Ingredient preflight and Batch B are NOT started.
-
-## Next action (requires resuming blocked pilot work)
-
-1. Fetch explicit `main` and `hoplite/massalia-c2862d7c` refs; inspect status and
-   ancestry. Preserve unrelated local changes. Never force push or rewrite history.
-2. Reproduce `pnpm vitest run tests/integration/recipe-authority-routing.test.ts`.
-3. Align the historical parity test's 71-recipe fixture with an explicit generated
-   71-recipe release using a test-local seam/mock, while retaining the unmocked
-   shipped-101 growth tests. Assert actual D1/canary selection so static fallback
-   cannot fake parity. Preserve real failure/fallback and cache expectations.
-   Do not alter production readiness or the shipped manifest for a test fixture.
-4. Re-run the two focused growth suites, the routing suite, then **all gates above**.
-   Only a fully passing pilot may be `T14F_PILOT_CERTIFIED`.
-5. Only then perform the required Batch B ingredient coverage design. Current
-   canonical size is 45; pilot uses 41. Sufficiency for 399 high-quality distinct
-   recipes has not been assessed. Do not infer infeasibility from usage count alone,
-   invent ingredients, silently expand truth, or pad trivial variants.
-6. Follow the user's T14F scale sequence only if preflight passes; otherwise stop
-   `T14F_INGREDIENT_COVERAGE_BLOCKED`. Keep #25 draft until all 500-recipe gates pass.
-
-## Immutable pilot state
+## Immutable pilot and renewed runtime evidence
 
 ```text
 batch=t14f-pilot-30-v1
-count=30
+pilot_count=30
 batch_hash=4d13915c075cd1b418d2454f7f03968349b779766cdb96b92df90f4138bc8cce
 0036_sha256=04228788e60d59a2427d70956d4d8a108d0a6c1c4a643c47641402f658120ba9
+0001_0035_hash_drift=0
 release_id=rel-193ac2b16c64a260
-legacy_static=71
+legacy_static_count=71
 expected_recipe_count=101
-approved_batches=1
-runtime_order=0..100 (101 distinct)
+approved_import_batches=1
+runtime_order_min=0
+runtime_order_max=100
+runtime_order_distinct=101
 complete=101
-fk_stub=0
+fkStub=0
 incomplete=0
-scale_count=0
-scale_batch_hash=N/A
-0037=N/A
 ```
 
-Never change `pilot-30.jsonl`, `pilot-review.json`, `approved-batches.json`, the
-shipped manifest, or 0036 to fix these test-comparison/fixture defects.
+Recompared all five protected pilot files against `585e718f…`, recomputed 0036's
+SHA-256, and byte-compared migrations 0001–0035 with certified main: no drift.
+Fresh/staged replay, FK/quick checks, and current-release readiness pass.
+Static/shadow response 71; shadow D1 READY 101; canary outside 71 static / inside
+101 D1; full D1 101. Reader stays five statements, no N+1. Real local Worker HTTP
+list/detail, recommendations, planner/generate/regenerate/swap, cooking deductions
+and idempotency, and media fallback pass. These are SQLite/HTTP-handler checks,
+**not browser, production, or newly populated media evidence**. T09/T11 unchanged;
+new inventory writers/readers 0; household isolation and Week compatibility preserved.
 
-## Local workspace and safety
+## Next task — separate authorization required
 
-The initial checkout already had a `.hoplite/settings.json` delta (inferred
-`pnpm dev` / null setup versus the versioned isolated preview setup). It is preserved
-and intentionally uncommitted. Dependencies were installed with the frozen lockfile
-and SQLite CLI for tests; no preview or production server was started. Local evidence
-under `.hoplite/artifacts/t14f/` is ignored; durable results are recorded in these docs.
+**T14F-B — Batch B Ingredient Coverage + 399 Recipe Expansion**.
+Recommended model from the task packet: **GLM 5.3 Flash / Flash Max**.
+Do not launch it as part of T14F-A. When separately authorized:
 
-Production D1/R2 write NO; deploy NO; authority activation NO; main write NO;
-force push NO; history rewrite NO; migration rewrite NO; media population NO;
-T14G NOT_STARTED. No PayOS/payments/billing/checkout/webhook/auth implementation
-changes. Inventory T09/T11 unchanged, zero new writers/readers. PR #25 remains
-draft/unmerged; rollout and media remain deferred.
+1. Read the final receipt and obtain its exact `T14F_PILOT_CERTIFIED_HEAD` and
+   successful final validate run/check. Fetch that SHA and the explicit branch/main
+   refs; verify identity, ancestry, safe worktree, and PR #25 draft/unmerged state.
+2. Start only from that final certified documentation head, not `8079a37`,
+   `2ee6f5cc`, or an unverified newer head. Investigate any intervening changes.
+3. Follow the separately supplied T14F-B packet. Ingredient sufficiency for 399
+   high-quality recipes is **not assessed**. The historical pilot's 41/45 usage
+   neither proves sufficiency nor authorizes ingredient invention or trivial variants.
+
+T14F-A ends here. Batch B NOT_STARTED; ingredient scale preflight NOT_RUN;
+0037/500 manifest absent; media population DEFERRED; T14G NOT_STARTED;
+PRODUCTION_ROLLOUT_DEFERRED. No production D1/R2 write, deployment, authority
+switch, PayOS/payment/auth change, or merge. PR #25 remains draft, open, unmerged,
+and subscribed to auto-fix updates. Preserve the unrelated local settings delta.

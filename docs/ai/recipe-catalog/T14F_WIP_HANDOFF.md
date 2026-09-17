@@ -1,8 +1,20 @@
 # T14F — WIP HANDOFF (SAFE STOP)
 
-## Superseding takeover checkpoint — 2026-09-17
+## Current T14F-A certification — 2026-09-17
 
-**Current status: T14F_PILOT_BLOCKED; T14F_SCALE_NOT_STARTED.** The historical
+**T14F_PILOT_CERTIFIED; T14F_SCALE_NOT_STARTED.** Routing-fixture remediation is
+test-only (`8079a37` + `2ee6f5cc…`); no pilot/manifest/migration/runtime change.
+Routing 8/8, growth 21/21, combined 29/29 twice, full 171 files / 3911 tests and all
+pilot gates PASS. Implementation CI **35223589293 / 105209475052 SUCCESS**.
+The [final receipt](https://github.com/frigo-4/Frigo-dev/pull/25#issuecomment-5714709031)
+must bind the final documentation head and hosted SUCCESS for a valid T14F-B base.
+Read `T14F_NEXT_HANDOFF.md` for exact commands, recovery and the pilot-only STOP.
+No ingredient scale preflight, Batch B, 0037, production, media or T14G work.
+PR #25 stays draft/unmerged. Everything below is historical, not a continuation instruction.
+
+## Historical takeover checkpoint — 2026-09-17 (superseded)
+
+**Status at that checkpoint: T14F_PILOT_BLOCKED; T14F_SCALE_NOT_STARTED.** The historical
 safe-stop record below is retained, not the current recovery procedure. Read
 `T14F_NEXT_HANDOFF.md` and `T14F_REAL_CATALOG_GROWTH.md` first for continuation.
 

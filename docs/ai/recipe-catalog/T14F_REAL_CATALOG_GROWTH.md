@@ -1,4 +1,72 @@
-# T14F real catalog growth — takeover verification
+# T14F real catalog growth — T14F-A pilot certification
+
+## Current result — T14F_PILOT_CERTIFIED / T14F_SCALE_NOT_STARTED
+
+The T14F-A task ends at the existing **101-recipe pilot**, not Batch B or 500 recipes.
+All local pilot gates and exact implementation CI pass. Final certification is bound
+by the [PR #25 receipt](https://github.com/frigo-4/Frigo-dev/pull/25#issuecomment-5714709031):
+it records the final documentation SHA and its own hosted validate SUCCESS after
+publication. A handoff cannot embed its own commit hash; use that receipt's
+`T14F_PILOT_CERTIFIED_HEAD`, never an earlier implementation SHA, for future T14F-B.
+Exact commands, immutable hashes and recovery protocol: `T14F_NEXT_HANDOFF.md`.
+
+### T14F-A recovery and failure reproduction
+
+Re-fetched numeric repository metadata (1368281478 = `frigo-4/Frigo-dev`), explicit
+main/head refs and PR #25. Main is still `f0c229f2…`; branch `hoplite/massalia-c2862d7c`.
+Actual start `8079a3717f9f6996ae4c98eb375c32fc1ca3e946` was inspected in full: it is
+the compatible automated test-only routing fix beyond requested `585e718f…`, not
+an application/catalog/migration change. Preserved the local-only settings delta.
+
+Reproduced the pre-fix routing file in a disposable archive of `585e718f…`, without
+checking the live branch backward: **5/7 pass**, line 114 D1 counter 0; line 247
+second read `[5]` instead of `[]`. A separate unmocked diagnostic confirmed:
+fixture count 71; shipped manifest 101; configured/selected D1, actual static;
+`COUNT_DRIFT`; repeated batches `[5,5]`, D1 counter 0, static/fallback counters 2.
+This was correct production fail-closed behavior, not corrupt pilot content.
+
+### Test-local remediation and certification
+
+Only `tests/integration/recipe-authority-routing.test.ts` changes in T14F-A:
+inherited `8079a37` generates the historical release via real
+`composeCatalogRelease(ALL_RECIPES, [])`; `2ee6f5cc0e144e5c522ce91bd005ab61dc124ed5`
+verifies its 71/71 counts, zero imports, exact ID order and certified fingerprints,
+explicit configured/selected/actual source and fallback diagnostics, and cleanup.
+HTTP counters protect all parity comparisons against fallback masquerading as D1.
+Inside-canary uses D1; outside stays static without content reads. Valid first read
+is `[5]`, next cached HTTP operation `[]`; semantic drift still falls back with
+`LEGACY_BASELINE_DRIFT` and two `[5,5]` reads, proving no verified cache.
+
+| Executed verification | Result |
+| --- | --- |
+| Routing suite | 1 file / 8 tests PASS |
+| Real, unmocked shipped-101 growth suites | 2 files / 21 tests PASS |
+| Routing + growth together, twice | 3 files / 29 tests PASS each |
+| Independent serial `--no-isolate` routing + growth | 3 files / 29 tests PASS |
+| Authority/readiness/parity/media/import/Inventory Truth focused suites | 12 files / 383 tests PASS |
+| Seed check, import check, typecheck, lint, migration smoke, build | All PASS |
+| Full `pnpm test` | 171/171 files; 3911/3911 tests PASS |
+| `git diff --check` | PASS |
+| Exact implementation CI | 35223589293 / validate 105209475052 SUCCESS |
+
+Full local test run: **2026-09-17 12:53:15 UTC**, **389.75 seconds**. Local evidence
+is under `.hoplite/artifacts/t14f-a/`. The inherited invalid-D1 regression adds one
+test; 8/29/3911 replace the packet's historical 7/28/3910 counts without removing
+or weakening an assertion. Independent review found no P0/P1/P2 blocker.
+
+All runtime evidence below was renewed by the focused/full suites: 101 complete,
+order 0..100, FK/quick checks, five-statement reader, static/shadow/canary/full-D1,
+and real local HTTP imported recipe flows. No browser/production verification is
+claimed. Hash checks show protected pilot files unchanged vs `585e718f…`, exact
+0036 SHA-256 unchanged, and 0001–0035 byte drift 0 vs certified main. Timestamp fix
+`486409c…` remains intact. No runtime/readiness change; T09/T11 unchanged, no new
+inventory writers/readers. Final-head CI binding is recorded in the receipt above.
+
+**STOP.** T14F-B needs separate authorization. No ingredient scale preflight, Batch B,
+0037, 500 manifest, production write/deploy/authority switch, media population or
+T14G. PR #25 remains draft/open/unmerged; overall T14F is not development-complete.
+
+## Historical takeover verification (superseded by T14F-A above)
 
 ## Recovery identity
 
