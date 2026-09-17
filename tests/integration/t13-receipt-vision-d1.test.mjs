@@ -1,16 +1,12 @@
 import { randomUUID } from 'node:crypto';
-import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { unstable_dev, unstable_splitSqlQuery } from 'wrangler';
+import { startLocalD1Worker } from '../helpers/local-d1-worker.mjs';
 
 // T13 real workerd/D1 proof. Everything here runs against the real migrations
 // (0001-0031), the real CHECK constraints and triggers, and the REAL scan
 // confirm / inventory truth Hono handlers — not a reimplementation.
 
 let worker;
-let directory;
 const token = randomUUID();
 const now = '2026-09-11T10:00:00Z';
 const scope = { householdId: '', actorId: '' };
@@ -76,29 +72,16 @@ const lotsOf = (householdId) => query(
    FROM inventory_lots WHERE household_id = ? ORDER BY id`, [householdId]);
 
 beforeAll(async () => {
-  directory = mkdtempSync(path.join(tmpdir(), 'frigo-t13-d1-'));
-  const config = path.join(directory, 'wrangler.json');
-  writeFileSync(config, JSON.stringify({ name: 'frigo-t13-local-proof', compatibility_date: '2025-03-01' }));
-  worker = await unstable_dev(path.resolve('tests/helpers/inventory-lot-d1-worker.ts'), {
-    config, ip: '127.0.0.1', port: 0, inspectorPort: 0, local: true, persist: false,
-    logLevel: 'error', vars: { TEST_TOKEN: token },
-    experimental: {
-      disableExperimentalWarning: true, disableDevRegistry: true, forceLocal: true, watch: false,
-      d1Databases: [{ binding: 'DB', database_name: 't13-isolated-test', database_id: '00000000-0000-0000-0000-000000000031' }],
-    },
-  });
-  // Fresh 0001 -> 0031 replay on real D1.
-  for (const file of readdirSync('migrations').filter((name) => /^\d+.*\.sql$/.test(name)).sort()) {
-    const result = await batch(unstable_splitSqlQuery(readFileSync(`migrations/${file}`, 'utf8')));
-    expect(result, file).toMatchObject({ status: 200 });
-  }
+  worker = await startLocalD1Worker({ name: 't13', token,
+    databaseName: 't13-isolated-test', databaseId: '00000000-0000-0000-0000-000000000031' });
+  // Fresh full-chain replay on real D1.
+  await worker.replayMigrations(expect);
   await seedHousehold(scope, 'T13 D1');
   await seedHousehold(foreign, 'T13 D1 foreign');
 }, 120_000);
 
 afterAll(async () => {
   await worker?.stop();
-  if (directory) rmSync(directory, { recursive: true, force: true });
 });
 
 describe('T13 real local D1 receipt/vision truth (no remote binding)', () => {

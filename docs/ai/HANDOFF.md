@@ -1,5 +1,59 @@
 # Frigo / Takosan current handoff — 2026-09-17
 
+## Current T14F — T14F_DEVELOPMENT_COMPLETE (T14F-C certified + closed; production untouched)
+
+T14F-C ran on top of the certified T14F-B base `7d667523…` and completed the 500-recipe development certification: 0037 promoted byte-identical to the certified factory artifact (`68e52e6d…`), `approved-batches.json` + shipped manifest regenerated to 500 recipes / 2 batches (`rel-bd00a4f53fcaeee4`, manifest `fa47d31f…`), fresh/staged/production-forward replay PASS, D1 readiness READY 500, static/shadow/canary/full-D1 authority PASS, and user flows incl. Batch B recipes across six cuisines PASS. Certificate: `recipe-catalog/T14F_C_500_CATALOG_CERTIFICATION.md` (with the closure section).
+
+**Closure executed** (safe stop `44c0ad38…` resolved): `pnpm lint` PASS, `pnpm build` PASS, full `pnpm test` **171/171 files, 3913/3913 tests** (419.6 s), `pnpm typecheck`, `pnpm check:migrations` (smoke through 0037), `pnpm recipe:seed:check`, `pnpm recipe:import:check` (500/2), `git diff --check` PASS; working tree clean. Hosted validate on `44c0ad38…` (run 35266591460) was cancelled by a runner shutdown, then on rerun **failed** the five real-D1 suites (`Error: Network connection lost`): replaying 0001→0037 in one workerd overflows the 1 MiB prepared-statement cache in workerd 1.20250718, whose eviction segfaults (cloudflare/workerd#5977). Fix `8c6080aa…` is tests-only (`tests/helpers/local-d1-worker.mjs`: persisted local D1, one batch per migration, workerd restart before the cache would overflow); real-D1 suites 5 files / 92 tests PASS. No migration, catalog, runtime, Inventory Truth, PayOS or auth change. A second, distinct closure blocker then surfaced on the docs-only heads: the hosted Vitest step passed 171/3913 but exited 1 with an unhandled `[vitest-worker]: Timeout calling "onTaskUpdate"` (birpc 60 s reply timeout starved by long synchronous SqliteD1 suites on the 2-vCPU runner). Fixed forward-only with `tests/helpers/vitest-event-loop-yield.ts` (vitest `setupFiles`, one `setImmediate` yield per test) — test config only.
+
+Final head and hosted exact-head validate SUCCESS (run/job ids) are bound in the PR #25 **final certification receipt**; PR #25 is marked ready for review and stays **unmerged**. Next action: **STOP.** Merge is a separate explicit decision after independent review. Production rollout (production ledger → 0036/0037 via the OPS migration workflow with `EXPECTED_PRE_TIP`, D1 readiness READY 500 verify, shadow → canary → d1), media population and T14G each require separate authorization. Production currently does **not** contain 500 recipes. `recipe-catalog/T14F_C_WIP_HANDOFF.md` is historical only — do not resume from it.
+
+### T14F-A — pilot certified (earlier)
+
+- Recovery: repository ID 1368281478; `frigo-4/Frigo-dev`; `hoplite/massalia-c2862d7c`;
+  main `f0c229f2…` unchanged; start `8079a37` inspected as a compatible test-only fix.
+- Implementation: `2ee6f5cc0e144e5c522ce91bd005ab61dc124ed5`. The legacy routing suite uses
+  a generated test-local 71 release, verifies actual D1/canary selection and null fallback,
+  retains first batch `[5]` / cached `[]`, rejects and does not cache semantic drift,
+  and cleans up its mock. Timestamp fix `486409c…` and production semantics preserved.
+- Failure history: reproduced pre-remediation 5/7; independent 71/101 mismatch diagnostics
+  confirm correct COUNT_DRIFT/static fallback. Both stale-fixture failures are resolved.
+- Verification: routing 8/8, growth 21/21, combined 29/29 twice, focused subsystem 383/383;
+  independent serial/non-isolated 29/29; no P0/P1/P2 review blocker. Executed seed/import,
+  typecheck, lint, migration smoke, build, full `pnpm test`, diff: all PASS;
+  full suite 171/171 files, 3911/3911 tests. Exact commands are in the next handoff.
+- Hosted implementation validate **35223589293 / 105209475052 SUCCESS**. The
+  [final certification receipt](https://github.com/frigo-4/Frigo-dev/pull/25#issuecomment-5714709031)
+  binds the final documentation head to its own hosted SUCCESS; required for a valid T14F-B base.
+- Pilot remains 30 + legacy 71 = 101 READY, complete 101/order 0..100, five statements/no N+1;
+  fresh/staged replay, authority modes, imported HTTP flows and inventory regressions pass.
+  Pilot sources/review/registry/manifest, 0036 hash and all historical migration bytes unchanged.
+- Next action: **STOP.** Await separate T14F-B authorization; start only from the final SHA
+  in the receipt, not an earlier implementation SHA. No ingredient scale preflight, Batch B,
+  0037, 500 manifest, production mutation/deploy/switch, media population or T14G.
+  PR #25 stays draft/unmerged and auto-fix subscribed. Pre-existing local settings delta preserved.
+- Durable recovery, exact commands and hashes: `recipe-catalog/T14F_NEXT_HANDOFF.md`;
+  full history: `T14F_REAL_CATALOG_GROWTH.md`; pilot quality: `T14F_CATALOG_QUALITY_REPORT.md`.
+
+## Historical handoffs (not current T14F status)
+
+## Current handoff — T14F WIP SAFE STOP on `feat/t14f-recipe-catalog-500`; pilot 30 compiled + 0036 promoted; ONE focused test failing; Batch B not started (2026-09-17)
+
+- **Implementation state:** uncommitted T14F pilot WIP checkpointed and pushed on
+  `feat/t14f-recipe-catalog-500` (base `f0c229f2…` = T14E certified main, still origin/main). See
+  `docs/ai/recipe-catalog/T14F_WIP_HANDOFF.md` for the authoritative state, hashes and next steps.
+- **Pilot:** `data/recipe-import/t14f/pilot-30.jsonl` (30 original recipes, reviewed) → T14E compile
+  30/30 publishable, 0 duplicates / 0 unresolved ingredients → `migrations/0036_recipe_catalog_pilot.sql`
+  byte-identical to artifact; manifest `rel-193ac2b16c64a260` = 101 recipes / 1 approved batch;
+  `ALL_RECIPES` stays 71; migrations 36 / tip 0036; 0001–0035 unchanged.
+- **Verification:** typecheck, `check:migrations`, seed check, import check, diff check PASS. Focused
+  growth suites 20/21: `production forward path 0034 → 0035 → growth` fails only when both growth
+  suites run together (passes alone; root cause unknown — fix before any Batch B work). Lint, build,
+  full `pnpm test`, bundle accounting NOT run.
+- **Next exact step:** checkout the branch, reproduce/fix the failing growth test (test isolation only —
+  do NOT regenerate data or 0036), then continue the T14F packet pilot gate before Batch B.
+- **Not done:** Batch B (399), final 500 manifest, QA/architecture docs, PR, production anything.
+
 ## Current handoff — T14E MERGED to main `f7a55408…`; main certified; production untouched; T14F not started (2026-09-17)
 
 - **Implementation state:** PR #23 (`hoplite/syrakousai-f7b7c8a0-…-t14e-bulk-recipe-import-factory`, remediated head

@@ -1,3 +1,43 @@
+## Current T14F — T14F_DEVELOPMENT_COMPLETE (T14F-A/B/C certified; production untouched) — 2026-09-17
+
+- T14F-C completed and committed (on top of authorized base `7d667523…`): 0037 promoted byte-identical (`68e52e6d…`), shipped manifest regenerated to 500/2 batches (`rel-bd00a4f53fcaeee4`, `fa47d31f…`), replay (fresh 0001→0037, 0036→0037, 0034→…→0037) PASS, D1 readiness READY 500, static/shadow/canary/full-D1 PASS, user flows incl. Batch B cuisines PASS. Development certificate: `docs/ai/recipe-catalog/T14F_C_500_CATALOG_CERTIFICATION.md`.
+- **T14F-C CLOSED**: safe stop `44c0ad38…` resolved. Full closure gates PASS — lint, build, full `pnpm test` **171 files / 3913 tests**, typecheck, migration smoke through 0037, seed/import checks (500/2), diff check. One real blocker fixed forward-only in `8c6080aa…` (tests only): the five real-D1 suites overflowed workerd 1.20250718's 1 MiB statement cache when replaying 0001→0037 in one process (cloudflare/workerd#5977); `tests/helpers/local-d1-worker.mjs` recycles workerd before that. No migration/catalog/runtime change. Second blocker (docs heads): hosted Vitest passed 171/3913 but exited 1 on a vitest-worker `onTaskUpdate` RPC timeout — fixed forward-only via `tests/helpers/vitest-event-loop-yield.ts` (setupFiles; test config only).
+- Final head + hosted exact-head validate SUCCESS bound in the PR #25 final certification receipt. Classification: `T14F_DEVELOPMENT_COMPLETE` · `T14F_REAL_CATALOG_500_COMPLETE` · `T14F_500_AUTHORITY_CERTIFIED` · `PRODUCTION_ROLLOUT_DEFERRED` · `MEDIA_POPULATION_DEFERRED` · `T14G_NOT_STARTED`; P3 = 1 (~780 KB unpaginated `/recipes`, T14G).
+- PR #25 **ready for review, unmerged**. Production does **not** contain 500 recipes. Merge, production rollout, media population and T14G each need separate authorization.
+
+## Historical T14F — T14F_B_SCALE_BATCH_CERTIFIED — 2026-09-17
+
+- T14F-A pilot certified (`b0150d0…`). T14F-B scale batch completed: **399/399 records** (`t14f-scale-399-v1`) validated publishable, 0 hard duplicates, 0 unresolved ingredients; QA `ok` 0 findings; double compile byte-identical; candidate-500 composition proven (500 unique, order verified).
+- Shipped release was 101 (`rel-193ac2b16c64a260`) at the time; approved-batches/current manifest unchanged then; 0036 SHA-256 unchanged; 0037 not yet created; no production action.
+- Full gates PASS (171 files / 3911 tests, 2026-09-17). Certified head in PR #25 receipt / `T14F_B_SCALE_BATCH_CERTIFICATION.md`.
+- Next: T14F-C only with separate authorization (0037 + 500 manifest). PR #25 stays draft/unmerged.
+
+- Repository ID 1368281478; unchanged main; forward-only `hoplite/massalia-c2862d7c`;
+  PR #25 draft/unmerged. Inherited routing fix `8079a37`, verification commit `2ee6f5cc…`.
+- Original 5/7 failure independently reproduced: strict 71/101 COUNT_DRIFT is correct.
+  Generated test-local 71 release now proves real D1/canary, null fallback, `[5]`/`[]` cache,
+  invalid-drift rejection and cleanup; no runtime, pilot, manifest or migration change.
+- Routing 8/8, growth 21/21, combined 29/29 twice, non-isolated 29/29, subsystem 383/383 PASS.
+  Executed seed/import/typecheck/lint/migration smoke/build/test/diff: all PASS;
+  full suite **171 files / 3911 tests**. Exact implementation CI **35223589293 / 105209475052 SUCCESS**.
+- Final documentation SHA + hosted CI SUCCESS are bound in the [certification receipt](https://github.com/frigo-4/Frigo-dev/pull/25#issuecomment-5714709031).
+  That final certified SHA, not the implementation commit, is the only valid future T14F-B base.
+- Pilot 30 + legacy 71 = 101, complete 101/order 0..100, five statements/no N+1;
+  replay, authority modes, imported HTTP flows and Inventory Truth regressions PASS.
+- **STOP.** Await separately authorized T14F-B. No ingredient scale preflight, Batch B, 0037,
+  500 manifest, production/media/T14G action or merge. Overall T14F is not complete.
+- Exact commands/hashes: `docs/ai/recipe-catalog/T14F_NEXT_HANDOFF.md`. Local-only settings preserved.
+
+## Historical T14F — WIP SAFE STOP — 2026-09-17 (superseded by takeover above)
+
+- Pilot batch `t14f-pilot-30-v1`: 30 original recipes authored + reviewed + compiled via T14E (30/30
+  publishable, 0 duplicates, 0 unresolved ingredients); `0036_recipe_catalog_pilot.sql` promoted
+  byte-identical; manifest `rel-193ac2b16c64a260` 101 recipes / 1 batch; `ALL_RECIPES` still 71.
+- Checks: typecheck, `check:migrations`, seed check, import check, diff check PASS; focused growth
+  suites 20/21 — `production forward path 0034 → 0035 → growth` fails when both growth suites run
+  together, passes alone (root cause unknown). Lint/build/full tests/bundle NOT run. Batch B not started.
+- Full state and exact next steps: `docs/ai/recipe-catalog/T14F_WIP_HANDOFF.md`.
+
 ## T14E — BULK RECIPE IMPORT FACTORY — 2026-09-17 (MERGED main f7a55408…; main certified; NOT deployed; T14F not started)
 
 - PR #23 merged (normal merge, remediated head `ba1a45d4…`); main CI green; 169/3889; app tree preserved. Release still

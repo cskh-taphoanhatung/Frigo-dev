@@ -2,6 +2,12 @@ import type { D1DatabaseBinding } from '@frigo/db';
 import { readRecipeContent } from '../../../packages/db/src/recipe-content';
 import { ALL_RECIPES } from '../../../packages/recipes/src/data';
 import {
+  assessD1Readiness,
+  currentCatalogRelease,
+  StaticRecipeAuthority,
+  type RecipeAuthorityReadiness,
+} from '../../../packages/recipes/src/recipe-authority';
+import {
   compareRuntimeCatalogs,
   D1RuntimeRecipeCatalog,
   type RecipeCatalogShadowDiagnostics,
@@ -21,6 +27,12 @@ import { parseRecipeAuthorityMode, type RecipeAuthorityMode } from './recipe-aut
  *
  * T14D (ADR-026) adds `canary`/`d1` user-visible modes in `recipe-authority.ts`; the mode parser
  * lives there. This module keeps the shadow comparison only and runs solely when mode is `shadow`.
+ *
+ * T14F (ADR-027 growth): the D1 catalog is allowed to be LARGER than the static baseline when the
+ * extra recipes are exactly the reviewed Catalog Release. The shadow therefore evaluates two things:
+ * the static-prefix parity (the 71 rollback recipes must be byte-equal and in order) and the
+ * release readiness of the whole D1 catalog against the shipped manifest. Reviewed growth is
+ * `release_ready` at level info; unmanifested extra rows, missing rows or drift stay `warn`.
  */
 export type RecipeCatalogMode = RecipeAuthorityMode;
 
@@ -44,8 +56,19 @@ export function resolveRecipeCatalogMode(value: unknown): RecipeCatalogMode {
 export type RecipeCatalogShadowOutcome =
   | { status: 'skipped'; mode: Exclude<RecipeCatalogMode, 'shadow'> }
   | { status: 'throttled'; mode: 'shadow'; nextEligibleInMs: number }
-  | { status: 'compared'; mode: 'shadow'; diagnostics: RecipeCatalogShadowDiagnostics }
+  | { status: 'compared'; mode: 'shadow'; diagnostics: RecipeCatalogShadowDiagnostics; release: RecipeCatalogShadowRelease }
   | { status: 'shadow_error'; mode: 'shadow'; error: string; lookupMs: number };
+
+/** Reviewed-release view of the D1 catalog (T14F): what the manifest expects vs. what D1 verifies as. */
+export interface RecipeCatalogShadowRelease {
+  releaseId: string;
+  expectedRecipeCount: number;
+  /** `ready` ⇔ D1 == the reviewed release (count, IDs, order, legacy prefix, fingerprint). */
+  readiness: RecipeAuthorityReadiness['status'];
+  readinessCode: string | null;
+  /** Recipes D1 has beyond the static baseline that the reviewed release approves (intentional growth). */
+  reviewedGrowthCount: number;
+}
 
 export interface RecipeCatalogShadowLogRecord {
   level: 'info' | 'warn';
@@ -63,6 +86,12 @@ export interface RecipeCatalogShadowLogRecord {
   catalog_order_drift_count: number | null;
   catalog_hydration_failure_count: number | null;
   catalog_lookup_ms: number;
+  /** T14F: reviewed Catalog Release identity/readiness; growth approved by the release is not drift. */
+  release_id: string | null;
+  release_expected_count: number | null;
+  release_readiness: RecipeAuthorityReadiness['status'] | null;
+  release_readiness_code: string | null;
+  release_reviewed_growth_count: number | null;
   /** Bounded sample of recipe IDs/field names only; never inventory or user data. */
   drift_sample: Array<{ id: string; fields: string[] }>;
   order_drift_sample: Array<{ id: string; staticPosition: number; d1Position: number }>;
@@ -82,6 +111,7 @@ export const DEFAULT_RECIPE_CATALOG_SHADOW_INTERVAL_MS = 60_000;
 export const MIN_RECIPE_CATALOG_SHADOW_INTERVAL_MS = 1_000;
 export const MAX_RECIPE_CATALOG_SHADOW_INTERVAL_MS = 24 * 60 * 60 * 1000;
 let lastShadowStartedAt: number | null = null;
+const shadowBaseline = new StaticRecipeAuthority();
 
 export function resolveRecipeCatalogShadowIntervalMs(value: unknown): number {
   if (value === undefined || value === null || value === '') return DEFAULT_RECIPE_CATALOG_SHADOW_INTERVAL_MS;
@@ -108,8 +138,15 @@ export async function runRecipeCatalogShadow(
     const catalog = new D1RuntimeRecipeCatalog(() => readRecipeContent(db));
     const [snapshot, hydration] = [await catalog.readSnapshot(), await catalog.hydrate()];
     const diagnostics = compareRuntimeCatalogs(ALL_RECIPES, snapshot, hydration, 0);
+    const manifest = currentCatalogRelease();
+    const { readiness } = await assessD1Readiness(await shadowBaseline.load(), hydration, manifest);
+    const release: RecipeCatalogShadowRelease = {
+      releaseId: manifest.releaseId, expectedRecipeCount: manifest.expectedRecipeCount,
+      readiness: readiness.status, readinessCode: readiness.status === 'ready' ? null : readiness.code,
+      reviewedGrowthCount: readiness.status === 'ready' ? readiness.recipeCount - ALL_RECIPES.length : 0,
+    };
     diagnostics.lookupMs = now() - started;
-    return { status: 'compared', mode, diagnostics };
+    return { status: 'compared', mode, diagnostics, release };
   } catch (error) {
     return { status: 'shadow_error', mode, error: error instanceof Error ? error.name : 'unknown', lookupMs: now() - started };
   }
@@ -122,14 +159,19 @@ export function toRecipeCatalogShadowLogRecord(outcome: RecipeCatalogShadowOutco
     status: outcome.status, catalog_static_count: ALL_RECIPES.length,
   };
   if (outcome.status === 'compared') {
-    const d = outcome.diagnostics;
-    const healthy = d.driftCount === 0 && d.orderDriftCount === 0 && d.staticOnlyCount === 0 && d.d1OnlyCount === 0 && d.hydrationFailureCount === 0;
+    const d = outcome.diagnostics; const r = outcome.release;
+    // The static prefix must be intact regardless of growth; D1-only rows are healthy ONLY when the whole D1
+    // catalog verifies as the reviewed release (so intentional catalog growth is never reported as drift).
+    const prefixHealthy = d.driftCount === 0 && d.orderDriftCount === 0 && d.staticOnlyCount === 0 && d.hydrationFailureCount === 0;
+    const growthHealthy = d.d1OnlyCount === 0 || (r.readiness === 'ready' && d.d1OnlyCount === r.reviewedGrowthCount);
     return {
-      ...base, level: healthy ? 'info' : 'warn',
+      ...base, level: prefixHealthy && growthHealthy ? 'info' : 'warn',
       catalog_d1_count: d.d1RowCount, catalog_complete_count: d.d1CompleteCount, catalog_hydrated_count: d.hydratedCount,
       catalog_static_only_count: d.staticOnlyCount, catalog_d1_only_count: d.d1OnlyCount,
       catalog_drift_count: d.driftCount, catalog_order_drift_count: d.orderDriftCount, catalog_hydration_failure_count: d.hydrationFailureCount,
       catalog_lookup_ms: d.lookupMs,
+      release_id: r.releaseId, release_expected_count: r.expectedRecipeCount, release_readiness: r.readiness,
+      release_readiness_code: r.readinessCode, release_reviewed_growth_count: r.reviewedGrowthCount,
       drift_sample: d.drift.slice(0, SAMPLE_LIMIT).map((item) => ({ id: item.id, fields: item.fields })),
       order_drift_sample: d.orderDrift.slice(0, SAMPLE_LIMIT).map((item) => ({ id: item.id, staticPosition: item.staticPosition, d1Position: item.d1Position })),
       hydration_failure_sample: d.hydrationFailures.slice(0, SAMPLE_LIMIT).map((item) => ({ id: item.id, code: item.code })),
@@ -140,6 +182,7 @@ export function toRecipeCatalogShadowLogRecord(outcome: RecipeCatalogShadowOutco
     catalog_d1_count: null, catalog_complete_count: null, catalog_hydrated_count: null,
     catalog_static_only_count: null, catalog_d1_only_count: null, catalog_drift_count: null, catalog_order_drift_count: null,
     catalog_hydration_failure_count: null, catalog_lookup_ms: outcome.status === 'shadow_error' ? outcome.lookupMs : 0,
+    release_id: null, release_expected_count: null, release_readiness: null, release_readiness_code: null, release_reviewed_growth_count: null,
     drift_sample: [], order_drift_sample: [], hydration_failure_sample: [],
     ...(outcome.status === 'shadow_error' ? { error: outcome.error } : {}),
   };

@@ -1,12 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { unstable_dev, unstable_splitSqlQuery } from 'wrangler';
+import { startLocalD1Worker } from '../helpers/local-d1-worker.mjs';
 
 let worker;
-let directory;
 const token = randomUUID();
 
 async function batch(statements) {
@@ -32,21 +28,9 @@ const scope = { householdId: '', actorId: '' };
 let fridgeId;
 
 beforeAll(async () => {
-  directory = mkdtempSync(path.join(tmpdir(), 'frigo-t10-d1-'));
-  const config = path.join(directory, 'wrangler.json');
-  writeFileSync(config, JSON.stringify({ name: 'frigo-t10-local-proof', compatibility_date: '2025-03-01' }));
-  worker = await unstable_dev(path.resolve('tests/helpers/inventory-lot-d1-worker.ts'), {
-    config, ip: '127.0.0.1', port: 0, inspectorPort: 0, local: true, persist: false,
-    logLevel: 'error', vars: { TEST_TOKEN: token },
-    experimental: {
-      disableExperimentalWarning: true, disableDevRegistry: true, forceLocal: true, watch: false,
-      d1Databases: [{ binding: 'DB', database_name: 't10-isolated-test', database_id: '00000000-0000-0000-0000-000000000030' }],
-    },
-  });
-  for (const file of readdirSync('migrations').filter((name) => /^\d+.*\.sql$/.test(name)).sort()) {
-    const result = await batch(unstable_splitSqlQuery(readFileSync(`migrations/${file}`, 'utf8')));
-    expect(result, file).toMatchObject({ status: 200 });
-  }
+  worker = await startLocalD1Worker({ name: 't10', token,
+    databaseName: 't10-isolated-test', databaseId: '00000000-0000-0000-0000-000000000030' });
+  await worker.replayMigrations(expect);
   const id = randomUUID();
   scope.householdId = `household-${id}`;
   scope.actorId = `actor-${id}`;
@@ -69,7 +53,6 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await worker?.stop();
-  if (directory) rmSync(directory, { recursive: true, force: true });
 });
 
 const observe = (patch = {}) => post('observe', { scope, now, input: {

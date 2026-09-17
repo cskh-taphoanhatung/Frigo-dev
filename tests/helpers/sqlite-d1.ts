@@ -32,11 +32,33 @@ export function createBarrier(parties: number) {
   };
 }
 
-export function applyMigrations(db: SqliteD1, directory = path.resolve(process.cwd(), 'migrations')): string[] {
-  const files = readdirSync(directory).filter((name) => /^\d+.*\.sql$/.test(name)).sort();
+/**
+ * Replays the migration ledger in canonical order. `through` stops after the named migration
+ * (inclusive) so a test can certify an earlier ledger state — e.g. the 71-recipe legacy baseline at
+ * `0035_recipe_media_layer.sql` — while the default replays the complete current ledger.
+ */
+export function applyMigrations(db: SqliteD1, directory = path.resolve(process.cwd(), 'migrations'), through?: string): string[] {
+  const all = readdirSync(directory).filter((name) => /^\d+.*\.sql$/.test(name)).sort();
+  if (through !== undefined && !all.includes(through)) throw new Error(`Unknown migration ${through}`);
+  const files = through === undefined ? all : all.slice(0, all.indexOf(through) + 1);
   for (const file of files) db.seed(readFileSync(path.join(directory, file), 'utf8'));
   return files;
 }
+
+/** Last migration of the 71-recipe legacy baseline; T14F catalog growth migrations follow it. */
+export const LEGACY_CATALOG_MIGRATION_TIP = '0035_recipe_media_layer.sql';
+
+/**
+ * Expected migration ledger shape. `catalogGrowth` lists the T14F data-only catalog migrations in order
+ * (each one = one immutable reviewed import batch); the count/tip follow from it so the ledger tests
+ * change in exactly one place when a batch is promoted.
+ */
+export const MIGRATION_LEDGER = Object.freeze({
+  legacyTip: LEGACY_CATALOG_MIGRATION_TIP,
+  catalogGrowth: Object.freeze(['0036_recipe_catalog_pilot.sql', '0037_recipe_catalog_scale.sql']),
+  get count() { return 35 + this.catalogGrowth.length; },
+  get tip(): string { return this.catalogGrowth.at(-1) ?? this.legacyTip; },
+});
 
 /** Real SQLite constraints and transactions, with async barriers only outside atomic batches. */
 export class SqliteD1 implements D1DatabaseBinding {
@@ -44,10 +66,10 @@ export class SqliteD1 implements D1DatabaseBinding {
   readonly migrations: string[];
   hooks: SqliteD1Hooks;
 
-  constructor(options: { migrate?: boolean; hooks?: SqliteD1Hooks } = {}) {
+  constructor(options: { migrate?: boolean; through?: string; hooks?: SqliteD1Hooks } = {}) {
     this.sqlite.exec('PRAGMA foreign_keys = ON');
     this.hooks = options.hooks ?? {};
-    this.migrations = options.migrate === false ? [] : applyMigrations(this);
+    this.migrations = options.migrate === false ? [] : applyMigrations(this, undefined, options.through);
   }
 
   prepare(sql: string): SqliteStatement {

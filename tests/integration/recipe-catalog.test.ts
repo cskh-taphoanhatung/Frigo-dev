@@ -7,7 +7,7 @@ import {
   createRecipeCatalog,
 } from '../../packages/recipes/src/catalog';
 import { ALL_RECIPES } from '../../packages/recipes/src/data';
-import { SqliteD1, type SqliteStatementEvent } from '../helpers/sqlite-d1';
+import { LEGACY_CATALOG_MIGRATION_TIP, SqliteD1, type SqliteStatementEvent } from '../helpers/sqlite-d1';
 
 const recipe = {
   id: 'catalog_recipe',
@@ -30,7 +30,7 @@ const recipe = {
 describe('read-only recipe catalog adapters', () => {
   const databases: SqliteD1[] = [];
   const database = () => {
-    const db = new SqliteD1();
+    const db = new SqliteD1({ through: LEGACY_CATALOG_MIGRATION_TIP }); // seed-only catalog (pre-T14F growth)
     databases.push(db);
     return db;
   };

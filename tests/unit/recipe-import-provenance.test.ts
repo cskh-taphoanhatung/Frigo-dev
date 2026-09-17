@@ -8,7 +8,7 @@ import { nutritionProfileId } from '../../packages/recipes/src/import/sql-render
 import { D1RecipeAuthority, StaticRecipeAuthority } from '../../packages/recipes/src/recipe-authority';
 import { hydrateRuntimeRecipes } from '../../packages/recipes/src/runtime-hydration';
 import { encode, toJsonl, validBatch } from '../helpers/recipe-import-fixtures';
-import { SqliteD1 } from '../helpers/sqlite-d1';
+import { LEGACY_CATALOG_MIGRATION_TIP, SqliteD1 } from '../helpers/sqlite-d1';
 
 /**
  * T14E remediation (review P1/P2/P3): nutrition evidence survives end-to-end and is persisted as
@@ -55,7 +55,7 @@ describe('T14E remediation — nutrition evidence round trip (P1)', () => {
     expect(sql).not.toContain(`${result.recipes[1].runtime.id}_nutrition_v1`); // no profile without evidence
     expect(sql).not.toMatch(/ON CONFLICT/);
     // Applied to a real replay: the D1 reader still hydrates, the ranking nutrition reader sees the evidence, and the readiness fingerprint is unaffected by the profile.
-    const db = new SqliteD1();
+    const db = new SqliteD1({ through: LEGACY_CATALOG_MIGRATION_TIP });
     try {
       db.seed(sql);
       const content = await readRecipeContent(db);
@@ -208,7 +208,7 @@ describe('T14E remediation — immutable batch hash covers all reviewed metadata
 
 describe('T14E remediation — release manifest failure telemetry (P3)', () => {
   it('a throwing release supplier is RELEASE_MANIFEST_INVALID (error), a throwing D1 read stays D1_READ_FAILED', async () => {
-    const db = new SqliteD1();
+    const db = new SqliteD1({ through: LEGACY_CATALOG_MIGRATION_TIP });
     try {
       const content = await readRecipeContent(db);
       const staticAuthority = new StaticRecipeAuthority(legacy, () => 1);

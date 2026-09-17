@@ -37,7 +37,9 @@ required_migrations(name) AS (
     ('0032_scan_evidence_retention.sql'),
     ('0033_scan_evidence_completeness.sql'),
     ('0034_global_recipe_catalog_parity.sql'),
-    ('0035_recipe_media_layer.sql')
+    ('0035_recipe_media_layer.sql'),
+    -- T14F: reviewed catalog growth (data-only, additive).
+    ('0036_recipe_catalog_pilot.sql')
 ),
 required_tables(name) AS (
   VALUES

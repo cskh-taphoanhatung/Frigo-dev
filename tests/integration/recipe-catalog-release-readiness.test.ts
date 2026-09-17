@@ -17,8 +17,9 @@ import {
 } from '../../packages/recipes/src/import/release-manifest';
 import { assessD1Readiness, currentCatalogRelease, D1RecipeAuthority, StaticRecipeAuthority } from '../../packages/recipes/src/recipe-authority';
 import { hydrateRuntimeRecipes } from '../../packages/recipes/src/runtime-hydration';
+import { approvedBatchesFromRegistry, LEGACY_BASELINE_FINGERPRINT } from '../helpers/recipe-catalog-growth';
 import { encode, syntheticBatch } from '../helpers/recipe-import-fixtures';
-import { SqliteD1 } from '../helpers/sqlite-d1';
+import { LEGACY_CATALOG_MIGRATION_TIP, SqliteD1 } from '../helpers/sqlite-d1';
 
 /**
  * T14E — Catalog Release Manifest + growth-ready D1 readiness (ADR-027).
@@ -37,44 +38,51 @@ async function compiledBatch(count: number, batchId: string, tag: string, approv
   return { result, content: { header: result.header!, recipes: result.recipes } satisfies ApprovedBatchContent };
 }
 
-describe('T14E — current Catalog Release Manifest (71, zero batches)', () => {
-  it('committed manifest equals the manifest composed from ALL_RECIPES; it is the static fingerprint with no batches', async () => {
-    const { manifest, recipes } = await composeCatalogRelease(ALL_RECIPES, []);
+describe('T14E/T14F — current Catalog Release Manifest is generated (legacy 71 + approved T14F batches)', () => {
+  it('committed manifest equals the manifest composed from ALL_RECIPES + the approved batch registry; legacy fingerprint is the static baseline', async () => {
+    const approved = await approvedBatchesFromRegistry();
+    const { manifest, recipes } = await composeCatalogRelease(ALL_RECIPES, approved);
     expect(readFileSync(CURRENT_MANIFEST_PATH, 'utf8')).toBe(serializeCatalogReleaseManifest(manifest));
     expect(currentCatalogRelease()).toEqual(manifest);
     const baseline = await staticAuthority.load();
-    expect(manifest).toMatchObject({ schemaVersion: 1, legacyBaselineCount: 71, expectedRecipeCount: 71, approvedImportBatches: [] });
-    expect(manifest.orderedRecipeIds).toEqual(ALL_RECIPES.map((recipe) => recipe.id));
+    expect(manifest).toMatchObject({ schemaVersion: 1, legacyBaselineCount: 71 });
+    expect(manifest.approvedImportBatches).toHaveLength(approved.length);
+    expect(manifest.expectedRecipeCount).toBe(71 + approved.reduce((total, batch) => total + batch.recipes.length, 0));
+    expect(manifest.orderedRecipeIds.slice(0, 71)).toEqual(ALL_RECIPES.map((recipe) => recipe.id));
     expect(manifest.legacyBaselineFingerprint).toBe(baseline.fingerprint);
-    expect(manifest.expectedRuntimeFingerprint).toBe(baseline.fingerprint);
-    expect(manifest.releaseId).toBe(await deriveReleaseId(baseline.fingerprint, []));
-    expect(recipes).toStrictEqual(baseline.list());
+    expect(manifest.legacyBaselineFingerprint).toBe(LEGACY_BASELINE_FINGERPRINT);
+    expect(manifest.releaseId).toBe(await deriveReleaseId(baseline.fingerprint, manifest.approvedImportBatches));
+    expect(recipes.slice(0, 71)).toStrictEqual(baseline.list());
+    expect(ALL_RECIPES).toHaveLength(71);
     // Deterministic: composing twice yields byte-identical text; drift is detected.
-    expect(serializeCatalogReleaseManifest((await composeCatalogRelease(ALL_RECIPES, [])).manifest)).toBe(serializeCatalogReleaseManifest(manifest));
+    expect(serializeCatalogReleaseManifest((await composeCatalogRelease(ALL_RECIPES, approved)).manifest)).toBe(serializeCatalogReleaseManifest(manifest));
     const drifted = { ...manifest, orderedRecipeIds: [...manifest.orderedRecipeIds].reverse() };
     expect(serializeCatalogReleaseManifest(drifted)).not.toBe(readFileSync(CURRENT_MANIFEST_PATH, 'utf8'));
-    expect(() => parseCatalogReleaseManifest({ ...manifest, expectedRecipeCount: 72 })).toThrow();
+    expect(() => parseCatalogReleaseManifest({ ...manifest, expectedRecipeCount: manifest.expectedRecipeCount + 1 })).toThrow();
     expect(() => parseCatalogReleaseManifest({ ...manifest, orderedRecipeIds: [...manifest.orderedRecipeIds, 'vn-canh-01'] })).toThrow();
   });
 
-  it('current D1 readiness is unchanged by the manifest: READY on the real ledger with the same fingerprint as T14D', async () => {
-    const db = new SqliteD1();
+  it('the legacy-only manifest (71, zero batches) is READY on the 0035 ledger with the T14D fingerprint; the shipped growth manifest is NOT READY there (COUNT_DRIFT)', async () => {
+    const db = new SqliteD1({ through: LEGACY_CATALOG_MIGRATION_TIP });
     try {
       const content = await readRecipeContent(db);
       const baseline = await staticAuthority.load();
-      const { readiness } = await assessD1Readiness(baseline, hydrateRuntimeRecipes(content));
-      expect(readiness).toEqual({ status: 'ready', source: 'd1', fingerprint: baseline.fingerprint, recipeCount: 71, releaseId: currentCatalogRelease().releaseId });
-      // Explicit equivalence: the manifest-driven assessment equals a manifest composed on the fly from the static baseline.
-      const explicit = await assessD1Readiness(baseline, hydrateRuntimeRecipes(content), (await composeCatalogRelease(ALL_RECIPES, [])).manifest);
-      expect(explicit.readiness).toEqual(readiness);
-      const loaded = await new D1RecipeAuthority(() => Promise.resolve(content), staticAuthority, () => 2).load();
+      const legacyOnly = (await composeCatalogRelease(ALL_RECIPES, [])).manifest;
+      expect(legacyOnly).toMatchObject({ legacyBaselineCount: 71, expectedRecipeCount: 71, approvedImportBatches: [] });
+      expect(legacyOnly.expectedRuntimeFingerprint).toBe(baseline.fingerprint);
+      const { readiness } = await assessD1Readiness(baseline, hydrateRuntimeRecipes(content), legacyOnly);
+      expect(readiness).toEqual({ status: 'ready', source: 'd1', fingerprint: baseline.fingerprint, recipeCount: 71, releaseId: legacyOnly.releaseId });
+      const loaded = await new D1RecipeAuthority(() => Promise.resolve(content), staticAuthority, () => 2, () => legacyOnly).load();
       expect(loaded.status).toBe('ready');
       if (loaded.status === 'ready') expect(loaded.snapshot.list()).toStrictEqual(baseline.list());
+      // The shipped manifest describes the grown release: a 71-row D1 must never certify against it.
+      const shipped = await new D1RecipeAuthority(() => Promise.resolve(content), staticAuthority, () => 2).load();
+      expect(shipped).toMatchObject({ status: 'not_ready', snapshot: null, readiness: { code: 'COUNT_DRIFT' } });
     } finally { db.close(); }
   });
 
   it('a manifest that does not describe this build\'s static baseline is RELEASE_MANIFEST_INVALID (stale metadata never certifies D1)', async () => {
-    const db = new SqliteD1();
+    const db = new SqliteD1({ through: LEGACY_CATALOG_MIGRATION_TIP });
     try {
       const content = await readRecipeContent(db);
       const baseline = await staticAuthority.load();
@@ -94,7 +102,7 @@ describe('T14E — expanded release readiness on a real SQLite replay (legacy 71
   let importedIds: string[];
 
   beforeEach(async () => {
-    db = new SqliteD1();
+    db = new SqliteD1({ through: LEGACY_CATALOG_MIGRATION_TIP });
     const { result, content } = await compiledBatch(6, 'synthetic-a', 'alpha');
     batchA = content;
     manifest = result.releaseManifest!;
@@ -130,11 +138,12 @@ describe('T14E — expanded release readiness on a real SQLite replay (legacy 71
     if (loaded.status === 'ready') { expect(loaded.snapshot.size).toBe(77); expect(loaded.snapshot.findById(importedIds[0])?.id).toBe(importedIds[0]); }
   });
 
-  it('NOT READY — unmanifested extra recipe (D1 78, manifest 77) → COUNT_DRIFT; also under today\'s 71 manifest', async () => {
+  it('NOT READY — unmanifested extra recipe (D1 78, manifest 77) → COUNT_DRIFT; also under the legacy-only 71 manifest', async () => {
     const { result } = await compiledBatch(1, 'stray', 'stray', [batchA], 101);
     db.seed(result.artifacts.get(IMPORT_ARTIFACT_FILES.migration)!);
     expect((await assess()).readiness).toMatchObject({ status: 'not_ready', code: 'COUNT_DRIFT', detail: { expectedCount: 77, actualCount: 78 } });
-    expect((await assess(currentCatalogRelease())).readiness).toMatchObject({ status: 'not_ready', code: 'COUNT_DRIFT', detail: { expectedCount: 71, actualCount: 78 } });
+    const legacyOnly = (await composeCatalogRelease(ALL_RECIPES, [])).manifest;
+    expect((await assess(legacyOnly)).readiness).toMatchObject({ status: 'not_ready', code: 'COUNT_DRIFT', detail: { expectedCount: 71, actualCount: 78 } });
   });
 
   it('NOT READY — missing imported recipe (manifest 77, D1 76) → COUNT_DRIFT; swapped ID → ID_DRIFT', async () => {
@@ -181,8 +190,12 @@ describe('T14E — expanded release readiness on a real SQLite replay (legacy 71
     expect(readiness).toMatchObject({ status: 'not_ready', code: 'CATALOG_DIAGNOSTICS', detail: { hydrationFailureCount: 1, hydrationFailureSample: [{ id: importedIds[4], code: 'incomplete_entry' }] } });
   });
 
-  it('a stale (pre-expansion) manifest is not fooled by extra rows: today\'s 71 manifest → COUNT_DRIFT, never READY', async () => {
-    expect((await assess(currentCatalogRelease())).readiness).toMatchObject({ status: 'not_ready', code: 'COUNT_DRIFT' });
+  it('a stale manifest is not fooled by extra rows: the legacy-only 71 manifest → COUNT_DRIFT; the shipped T14F manifest (different IDs) → COUNT_DRIFT/ID_DRIFT, never READY', async () => {
+    const legacyOnly = (await composeCatalogRelease(ALL_RECIPES, [])).manifest;
+    expect((await assess(legacyOnly)).readiness).toMatchObject({ status: 'not_ready', code: 'COUNT_DRIFT' });
+    const shipped = (await assess(currentCatalogRelease())).readiness;
+    expect(shipped.status).toBe('not_ready');
+    if (shipped.status === 'not_ready') expect(['COUNT_DRIFT', 'ID_DRIFT']).toContain(shipped.code);
   });
 });
 
@@ -223,7 +236,7 @@ describe('T14E — multi-batch composition and batch immutability', () => {
 
 describe('T14E — legacy FK-anchor interaction and collision policy', () => {
   it('an imported recipe can never be mistaken for an FK stub, and a pre-existing stub with an imported ID makes the import abort instead of upgrading it', async () => {
-    const db = new SqliteD1();
+    const db = new SqliteD1({ through: LEGACY_CATALOG_MIGRATION_TIP });
     try {
       const { result } = await compiledBatch(2, 'anchor', 'anchor', [], 404);
       const target = result.recipes[0].runtime;

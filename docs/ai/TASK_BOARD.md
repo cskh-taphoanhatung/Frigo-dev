@@ -1,5 +1,56 @@
 # Frigo / Takosan current task board — 2026-09-17
 
+## Current T14F — T14F_DEVELOPMENT_COMPLETE (T14F-A/B/C certified; production untouched)
+
+- [done] T14F-C: 0037 promoted byte-identical (`68e52e6d…`; 0036 `04228788…` unchanged), shipped manifest 500 / 2 batches (`rel-bd00a4f53fcaeee4`), `ALL_RECIPES` 71.
+- [done] Replay fresh 0001→0037 / 0036→0037 / 0034→…→0037 PASS; D1 readiness READY 500; static/shadow/canary/full-D1 PASS; reader 5 statements, no N+1; user flows incl. Batch B VN/CN/JP/KR/TH/IT PASS; T09/T11 unchanged.
+- [done] Closure gates (safe stop `44c0ad38…` resolved): lint, build, full test **171 files / 3913 tests**, typecheck, migration smoke, seed/import checks, diff check — PASS.
+- [done] Closure blocker fixed forward-only `8c6080aa…` (tests only): real-D1 suites now recycle workerd before its 1 MiB statement cache overflows on the 0001→0037 replay (cloudflare/workerd#5977). Hosted validate on `44c0ad38…` had failed exactly there.
+- [done] Second closure blocker fixed forward-only (test config only): docs-only heads passed 171/3913 on hosted CI but exited 1 on a vitest-worker `onTaskUpdate` birpc timeout starved by long synchronous SqliteD1 suites; `tests/helpers/vitest-event-loop-yield.ts` (setupFiles) yields once per test.
+- [done] Hosted exact-final-head validate SUCCESS + `T14F_FINAL_CERTIFIED_HEAD` bound in the PR #25 final certification receipt. PR #25 ready for review, **unmerged**.
+- [next] **STOP.** Merge = separate decision after independent review. Production rollout, media population and T14G = separate authorization. Production does not contain 500 recipes.
+- [P3] Unpaginated `GET /recipes` ≈ 780 KB at 500 recipes — T14G scope, not release-blocking for development certification.
+
+## Historical T14F — T14F_B_SCALE_BATCH_CERTIFIED
+
+- [done] T14F-A pilot certified at `b0150d0…` (routing fix, 171/3911).
+- [done] T14F-B resumed: ingredient preflight + 399-concept matrix committed.
+- [done] **399 records authored** (`t14f-scale-399-v1`); factory 399/399 publishable, 0 hard dups, 0 unresolved; QA `ok` 0 findings.
+- [done] Deterministic double compile (byte-identical) with hashes; candidate-500 (71+30+399=500) composition verified; shipped 101 manifest + 0036 unchanged; 0037 absent.
+- [done] Full gates: seed/import/typecheck/lint/migrations/build/test (171 files / 3911) PASS.
+- [next] **T14F-C only under separate authorization**: promote 0037 from the artifact, regenerate shipped 500 manifest, 500-authority certification. Do NOT start here.
+- [not started] 0037 promotion, 500 shipped manifest, production/media/T14G. PR #25 draft/unmerged.
+
+- [done] Verified repository ID 1368281478, unchanged main, forward-only branch and inherited
+  test-only `8079a37`; PR #25 remains draft/unmerged. Preserved timestamp fix `486409c…`.
+- [done] Reproduced 5/7 pre-fix routing failure and strict 71/101 COUNT_DRIFT fallback.
+  `2ee6f5cc…` verifies generated legacy release, actual sources/diagnostics, cache and cleanup.
+- [done] Routing 8/8, growth 21/21, combined 29/29 twice; non-isolated 29/29; subsystem 383/383.
+  Seed/import/typecheck/lint/migration smoke/build/full test/diff PASS: **171 files / 3911 tests**.
+- [done] Implementation CI **35223589293 / 105209475052 SUCCESS**. Final exact-head
+  [receipt](https://github.com/frigo-4/Frigo-dev/pull/25#issuecomment-5714709031) must bind the
+  documentation SHA and hosted SUCCESS before it is accepted as the T14F-B base.
+- [done] Pilot 30 / release 101 / static 71 / migrations unchanged; complete 101/order 0..100;
+  reader 5/no N+1, imported HTTP flows and inventory regressions PASS.
+- [next] **STOP**; await separate T14F-B authorization, using only the final certified SHA.
+  Exact commands/hashes and receipt protocol: `recipe-catalog/T14F_NEXT_HANDOFF.md`.
+- [not started] Ingredient scale preflight, Batch B 399, 0037, 500 release, media population,
+  T14G; no production write/deploy/authority switch. Overall T14F is not complete.
+
+## Historical entries (not current T14F status)
+
+## T14F — WIP safe stop — 2026-09-17 (branch `feat/t14f-recipe-catalog-500`, unpushed→pushed checkpoint; pilot NOT certified)
+
+- [done] Pilot 30 (`t14f-pilot-30-v1`) authored, reviewed, T14E-compiled; `0036` promoted byte-identical;
+  manifest 101/1 batch; static 71 unchanged; 0001–0035 untouched.
+- [done] Safe-stop verification: typecheck, `check:migrations`, seed check, import check, `git diff --check`
+  PASS; handoff `docs/ai/recipe-catalog/T14F_WIP_HANDOFF.md`.
+- [open, blocker for pilot certification] focused growth suites 20/21: `production forward path
+  0034 → 0035 → growth` fails when both growth suites run together, passes alone — fix test isolation
+  WITHOUT regenerating data/0036.
+- [not done] lint, build, full `pnpm test`, bundle accounting, pilot QA report, Batch B (399), 0037,
+  final 500 manifest, PR. Do NOT merge; do NOT start T14G; no production action.
+
 ## T14E — merged + main certified — 2026-09-17 (PR #23 → main `f7a55408…`; production untouched; T14F not started)
 
 - [done] PR #23 merged by normal merge (`f7a5540841db27be31cdab9e0c2010cd92bc3861`); `ba1a45d4…` and `7b4edcc8…` in main ancestry;

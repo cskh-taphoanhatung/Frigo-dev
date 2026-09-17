@@ -1,0 +1,92 @@
+{
+  "batchId": "t14f-pilot-30-v1",
+  "reviewedBy": "Hoplite (T14F packet); independent human review at PR",
+  "reviewedAt": "2026-09-17",
+  "source": "data/recipe-import/t14f/pilot-30.jsonl",
+  "artifact": {
+    "batchHash": "4d13915c075cd1b418d2454f7f03968349b779766cdb96b92df90f4138bc8cce",
+    "inputSha256": "53b8adb215313cef029ef37a0a395990df6fb9c7a1e8ac833cf62bba89f150d3",
+    "normalizedSha256": "ee80f29eca531578562c3a493fb58c617acffa8c0ac91d529f37ccedc31c5216",
+    "migrationSha256": "04228788e60d59a2427d70956d4d8a108d0a6c1c4a643c47641402f658120ba9",
+    "releaseManifestSha256": "a1f3a0f2ed5949ff64a3d68c71c5b4866caa500d267cd552105dc567bf15bb5a",
+    "releaseId": "rel-193ac2b16c64a260",
+    "recipeCount": 30,
+    "ingredientLineCount": 183,
+    "stepCount": 128
+  },
+  "summary": {
+    "recordsReviewed": 30,
+    "recordsAccepted": 30,
+    "recordsRejected": 0,
+    "recordsReplaced": 0,
+    "duplicateCandidates": 0,
+    "duplicateWaivers": 0,
+    "hardDuplicates": 0,
+    "unresolvedIngredients": 0,
+    "ambiguousIngredients": 0,
+    "unsupportedUnits": 0,
+    "unsupportedCuisine": 0,
+    "editorialFindingsOpen": 0,
+    "editorialFindingsFixedDuringReview": 1
+  },
+  "editorialFixes": [
+    {
+      "sourceRecordId": "t14f-a-012",
+      "code": "THIN_STEP",
+      "fix": "Expanded step 2 (sả/ớt/tỏi prep) into a usable instruction"
+    }
+  ],
+  "ingredientCoverage": {
+    "canonicalCatalogSize": 45,
+    "requiredDistinct": 41,
+    "resolvedDistinct": 41,
+    "unusedCanonicalIds": [
+      "BITTER_MELON",
+      "CHAYOTE",
+      "CRAB_MEAT",
+      "RICE_PAPER"
+    ],
+    "ambiguous": [],
+    "unresolved": []
+  },
+  "distribution": {
+    "byCuisine": {
+      "chinese": 3,
+      "italian": 3,
+      "japanese": 4,
+      "korean": 3,
+      "thai": 3,
+      "vietnamese": 14
+    },
+    "byCategory": {
+      "(chinese)": 3,
+      "(italian)": 3,
+      "(japanese)": 4,
+      "(korean)": 3,
+      "(thai)": 3,
+      "mon_bun_pho": 1,
+      "mon_canh": 2,
+      "mon_chay": 1,
+      "mon_chien": 1,
+      "mon_cuon_nom": 1,
+      "mon_hap_luoc": 2,
+      "mon_kho": 1,
+      "mon_lau_tiec": 1,
+      "mon_nhanh_sang": 2,
+      "mon_xao": 2
+    },
+    "byDifficulty": {
+      "easy": 22,
+      "medium": 8
+    }
+  },
+  "duplicateDetail": [],
+  "nutrition": {
+    "recordsWithNutrition": 0,
+    "policy": "omitted — no credible evidence for project-original recipes"
+  },
+  "media": {
+    "heroSlots": "pending",
+    "ready": 0
+  }
+}
