@@ -225,12 +225,25 @@ describe('T14F — fresh SQLite replay of the full ledger (0001 → tip)', () =>
     expect(files[33]).toBe('0034_global_recipe_catalog_parity.sql');
     expect(staged.query<{ n: number }>("SELECT COUNT(*) AS n FROM sqlite_master WHERE name = 'recipe_media'")[0].n).toBe(0);
     for (const file of files.slice(34)) staged.seed(readFileSync(path.join(root, 'migrations', file), 'utf8'));
-    for (const table of ['recipes', 'recipe_ingredients', 'recipe_steps', 'recipe_runtime_fields', 'recipe_runtime_ingredient_order', 'recipe_classifications']) {
+    // Independent replays generate different recipes.created_at values from SQLite's clock.
+    const recipeColumns = ['id', 'slug', 'title', 'description', 'cuisine', 'cook_time_minutes', 'servings', 'difficulty', 'image_url', 'tags', 'family_id', 'prep_time_minutes', 'source_type', 'source_reference', 'verification_state', 'version'];
+    expect(fresh.query<{ name: string }>('PRAGMA table_info(recipes)').map((column) => column.name).sort()).toEqual([...recipeColumns, 'created_at'].sort());
+    const recipes = (db: SqliteD1) => db.query(`SELECT ${recipeColumns.join(', ')} FROM recipes ORDER BY id`);
+    expect(recipes(staged)).toEqual(recipes(fresh));
+    // These tables have no clock-derived defaults; retain every column, including row identities.
+    for (const table of ['recipe_ingredients', 'recipe_steps', 'recipe_runtime_fields', 'recipe_runtime_ingredient_order', 'recipe_classifications']) {
       expect(staged.query(`SELECT * FROM ${table} ORDER BY 1, 2`), table).toEqual(fresh.query(`SELECT * FROM ${table} ORDER BY 1, 2`));
     }
     // recipe_media carries insertion timestamps; compare the identity/status projection.
     const media = (db: SqliteD1) => db.query('SELECT id, recipe_id, role, version, status, storage_key FROM recipe_media ORDER BY id');
     expect(media(staged)).toEqual(media(fresh));
+
+    // Exercise the exclusion without relying on a replay crossing a wall-clock second.
+    staged.seed("UPDATE recipes SET created_at = '2000-01-01 00:00:00'");
+    expect(staged.query('SELECT id, created_at FROM recipes ORDER BY id')).not.toEqual(fresh.query('SELECT id, created_at FROM recipes ORDER BY id'));
+    expect(recipes(staged)).toEqual(recipes(fresh));
+    staged.seed("UPDATE recipes SET title = title || ' drift'");
+    expect(recipes(staged)).not.toEqual(recipes(fresh));
   });
 });
 
