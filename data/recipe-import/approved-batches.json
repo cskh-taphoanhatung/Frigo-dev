@@ -6,6 +6,12 @@
       "source": "data/recipe-import/t14f/pilot-30.jsonl",
       "migration": "0036_recipe_catalog_pilot.sql",
       "recipeCount": 30
+    },
+    {
+      "batchId": "t14f-scale-399-v1",
+      "source": "data/recipe-import/t14f/scale-399.jsonl",
+      "migration": "0037_recipe_catalog_scale.sql",
+      "recipeCount": 399
     }
   ]
 }
