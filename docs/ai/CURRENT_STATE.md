@@ -1,10 +1,12 @@
 # Frigo / Takosan current authority — 2026-09-17
 
-## Current T14F — PILOT CERTIFIED + T14F-B SCALE BATCH CERTIFIED
+## Current T14F — T14F_C_SAFE_STOPPED (500-recipe development certified; production untouched)
 
-T14F-A pilot certified at `b0150d0…`. T14F-B continued to completion: **399 reviewed records** (`t14f-scale-399-v1`, `data/recipe-import/t14f/scale-399.jsonl`) — 399/399 publishable, 0 hard duplicates, 0 unresolved ingredients, QA `ok` 0 findings, byte-identical double compile, candidate-500 (71+30+399=500) composition verified. Full gates green: 171 files / 3911 tests (2026-09-17). Shipped release stays 101 (`rel-193ac2b16c64a260`), 0037 NOT created, shipped manifest/approved-batches unchanged; 0036 SHA-256 `04228788…`; 0001-0035 drift 0.
+T14F-A pilot certified (`b0150d0…`); T14F-B 399 scale recipes certified (`7d667523…`). T14F-C then completed development certification: 0037 promoted byte-identical to the certified factory artifact, shipped manifest regenerated to **500 recipes / 2 batches** (`rel-bd00a4f53fcaeee4`), fresh/staged/production-forward replay PASS, D1 readiness READY at 500, all authority modes and user flows PASS (see `recipe-catalog/T14F_C_500_CATALOG_CERTIFICATION.md`). Safe stop recorded in `recipe-catalog/T14F_C_WIP_HANDOFF.md`; checkpoint head bound in the PR #25 safe-stop receipt.
 
-Certification/handoff: `recipe-catalog/T14F_B_SCALE_BATCH_CERTIFICATION.md`, `recipe-catalog/T14F_B_WIP_HANDOFF.md`, `recipe-catalog/T14F_NEXT_HANDOFF.md`, PR #25 receipt for `T14F_B_CERTIFIED_HEAD`. **STOP: T14F-C (0037 promotion, 500 manifest, 500-authority) requires separate authorization.**
+Safe-stop checks: growth suites 23/23, typecheck, `check:migrations` (smoke through 0037), `recipe:import:check` (500/2 batches, manifest byte-unchanged), `git diff --check` PASS; lint/build/full suite = FULL_TEST_NOT_RUN_DUE_SAFE_STOP. 0037 SHA-256 `68e52e6d…`; 0036 `04228788…` unchanged; legacy fingerprint `9ae153e64…`; `ALL_RECIPES` still 71.
+
+Certification/handoff: `recipe-catalog/T14F_C_500_CATALOG_CERTIFICATION.md`, `recipe-catalog/T14F_C_WIP_HANDOFF.md`, plus the T14F-B docs for history. **STOP: production rollout, media population and T14G require separate authorization; PR #25 stays draft/unmerged.**
 
 ### T14F-A — T14F_PILOT_CERTIFIED / T14F_SCALE_NOT_STARTED (certified earlier)
 

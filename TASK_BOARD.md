@@ -1,7 +1,13 @@
-## Current T14F — T14F_B_SCALE_BATCH_CERTIFIED — 2026-09-17
+## Current T14F — T14F_C_SAFE_STOPPED (500 dev-certified, production untouched) — 2026-09-17
+
+- T14F-C completed and committed (on top of authorized base `7d667523…`): 0037 promoted byte-identical (`68e52e6d…`), shipped manifest regenerated to 500/2 batches (`rel-bd00a4f53fcaeee4`, `fa47d31f…`), replay (fresh 0001→0037, 0036→0037, 0034→…→0037) PASS, D1 readiness READY 500, static/shadow/canary/full-D1 PASS, user flows incl. Batch B cuisines PASS. Development certificate: `docs/ai/recipe-catalog/T14F_C_500_CATALOG_CERTIFICATION.md`.
+- **SAFE STOP** (`T14F_C_SAFE_STOPPED_DOCS_CLOSURE`): 3 T14F-C commits + safe-stop handoff committed; production untouched. Checks: growth 23/23, typecheck, migration smoke through 0037, import check, diff check PASS; lint/build/full suite NOT run (safe stop). Exact state: `docs/ai/recipe-catalog/T14F_C_WIP_HANDOFF.md`.
+- Next: T14F-C closure (lint/build/full suite + hosted CI on the safe-stop head) from the PR #25 safe-stop receipt head; production rollout/media/T14G only with separate authorization. PR #25 stays draft/unmerged.
+
+## Historical T14F — T14F_B_SCALE_BATCH_CERTIFIED — 2026-09-17
 
 - T14F-A pilot certified (`b0150d0…`). T14F-B scale batch completed: **399/399 records** (`t14f-scale-399-v1`) validated publishable, 0 hard duplicates, 0 unresolved ingredients; QA `ok` 0 findings; double compile byte-identical; candidate-500 composition proven (500 unique, order verified).
-- Shipped release remains 101 (`rel-193ac2b16c64a260`); approved-batches/current manifest unchanged; 0036 SHA-256 unchanged; 0037 NOT created; no production action.
+- Shipped release was 101 (`rel-193ac2b16c64a260`) at the time; approved-batches/current manifest unchanged then; 0036 SHA-256 unchanged; 0037 not yet created; no production action.
 - Full gates PASS (171 files / 3911 tests, 2026-09-17). Certified head in PR #25 receipt / `T14F_B_SCALE_BATCH_CERTIFICATION.md`.
 - Next: T14F-C only with separate authorization (0037 + 500 manifest). PR #25 stays draft/unmerged.
 

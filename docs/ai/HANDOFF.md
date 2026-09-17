@@ -1,12 +1,12 @@
 # Frigo / Takosan current handoff — 2026-09-17
 
-## Current T14F — T14F_B_SCALE_BATCH_CERTIFIED / T14F_SCALE_DATA_COMPLETE
+## Current T14F — T14F_C_SAFE_STOPPED (500-recipe development certified; production untouched)
 
-T14F-B continued from the certified pilot base `b0150d0…` to **399/399 reviewed scale recipes** (`t14f-scale-399-v1`): ingredient preflight PASS, 399-concept matrix, factory 399/399 publishable with 0 hard duplicates and 0 unresolved ingredients, QA `ok` (0 editorial findings; 22 identical-signature candidates waived with culinary reasons), double deterministic compile byte-identical, candidate-500 composition (71/30/399, 500 unique, order matches) verified. Shipped release remains 101, approved-batches and current manifest unchanged, 0036 unchanged, no 0037.
+T14F-C ran on top of the certified T14F-B base `7d667523…` and completed the 500-recipe development certification: 0037 promoted byte-identical to the certified factory artifact (`68e52e6d…`), `approved-batches.json` + shipped manifest regenerated to 500 recipes / 2 batches (`rel-bd00a4f53fcaeee4`, manifest `fa47d31f…`), fresh/staged/production-forward replay PASS, D1 readiness READY 500, static/shadow/canary/full-D1 authority PASS, and user flows incl. Batch B recipes across six cuisines PASS. Certificate: `recipe-catalog/T14F_C_500_CATALOG_CERTIFICATION.md`.
 
-Full gates PASS: seed/import/typecheck/lint/migrations/build and `pnpm test` 171 files / 3911 tests (2026-09-17). Certification: `recipe-catalog/T14F_B_SCALE_BATCH_CERTIFICATION.md`; handoffs: `T14F_B_WIP_HANDOFF.md`, `T14F_NEXT_HANDOFF.md`; certified head recorded in PR #25 receipt.
+**SAFE STOP** (`T14F_C_SAFE_STOPPED_DOCS_CLOSURE`): the three T14F-C commits plus the safe-stop handoff are committed and pushed forward-only; PR #25 stays draft/unmerged and production is untouched. Safe-stop checks: growth suites 23/23, typecheck, `check:migrations` through 0037, `recipe:import:check` (500/2), `git diff --check` PASS; lint/build/full suite = FULL_TEST_NOT_RUN_DUE_SAFE_STOP.
 
-Next action: **WAIT for T14F-C authorization** (0037 promotion + 500 shipped manifest + 500-authority certification, recommended GPT-5.6 Sol High). No Batch B action, no production action, PR #25 stays draft/unmerged.
+Next action: resume T14F-C closure from the safe-stop head bound in the PR #25 T14F-C safe-stop receipt — run `pnpm lint`, `pnpm build`, full `pnpm test`, and obtain hosted CI SUCCESS on that head; production rollout, media population and T14G require separate authorization. Full state: `recipe-catalog/T14F_C_WIP_HANDOFF.md`.
 
 ### T14F-A — pilot certified (earlier)
 
