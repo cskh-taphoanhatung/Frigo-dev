@@ -59,8 +59,10 @@ export const ImportNutritionSchema = z.object({
   proteinG: z.number().finite().nonnegative(),
   fatG: z.number().finite().nonnegative(),
   carbG: z.number().finite().nonnegative(),
-  /** Where the numbers come from; required so nutrition is never silently fabricated. */
+  /** Where the numbers come from; required so nutrition is never silently fabricated. Persisted as nutrition_profiles.source_reference. */
   evidence: BoundedText(IMPORT_LIMITS.maxSourceRef),
+  /** nutrition_profiles.source_type (ADR-004); defaults to `imported`. `authoritative` is a reviewer claim, not verification. */
+  sourceType: z.enum(['authoritative', 'imported', 'calculated', 'estimated']).optional(),
 }).strict();
 
 export const ImportClassificationSchema = z.object({

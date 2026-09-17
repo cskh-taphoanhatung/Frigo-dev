@@ -1,3 +1,8 @@
+## T14E — REMEDIATION — 2026-09-17 (review P1/P2/P3 closed; PR #23 ready for re-review, unmerged)
+
+- Nutrition evidence preserved end-to-end (ADR-004 `nutrition_profiles` persistence), immutable batch hash covers all reviewed
+  metadata, manifest failure telemetry corrected. No 0036, no real recipes, no production action.
+
 ## T14E — BULK RECIPE IMPORT FACTORY — 2026-09-17 (development complete on feature branch; PR unmerged)
 
 - Import factory (`packages/recipes/src/import/`), CLI, 71-recipe Catalog Release Manifest, manifest-driven D1 readiness

@@ -1,5 +1,22 @@
 # Frigo / Takosan current handoff — 2026-09-17
 
+## Current handoff — T14E remediation (P1/P2/P3) on the feature branch; PR #23 unmerged, awaiting re-review (2026-09-17)
+
+- **Implementation state:** forward commit after `7b4edcc8…`. `packages/recipes/src/import/{types,schema,normalize,compiler,
+  sql-render,release-manifest}.ts`: `nutritionEvidence` + `duplicateReview` on the normalized model; `canonicalBatchProjection`
+  (single hash projection); SQL renders `nutrition_profiles` (`<id>_nutrition_v1`, per serving, source_type/source_reference from the
+  reviewed evidence) + `recipe_nutrition` rows; `normalized-recipes.json` carries batch metadata (incl. license/usageNote) and per-recipe
+  evidence/review; `NUTRITION_EVIDENCE_LOST` guard. `recipe-authority.ts`: error union `D1_READ_FAILED | RELEASE_MANIFEST_INVALID`;
+  manifest supplier failure ⇒ `RELEASE_MANIFEST_INVALID`. Migrations 35 / 0035 / no 0036; hash set unchanged. Protected paths untouched.
+- **Executed checks:** `pnpm install --frozen-lockfile`, `recipe:seed:check` 3× ok, `recipe:import:check` ok (`rel-1a047444a3632771`, 71/0),
+  `typecheck`, `lint`, `check:migrations` (`migration-smoke=ok`), `build`, `pnpm test` **169 files / 3889 tests PASS**; focused:
+  provenance 11, factory 16, scale 4, output-policy+CLI 25, release-readiness 15, authority 17 (88); `git diff --check` clean.
+  Scale (50 % evidence-backed): 500 → 826,455 B; 2,000 → 3,326,028 B; 5,000 → 8,322,981 B SQL.
+- **Not done — by design:** merge, 0036, real recipes, media population, production/Cloudflare action, authority activation, T14F.
+- **Next action:** independent re-review of PR #23 (exact head recorded in the PR post-push comment) → merge → freeze
+  `T14E_FINAL_CANONICAL_MAIN` → T14F per `recipe-catalog/T14E_NEXT_HANDOFF.md`. Production dispatch still pending per
+  `T14CD_PRODUCTION_ROLLOUT_HANDOFF.md`.
+
 ## Current handoff — T14E import factory development complete on feature branch; PR open, NOT merged (2026-09-17)
 
 - **Implementation state:** `packages/recipes/src/import/{types,schema,parse,identity,ingredients,normalize,duplicates,

@@ -1,5 +1,13 @@
 # Frigo Project Status
 
+## T14E remediation complete — PR #23 ready for re-review (2026-09-17)
+
+Independent review blockers closed on the feature branch: nutrition evidence is preserved end-to-end and persisted as ADR-004
+evidence in the generated SQL; the immutable batch hash now commits to schema version, license, usage note, nutrition evidence and
+duplicate-review decisions (any change ⇒ new `batchHash`/`releaseId`); a release-manifest load failure is reported as
+`RELEASE_MANIFEST_INVALID`. Current 71-recipe release unchanged. 169 files / 3889 tests. Status `T14E_REMEDIATED` ·
+`T14E_READY_FOR_RE_REVIEW`; PR unmerged; production unchanged (`4ed98514…` / D1 0034 / static).
+
 ## T14E — Bulk Recipe Import Factory + Catalog Release Manifest: development complete, PR open (2026-09-17)
 
 Builds the deterministic, fail-closed machinery for future catalog growth (authorized batch → schema → normalization → exact

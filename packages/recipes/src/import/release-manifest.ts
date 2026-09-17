@@ -19,9 +19,15 @@ import { CATALOG_RELEASE_SCHEMA_VERSION, type NormalizedImportRecipe } from './t
  * file can be regenerated and compared; nothing is hand-maintained.
  */
 
+/**
+ * Compact by design: `batchHash` cryptographically commits to ALL review-relevant metadata (schema
+ * version, license, usage note, nutrition evidence, duplicate-review decisions, runtime content …) via
+ * `canonicalBatchProjection`, and the batch's `normalized-recipes.json` artifact preserves every field
+ * needed to audit/reproduce it. The runtime manifest therefore does not duplicate that metadata.
+ */
 export const ApprovedImportBatchSchema = z.object({
   batchId: z.string().min(1),
-  /** SHA-256 over the canonical normalized batch (see `computeBatchHash`). Immutable once approved. */
+  /** SHA-256 over `canonicalBatchProjection` (see `computeBatchHash`). Immutable once approved. */
   batchHash: z.string().regex(/^[0-9a-f]{64}$/),
   recipeCount: z.number().int().nonnegative(),
   /** Runtime order of the batch's first recipe = number of recipes released before it. */
@@ -58,14 +64,41 @@ export interface ApprovedBatchContent {
   recipes: readonly NormalizedImportRecipe[];
 }
 
-/** Batch hash: identity + provenance + every normalized runtime recipe in batch order. */
-export async function computeBatchHash(header: ImportBatchHeader, recipes: readonly NormalizedImportRecipe[]): Promise<string> {
+/**
+ * THE canonical projection of an immutable reviewed batch. Everything a reviewer approved is here —
+ * schema version, batch identity, full source provenance (incl. license / usage note), and per recipe:
+ * batch order, source key, runtime content, provenance, classifications, nutrition evidence and the
+ * duplicate-review decision. Nothing about physical row order, JSON whitespace, key order, file paths,
+ * timestamps or diagnostics participates. Every hash in the factory (compile, verify, release
+ * composition, CLI) goes through `computeBatchHash` → this projection; there is no second implementation.
+ */
+export function canonicalBatchProjection(header: ImportBatchHeader, recipes: readonly NormalizedImportRecipe[]): string {
   const ordered = [...recipes].sort((a, b) => a.batchOrder - b.batchOrder);
-  return sha256Hex(canonicalJson({
+  return canonicalJson({
+    schemaVersion: header.schemaVersion,
     batchId: header.batchId,
-    source: { sourceType: header.source.sourceType, sourceNamespace: header.source.sourceNamespace, sourceReference: header.source.sourceReference },
-    recipes: ordered.map((recipe) => ({ batchOrder: recipe.batchOrder, sourceKey: recipe.sourceKey, runtime: recipe.runtime, classifications: recipe.classifications })),
-  }));
+    source: {
+      sourceType: header.source.sourceType,
+      sourceNamespace: header.source.sourceNamespace,
+      sourceReference: header.source.sourceReference,
+      license: header.source.license ?? null,
+      usageNote: header.source.usageNote ?? null,
+    },
+    recipes: ordered.map((recipe) => ({
+      batchOrder: recipe.batchOrder,
+      sourceKey: recipe.sourceKey,
+      runtime: recipe.runtime,
+      provenance: recipe.provenance,
+      classifications: recipe.classifications,
+      nutritionEvidence: recipe.nutritionEvidence,
+      duplicateReview: recipe.duplicateReview,
+    })),
+  });
+}
+
+/** SHA-256 of {@link canonicalBatchProjection}. */
+export async function computeBatchHash(header: ImportBatchHeader, recipes: readonly NormalizedImportRecipe[]): Promise<string> {
+  return sha256Hex(canonicalBatchProjection(header, recipes));
 }
 
 export async function deriveReleaseId(legacyBaselineFingerprint: string, batches: readonly Pick<ApprovedImportBatch, 'batchId' | 'batchHash'>[]): Promise<string> {

@@ -105,6 +105,30 @@ describe('recipe-import CLI (real script, git-ignored artifact directory)', () =
     expect(drift.code).toBe(1);
     expect(drift.out).toMatch(/recipe-import-verify=DRIFT migration.sql/);
     expect(readFileSync(tampered, 'utf8')).toBe('-- tampered\n');
+    // Reviewed-metadata mutation in the SOURCE (license / evidence / review reason) is detected by read-only verify.
+    writeFileSync(tampered, readFileSync(path.join(root, artifactDir, 'normalized-recipes.json'), 'utf8').length ? '-- restored below\n' : '');
+    const recompiled = run('compile', '--input', 'tests/fixtures/recipe-import/valid-batch.json', '--out', artifactDir);
+    expect(recompiled.code).toBe(0);
+    const source = JSON.parse(readFileSync(path.join(root, 'tests/fixtures/recipe-import/valid-batch.json'), 'utf8'));
+    const mutatedDir = mkdtempSync(path.join(tmpdir(), 'frigo-import-mutated-'));
+    try {
+      const variants = {
+        license: (b) => { b.source.license = 'non-commercial'; },
+        evidence: (b) => { b.recipes[1].nutrition.evidence = 'different-evidence'; },
+        usageNote: (b) => { b.source.usageNote = 'changed'; },
+      };
+      for (const [name, mutate] of Object.entries(variants)) {
+        const copy = JSON.parse(JSON.stringify(source));
+        mutate(copy);
+        const file = path.join(mutatedDir, `${name}.json`);
+        writeFileSync(file, JSON.stringify(copy));
+        const verifyMutated = run('verify', '--input', file, '--artifact', artifactDir);
+        expect(verifyMutated.code, name).toBe(1);
+        expect(verifyMutated.out, name).toMatch(/recipe-import-verify=DRIFT normalized-recipes.json/);
+        expect(verifyMutated.out, name).toMatch(/recipe-import-verify=DRIFT artifact-manifest.json/);
+      }
+      expect(run('verify', '--input', 'tests/fixtures/recipe-import/valid-batch.json', '--artifact', artifactDir).code).toBe(0); // artifacts untouched by verify
+    } finally { rmSync(mutatedDir, { recursive: true, force: true }); }
     const check = run('check');
     expect(check.out).toMatch(/recipe-import-check=ok packages\/recipes\/src\/import\/catalog-release.current.json \(releaseId=rel-[0-9a-f]{16} recipes=71 batches=0\)/);
     expect(check.code).toBe(0);

@@ -1,7 +1,7 @@
 # T14E next-phase handoff — state record only (T14F NOT started)
 
 ```text
-T14E_STATUS=T14E_DEVELOPMENT_COMPLETE · T14E_READY_FOR_REVIEW · REAL_CATALOG_GROWTH_NOT_STARTED · PRODUCTION_ROLLOUT_DEFERRED
+T14E_STATUS=T14E_REMEDIATED · T14E_READY_FOR_RE_REVIEW · REAL_CATALOG_GROWTH_NOT_STARTED · PRODUCTION_ROLLOUT_DEFERRED
 T14E_BASE_MAIN=9ff571995bf5f2a4381c2dfc6de796e6554fd43c
 T14E_FINAL_CANONICAL_MAIN=<merge SHA of the reviewed T14E PR — recorded in its post-merge comment; the ONLY valid base for T14F>
 ```
@@ -19,6 +19,11 @@ T14E_FINAL_CANONICAL_MAIN=<merge SHA of the reviewed T14E PR — recorded in its
   `tests/unit/recipe-import-output-policy.test.mjs`, `tests/integration/recipe-catalog-release-readiness.test.ts`,
   fixtures `tests/fixtures/recipe-import/valid-batch.json`, helpers `tests/helpers/recipe-import-fixtures.ts`.
 - Docs: `T14E_BULK_RECIPE_IMPORT_FACTORY.md`, ADR-027.
+- Remediation (review P1/P2/P3, forward commit on the same branch): nutrition evidence preserved end-to-end and persisted as
+  ADR-004 `nutrition_profiles` + `recipe_nutrition` rows by the generated SQL; `canonicalBatchProjection` = single immutable
+  batch-hash projection (schema version, license, usage note, evidence, duplicate review, content); `normalized-recipes.json`
+  carries batch metadata + evidence + review decisions; manifest load/parse failure = `RELEASE_MANIFEST_INVALID` (not
+  `D1_READ_FAILED`). Tests: `tests/unit/recipe-import-provenance.test.ts`. Current release `rel-1a047444a3632771` unchanged.
 
 ## 2. Unchanged (by design)
 
@@ -44,8 +49,10 @@ Truth (T09/T11); PayOS/auth/OCR/Qwen/CSP/DNS. Production: `4ed98514…` / D1 003
 6. `node scripts/recipe-import.mjs compile --input <batch> --out .artifacts/recipe-import/<batch-id>`; then
    `verify --input <batch> --artifact <dir>` (read-only) and confirm hashes in `artifact-manifest.json` are stable
    across two compiles.
-7. Inspect `migration.sql` (plain INSERT, `runtime_order = 71 + batchOrder`, pending media slots) and
-   `catalog-release-manifest.json` (expectedRecipeCount = 71 + N, one approved batch).
+7. Inspect `migration.sql` (plain INSERT, `runtime_order = 71 + batchOrder`, pending media slots, one `nutrition_profiles`
+   + `recipe_nutrition` row per evidence-backed recipe) and `catalog-release-manifest.json` (expectedRecipeCount = 71 + N,
+   one approved batch whose `batchHash` commits to license/usage/evidence/review metadata — keep `normalized-recipes.json`
+   with the review record for audit).
 8. Promote: copy `migration.sql` → `migrations/<next-number>_<batch>.sql` (0036 if nothing lands before). Chunk large
    releases into consecutive complete-batch migrations; the manifest certifies only the complete release.
 9. Copy `catalog-release-manifest.json` → `packages/recipes/src/import/catalog-release.current.json`;

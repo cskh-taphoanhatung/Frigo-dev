@@ -42,7 +42,7 @@ export function lcg(seed: number): () => number {
  * recipes share the exact ingredient signature and no title repeats (so the batch is duplicate-free),
  * with 2..6 ingredient lines and 2..5 steps each.
  */
-export function syntheticRecords(count: number, namespaceTag = 'scale', seed = 7): ImportRecipeRecord[] {
+export function syntheticRecords(count: number, namespaceTag = 'scale', seed = 7, options: { nutritionEvery?: number } = {}): ImportRecipeRecord[] {
   const random = lcg(seed);
   const records: ImportRecipeRecord[] = [];
   for (let index = 0; index < count; index += 1) {
@@ -72,17 +72,20 @@ export function syntheticRecords(count: number, namespaceTag = 'scale', seed = 7
       steps: Array.from({ length: stepCount }, (_, step) => ({ stepNumber: step + 1, instruction: `Step ${step + 1} for synthetic recipe ${index}.`, ...(step === 0 ? { timerMinutes: 3 + (index % 20) } : {}) })),
       tags: [`synthetic`, `bucket-${index % 10}`],
       classifications: [{ kind: 'meal_type', tag: index % 2 ? 'dinner' : 'lunch' }],
+      ...(options.nutritionEvery && index % options.nutritionEvery === 0
+        ? { nutrition: { calories: 100 + (index % 700), proteinG: index % 60, fatG: index % 40, carbG: index % 90, evidence: `synthetic-nutrition-table:${namespaceTag}:${index}` } }
+        : {}),
     });
   }
   return records;
 }
 
-export function syntheticBatch(count: number, batchId = 'synthetic-batch', namespaceTag = 'scale', seed = 7) {
+export function syntheticBatch(count: number, batchId = 'synthetic-batch', namespaceTag = 'scale', seed = 7, options: { nutritionEvery?: number } = {}) {
   return {
     schemaVersion: 1 as const,
     batchId,
-    source: { sourceType: 'imported' as const, sourceNamespace: `fixture.${namespaceTag}`, sourceReference: `synthetic ${namespaceTag} dataset (test-only)` },
-    recipes: syntheticRecords(count, namespaceTag, seed),
+    source: { sourceType: 'imported' as const, sourceNamespace: `fixture.${namespaceTag}`, sourceReference: `synthetic ${namespaceTag} dataset (test-only)`, license: 'synthetic-test-license', usageNote: 'test-only synthetic content' },
+    recipes: syntheticRecords(count, namespaceTag, seed, options),
   };
 }
 

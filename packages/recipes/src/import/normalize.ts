@@ -146,6 +146,11 @@ export async function normalizeImportRecord(
       batchOrder: record.batchOrder,
       provenance: { sourceType: header.source.sourceType, sourceReference: header.source.sourceReference, verificationState: 'reviewed', version: 1 },
       classifications,
+      nutritionEvidence: record.nutrition === undefined ? null : {
+        calories: record.nutrition.calories, proteinG: record.nutrition.proteinG, fatG: record.nutrition.fatG, carbG: record.nutrition.carbG,
+        evidence: record.nutrition.evidence.normalize('NFKC').trim(), sourceType: record.nutrition.sourceType ?? 'imported',
+      },
+      duplicateReview: record.duplicateReview === undefined ? null : { decision: record.duplicateReview.decision, reason: record.duplicateReview.reason.normalize('NFKC').trim() },
       contentFingerprint: await sha256Hex(canonicalJson(runtime.data)),
     },
     batchOrder: record.batchOrder,

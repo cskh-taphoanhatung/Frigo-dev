@@ -1,7 +1,7 @@
 # T14E — Bulk Recipe Import Factory + Catalog Release Manifest (ADR-027)
 
 ```text
-STATUS=T14E_DEVELOPMENT_COMPLETE · REAL_CATALOG_GROWTH_NOT_STARTED · PRODUCTION_ROLLOUT_DEFERRED
+STATUS=T14E_REMEDIATED · T14E_READY_FOR_RE_REVIEW · REAL_CATALOG_GROWTH_NOT_STARTED · PRODUCTION_ROLLOUT_DEFERRED
 base=9ff571995bf5f2a4381c2dfc6de796e6554fd43c   (canonical main at start)
 migrations=35, highest=0035_recipe_media_layer.sql, 0036=absent   (unchanged by T14E)
 ALL_RECIPES=71 (unchanged) · current release manifest=71 recipes / 0 approved batches
@@ -74,13 +74,15 @@ JSONL: first line = header (everything but `recipes`), then one record per line.
 | Steps | Integers, start at 1, contiguous, unique, non-empty; `tip`/`timerMinutes` optional. IDs `<recipe>_step_<n>`, ingredient rows `<recipe>_ing_<1-based>`, positions in `recipe_runtime_ingredient_order`. |
 | Cuisine / region / category | Closed runtime vocabularies for cuisine (`UNSUPPORTED_CUISINE`) and region (`INVALID_REGION`; VN only). Category typed-open, normalized, non-empty. |
 | Tags / classifications | NFKC + trim + dedupe, order preserved, legacy `cat:`/`region:` markers rejected; classification kinds are the existing six; no health/dietary inference. |
-| Nutrition | Optional. Requires `evidence`; finite non-negative macros; lands in `recipe_runtime_fields.legacy_*` (compatibility projection). Never fabricated. `nutrition_profiles` evidence remains a separate system (ADR-004). |
+| Nutrition | Optional. Requires `evidence` (+ optional `sourceType ∈ authoritative|imported|calculated|estimated`, default `imported`); finite non-negative macros. **Evidence is preserved end-to-end:** `NormalizedImportRecipe.nutritionEvidence` → `normalized-recipes.json` → canonical batch projection → SQL. The macros land in `recipe_runtime_fields.legacy_*` (runtime compatibility projection, part of the runtime fingerprint) AND the evidence is persisted as ADR-004 truth: one per-serving `nutrition_profiles` row `<recipe-id>_nutrition_v1` (`source_type` = declared sourceType, `source_reference` = evidence, kcal/protein/carb/fat) linked via `recipe_nutrition` at recipe version 1 (ADR-009). Plain INSERT. A recipe without evidence gets no profile; macros without evidence cannot exist in the canonical model (`NUTRITION_EVIDENCE_LOST` guard + renderer invariant). Never fabricated. |
 | Media / imageUrl | Import never downloads/generates images. SQL creates one truthful `recipe_media` hero v1 **pending** slot per recipe (no storage key/hash). `imageUrl` compatibility: same-origin raster path or the audited placeholder `/frigo/illustrations/delicious-meal.png` (classifies `legacy_static`); external URLs are rejected (no new CSP debt). |
 | Provenance | `recipes.source_type/source_reference/verification_state/version` = batch sourceType / batch sourceReference / `reviewed` / 1. Stricter than the historical schema (which allows NULL references). AI-generated input passes identical gates. |
-| Duplicates | Hard (error, unwaivable): same source key, same ID, same slug, identical content fingerprint. Semantic (review): normalized title within cuisine, identical ingredient signature. Bucketed maps ⇒ O(N + M). Waiver = `duplicateReview { decision: "distinct", reason }`, recorded in `duplicate-report.json`. |
+| Duplicates | Hard (error, unwaivable): same source key, same ID, same slug, identical content fingerprint. Semantic (review): normalized title within cuisine, identical ingredient signature. Bucketed maps ⇒ O(N + M). Waiver = `duplicateReview { decision: "distinct", reason }`; the decision is carried on `NormalizedImportRecipe.duplicateReview`, in `normalized-recipes.json`, in the batch hash, and reported in `duplicate-report.json`. |
 | SQL | One literal renderer (`'` doubled, NUL refused, finite numbers only). Plain `INSERT` (abort on collision; no `ON CONFLICT DO UPDATE`). Rows: recipes, recipe_ingredients, recipe_steps, recipe_runtime_fields, recipe_runtime_ingredient_order, recipe_classifications, recipe_media. Prerequisite: canonical ordering through 0035. |
-| Determinism | No `Date.now()`, randomness, filesystem order, locale or timezone. Canonical key-sorted JSON everywhere; issues sorted (subject, code, path, detail). Same input + same previous release ⇒ byte-identical artifacts (only `artifact-manifest.json.inputSha256` reflects the physical bytes). |
-| Artifacts | `normalized-recipes.json`, `validation-report.json`, `duplicate-report.json`, `unresolved-ingredients.json`, `migration.sql` (publishable only), `catalog-release-manifest.json` (publishable only), `artifact-manifest.json` (schemaVersion, batchId, batchHash, inputSha256, normalizedSha256, migrationSha256, releaseManifestSha256, releaseId, counts). Written only beneath `.artifacts/recipe-import/<dir>/`; traversal, sibling-prefix dirs, absolute paths and symlink escapes are refused; `verify` is read-only. |
+| Determinism | No `Date.now()`, randomness, filesystem order, locale or timezone. Canonical key-sorted JSON everywhere; issues sorted (subject, code, path, detail). Same input + same previous release ⇒ byte-identical artifacts (only `artifact-manifest.json.inputSha256` reflects the physical bytes). Row order, JSON whitespace and key order do not affect `batchHash`, `releaseId`, `migration.sql` or `normalized-recipes.json` (tested). |
+| **Immutable batch hash** | `batchHash = SHA-256(canonicalBatchProjection)` — ONE function used by compile, verify, release composition and the CLI. The projection = `{ schemaVersion, batchId, source: { sourceType, sourceNamespace, sourceReference, license ?? null, usageNote ?? null }, recipes[batchOrder-ordered]: { batchOrder, sourceKey, runtime, provenance, classifications, nutritionEvidence, duplicateReview } }`. Any change to reviewed meaning (license, usage note, evidence, review reason, schema version, content) ⇒ new `batchHash` ⇒ new `releaseId`; approved batch mutated ⇒ `BATCH_COLLISION`. It never hashes file noise (row order, whitespace, key order, paths, timestamps, diagnostics). |
+| **Two identities** | `batchHash` = reviewed import provenance + content identity. `expectedRuntimeFingerprint` / per-recipe `contentFingerprint` = user-visible runtime recipe semantics only (`RuntimeRecipeSchema` fields, incl. macro numbers). License, usage note, duplicate review and nutrition *evidence* are provenance and are NOT in the runtime fingerprint, so a provenance-only change yields a new `releaseId` with an unchanged runtime fingerprint (desired). |
+| Artifacts | `normalized-recipes.json` (auditable reviewed batch: `schemaVersion`, `batchId`, `batchHash`, full `source` incl. license/usageNote, per-recipe `nutritionEvidence` + `duplicateReview` + runtime — everything the hash commits to), `validation-report.json`, `duplicate-report.json`, `unresolved-ingredients.json`, `migration.sql` (publishable only), `catalog-release-manifest.json` (publishable only), `artifact-manifest.json` (schemaVersion, batchId, batchHash, inputSha256, normalizedSha256, migrationSha256, releaseManifestSha256, releaseId, counts). Written only beneath `.artifacts/recipe-import/<dir>/`; traversal, sibling-prefix dirs, absolute paths and symlink escapes are refused; `verify` is read-only. |
 | Fail-closed | Any error ⇒ exit 1, `publishable=false`, no `migration.sql`/manifest; diagnostics still written. Warnings are currently unused (no integrity issue is downgraded). |
 
 ## 4. Catalog Release Manifest and growth-ready readiness
@@ -100,8 +102,13 @@ D1 authority READY  ⇔  hydration failures = 0
 ```
 
 `packages/recipes/src/import/catalog-release.current.json` = today's release (`rel-1a047444a3632771`, 71 recipes, 0
-batches, fingerprint `9ae153e6…7c3f` == static). `assessD1Readiness(baseline, hydration, release = currentCatalogRelease())`
-and `D1RecipeAuthority` default to it; the worker router (`src/worker/services/recipe-authority.ts`) is unchanged. The
+batches, fingerprint `9ae153e6…7c3f` == static; unchanged by the remediation because no batch exists). `ApprovedImportBatch`
+stays compact (`batchId, batchHash, recipeCount, releaseBaseCount, sourceNamespace, sourceReference`) because `batchHash`
+commits to all reviewed metadata and the batch's `normalized-recipes.json` preserves it for audit. `assessD1Readiness(baseline, hydration, release = currentCatalogRelease())`
+and `D1RecipeAuthority` default to it; the worker router (`src/worker/services/recipe-authority.ts`) is unchanged.
+Error telemetry distinguishes a D1 content read failure (`status=error, code=D1_READ_FAILED`) from a release-manifest
+load/parse failure (`status=error, code=RELEASE_MANIFEST_INVALID`); a manifest that parses but does not describe this
+build's baseline is `not_ready` with the same code. The
 manifest is reviewed metadata compiled into the bundle — never request/header/query/KV/D1-row controlled.
 
 Proven on a real SQLite replay of 0001→0035 + generated batch SQL (tests): 71 READY (identical to T14D), 77 READY with

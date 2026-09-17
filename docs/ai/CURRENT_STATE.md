@@ -1,5 +1,21 @@
 # Frigo / Takosan current authority — 2026-09-17
 
+## T14E remediation — review P1/P2/P3 closed on the feature branch; PR #23 re-review pending (2026-09-17)
+
+Forward commit on the T14E branch (old head `7b4edcc8…` kept). **P1 nutrition evidence** now survives end-to-end:
+`NormalizedImportRecipe.nutritionEvidence` (macros + `evidence` + ADR-004 `sourceType`, default `imported`) → `normalized-recipes.json`
+→ canonical batch projection → generated SQL persists one per-serving `nutrition_profiles` row `<recipe-id>_nutrition_v1`
+(`source_reference` = evidence) linked via `recipe_nutrition` at version 1, alongside the legacy compatibility macros; compiler guard
+`NUTRITION_EVIDENCE_LOST` + renderer invariant make macros-without-evidence impossible. **P2 immutable batch hash**:
+`canonicalBatchProjection` (single function for compile/verify/composition/CLI) commits to schemaVersion, batchId, sourceType/
+namespace/reference, license, usageNote and per recipe batchOrder/sourceKey/runtime/provenance/classifications/nutritionEvidence/
+duplicateReview; license/usageNote/evidence/review-reason changes ⇒ new `batchHash` ⇒ new `releaseId` (runtime fingerprint unchanged);
+row order/whitespace/key order irrelevant; mutated approved batch ⇒ `BATCH_COLLISION`; `verify` detects source metadata mutation.
+**P3**: release-manifest load/parse failure is `status=error, code=RELEASE_MANIFEST_INVALID` (not `D1_READ_FAILED`). Current release
+`rel-1a047444a3632771` (71/0, fingerprint `9ae153e6…`) unchanged. Scale with 50 % evidence-backed recipes: 500 ≈0.83 MB, 2,000 ≈3.3 MB,
+5,000 ≈8.3 MB SQL. Gates: lint, typecheck, seed/import check, `migration-smoke=ok` (35, no 0036), build, **169 files / 3889 tests**.
+Status `T14E_REMEDIATED` · `T14E_READY_FOR_RE_REVIEW` · `REAL_CATALOG_GROWTH_NOT_STARTED` · `PRODUCTION_ROLLOUT_DEFERRED`; PR #23 unmerged.
+
 ## T14E — Bulk Recipe Import Factory + Catalog Release Manifest — development complete on feature branch (2026-09-17)
 
 Base `9ff571995bf5f2a4381c2dfc6de796e6554fd43c`. Adds `packages/recipes/src/import/` (v1 batch schema, JSON/JSONL parser,

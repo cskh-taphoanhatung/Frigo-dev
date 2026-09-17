@@ -101,7 +101,8 @@ export type RecipeAuthorityReadinessCode =
 export type RecipeAuthorityReadiness =
   | { status: 'ready'; source: 'd1'; fingerprint: string; recipeCount: number; releaseId: string }
   | { status: 'not_ready'; source: 'd1'; code: Exclude<RecipeAuthorityReadinessCode, 'D1_READ_FAILED'>; detail: RecipeAuthorityReadinessDetail }
-  | { status: 'error'; source: 'd1'; code: 'D1_READ_FAILED'; error: string };
+  /** `D1_READ_FAILED`: the content read threw. `RELEASE_MANIFEST_INVALID` (error form): the reviewed release metadata could not be loaded/parsed — D1 may be fine. */
+  | { status: 'error'; source: 'd1'; code: 'D1_READ_FAILED' | 'RELEASE_MANIFEST_INVALID'; error: string };
 
 /** Bounded, PII-free evidence: counts and at most a few recipe IDs / field names. */
 export interface RecipeAuthorityReadinessDetail {
@@ -233,7 +234,8 @@ export class D1RecipeAuthority {
     try {
       release = this.release();
     } catch (error) {
-      return { status: 'error', snapshot: null, readiness: { status: 'error', source: 'd1', code: 'D1_READ_FAILED', error: error instanceof Error ? `release manifest: ${error.name}` : 'release manifest' } };
+      // The D1 read succeeded; what failed is the reviewed release metadata. Never mislabel it as a read failure.
+      return { status: 'error', snapshot: null, readiness: { status: 'error', source: 'd1', code: 'RELEASE_MANIFEST_INVALID', error: error instanceof Error ? error.name : 'unknown' } };
     }
     const { readiness, recipes } = await assessD1Readiness(baseline, hydrateRuntimeRecipes(content), release);
     if (readiness.status !== 'ready') return { status: readiness.status, snapshot: null, readiness };

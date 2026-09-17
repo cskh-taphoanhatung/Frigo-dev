@@ -82,7 +82,7 @@ describe('T14E — current Catalog Release Manifest (71, zero batches)', () => {
       const { readiness } = await assessD1Readiness(baseline, hydrateRuntimeRecipes(content), manifest);
       expect(readiness).toMatchObject({ status: 'not_ready', code: 'RELEASE_MANIFEST_INVALID' });
       const broken = new D1RecipeAuthority(() => Promise.resolve(content), staticAuthority, () => 2, () => { throw new Error('bad json'); });
-      expect(await broken.load()).toMatchObject({ status: 'error', snapshot: null, readiness: { code: 'D1_READ_FAILED' } });
+      expect(await broken.load()).toMatchObject({ status: 'error', snapshot: null, readiness: { code: 'RELEASE_MANIFEST_INVALID' } });
     } finally { db.close(); }
   });
 });

@@ -90,8 +90,7 @@ async function compileParsedBatch(batch: RawImportBatch, options: Required<Pick<
     for (const item of outcome.unresolvedIngredients) unresolved.push({ subject: outcome.issues[0]?.subject ?? `row:${rowIndex}`, ...item });
     if (outcome.recipe) {
       recipes.push(outcome.recipe);
-      const review = (raw as Record<string, unknown>).duplicateReview as { decision: 'distinct'; reason: string } | undefined;
-      if (review) waivers.set(outcome.recipe.sourceKey, review);
+      if (outcome.recipe.duplicateReview) waivers.set(outcome.recipe.sourceKey, outcome.recipe.duplicateReview);
       summary.valid += 1;
     } else summary.invalid += 1;
   }
@@ -118,6 +117,14 @@ async function compileParsedBatch(batch: RawImportBatch, options: Required<Pick<
   const duplicates = detectDuplicates(uniqueRecipes, existing, waivers);
   issues.push(...duplicates.issues);
 
+  // Evidence-only nutrition contract: a publishable recipe with macros MUST carry its evidence into the
+  // canonical model. This can only trip on an internal regression, and it must fail closed if it does.
+  for (const recipe of recipes) {
+    const hasMacros = recipe.runtime.nutrition !== undefined;
+    const evidenceOk = recipe.nutritionEvidence !== null && recipe.nutritionEvidence.evidence.length > 0;
+    if (hasMacros !== evidenceOk) issues.push({ code: 'NUTRITION_EVIDENCE_LOST', severity: 'error', subject: recipe.sourceKey, detail: 'nutrition macros without attached evidence (or evidence without macros) in the canonical model', path: 'nutrition' });
+  }
+
   const sorted = sortIssues(issues);
   summary.errors = sorted.filter((issue) => issue.severity === 'error').length;
   summary.warnings = sorted.filter((issue) => issue.severity === 'warning').length;
@@ -139,7 +146,15 @@ async function compileParsedBatch(batch: RawImportBatch, options: Required<Pick<
 async function finish(result: CompileResult): Promise<CompileResult> {
   const artifacts = result.artifacts;
   const json = (value: unknown) => `${JSON.stringify(JSON.parse(canonicalJson(value)), null, 2)}\n`;
-  const normalizedText = json(result.recipes.map((recipe) => ({ id: recipe.runtime.id, sourceKey: recipe.sourceKey, batchOrder: recipe.batchOrder, contentFingerprint: recipe.contentFingerprint, provenance: recipe.provenance, classifications: recipe.classifications, runtime: recipe.runtime })));
+  // The normalized artifact is the auditable reviewed batch: it carries every field the immutable batch
+  // hash commits to (batch metadata incl. license/usageNote, per-recipe evidence and review decisions).
+  const normalizedText = json({
+    schemaVersion: result.header?.schemaVersion ?? null,
+    batchId: result.header?.batchId ?? null,
+    batchHash: result.batchHash,
+    source: result.header ? { sourceType: result.header.source.sourceType, sourceNamespace: result.header.source.sourceNamespace, sourceReference: result.header.source.sourceReference, license: result.header.source.license ?? null, usageNote: result.header.source.usageNote ?? null } : null,
+    recipes: result.recipes.map((recipe) => ({ id: recipe.runtime.id, sourceKey: recipe.sourceKey, batchOrder: recipe.batchOrder, contentFingerprint: recipe.contentFingerprint, provenance: recipe.provenance, classifications: recipe.classifications, nutritionEvidence: recipe.nutritionEvidence, duplicateReview: recipe.duplicateReview, runtime: recipe.runtime })),
+  });
   artifacts.set(IMPORT_ARTIFACT_FILES.normalized, normalizedText);
   artifacts.set(IMPORT_ARTIFACT_FILES.validation, json({ ok: result.ok, summary: result.summary, issues: result.issues }));
   artifacts.set(IMPORT_ARTIFACT_FILES.duplicates, `${JSON.stringify(JSON.parse(serializeDuplicateReport(result.duplicateReport)), null, 2)}\n`);

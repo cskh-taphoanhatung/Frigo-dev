@@ -43,6 +43,7 @@ export const IMPORT_ISSUE_CODES = [
   'RUNTIME_CONTRACT_VIOLATION',
   'BATCH_COLLISION',
   'BATCH_HASH_MISMATCH',
+  'NUTRITION_EVIDENCE_LOST',
 ] as const;
 export type ImportIssueCode = (typeof IMPORT_ISSUE_CODES)[number];
 
@@ -78,8 +79,27 @@ export interface NormalizedImportRecipe {
   batchOrder: number;
   provenance: { sourceType: 'curated' | 'imported' | 'ai_generated'; sourceReference: string; verificationState: 'reviewed'; version: 1 };
   classifications: Array<{ kind: ClassificationKind; tag: string }>;
+  /**
+   * Evidence-backed nutrition (ADR-004): present iff `runtime.nutrition` is present. The macros are runtime
+   * semantics (they mirror `runtime.nutrition` and the legacy compatibility columns); `evidence` is
+   * provenance and is persisted as a per-serving `nutrition_profiles` row linked via `recipe_nutrition`.
+   */
+  nutritionEvidence: NutritionEvidence | null;
+  /** Human duplicate-review decision carried with the reviewed record (part of the immutable batch identity). */
+  duplicateReview: DuplicateReviewRecord | null;
   /** SHA-256 over the canonical runtime projection of this single recipe. */
   contentFingerprint: string;
+}
+
+export interface NutritionEvidence {
+  calories: number;
+  proteinG: number;
+  fatG: number;
+  carbG: number;
+  /** Source/evidence reference → `nutrition_profiles.source_reference`. */
+  evidence: string;
+  /** `nutrition_profiles.source_type`; imports default to `imported`. */
+  sourceType: 'authoritative' | 'imported' | 'calculated' | 'estimated';
 }
 
 export const CLASSIFICATION_KINDS = ['meal_type', 'dietary', 'allergen', 'method', 'equipment', 'suitability'] as const;

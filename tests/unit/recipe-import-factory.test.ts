@@ -269,7 +269,8 @@ describe('T14E import factory — SQL renderer and determinism', () => {
     expect(sql).not.toMatch(/ON CONFLICT/);
     expect(sql.match(/^INSERT INTO (\w+)/gm)).toEqual([
       'INSERT INTO recipes', 'INSERT INTO recipe_ingredients', 'INSERT INTO recipe_steps', 'INSERT INTO recipe_runtime_fields',
-      'INSERT INTO recipe_runtime_ingredient_order', 'INSERT INTO recipe_classifications', 'INSERT INTO recipe_media',
+      'INSERT INTO recipe_runtime_ingredient_order', 'INSERT INTO recipe_classifications',
+      'INSERT INTO nutrition_profiles', 'INSERT INTO recipe_nutrition', 'INSERT INTO recipe_media',
     ]);
     const [first, second] = result.recipes.map((recipe) => recipe.runtime.id);
     expect(sql).toContain(`('${first}', 71, 'mon_kho', 'nam', 520, 24, 40, 6)`); // runtime_order = 71 + batchOrder 0
