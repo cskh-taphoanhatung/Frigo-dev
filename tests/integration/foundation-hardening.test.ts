@@ -4,13 +4,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { addIngredientAlias, createIngredientDefinition } from '../../packages/db/src/catalog';
 import { IngredientDefinitionSchema } from '../../packages/domain/src/foundation';
 import { SqliteD1 } from '../helpers/sqlite-d1';
+import { renderSchemaGateSql } from '../../scripts/d1-schema-gate.mjs';
 
 const migrationDirectory = path.resolve(process.cwd(), 'migrations');
 const hardeningMigration = readFileSync(
   path.join(migrationDirectory, '0020_t01_foundation_hardening.sql'),
   'utf8',
 );
-const schemaGate = readFileSync(path.resolve(process.cwd(), 'scripts/d1-schema-gate.sql'), 'utf8');
+const schemaGate = renderSchemaGateSql();
 
 describe('T01 foundation integrity hardening', () => {
   const databases: SqliteD1[] = [];

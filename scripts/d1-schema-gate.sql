@@ -1,45 +1,26 @@
 WITH
+-- Populated by scripts/d1-schema-gate.mjs from the migrations/ directory of the checked-out
+-- commit (0001..tip, contiguous). The payment migration 0018 and production 0023 are part of
+-- that list and remain immutable/protected. Never hand-edit the list here.
 required_migrations(name) AS (
   VALUES
-    ('0001_initial_schema.sql'),
-    ('0002_seed_data.sql'),
-    ('0003_weekly_planner.sql'),
-    ('0004_auth_system.sql'),
-    ('0005_meal_plans_relational.sql'),
-    ('0006_vietnamese_recipe_bank.sql'),
-    ('0007_week_integrity.sql'),
-    ('0008_week_snapshot_metadata.sql'),
-    ('0009_inventory_optimistic_version.sql'),
-    ('0010_week_schema_shadow_canonical.sql'),
-    ('0011_meal_plan_tenant_ownership.sql'),
-    ('0012_scan_queue_jobs.sql'),
-    ('0013_scan_receipt_metadata.sql'),
-    ('0014_scan_queue_fencing.sql'),
-    ('0015_auth_session_otp_hardening.sql'),
-    ('0016_scan_quota_ledger.sql'),
-    ('0017_auth_otps_remove_plaintext.sql'),
-    -- Payment migration remains immutable/protected, but it is part of the
-    -- production ledger and must be present for an exact schema check.
-    ('0018_payments.sql'),
-    ('0019_recipe_domain_foundation.sql'),
-    ('0020_t01_foundation_hardening.sql'),
-    ('0021_recipe_personalization.sql'),
-    ('0022_generated_meal_plans.sql'),
-    ('0023_scan_request_fingerprint.sql'),
-    ('0024_inventory_truth_foundation.sql'),
-    ('0025_inventory_lot_commands.sql'),
-    ('0026_inventory_event_authority.sql'),
-    ('0027_inventory_event_poststate.sql'),
-    ('0028_inventory_fefo_authority.sql'),
-    ('0029_inventory_adoption_authority.sql'),
-    ('0030_inventory_fefo_backfill_compatibility.sql'),
-    ('0031_inventory_observation_reconciliation.sql'),
-    ('0032_scan_evidence_retention.sql'),
-    ('0033_scan_evidence_completeness.sql'),
-    ('0034_global_recipe_catalog_parity.sql'),
-    ('0035_recipe_media_layer.sql'),
-    -- T14F: reviewed catalog growth (data-only, additive).
-    ('0036_recipe_catalog_pilot.sql')
+-- @required_migrations
+),
+-- Ledger must equal the required list exactly: a missing migration means the schema is
+-- behind the release; an unexpected entry means the database is ahead of (or diverged
+-- from) the repository and needs an explicit migration/rollback owner review.
+migration_ledger_issues(issue, detail) AS (
+  SELECT 'missing_migration', migration.name
+  FROM required_migrations migration
+  WHERE NOT EXISTS (
+    SELECT 1 FROM d1_migrations applied WHERE applied.name = migration.name
+  )
+  UNION ALL
+  SELECT 'unexpected_migration', applied.name
+  FROM d1_migrations applied
+  WHERE NOT EXISTS (
+    SELECT 1 FROM required_migrations migration WHERE migration.name = applied.name
+  )
 ),
 required_tables(name) AS (
   VALUES
@@ -234,11 +215,8 @@ required_schema_objects(type, name) AS (
     ('trigger', 'trg_recipe_families_source_reference_insert'),
     ('trigger', 'trg_recipe_families_source_reference_update')
 )
-SELECT 'missing_migration' AS issue, migration.name AS detail
-FROM required_migrations migration
-WHERE NOT EXISTS (
-  SELECT 1 FROM d1_migrations applied WHERE applied.name = migration.name
-)
+SELECT issue, detail
+FROM migration_ledger_issues
 UNION ALL
 SELECT 'missing_table', required.name
 FROM required_tables required

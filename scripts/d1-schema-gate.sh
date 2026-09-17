@@ -17,9 +17,11 @@ case "$scope" in
     ;;
 esac
 
-query="$(sed -e '/^[[:space:]]*--/d' -e '/^[[:space:]]*$/d' scripts/d1-schema-gate.sql | tr '\n' ' ')"
+# Required migrations are derived from migrations/ at this checkout (fail closed on gaps).
+query="$(node scripts/d1-schema-gate.mjs render)"
+required_tip="$(node scripts/d1-schema-gate.mjs tip)"
 
-echo "Checking read-only D1 schema gate: database=$database scope=$scope"
+echo "Checking read-only D1 schema gate: database=$database scope=$scope required_tip=$required_tip"
 
 if ! result="$(pnpm wrangler d1 execute "$database" "$scope_flag" --yes --command "$query" --json)"; then
   echo "D1 schema query failed; no migration or deployment was attempted."
@@ -58,4 +60,4 @@ if ! printf '%s' "$result" | node --input-type=module -e '
   exit 1
 fi
 
-echo "D1 schema gate passed: required migrations (0001-0036, including protected 0018 and production 0023), security/Week schema, recipe foundation + runtime fields/ingredient order, recipe media layer, ranking persistence, generated plans, scan replay identity, inventory truth, lot command/event/FEFO/adoption authority, observation/reconciliation persistence and guards, scan evidence retention/completeness, and foreign keys are valid."
+echo "D1 schema gate passed: migration ledger equals the repository migrations exactly (0001 through $required_tip, including protected 0018 and production 0023), security/Week schema, recipe foundation + runtime fields/ingredient order, recipe media layer, ranking persistence, generated plans, scan replay identity, inventory truth, lot command/event/FEFO/adoption authority, observation/reconciliation persistence and guards, scan evidence retention/completeness, and foreign keys are valid."
