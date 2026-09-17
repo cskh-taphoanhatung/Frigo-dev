@@ -14,8 +14,12 @@ T14F_certified_base=f0c229f2e2b134904a8c0e355479394cbf53c954
 origin_main=f0c229f2e2b134904a8c0e355479394cbf53c954 (unchanged at safe stop)
 branch=feat/t14f-recipe-catalog-500
 current_head_before_safe_stop=f0c229f2e2b134904a8c0e355479394cbf53c954 (no T14F commits yet; all WIP was uncommitted)
-safe_stop_commit=<see git log; "chore(t14f): checkpoint WIP and safe handoff">
-remote_branch_head=<pushed at safe stop; verify with git rev-parse origin/feat/t14f-recipe-catalog-500>
+safe_stop_commit=148b7a1c7ed4acf766053ecde94fadfd723529ba ("chore(t14f): checkpoint WIP and safe handoff")
+remote_branch_head=148b7a1c7ed4acf766053ecde94fadfd723529ba on origin/hoplite/massalia-c2862d7c
+  (pushed via draft PR #25 — feat/t14f-recipe-catalog-500 could not be published because it is
+  not a Hoplite-authorized branch; PR: https://github.com/frigo-3/Frigo-dev/pull/25, base main,
+  head hoplite/massalia-c2862d7c at this SHA. PR is DRAFT and must NOT be merged.)
+safe_stop_pr=25 (draft; local HEAD == remote branch head == PR head verified 2026-09-17)
 ```
 
 ## 2. Phase
