@@ -1,15 +1,11 @@
 import { randomUUID } from 'node:crypto';
-import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { unstable_dev, unstable_splitSqlQuery } from 'wrangler';
+import { startLocalD1Worker } from '../helpers/local-d1-worker.mjs';
 
 // T12 real workerd/D1 closed-loop proof: observation -> reconciliation -> T09
 // command authority -> inventory_lots -> T11 read authority -> product funnel.
 // Runs on actual local D1 (isolated database, fresh 0001..0030 chain).
 let worker;
-let directory;
 const token = randomUUID();
 const now = '2026-09-12T10:00:00Z';
 const later = '2026-09-12T11:00:00Z';
@@ -89,26 +85,13 @@ const counts = async (scope) => {
 };
 
 beforeAll(async () => {
-  directory = mkdtempSync(path.join(tmpdir(), 'frigo-t12-d1-'));
-  const config = path.join(directory, 'wrangler.json');
-  writeFileSync(config, JSON.stringify({ name: 'frigo-t12-local-proof', compatibility_date: '2025-03-01' }));
-  worker = await unstable_dev(path.resolve('tests/helpers/inventory-lot-d1-worker.ts'), {
-    config, ip: '127.0.0.1', port: 0, inspectorPort: 0, local: true, persist: false,
-    logLevel: 'error', vars: { TEST_TOKEN: token },
-    experimental: {
-      disableExperimentalWarning: true, disableDevRegistry: true, forceLocal: true, watch: false,
-      d1Databases: [{ binding: 'DB', database_name: 't12-isolated-test', database_id: '00000000-0000-0000-0000-000000000032' }],
-    },
-  });
-  for (const file of readdirSync('migrations').filter((name) => /^\d+.*\.sql$/.test(name)).sort()) {
-    const result = await batch(unstable_splitSqlQuery(readFileSync(`migrations/${file}`, 'utf8')));
-    expect(result, file).toMatchObject({ status: 200 });
-  }
+  worker = await startLocalD1Worker({ name: 't12', token,
+    databaseName: 't12-isolated-test', databaseId: '00000000-0000-0000-0000-000000000032' });
+  await worker.replayMigrations(expect);
 }, 120_000);
 
 afterAll(async () => {
   await worker?.stop();
-  if (directory) rmSync(directory, { recursive: true, force: true });
 });
 
 describe('T12 real local D1 closed loop', () => {
