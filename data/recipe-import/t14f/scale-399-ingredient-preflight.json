@@ -1,0 +1,796 @@
+{
+  "generatedBy": "T14F-B ingredient scale preflight (read-only audit; ingredient truth untouched)",
+  "canonicalCount": 45,
+  "closedUnits": [
+    "g",
+    "kg",
+    "ml",
+    "l",
+    "piece",
+    "pack",
+    "bunch",
+    "slice"
+  ],
+  "inventory": [
+    {
+      "id": "PORK_BELLY",
+      "nameVi": "Thịt ba chỉ",
+      "nameEn": "Pork belly",
+      "category": "meat",
+      "defaultUnit": "g",
+      "supportedUnits": [
+        "g"
+      ],
+      "aliases": [
+        "ba chỉ",
+        "ba rọi",
+        "thịt ba rọi",
+        "thịt ba chỉ heo",
+        "pork belly"
+      ],
+      "legacyUse": 10,
+      "pilotUse": 4
+    },
+    {
+      "id": "GROUND_PORK",
+      "nameVi": "Thịt heo xay",
+      "nameEn": "Ground pork",
+      "category": "meat",
+      "defaultUnit": "g",
+      "supportedUnits": [
+        "g"
+      ],
+      "aliases": [
+        "thịt băm",
+        "thịt xay",
+        "thịt lợn xay",
+        "thịt bằm"
+      ],
+      "legacyUse": 10,
+      "pilotUse": 3
+    },
+    {
+      "id": "BEEF_SIRLOIN",
+      "nameVi": "Thịt bò",
+      "nameEn": "Beef sirloin",
+      "category": "meat",
+      "defaultUnit": "g",
+      "supportedUnits": [
+        "g"
+      ],
+      "aliases": [
+        "thịt bò",
+        "bò phi lê",
+        "thịt thăn bò",
+        "bắp bò"
+      ],
+      "legacyUse": 10,
+      "pilotUse": 3
+    },
+    {
+      "id": "CHICKEN_BREAST",
+      "nameVi": "Ức gà",
+      "nameEn": "Chicken breast",
+      "category": "meat",
+      "defaultUnit": "g",
+      "supportedUnits": [
+        "g"
+      ],
+      "aliases": [
+        "ức gà",
+        "thịt ức gà",
+        "gà phi lê"
+      ],
+      "legacyUse": 2,
+      "pilotUse": 1
+    },
+    {
+      "id": "CHICKEN_THIGH",
+      "nameVi": "Đùi gà",
+      "nameEn": "Chicken thigh",
+      "category": "meat",
+      "defaultUnit": "g",
+      "supportedUnits": [
+        "g"
+      ],
+      "aliases": [
+        "đùi gà",
+        "má đùi gà",
+        "thịt đùi gà"
+      ],
+      "legacyUse": 8,
+      "pilotUse": 1
+    },
+    {
+      "id": "SHRIMP",
+      "nameVi": "Tôm tươi",
+      "nameEn": "Fresh shrimp",
+      "category": "seafood",
+      "defaultUnit": "g",
+      "supportedUnits": [
+        "g"
+      ],
+      "aliases": [
+        "tôm",
+        "tôm sú",
+        "tôm thẻ",
+        "tôm lột"
+      ],
+      "legacyUse": 7,
+      "pilotUse": 8
+    },
+    {
+      "id": "SALMON_FILLET",
+      "nameVi": "Cá hồi",
+      "nameEn": "Salmon fillet",
+      "category": "seafood",
+      "defaultUnit": "g",
+      "supportedUnits": [
+        "g"
+      ],
+      "aliases": [
+        "cá hồi",
+        "phi lê cá hồi"
+      ],
+      "legacyUse": 0,
+      "pilotUse": 2
+    },
+    {
+      "id": "CHICKEN_EGG",
+      "nameVi": "Trứng gà",
+      "nameEn": "Chicken egg",
+      "category": "egg",
+      "defaultUnit": "piece",
+      "supportedUnits": [
+        "piece"
+      ],
+      "aliases": [
+        "trứng",
+        "trứng gà",
+        "trứng gà ta",
+        "trứng vịt",
+        "egg"
+      ],
+      "legacyUse": 17,
+      "pilotUse": 5
+    },
+    {
+      "id": "FRESH_MILK",
+      "nameVi": "Sữa tươi",
+      "nameEn": "Fresh milk",
+      "category": "dairy",
+      "defaultUnit": "ml",
+      "supportedUnits": [
+        "ml"
+      ],
+      "aliases": [
+        "sữa",
+        "sữa tươi",
+        "sữa không đường",
+        "sữa có đường"
+      ],
+      "legacyUse": 2,
+      "pilotUse": 1
+    },
+    {
+      "id": "CHEDDAR_CHEESE",
+      "nameVi": "Phô mai",
+      "nameEn": "Cheese",
+      "category": "dairy",
+      "defaultUnit": "g",
+      "supportedUnits": [
+        "g"
+      ],
+      "aliases": [
+        "phô mai",
+        "pho mát",
+        "cheddar",
+        "mozzarella"
+      ],
+      "legacyUse": 0,
+      "pilotUse": 1
+    },
+    {
+      "id": "BUTTER",
+      "nameVi": "Bơ thực vật/động vật",
+      "nameEn": "Butter",
+      "category": "dairy",
+      "defaultUnit": "g",
+      "supportedUnits": [
+        "g"
+      ],
+      "aliases": [
+        "bơ",
+        "bơ lạt",
+        "bơ phe",
+        "butter"
+      ],
+      "legacyUse": 1,
+      "pilotUse": 2
+    },
+    {
+      "id": "TOMATO",
+      "nameVi": "Cà chua",
+      "nameEn": "Tomato",
+      "category": "vegetable",
+      "defaultUnit": "piece",
+      "supportedUnits": [
+        "piece"
+      ],
+      "aliases": [
+        "cà chua",
+        "cà chua bi",
+        "tomato"
+      ],
+      "legacyUse": 13,
+      "pilotUse": 2
+    },
+    {
+      "id": "WATER_SPINACH",
+      "nameVi": "Rau muống",
+      "nameEn": "Water spinach",
+      "category": "vegetable",
+      "defaultUnit": "bunch",
+      "supportedUnits": [
+        "bunch"
+      ],
+      "aliases": [
+        "rau muống",
+        "muống nước",
+        "rau muống đồng"
+      ],
+      "legacyUse": 5,
+      "pilotUse": 2
+    },
+    {
+      "id": "SPINACH",
+      "nameVi": "Rau chân vịt",
+      "nameEn": "Spinach",
+      "category": "vegetable",
+      "defaultUnit": "g",
+      "supportedUnits": [
+        "g"
+      ],
+      "aliases": [
+        "rau bina",
+        "cải bó xôi",
+        "rau chân vịt"
+      ],
+      "legacyUse": 1,
+      "pilotUse": 1
+    },
+    {
+      "id": "TOFU",
+      "nameVi": "Đậu phụ",
+      "nameEn": "Tofu",
+      "category": "vegetable",
+      "defaultUnit": "piece",
+      "supportedUnits": [
+        "piece"
+      ],
+      "aliases": [
+        "đậu phụ",
+        "đậu hũ",
+        "tàu hũ",
+        "tofu"
+      ],
+      "legacyUse": 8,
+      "pilotUse": 3
+    },
+    {
+      "id": "BROCCOLI",
+      "nameVi": "Bông cải xanh",
+      "nameEn": "Broccoli",
+      "category": "vegetable",
+      "defaultUnit": "piece",
+      "supportedUnits": [
+        "piece"
+      ],
+      "aliases": [
+        "súp lơ",
+        "súp lơ xanh",
+        "bông cải xanh",
+        "broccoli"
+      ],
+      "legacyUse": 2,
+      "pilotUse": 2
+    },
+    {
+      "id": "CARROT",
+      "nameVi": "Cà rốt",
+      "nameEn": "Carrot",
+      "category": "vegetable",
+      "defaultUnit": "piece",
+      "supportedUnits": [
+        "piece"
+      ],
+      "aliases": [
+        "cà rốt",
+        "carrot"
+      ],
+      "legacyUse": 13,
+      "pilotUse": 3
+    },
+    {
+      "id": "ONION",
+      "nameVi": "Hành tây",
+      "nameEn": "Onion",
+      "category": "vegetable",
+      "defaultUnit": "piece",
+      "supportedUnits": [
+        "piece"
+      ],
+      "aliases": [
+        "hành tây",
+        "củ hành tây"
+      ],
+      "legacyUse": 7,
+      "pilotUse": 7
+    },
+    {
+      "id": "GARLIC",
+      "nameVi": "Tỏi",
+      "nameEn": "Garlic",
+      "category": "spice",
+      "defaultUnit": "piece",
+      "supportedUnits": [
+        "piece"
+      ],
+      "aliases": [
+        "tỏi",
+        "tỏi cô đơn",
+        "tỏi ta",
+        "củ tỏi"
+      ],
+      "legacyUse": 29,
+      "pilotUse": 18
+    },
+    {
+      "id": "GINGER",
+      "nameVi": "Gừng",
+      "nameEn": "Ginger",
+      "category": "spice",
+      "defaultUnit": "g",
+      "supportedUnits": [
+        "g"
+      ],
+      "aliases": [
+        "gừng",
+        "củ gừng"
+      ],
+      "legacyUse": 10,
+      "pilotUse": 9
+    },
+    {
+      "id": "SCALLION",
+      "nameVi": "Hành lá",
+      "nameEn": "Green onion",
+      "category": "vegetable",
+      "defaultUnit": "bunch",
+      "supportedUnits": [
+        "bunch"
+      ],
+      "aliases": [
+        "hành lá",
+        "hành hoa",
+        "scallion"
+      ],
+      "legacyUse": 34,
+      "pilotUse": 18
+    },
+    {
+      "id": "CHILI",
+      "nameVi": "Ớt",
+      "nameEn": "Chili",
+      "category": "spice",
+      "defaultUnit": "piece",
+      "supportedUnits": [
+        "piece"
+      ],
+      "aliases": [
+        "ớt",
+        "ớt hiểm",
+        "ớt sừng",
+        "ớt đỏ"
+      ],
+      "legacyUse": 21,
+      "pilotUse": 9
+    },
+    {
+      "id": "CUCUMBER",
+      "nameVi": "Dưa leo",
+      "nameEn": "Cucumber",
+      "category": "vegetable",
+      "defaultUnit": "piece",
+      "supportedUnits": [
+        "piece"
+      ],
+      "aliases": [
+        "dưa chuột",
+        "dưa leo"
+      ],
+      "legacyUse": 4,
+      "pilotUse": 1
+    },
+    {
+      "id": "CABBAGE",
+      "nameVi": "Bắp cải",
+      "nameEn": "Cabbage",
+      "category": "vegetable",
+      "defaultUnit": "piece",
+      "supportedUnits": [
+        "piece"
+      ],
+      "aliases": [
+        "bắp cải",
+        "cải bắp"
+      ],
+      "legacyUse": 3,
+      "pilotUse": 1
+    },
+    {
+      "id": "KIMCHI",
+      "nameVi": "Kim chi",
+      "nameEn": "Kimchi",
+      "category": "vegetable",
+      "defaultUnit": "g",
+      "supportedUnits": [
+        "g"
+      ],
+      "aliases": [
+        "kimchi",
+        "kim chi hàn quốc"
+      ],
+      "legacyUse": 1,
+      "pilotUse": 2
+    },
+    {
+      "id": "MUSHROOM",
+      "nameVi": "Nấm đùi gà / nấm hương",
+      "nameEn": "Mushroom",
+      "category": "vegetable",
+      "defaultUnit": "g",
+      "supportedUnits": [
+        "g"
+      ],
+      "aliases": [
+        "nấm",
+        "nấm hương",
+        "nấm kim châm",
+        "nấm đùi gà",
+        "nấm rơm"
+      ],
+      "legacyUse": 11,
+      "pilotUse": 5
+    },
+    {
+      "id": "RICE",
+      "nameVi": "Gạo / Cơm nguội",
+      "nameEn": "Rice",
+      "category": "grain",
+      "defaultUnit": "g",
+      "supportedUnits": [
+        "g"
+      ],
+      "aliases": [
+        "gạo",
+        "cơm",
+        "cơm nguội",
+        "gạo thơm"
+      ],
+      "legacyUse": 6,
+      "pilotUse": 4
+    },
+    {
+      "id": "SPAGHETTI_PASTA",
+      "nameVi": "Mì Ý / Pasta",
+      "nameEn": "Pasta",
+      "category": "grain",
+      "defaultUnit": "g",
+      "supportedUnits": [
+        "g"
+      ],
+      "aliases": [
+        "mì ý",
+        "spaghetti",
+        "pasta",
+        "mì sợi"
+      ],
+      "legacyUse": 2,
+      "pilotUse": 2
+    },
+    {
+      "id": "NOODLE",
+      "nameVi": "Bún / Mì sợi",
+      "nameEn": "Noodles",
+      "category": "grain",
+      "defaultUnit": "g",
+      "supportedUnits": [
+        "g"
+      ],
+      "aliases": [
+        "bún",
+        "mì",
+        "phở",
+        "hủ tiếu",
+        "bún tươi"
+      ],
+      "legacyUse": 15,
+      "pilotUse": 4
+    },
+    {
+      "id": "FISH_SAUCE",
+      "nameVi": "Nước mắm",
+      "nameEn": "Fish sauce",
+      "category": "spice",
+      "defaultUnit": "ml",
+      "supportedUnits": [
+        "ml"
+      ],
+      "aliases": [
+        "nước mắm",
+        "mắm nam ngư",
+        "mắm"
+      ],
+      "legacyUse": 39,
+      "pilotUse": 14
+    },
+    {
+      "id": "SOY_SAUCE",
+      "nameVi": "Xì dầu / Nước tương",
+      "nameEn": "Soy sauce",
+      "category": "spice",
+      "defaultUnit": "ml",
+      "supportedUnits": [
+        "ml"
+      ],
+      "aliases": [
+        "xì dầu",
+        "nước tương",
+        "tương đậu nành"
+      ],
+      "legacyUse": 14,
+      "pilotUse": 11
+    },
+    {
+      "id": "COOKING_OIL",
+      "nameVi": "Dầu ăn",
+      "nameEn": "Cooking oil",
+      "category": "spice",
+      "defaultUnit": "ml",
+      "supportedUnits": [
+        "ml"
+      ],
+      "aliases": [
+        "dầu ăn",
+        "dầu mè",
+        "dầu olive",
+        "dầu thực vật"
+      ],
+      "legacyUse": 31,
+      "pilotUse": 16
+    },
+    {
+      "id": "PORK_RIBS",
+      "nameVi": "Sườn heo / Sườn non",
+      "nameEn": "Pork ribs",
+      "category": "meat",
+      "defaultUnit": "g",
+      "supportedUnits": [
+        "g"
+      ],
+      "aliases": [
+        "sườn",
+        "sườn heo",
+        "sườn non",
+        "sườn sụn"
+      ],
+      "legacyUse": 4,
+      "pilotUse": 1
+    },
+    {
+      "id": "CRAB_MEAT",
+      "nameVi": "Cua đồng / Cua thịt",
+      "nameEn": "Crab meat / Field crab",
+      "category": "seafood",
+      "defaultUnit": "g",
+      "supportedUnits": [
+        "g"
+      ],
+      "aliases": [
+        "cua đồng",
+        "cua",
+        "riêu cua",
+        "thịt cua"
+      ],
+      "legacyUse": 4,
+      "pilotUse": 0
+    },
+    {
+      "id": "SQUID",
+      "nameVi": "Mực tươi",
+      "nameEn": "Squid",
+      "category": "seafood",
+      "defaultUnit": "g",
+      "supportedUnits": [
+        "g"
+      ],
+      "aliases": [
+        "mực",
+        "mực ống",
+        "mực lá",
+        "mực tươi"
+      ],
+      "legacyUse": 3,
+      "pilotUse": 1
+    },
+    {
+      "id": "FISH_FRESHWATER",
+      "nameVi": "Cá tươi (Cá lóc, cá điêu hồng, rô phi)",
+      "nameEn": "Freshwater fish",
+      "category": "seafood",
+      "defaultUnit": "g",
+      "supportedUnits": [
+        "g"
+      ],
+      "aliases": [
+        "cá lóc",
+        "cá quả",
+        "cá điêu hồng",
+        "cá rô",
+        "cá tươi",
+        "cá trắm"
+      ],
+      "legacyUse": 7,
+      "pilotUse": 1
+    },
+    {
+      "id": "BITTER_MELON",
+      "nameVi": "Khổ qua / Mướp đắng",
+      "nameEn": "Bitter melon",
+      "category": "vegetable",
+      "defaultUnit": "piece",
+      "supportedUnits": [
+        "piece"
+      ],
+      "aliases": [
+        "khổ qua",
+        "mướp đắng"
+      ],
+      "legacyUse": 3,
+      "pilotUse": 0
+    },
+    {
+      "id": "WINTER_MELON",
+      "nameVi": "Bí đao",
+      "nameEn": "Winter melon",
+      "category": "vegetable",
+      "defaultUnit": "piece",
+      "supportedUnits": [
+        "piece"
+      ],
+      "aliases": [
+        "bí đao",
+        "bí xanh"
+      ],
+      "legacyUse": 3,
+      "pilotUse": 1
+    },
+    {
+      "id": "PUMPKIN",
+      "nameVi": "Bí đỏ",
+      "nameEn": "Pumpkin",
+      "category": "vegetable",
+      "defaultUnit": "piece",
+      "supportedUnits": [
+        "piece"
+      ],
+      "aliases": [
+        "bí đỏ",
+        "bí ngô"
+      ],
+      "legacyUse": 1,
+      "pilotUse": 1
+    },
+    {
+      "id": "PINEAPPLE",
+      "nameVi": "Dứa / Thơm",
+      "nameEn": "Pineapple",
+      "category": "fruit",
+      "defaultUnit": "piece",
+      "supportedUnits": [
+        "piece"
+      ],
+      "aliases": [
+        "dứa",
+        "thơm",
+        "khóm"
+      ],
+      "legacyUse": 3,
+      "pilotUse": 3
+    },
+    {
+      "id": "BEAN_SPROUTS",
+      "nameVi": "Giá đỗ",
+      "nameEn": "Bean sprouts",
+      "category": "vegetable",
+      "defaultUnit": "g",
+      "supportedUnits": [
+        "g"
+      ],
+      "aliases": [
+        "giá đỗ",
+        "giá sống"
+      ],
+      "legacyUse": 2,
+      "pilotUse": 2
+    },
+    {
+      "id": "CHAYOTE",
+      "nameVi": "Su su",
+      "nameEn": "Chayote",
+      "category": "vegetable",
+      "defaultUnit": "piece",
+      "supportedUnits": [
+        "piece"
+      ],
+      "aliases": [
+        "su su",
+        "quả su su"
+      ],
+      "legacyUse": 2,
+      "pilotUse": 0
+    },
+    {
+      "id": "LEMONGRASS",
+      "nameVi": "Sả tươi",
+      "nameEn": "Lemongrass",
+      "category": "spice",
+      "defaultUnit": "piece",
+      "supportedUnits": [
+        "piece"
+      ],
+      "aliases": [
+        "sả",
+        "củ sả",
+        "cây sả"
+      ],
+      "legacyUse": 7,
+      "pilotUse": 5
+    },
+    {
+      "id": "LIME",
+      "nameVi": "Chanh tươi",
+      "nameEn": "Lime",
+      "category": "fruit",
+      "defaultUnit": "piece",
+      "supportedUnits": [
+        "piece"
+      ],
+      "aliases": [
+        "chanh",
+        "quả chanh",
+        "nước cốt chanh"
+      ],
+      "legacyUse": 7,
+      "pilotUse": 3
+    },
+    {
+      "id": "RICE_PAPER",
+      "nameVi": "Bánh tráng cuốn",
+      "nameEn": "Rice paper",
+      "category": "grain",
+      "defaultUnit": "pack",
+      "supportedUnits": [
+        "pack"
+      ],
+      "aliases": [
+        "bánh tráng",
+        "bánh đa nem",
+        "ram"
+      ],
+      "legacyUse": 3,
+      "pilotUse": 0
+    }
+  ]
+}
