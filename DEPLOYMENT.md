@@ -104,7 +104,22 @@ The production job re-runs lint/typecheck/tests/migration-smoke/build, then:
   plaintext `code` column. These are not unrestricted replay/rollback scripts.
 - The pipeline **never applies remote migrations automatically**. If the
   schema gate fails because a new migration is missing, an operator applies
-  it explicitly and re-dispatches:
+  it explicitly and re-dispatches. The preferred path is the manual,
+  fail-closed **Production D1 Migration** workflow
+  (`.github/workflows/production-d1-migrate.yml`, `workflow_dispatch` only,
+  mutation job bound to the `production` Environment and its required
+  reviewers). Inputs: `ref` (full SHA in main whose `migrations/` tip is the
+  migration), `expected_pre_tip`, `migration`, `confirm_production_migration`.
+  Before mutating it verifies main ancestry + exact-SHA hosted CI + pinned
+  historical hashes, Cloudflare account and `frigo-db` identity, the ledger
+  (`expected_pre_tip`, or certification-only if the migration is already
+  present), captures a D1 Time Travel bookmark (the rollback receipt), records
+  an aggregate counts-only baseline and requires the Wrangler plan to be
+  exactly one migration. After apply it re-reads the ledger, checks FK /
+  `quick_check` / aggregate drift / (for 0035) the `recipe_media` seed, and runs
+  the schema gate. The receipt artifact is sanitized (SHAs, ledger names,
+  bookmark, counts); raw exports are never uploaded to this public repository.
+  Manual fallback for an authenticated operator:
 
   ```bash
   pnpm wrangler d1 migrations apply frigo-db --remote

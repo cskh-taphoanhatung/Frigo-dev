@@ -1,0 +1,219 @@
+# Manual, fail-closed production D1 migration. Never triggered automatically; the mutation
+# job runs under the operator-managed `production` Environment (required reviewers).
+# Application deployment stays a separate action (deploy.yml never applies migrations).
+name: Production D1 Migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Full immutable SHA already contained in main whose migrations/ tip is the migration to apply
+        type: string
+        required: true
+      expected_pre_tip:
+        description: Migration file name expected as the current production ledger tip (e.g. 0034_global_recipe_catalog_parity.sql)
+        type: string
+        required: true
+      migration:
+        description: Exact single migration file name to apply (e.g. 0035_recipe_media_layer.sql)
+        type: string
+        required: true
+      confirm_production_migration:
+        description: Confirm this is an intentional production D1 schema mutation
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: frigo-production-d1-migration
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    if: github.ref == 'refs/heads/main' && inputs.confirm_production_migration == true
+    runs-on: ubuntu-latest
+    outputs:
+      candidate_sha: ${{ steps.gate.outputs.candidate_sha }}
+    steps:
+      - name: Checkout trusted main policy and full ancestry
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Exact-SHA gate (main ancestry, migration tip, pinned history, hosted CI)
+        id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MIGRATION_REF: ${{ inputs.ref }}
+          EXPECTED_PRE_TIP: ${{ inputs.expected_pre_tip }}
+          MIGRATION: ${{ inputs.migration }}
+        run: node scripts/d1-migration-check.mjs gate migration-manifest.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: d1-migration-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: migration-manifest.json
+          if-no-files-found: error
+          retention-days: 90
+
+  migrate:
+    needs: gate
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout pinned migration candidate
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.gate.outputs.candidate_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: d1-migration-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Require production Cloudflare credentials (names only)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::error::PRODUCTION_CREDENTIAL_PATH_BLOCKED: CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID missing in the production Environment"
+            exit 1
+          fi
+          echo "Production Cloudflare credentials present (values never printed)."
+
+      - name: Recheck candidate after environment approval
+        run: |
+          test "$(git rev-parse HEAD)" = "$(node -p 'require("./migration-manifest.json").sha')"
+          node --input-type=module -e '
+            import { migrationManifest } from "./scripts/release-check.mjs";
+            import { readFileSync } from "node:fs";
+            const manifest = JSON.parse(readFileSync("migration-manifest.json", "utf8"));
+            if (migrationManifest(process.cwd(), manifest.sha).sha256 !== manifest.schema.sha256) throw new Error("Migration manifest changed");
+          '
+
+      - name: Cloudflare account and D1 identity preflight
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          pnpm wrangler whoami > /dev/null
+          pnpm wrangler d1 list --json > d1-list.json
+          if pnpm wrangler d1 info frigo-db --json > d1-info.json 2> d1-info.err; then
+            node scripts/d1-migration-check.mjs identity migration-manifest.json d1-list.json d1-info.json
+          else
+            echo "::warning::d1 info unavailable with this token scope; identity proven from d1 list only"
+            node scripts/d1-migration-check.mjs identity migration-manifest.json d1-list.json
+          fi
+          echo "Cloudflare account authenticated; database frigo-db / $(node -p 'require("./migration-manifest.json").cloudflare.databaseId') verified."
+
+      - name: Production pre-ledger (read-only)
+        id: pre_ledger
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          pnpm wrangler d1 execute frigo-db --remote --yes --command "SELECT name FROM d1_migrations ORDER BY name" --json > pre-ledger.json
+          node scripts/d1-migration-check.mjs pre-ledger migration-manifest.json pre-ledger.json
+
+      - name: Capture D1 Time Travel rollback bookmark
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          pnpm wrangler d1 time-travel info frigo-db --json > time-travel.json
+          node scripts/d1-migration-check.mjs bookmark migration-manifest.json time-travel.json
+          echo "PRE_MIGRATION_TIME_TRAVEL_BOOKMARK=$(node -p 'require("./time-travel.json").bookmark')"
+
+      - name: Pre-migration aggregate baseline (counts only)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          query="$(node -e 'import("./scripts/d1-migration-check.mjs").then((m) => process.stdout.write(m.baselineQuery()))')"
+          pnpm wrangler d1 execute frigo-db --remote --yes --command "$query" --json > pre-baseline.json
+          node scripts/d1-migration-check.mjs baseline migration-manifest.json pre-baseline.json
+          node -p 'JSON.stringify(require("./pre-baseline.json")[0].results[0])'
+
+      - name: Verify migration plan is exactly the requested migration
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          pnpm wrangler d1 migrations list frigo-db --remote | tee migration-plan.txt
+          node scripts/d1-migration-check.mjs plan migration-manifest.json migration-plan.txt
+
+      - name: Apply migration through the Wrangler ledger
+        if: steps.pre_ledger.outputs.mode == 'apply'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          pnpm wrangler d1 migrations apply frigo-db --remote
+          node scripts/d1-migration-check.mjs applied migration-manifest.json
+
+      - name: Certification-only (migration already present; nothing applied)
+        if: steps.pre_ledger.outputs.mode == 'certify'
+        run: echo "::notice::${{ inputs.migration }} already present in the production ledger; certifying without re-applying."
+
+      - name: Post-migration ledger
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          pnpm wrangler d1 execute frigo-db --remote --yes --command "SELECT name FROM d1_migrations ORDER BY name" --json > post-ledger.json
+          node scripts/d1-migration-check.mjs post-ledger migration-manifest.json post-ledger.json
+
+      - name: Post-migration verification (aggregates, FK, quick_check, recipe_media seed)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          d1() { pnpm wrangler d1 execute frigo-db --remote --yes --json --command "$1"; }
+          query="$(node -e 'import("./scripts/d1-migration-check.mjs").then((m) => process.stdout.write(m.baselineQuery()))')"
+          d1 "$query" > post-baseline.json
+          d1 "PRAGMA foreign_key_check" > fk.json
+          d1 "PRAGMA quick_check" > quick.json
+          d1 "SELECT COUNT(*) AS total, SUM(role = 'hero') AS hero, SUM(role = 'thumbnail') AS thumbnail, SUM(status = 'pending') AS pending, SUM(status = 'ready') AS ready, SUM(status = 'rejected') AS rejected, SUM(status = 'superseded') AS superseded FROM recipe_media" > media-summary.json
+          d1 "SELECT COUNT(*) AS recipes_without_exact_hero_v1_pending FROM recipes r WHERE (SELECT COUNT(*) FROM recipe_media m WHERE m.recipe_id = r.id AND m.role = 'hero' AND m.version = 1 AND m.status = 'pending') <> 1 OR (SELECT COUNT(*) FROM recipe_media m WHERE m.recipe_id = r.id) <> 1" > media-slots.json
+          d1 "SELECT type, name, sql FROM sqlite_master WHERE tbl_name = 'recipe_media' ORDER BY type, name" > media-schema.json
+          node scripts/d1-migration-check.mjs verify migration-manifest.json post-baseline.json fk.json quick.json media-summary.json media-slots.json media-schema.json
+          node -p 'const m = require("./migration-manifest.json"); JSON.stringify({ postLedger: m.postLedger, recipeMedia: m.recipeMedia, health: m.health, aggregateDrift: m.aggregateDrift, postBaseline: m.postBaseline })'
+
+      - name: Production schema gate (read-only)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          bash scripts/d1-schema-gate.sh remote
+          node scripts/d1-migration-check.mjs schema-gate migration-manifest.json
+
+      # Sanitized receipt only: SHAs, ledger names, bookmark, aggregate counts. Never rows or tokens.
+      - name: Save sanitized migration receipt (even on failure)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: d1-migration-receipt-${{ github.run_id }}-${{ github.run_attempt }}
+          path: migration-manifest.json
+          retention-days: 90
