@@ -1,0 +1,11 @@
+{
+  "$comment": "Reviewed import batches in release order (T14F). The Catalog Release Manifest (packages/recipes/src/import/catalog-release.current.json) is composed from ALL_RECIPES + these sources by `node scripts/recipe-import.mjs release-manifest`, and `pnpm recipe:import:check` recompiles them to prove the committed manifest is generated, not hand-edited. Each entry is immutable once its migration is promoted.",
+  "batches": [
+    {
+      "batchId": "t14f-pilot-30-v1",
+      "source": "data/recipe-import/t14f/pilot-30.jsonl",
+      "migration": "0036_recipe_catalog_pilot.sql",
+      "recipeCount": 30
+    }
+  ]
+}

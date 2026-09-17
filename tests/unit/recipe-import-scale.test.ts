@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ALL_RECIPES } from '../../packages/recipes/src/data';
 import { compileImportBatch, IMPORT_ARTIFACT_FILES } from '../../packages/recipes/src/import/compiler';
+import { IMPORT_SQL_MAX_STATEMENT_BYTES } from '../../packages/recipes/src/import/sql-render';
 import { DuplicateIndex, catalogEntryFromRuntime } from '../../packages/recipes/src/import/duplicates';
 import { composeCatalogRelease } from '../../packages/recipes/src/import/release-manifest';
 import { encode, syntheticBatch, toJsonl } from '../helpers/recipe-import-fixtures';
@@ -61,7 +62,12 @@ describe('T14E — 5,000-recipe synthetic compile', () => {
     const sql = result.artifacts.get(IMPORT_ARTIFACT_FILES.migration)!;
     // Linear row counts: one recipes row, one media row, one runtime_fields row per recipe.
     expect((sql.match(/_media_hero_v1'/g) ?? []).length).toBe(5000);
-    expect((sql.match(/^INSERT INTO /gm) ?? []).length).toBe(9);
+    // T14F: multi-row INSERTs are chunked so no single statement exceeds the hosted D1 100 KB statement limit
+    // (one recipes row per recipe ⇒ ≥ 5000/250 = 20 recipe statements); every statement stays under the budget.
+    const statements = sql.split(/;\n/).flatMap((piece) => (piece.includes('INSERT INTO ') ? [`${piece.slice(piece.indexOf('INSERT INTO '))};`] : []));
+    expect(statements.length).toBeGreaterThanOrEqual(9);
+    expect(Math.max(...statements.map((statement) => Buffer.byteLength(statement, 'utf8')))).toBeLessThanOrEqual(IMPORT_SQL_MAX_STATEMENT_BYTES);
+    expect(new Set(statements.map((statement) => statement.match(/^INSERT INTO (\w+)/m)![1])).size).toBe(9);
     expect((sql.match(/_nutrition_v1'/g) ?? []).length).toBe(2500 * 2); // profile row + link row per evidence-backed recipe
     expect(result.recipes.filter((recipe) => recipe.nutritionEvidence !== null)).toHaveLength(2500);
     console.log(`T14E scale 5000: recipes=${artifact.recipeCount} ingredient_lines=${artifact.ingredientLineCount} steps=${artifact.stepCount} nutrition_profiles=2500 sql_bytes=${Buffer.byteLength(sql, 'utf8')}`);

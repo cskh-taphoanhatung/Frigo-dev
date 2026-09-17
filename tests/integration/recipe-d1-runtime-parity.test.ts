@@ -16,7 +16,7 @@ import { recipeRoutes } from '../../src/worker/routes/recipes';
 import { resetRecipeCatalogShadowThrottle, runRecipeCatalogShadow, toRecipeCatalogShadowLogRecord } from '../../src/worker/services/recipe-catalog-shadow';
 import type { AuthContext, Env } from '../../src/worker/types';
 import { signJwt } from '../../src/worker/utils/jwt';
-import { SqliteD1 } from '../helpers/sqlite-d1';
+import { LEGACY_CATALOG_MIGRATION_TIP, SqliteD1 } from '../helpers/sqlite-d1';
 
 /**
  * T14B-B parity harnesses. Every scorer/planner/cooking primitive is called twice — once with
@@ -59,7 +59,7 @@ describe('T14B-B — static vs D1 runtime catalog behavioural parity (actual cat
   let staticRecipes: Recipe[];
   let d1Recipes: Recipe[];
   beforeEach(async () => {
-    db = new SqliteD1();
+    db = new SqliteD1({ through: LEGACY_CATALOG_MIGRATION_TIP }); // 71-recipe legacy baseline ledger
     const staticCatalog = new StaticRuntimeRecipeCatalog();
     const d1Catalog = new D1RuntimeRecipeCatalog(() => readRecipeContent(db));
     expect((await d1Catalog.hydrate()).failures).toEqual([]);
@@ -282,9 +282,11 @@ describe('T14B-B — static vs D1 runtime catalog behavioural parity (actual cat
   it('shadow health: the real ledger logs info with zero order drift; a reordered D1 view logs warn with order drift', async () => {
     const outcome = await runRecipeCatalogShadow(db, 'shadow');
     expect(outcome.status).toBe('compared');
+    if (outcome.status !== 'compared') return;
+    // On the 0035 ledger the shipped (grown) manifest is intentionally NOT READY (COUNT_DRIFT); prefix parity is still info.
     expect(toRecipeCatalogShadowLogRecord(outcome)).toMatchObject({
       level: 'info', status: 'compared', catalog_static_only_count: 0, catalog_d1_only_count: 0, catalog_drift_count: 0,
-      catalog_order_drift_count: 0, catalog_hydration_failure_count: 0, order_drift_sample: [],
+      catalog_order_drift_count: 0, catalog_hydration_failure_count: 0, order_drift_sample: [], release_readiness: 'not_ready', release_readiness_code: 'COUNT_DRIFT',
     });
     const snapshot = await readRecipeContent(db);
     const globalFirst: D1RecipeContentSnapshot = {
@@ -293,7 +295,7 @@ describe('T14B-B — static vs D1 runtime catalog behavioural parity (actual cat
     };
     const drifted = compareRuntimeCatalogs(ALL_RECIPES, globalFirst);
     expect(drifted).toMatchObject({ staticOnlyCount: 0, d1OnlyCount: 0, driftCount: 0, hydrationFailureCount: 0, orderDriftCount: 71 });
-    const record = toRecipeCatalogShadowLogRecord({ status: 'compared', mode: 'shadow', diagnostics: drifted });
+    const record = toRecipeCatalogShadowLogRecord({ status: 'compared', mode: 'shadow', diagnostics: drifted, release: { ...outcome.release, readiness: 'not_ready', readinessCode: 'ORDER_DRIFT', reviewedGrowthCount: 0 } });
     expect(record).toMatchObject({ level: 'warn', catalog_order_drift_count: 71, catalog_drift_count: 0 });
     expect(record.order_drift_sample).toHaveLength(10);
     expect(record.order_drift_sample[0]).toEqual({ id: 'vn-canh-01', staticPosition: 0, d1Position: 12 });
@@ -310,7 +312,7 @@ describe('T14B-B — cooking boundary with hydrated recipes (legacy inventory au
   const originalLog = console.log;
 
   beforeEach(async () => {
-    db = new SqliteD1();
+    db = new SqliteD1({ through: LEGACY_CATALOG_MIGRATION_TIP });
     db.seed(`INSERT INTO users(id) VALUES ('${USER}');
       INSERT INTO households(id, name, created_by) VALUES ('${HOUSEHOLD}', 'Parity', '${USER}');
       INSERT INTO household_members(id, household_id, user_id, role) VALUES ('pm', '${HOUSEHOLD}', '${USER}', 'owner');

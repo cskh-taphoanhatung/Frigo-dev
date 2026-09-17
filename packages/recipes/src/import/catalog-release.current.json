@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "releaseId": "rel-1a047444a3632771",
+  "releaseId": "rel-193ac2b16c64a260",
   "legacyBaselineCount": 71,
   "legacyBaselineFingerprint": "9ae153e64d34b30d72bb985d4070d8e210201219c0e8f8998ce8f99057fc7c3f",
-  "expectedRecipeCount": 71,
+  "expectedRecipeCount": 101,
   "orderedRecipeIds": [
     "vn-canh-01",
     "vn-canh-02",
@@ -75,8 +75,47 @@
     "gl-09",
     "gl-10",
     "gl-11",
-    "gl-12"
+    "gl-12",
+    "imp-199ff78d3d8c8ab3",
+    "imp-ab36e38b07f3a57b",
+    "imp-26a36c69306143bc",
+    "imp-b87b71d57128cc07",
+    "imp-511a92d180408e0a",
+    "imp-d02c9b83214f81be",
+    "imp-9ae951bec7fbf21b",
+    "imp-5ab5c1053b7371f0",
+    "imp-67054d03e5a5b011",
+    "imp-e375595daced53af",
+    "imp-9b4ea97916a44e67",
+    "imp-6d7fc503ade5df6e",
+    "imp-364497296cfcf033",
+    "imp-806780abda4b5205",
+    "imp-a48b19224e397cea",
+    "imp-79819e1b0c75f4da",
+    "imp-ac255bcc36d1324e",
+    "imp-bb07db73fb381724",
+    "imp-a9398d96945ba6f7",
+    "imp-af8a9cdb17d5e9fd",
+    "imp-d3d0c59e0cfa845d",
+    "imp-262caf09e6f38c59",
+    "imp-352999f711c710d9",
+    "imp-b3f99919ea9f17f8",
+    "imp-b6dae711698259d6",
+    "imp-f729957329cd75f5",
+    "imp-04d0b94d17ce080c",
+    "imp-b01569fd0df22f66",
+    "imp-d463228be1e6e7c0",
+    "imp-9d575ec5c01896f0"
   ],
-  "expectedRuntimeFingerprint": "9ae153e64d34b30d72bb985d4070d8e210201219c0e8f8998ce8f99057fc7c3f",
-  "approvedImportBatches": []
+  "expectedRuntimeFingerprint": "90b673ba6f0cd57623d3982c0f1aad2c68922a6e806644f8bb0fc611c54293b0",
+  "approvedImportBatches": [
+    {
+      "batchId": "t14f-pilot-30-v1",
+      "batchHash": "4d13915c075cd1b418d2454f7f03968349b779766cdb96b92df90f4138bc8cce",
+      "recipeCount": 30,
+      "releaseBaseCount": 71,
+      "sourceNamespace": "frigo.t14f.original.v1",
+      "sourceReference": "T14F project-original recipe generation batch t14f-pilot-30-v1"
+    }
+  ]
 }

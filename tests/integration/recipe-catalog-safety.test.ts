@@ -4,7 +4,7 @@ import { classifyCatalogEntry, isFkStubShape } from '../../packages/recipes/src/
 import { auditCatalogDrift, UNAUDITED_RUNTIME_FIELDS, type D1RecipeContentSnapshot } from '../../packages/recipes/src/catalog-drift';
 import { readRecipeCatalog } from '../../packages/db/src/recipe-catalog';
 import { readRecipeContent } from '../../packages/db/src/recipe-content';
-import { SqliteD1, type SqliteStatementEvent } from '../helpers/sqlite-d1';
+import { LEGACY_CATALOG_MIGRATION_TIP, SqliteD1, type SqliteStatementEvent } from '../helpers/sqlite-d1';
 
 const GLOBAL_IDS = ['gl-01', 'gl-02', 'gl-03', 'gl-04', 'gl-05', 'gl-06', 'gl-07', 'gl-08', 'gl-09', 'gl-10', 'gl-11', 'gl-12'];
 
@@ -58,7 +58,8 @@ describe('catalog entry completeness (T14B-A)', () => {
 
 describe('static ↔ D1 drift audit against the real migration ledger', () => {
   const databases: SqliteD1[] = [];
-  const database = () => { const db = new SqliteD1(); databases.push(db); return db; };
+  // Baseline drift audit: ledger through 0035 (71 static == 71 D1). T14F growth is audited in recipe-catalog-growth tests.
+  const database = () => { const db = new SqliteD1({ through: LEGACY_CATALOG_MIGRATION_TIP }); databases.push(db); return db; };
   afterEach(() => { for (const db of databases.splice(0)) db.close(); });
 
   it('reads content in one read-only batch and never issues a write', async () => {

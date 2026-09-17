@@ -16,7 +16,7 @@ import { assertNotSymlink, ImportOutputPolicyError, resolveImportOutputDir } fro
 
 const args = process.argv.slice(2);
 const command = args[0];
-const option = (name) => { const index = args.indexOf(name); return index >= 0 ? args[index + 1] : null; };
+const option = (name) => { const index = args.indexOf(name); return index >= 0 ? (args[index + 1] ?? true) : null; };
 const usage = () => {
   console.error('usage: recipe-import.mjs validate --input <batch> | compile --input <batch> --out <dir> | verify --input <batch> --artifact <dir> | check | release-manifest --out <dir>');
   process.exit(2);
@@ -31,6 +31,9 @@ if (command === 'verify' && !artifactDir) usage();
 
 const root = process.cwd();
 const CURRENT_MANIFEST = path.join('packages', 'recipes', 'src', 'import', 'catalog-release.current.json');
+// T14F: reviewed batches that form the current release, in release order. Each is recompiled against
+// legacy + the batches before it, so the composed manifest is always derived from committed sources.
+const APPROVED_BATCHES = path.join('data', 'recipe-import', 'approved-batches.json');
 
 const vite = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'error', optimizeDeps: { noDiscovery: true, include: [] } });
 try {
@@ -43,11 +46,42 @@ try {
     for (const issue of result.issues.slice(0, 50)) console.log(`  ${issue.severity.toUpperCase()} ${issue.code} ${issue.subject}${issue.path ? ` @${issue.path}` : ''}: ${issue.detail}`);
     if (result.issues.length > 50) console.log(`  … ${result.issues.length - 50} more issue(s) in validation-report.json`);
   };
+  /** Compiles every registered approved batch in release order; fails closed on any error or identity mismatch. */
+  const approvedBatches = async () => {
+    const registry = JSON.parse(readFileSync(path.resolve(root, APPROVED_BATCHES), 'utf8'));
+    const approved = [];
+    for (const entry of registry.batches) {
+      const format = factory.importFormatForPath(entry.source);
+      const bytes = new Uint8Array(readFileSync(path.resolve(root, entry.source)));
+      const result = await factory.compileImportBatch(bytes, format, { legacy: ALL_RECIPES, approvedBatches: approved });
+      if (!result.ok) throw new Error(`approved batch ${entry.batchId} (${entry.source}) no longer compiles cleanly: errors=${result.summary.errors}`);
+      if (result.header.batchId !== entry.batchId || result.recipes.length !== entry.recipeCount) throw new Error(`approved batch registry mismatch for ${entry.source}: batchId=${result.header.batchId} recipes=${result.recipes.length}`);
+      const committedMigration = readFileSync(path.resolve(root, 'migrations', entry.migration), 'utf8');
+      if (committedMigration !== result.artifacts.get('migration.sql')) throw new Error(`migrations/${entry.migration} is not byte-identical to the T14E render of ${entry.source}`);
+      approved.push({ header: result.header, recipes: result.recipes });
+    }
+    return approved;
+  };
   const compile = async () => {
     const format = factory.importFormatForPath(input);
     if (!format) { console.error(`unsupported input extension: ${input} (use .json or .jsonl)`); process.exit(2); }
     const bytes = new Uint8Array(readFileSync(path.resolve(root, input)));
-    return factory.compileImportBatch(bytes, format, { legacy: ALL_RECIPES });
+    // A new batch compiles against legacy + every already-approved batch (cross-batch duplicate/ID/slug checks).
+    return factory.compileImportBatch(bytes, format, { legacy: ALL_RECIPES, approvedBatches: option('--no-approved') ? [] : await approvedBatchesExcluding(input) });
+  };
+  /** The approved registry minus the batch being compiled (so recompiling an approved batch itself stays possible). */
+  const approvedBatchesExcluding = async (file) => {
+    const registry = JSON.parse(readFileSync(path.resolve(root, APPROVED_BATCHES), 'utf8'));
+    const target = path.resolve(root, file);
+    const approved = [];
+    for (const entry of registry.batches) {
+      if (path.resolve(root, entry.source) === target) break;
+      const format = factory.importFormatForPath(entry.source);
+      const result = await factory.compileImportBatch(new Uint8Array(readFileSync(path.resolve(root, entry.source))), format, { legacy: ALL_RECIPES, approvedBatches: approved });
+      if (!result.ok) throw new Error(`approved batch ${entry.batchId} no longer compiles cleanly`);
+      approved.push({ header: result.header, recipes: result.recipes });
+    }
+    return approved;
   };
 
   if (command === 'validate') {
@@ -81,7 +115,7 @@ try {
     }
     process.exitCode = drift === 0 && result.ok ? 0 : 1;
   } else if (command === 'check') {
-    const { manifest } = await factory.composeCatalogRelease(ALL_RECIPES, []);
+    const { manifest } = await factory.composeCatalogRelease(ALL_RECIPES, await approvedBatches());
     const generated = factory.serializeCatalogReleaseManifest(manifest);
     const committed = readFileSync(path.resolve(root, CURRENT_MANIFEST), 'utf8');
     if (committed === generated) {
@@ -94,7 +128,7 @@ try {
   } else if (command === 'release-manifest') {
     let dir;
     try { dir = resolveImportOutputDir(root, out); } catch (error) { if (error instanceof ImportOutputPolicyError) { console.error(error.message); process.exit(3); } throw error; }
-    const { manifest } = await factory.composeCatalogRelease(ALL_RECIPES, []);
+    const { manifest } = await factory.composeCatalogRelease(ALL_RECIPES, await approvedBatches());
     mkdirSync(dir, { recursive: true });
     resolveImportOutputDir(root, out);
     const file = path.join(dir, 'catalog-release-manifest.json');

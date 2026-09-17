@@ -1,6 +1,6 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { afterEach, describe, expect, it } from 'vitest';
-import { SqliteD1 } from '../helpers/sqlite-d1';
+import { MIGRATION_LEDGER, SqliteD1 } from '../helpers/sqlite-d1';
 
 const migrationFiles = () => readdirSync('migrations')
   .filter((name) => /^\d+.*\.sql$/.test(name))
@@ -84,16 +84,18 @@ describe('production 0023 to T13 migration bridge', () => {
     expect(db.query('PRAGMA integrity_check')).toEqual([{ integrity_check: 'ok' }]);
   });
 
-  it('uses 35 unique contiguous migration numbers with production fingerprint at 0023', () => {
+  it('uses unique contiguous migration numbers with production fingerprint at 0023 and the T14F catalog growth tail', () => {
     const files = migrationFiles();
     const numbers = files.map((name) => name.slice(0, 4));
-    expect(files).toHaveLength(35);
-    expect(new Set(numbers).size).toBe(35);
-    expect(numbers).toEqual(Array.from({ length: 35 }, (_, index) => String(index + 1).padStart(4, '0')));
+    expect(files).toHaveLength(MIGRATION_LEDGER.count);
+    expect(new Set(numbers).size).toBe(MIGRATION_LEDGER.count);
+    expect(numbers).toEqual(Array.from({ length: MIGRATION_LEDGER.count }, (_, index) => String(index + 1).padStart(4, '0')));
     expect(files[22]).toBe('0023_scan_request_fingerprint.sql');
     expect(files[23]).toBe('0024_inventory_truth_foundation.sql');
     expect(files[32]).toBe('0033_scan_evidence_completeness.sql');
     expect(files[33]).toBe('0034_global_recipe_catalog_parity.sql');
-    expect(files.at(-1)).toBe('0035_recipe_media_layer.sql');
+    expect(files[34]).toBe('0035_recipe_media_layer.sql');
+    expect(files.slice(35)).toEqual(MIGRATION_LEDGER.catalogGrowth);
+    expect(files.at(-1)).toBe(MIGRATION_LEDGER.tip);
   });
 });

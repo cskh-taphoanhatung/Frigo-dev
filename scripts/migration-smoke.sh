@@ -391,5 +391,53 @@ INSERT INTO assert_zero SELECT COUNT(*) FROM (SELECT * FROM recipes EXCEPT SELEC
 .read migrations/0035_recipe_media_layer.sql
 INSERT INTO assert_one SELECT COUNT(*) = 71 FROM recipe_media;
 
+-- T14F (0036): real catalog growth, batch A (pilot, 30 reviewed project-original recipes). Data-only,
+-- plain INSERT rendered by the T14E import factory. The 71 legacy rows, their runtime fields/media and
+-- every non-recipe table must be byte-identical before/after; runtime order continues 71..100.
+CREATE TEMP TABLE smoke_pre_t14f_legacy_recipes AS SELECT * FROM recipes;
+CREATE TEMP TABLE smoke_pre_t14f_legacy_fields AS SELECT * FROM recipe_runtime_fields;
+CREATE TEMP TABLE smoke_pre_t14f_legacy_media AS SELECT * FROM recipe_media;
+CREATE TEMP TABLE smoke_pre_t14f_counts AS
+  SELECT 'users' AS t, COUNT(*) AS n FROM users UNION ALL SELECT 'households', COUNT(*) FROM households
+  UNION ALL SELECT 'inventory_items', COUNT(*) FROM inventory_items UNION ALL SELECT 'inventory_lots', COUNT(*) FROM inventory_lots
+  UNION ALL SELECT 'inventory_events', COUNT(*) FROM inventory_events UNION ALL SELECT 'inventory_commands', COUNT(*) FROM inventory_commands
+  UNION ALL SELECT 'meal_plans', COUNT(*) FROM meal_plans UNION ALL SELECT 'scans', COUNT(*) FROM scans
+  UNION ALL SELECT 'cooked_meals', COUNT(*) FROM cooked_meals;
+
+.read migrations/0036_recipe_catalog_pilot.sql
+
+INSERT INTO assert_zero SELECT COUNT(*) FROM pragma_foreign_key_check;
+INSERT INTO assert_zero SELECT COUNT(*) FROM pragma_integrity_check WHERE integrity_check <> 'ok';
+INSERT INTO assert_one SELECT COUNT(*) = 101 FROM recipes;
+INSERT INTO assert_one SELECT COUNT(*) = 30 FROM recipes WHERE id LIKE 'imp-%';
+INSERT INTO assert_one SELECT COUNT(*) = 30 FROM recipes WHERE id LIKE 'imp-%' AND source_type = 'ai_generated' AND verification_state = 'reviewed' AND version = 1 AND description IS NOT NULL;
+INSERT INTO assert_one SELECT COUNT(*) = 101 FROM recipe_runtime_fields;
+INSERT INTO assert_one SELECT COUNT(DISTINCT runtime_order) = 101 AND MIN(runtime_order) = 0 AND MAX(runtime_order) = 100 FROM recipe_runtime_fields;
+INSERT INTO assert_one SELECT MIN(runtime_order) = 71 AND MAX(runtime_order) = 100 FROM recipe_runtime_fields WHERE recipe_id LIKE 'imp-%';
+INSERT INTO assert_zero SELECT COUNT(*) FROM recipes r WHERE NOT EXISTS (SELECT 1 FROM recipe_ingredients l WHERE l.recipe_id = r.id);
+INSERT INTO assert_zero SELECT COUNT(*) FROM recipes r WHERE NOT EXISTS (SELECT 1 FROM recipe_steps s WHERE s.recipe_id = r.id);
+INSERT INTO assert_zero SELECT COUNT(*) FROM recipe_ingredients l WHERE NOT EXISTS (SELECT 1 FROM ingredients i WHERE i.id = l.ingredient_id);
+INSERT INTO assert_zero SELECT COUNT(*) FROM recipe_ingredients l WHERE NOT EXISTS (SELECT 1 FROM recipe_runtime_ingredient_order o WHERE o.recipe_ingredient_id = l.id);
+INSERT INTO assert_zero SELECT COUNT(*) FROM (SELECT recipe_id FROM recipe_runtime_ingredient_order GROUP BY recipe_id HAVING MIN(position) <> 0 OR MAX(position) <> COUNT(*) - 1);
+INSERT INTO assert_zero SELECT COUNT(*) FROM (SELECT recipe_id FROM recipe_steps GROUP BY recipe_id HAVING MIN(step_number) <> 1 OR MAX(step_number) <> COUNT(*));
+-- Media: exactly one pending hero v1 slot per recipe (101), nothing ready; no evidence-free nutrition rows for imports.
+INSERT INTO assert_one SELECT COUNT(*) = 101 FROM recipe_media WHERE role = 'hero' AND version = 1 AND status = 'pending' AND storage_key IS NULL;
+INSERT INTO assert_zero SELECT COUNT(*) FROM recipe_media WHERE status = 'ready';
+INSERT INTO assert_zero SELECT COUNT(*) FROM recipes r WHERE (SELECT COUNT(*) FROM recipe_media m WHERE m.recipe_id = r.id) <> 1;
+INSERT INTO assert_zero SELECT COUNT(*) FROM recipe_nutrition WHERE recipe_id LIKE 'imp-%';
+INSERT INTO assert_zero SELECT COUNT(*) FROM recipe_runtime_fields WHERE recipe_id LIKE 'imp-%' AND legacy_calories IS NOT NULL;
+-- Legacy 71 rows, runtime fields and media slots untouched; non-recipe tables untouched.
+INSERT INTO assert_zero SELECT COUNT(*) FROM (SELECT * FROM smoke_pre_t14f_legacy_recipes EXCEPT SELECT * FROM recipes);
+INSERT INTO assert_zero SELECT COUNT(*) FROM (SELECT * FROM recipes WHERE id NOT LIKE 'imp-%' EXCEPT SELECT * FROM smoke_pre_t14f_legacy_recipes);
+INSERT INTO assert_zero SELECT COUNT(*) FROM (SELECT * FROM smoke_pre_t14f_legacy_fields EXCEPT SELECT * FROM recipe_runtime_fields);
+INSERT INTO assert_zero SELECT COUNT(*) FROM (SELECT * FROM smoke_pre_t14f_legacy_media EXCEPT SELECT * FROM recipe_media);
+INSERT INTO assert_zero SELECT COUNT(*) FROM (
+  SELECT 'users' AS t, COUNT(*) AS n FROM users UNION ALL SELECT 'households', COUNT(*) FROM households
+  UNION ALL SELECT 'inventory_items', COUNT(*) FROM inventory_items UNION ALL SELECT 'inventory_lots', COUNT(*) FROM inventory_lots
+  UNION ALL SELECT 'inventory_events', COUNT(*) FROM inventory_events UNION ALL SELECT 'inventory_commands', COUNT(*) FROM inventory_commands
+  UNION ALL SELECT 'meal_plans', COUNT(*) FROM meal_plans UNION ALL SELECT 'scans', COUNT(*) FROM scans
+  UNION ALL SELECT 'cooked_meals', COUNT(*) FROM cooked_meals
+  EXCEPT SELECT * FROM smoke_pre_t14f_counts);
+
 SELECT 'migration-smoke=ok';
 SQL

@@ -6,14 +6,16 @@ import {
 } from '../../packages/db/src/meal-planning-snapshot';
 import { createPlanningContext } from '../../packages/recipes/src/planner-context';
 import { planWeeklyMeals } from '../../packages/recipes/src/weekly-planner';
-import { SqliteD1, type SqliteStatementEvent } from '../helpers/sqlite-d1';
+import { LEGACY_CATALOG_MIGRATION_TIP, SqliteD1, type SqliteStatementEvent } from '../helpers/sqlite-d1';
 
 const householdId = 'snapshot-home';
 const userId = 'snapshot-user';
 const referenceTime = '2026-09-08T07:00:00.000Z';
 
 function fixture() {
-  const db = new SqliteD1();
+  // T04 planner semantics on the 71-recipe baseline ledger (recipeLimit 80 exhaustive). Catalog growth
+  // beyond recipeLimit truthfully reports CATALOG_RECIPE_LIMIT / search_limited (see recipe-catalog-growth tests).
+  const db = new SqliteD1({ through: LEGACY_CATALOG_MIGRATION_TIP });
   db.seed(`
     INSERT INTO users (id) VALUES ('${userId}'), ('snapshot-other');
     INSERT INTO households (id, name, created_by)

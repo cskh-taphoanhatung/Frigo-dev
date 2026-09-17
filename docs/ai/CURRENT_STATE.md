@@ -1,5 +1,19 @@
 # Frigo / Takosan current authority — 2026-09-17
 
+## T14F — WIP SAFE STOP on branch `feat/t14f-recipe-catalog-500`; pilot compiled + promoted; NOT certified; Batch B not started (2026-09-17)
+
+Safe-stop checkpoint per `docs/ai/recipe-catalog/T14F_WIP_HANDOFF.md`. Pilot batch `t14f-pilot-30-v1`
+(30 original `ai_generated` recipes, source namespace `frigo.t14f.original.v1`) compiled via T14E:
+30/30 valid/reviewed/publishable, 0 duplicates, 0 unresolved ingredients; `0036_recipe_catalog_pilot.sql`
+promoted byte-identical to the compiler artifact (sha256 `04228788…20ba9`); shipped manifest regenerated
+to `rel-193ac2b16c64a260` = 101 recipes / 1 approved batch, legacy fingerprint unchanged. `ALL_RECIPES`
+still 71; migrations 36 / tip 0036; 0001–0035 hash drift 0. Executed checks: typecheck, `check:migrations`,
+seed check, import check, `git diff --check` all PASS; focused growth suites 20/21 — the
+`production forward path 0034 → 0035 → growth` test fails when both growth suites run together and passes
+alone (root cause not diagnosed; suspect test isolation). Full gates (lint, build, full `pnpm test`, bundle
+accounting) NOT run; Batch B (399) NOT started; no PR; no production action. Do NOT mark pilot certified
+or start Batch B before fixing that test failure.
+
 ## T14E — MERGED into main `f7a5540841db27be31cdab9e0c2010cd92bc3861`; main certified; production rollout DEFERRED (2026-09-17)
 
 PR #23 (remediated head `ba1a45d4…`; original reviewed head `7b4edcc8…` remains an ancestor — forward-only remediation) merged by

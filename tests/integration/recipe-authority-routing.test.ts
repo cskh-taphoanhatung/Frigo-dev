@@ -13,7 +13,7 @@ import { resetRecipeCatalogShadowThrottle } from '../../src/worker/services/reci
 import type { AuthContext, Env } from '../../src/worker/types';
 import { signJwt } from '../../src/worker/utils/jwt';
 import { FakeR2, WEBP_FIXTURE_BYTES, WEBP_FIXTURE_SHA256 } from '../helpers/recipe-media-r2';
-import { SqliteD1, type SqliteStatementEvent } from '../helpers/sqlite-d1';
+import { LEGACY_CATALOG_MIGRATION_TIP, SqliteD1, type SqliteStatementEvent } from '../helpers/sqlite-d1';
 
 // The Workers-only cloudflare:email module cannot load in Node; no network mail is sent.
 vi.mock('../../src/worker/services/email', () => ({
@@ -67,7 +67,7 @@ describe('T14D — HTTP parity of every runtime recipe consumer across static / 
   const originalWarn = console.warn;
 
   beforeEach(async () => {
-    db = new SqliteD1();
+    db = new SqliteD1({ through: LEGACY_CATALOG_MIGRATION_TIP }); // 71 == 71 parity; T14F growth parity lives in recipe-catalog-growth-authority
     seed(db, HOUSEHOLD);
     seed(db, OUTSIDE_HOUSEHOLD);
     token = await signJwt({ sub: USER, hid: HOUSEHOLD, typ: 'access', exp: Math.floor(Date.now() / 1000) + 3600 }, secret);

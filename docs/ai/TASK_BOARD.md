@@ -1,5 +1,17 @@
 # Frigo / Takosan current task board — 2026-09-17
 
+## T14F — WIP safe stop — 2026-09-17 (branch `feat/t14f-recipe-catalog-500`, unpushed→pushed checkpoint; pilot NOT certified)
+
+- [done] Pilot 30 (`t14f-pilot-30-v1`) authored, reviewed, T14E-compiled; `0036` promoted byte-identical;
+  manifest 101/1 batch; static 71 unchanged; 0001–0035 untouched.
+- [done] Safe-stop verification: typecheck, `check:migrations`, seed check, import check, `git diff --check`
+  PASS; handoff `docs/ai/recipe-catalog/T14F_WIP_HANDOFF.md`.
+- [open, blocker for pilot certification] focused growth suites 20/21: `production forward path
+  0034 → 0035 → growth` fails when both growth suites run together, passes alone — fix test isolation
+  WITHOUT regenerating data/0036.
+- [not done] lint, build, full `pnpm test`, bundle accounting, pilot QA report, Batch B (399), 0037,
+  final 500 manifest, PR. Do NOT merge; do NOT start T14G; no production action.
+
 ## T14E — merged + main certified — 2026-09-17 (PR #23 → main `f7a55408…`; production untouched; T14F not started)
 
 - [done] PR #23 merged by normal merge (`f7a5540841db27be31cdab9e0c2010cd92bc3861`); `ba1a45d4…` and `7b4edcc8…` in main ancestry;

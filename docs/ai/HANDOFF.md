@@ -1,5 +1,22 @@
 # Frigo / Takosan current handoff — 2026-09-17
 
+## Current handoff — T14F WIP SAFE STOP on `feat/t14f-recipe-catalog-500`; pilot 30 compiled + 0036 promoted; ONE focused test failing; Batch B not started (2026-09-17)
+
+- **Implementation state:** uncommitted T14F pilot WIP checkpointed and pushed on
+  `feat/t14f-recipe-catalog-500` (base `f0c229f2…` = T14E certified main, still origin/main). See
+  `docs/ai/recipe-catalog/T14F_WIP_HANDOFF.md` for the authoritative state, hashes and next steps.
+- **Pilot:** `data/recipe-import/t14f/pilot-30.jsonl` (30 original recipes, reviewed) → T14E compile
+  30/30 publishable, 0 duplicates / 0 unresolved ingredients → `migrations/0036_recipe_catalog_pilot.sql`
+  byte-identical to artifact; manifest `rel-193ac2b16c64a260` = 101 recipes / 1 approved batch;
+  `ALL_RECIPES` stays 71; migrations 36 / tip 0036; 0001–0035 unchanged.
+- **Verification:** typecheck, `check:migrations`, seed check, import check, diff check PASS. Focused
+  growth suites 20/21: `production forward path 0034 → 0035 → growth` fails only when both growth
+  suites run together (passes alone; root cause unknown — fix before any Batch B work). Lint, build,
+  full `pnpm test`, bundle accounting NOT run.
+- **Next exact step:** checkout the branch, reproduce/fix the failing growth test (test isolation only —
+  do NOT regenerate data or 0036), then continue the T14F packet pilot gate before Batch B.
+- **Not done:** Batch B (399), final 500 manifest, QA/architecture docs, PR, production anything.
+
 ## Current handoff — T14E MERGED to main `f7a55408…`; main certified; production untouched; T14F not started (2026-09-17)
 
 - **Implementation state:** PR #23 (`hoplite/syrakousai-f7b7c8a0-…-t14e-bulk-recipe-import-factory`, remediated head

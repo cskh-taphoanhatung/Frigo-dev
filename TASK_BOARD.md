@@ -1,3 +1,13 @@
+## T14F — WIP SAFE STOP — 2026-09-17 (branch `feat/t14f-recipe-catalog-500`; pilot NOT certified; unmerged, unPR'd)
+
+- Pilot batch `t14f-pilot-30-v1`: 30 original recipes authored + reviewed + compiled via T14E (30/30
+  publishable, 0 duplicates, 0 unresolved ingredients); `0036_recipe_catalog_pilot.sql` promoted
+  byte-identical; manifest `rel-193ac2b16c64a260` 101 recipes / 1 batch; `ALL_RECIPES` still 71.
+- Checks: typecheck, `check:migrations`, seed check, import check, diff check PASS; focused growth
+  suites 20/21 — `production forward path 0034 → 0035 → growth` fails when both growth suites run
+  together, passes alone (root cause unknown). Lint/build/full tests/bundle NOT run. Batch B not started.
+- Full state and exact next steps: `docs/ai/recipe-catalog/T14F_WIP_HANDOFF.md`.
+
 ## T14E — BULK RECIPE IMPORT FACTORY — 2026-09-17 (MERGED main f7a55408…; main certified; NOT deployed; T14F not started)
 
 - PR #23 merged (normal merge, remediated head `ba1a45d4…`); main CI green; 169/3889; app tree preserved. Release still

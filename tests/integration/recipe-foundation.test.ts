@@ -7,7 +7,7 @@ import {
   resolveIngredientAlias,
 } from '../../packages/db/src/catalog';
 import { UNIT_DEFINITIONS } from '../../packages/domain/src/foundation';
-import { SqliteD1 } from '../helpers/sqlite-d1';
+import { MIGRATION_LEDGER, SqliteD1 } from '../helpers/sqlite-d1';
 
 const migrationDirectory = path.resolve(process.cwd(), 'migrations');
 const foundationMigration = readFileSync(
@@ -53,7 +53,7 @@ describe('recipe domain foundation migration and catalog', () => {
 
   it('replays the full migration chain and keeps TypeScript unit definitions synchronized with SQLite', () => {
     const db = database();
-    expect(db.migrations.at(-1)).toBe('0035_recipe_media_layer.sql');
+    expect(db.migrations.at(-1)).toBe(MIGRATION_LEDGER.tip);
     expect(db.query('PRAGMA integrity_check')).toEqual([{ integrity_check: 'ok' }]);
     expect(db.query('PRAGMA foreign_key_check')).toEqual([]);
 

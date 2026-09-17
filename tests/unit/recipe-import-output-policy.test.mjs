@@ -129,8 +129,11 @@ describe('recipe-import CLI (real script, git-ignored artifact directory)', () =
       }
       expect(run('verify', '--input', 'tests/fixtures/recipe-import/valid-batch.json', '--artifact', artifactDir).code).toBe(0); // artifacts untouched by verify
     } finally { rmSync(mutatedDir, { recursive: true, force: true }); }
+    // T14F: the current release is composed from ALL_RECIPES + the approved batch registry (real committed batches).
+    const registry = JSON.parse(readFileSync(path.join(root, 'data/recipe-import/approved-batches.json'), 'utf8')).batches;
+    const expectedRecipes = 71 + registry.reduce((total, entry) => total + entry.recipeCount, 0);
     const check = run('check');
-    expect(check.out).toMatch(/recipe-import-check=ok packages\/recipes\/src\/import\/catalog-release.current.json \(releaseId=rel-[0-9a-f]{16} recipes=71 batches=0\)/);
+    expect(check.out).toMatch(new RegExp(`recipe-import-check=ok packages\\/recipes\\/src\\/import\\/catalog-release.current.json \\(releaseId=rel-[0-9a-f]{16} recipes=${expectedRecipes} batches=${registry.length}\\)`));
     expect(check.code).toBe(0);
     expect(readdirSync(path.join(root, 'migrations')).sort()).toEqual(migrationsBefore);
     expect(existsSync(path.join(root, 'migrations', '0036_recipe_import.sql'))).toBe(false);

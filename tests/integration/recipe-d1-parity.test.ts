@@ -14,7 +14,7 @@ import {
 import { RuntimeRecipeSchema, toRuntimeRecipe } from '../../packages/recipes/src/runtime-recipe';
 import { GLOBAL_PARITY_MIGRATION_FILENAME, renderGlobalRecipeParitySql } from '../../packages/recipes/src/seed-render';
 import type { Recipe } from '../../packages/recipes/src/types';
-import { SqliteD1, type SqliteStatementEvent } from '../helpers/sqlite-d1';
+import { LEGACY_CATALOG_MIGRATION_TIP, MIGRATION_LEDGER, SqliteD1, type SqliteStatementEvent } from '../helpers/sqlite-d1';
 import migrationManifest from '../fixtures/migration-sha256.json';
 
 const GLOBAL_IDS = Array.from({ length: 12 }, (_, index) => `gl-${String(index + 1).padStart(2, '0')}`);
@@ -24,14 +24,15 @@ const sha256 = (file: string) => createHash('sha256').update(readFileSync(file))
 
 describe('T14B-B — 0034 parity migration', () => {
   const databases: SqliteD1[] = [];
-  const database = (options?: { migrate?: boolean }) => { const db = new SqliteD1(options); databases.push(db); return db; };
+  // Legacy-baseline parity: replay the ledger through 0035 (the 71-recipe static baseline). T14F growth is certified separately.
+  const database = (options?: { migrate?: boolean }) => { const db = new SqliteD1({ ...options, through: LEGACY_CATALOG_MIGRATION_TIP }); databases.push(db); return db; };
   afterEach(() => { for (const db of databases.splice(0)) db.close(); });
 
-  it('is the 34th migration (35 contiguous) and renders byte-for-byte from the static catalog (order data included)', () => {
+  it('is the 34th migration (contiguous ledger) and renders byte-for-byte from the static catalog (order data included)', () => {
     const files = migrationFiles();
-    expect(files).toHaveLength(35);
+    expect(files).toHaveLength(MIGRATION_LEDGER.count);
     expect(files[33]).toBe(GLOBAL_PARITY_MIGRATION_FILENAME);
-    expect(files.map((name) => name.slice(0, 4))).toEqual(Array.from({ length: 35 }, (_, i) => String(i + 1).padStart(4, '0')));
+    expect(files.map((name) => name.slice(0, 4))).toEqual(Array.from({ length: MIGRATION_LEDGER.count }, (_, i) => String(i + 1).padStart(4, '0')));
     const rendered = renderGlobalRecipeParitySql(GLOBAL_RECIPES, ALL_RECIPES);
     expect(readFileSync(path.join('migrations', GLOBAL_PARITY_MIGRATION_FILENAME), 'utf8')).toBe(rendered);
     // The renderer, not a hand-maintained list, owns runtime_order and ingredient positions.
@@ -151,7 +152,7 @@ describe('T14B-B — 0034 parity migration', () => {
 
 describe('T14B-B — D1 → RuntimeRecipe hydration parity', () => {
   const databases: SqliteD1[] = [];
-  const database = () => { const db = new SqliteD1(); databases.push(db); return db; };
+  const database = () => { const db = new SqliteD1({ through: LEGACY_CATALOG_MIGRATION_TIP }); databases.push(db); return db; };
   afterEach(() => { for (const db of databases.splice(0)) db.close(); });
 
   it('reads one five-statement read-only batch and hydrates all 71 recipes deep-equal to the static authority', async () => {

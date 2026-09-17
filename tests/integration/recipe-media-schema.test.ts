@@ -8,7 +8,7 @@ import {
   renderRecipeMediaLayerSql,
 } from '../../packages/recipes/src/recipe-media';
 import migrationManifest from '../fixtures/migration-sha256.json';
-import { SqliteD1 } from '../helpers/sqlite-d1';
+import { LEGACY_CATALOG_MIGRATION_TIP, MIGRATION_LEDGER, SqliteD1 } from '../helpers/sqlite-d1';
 
 const HASH = 'a'.repeat(64);
 const migrationFiles = () => readdirSync('migrations').filter((name) => /^\d+.*\.sql$/.test(name)).sort();
@@ -16,14 +16,16 @@ const sha256 = (file: string) => createHash('sha256').update(readFileSync(file))
 
 describe('T14C — 0035 recipe media layer: migration, schema invariants, seed', () => {
   const databases: SqliteD1[] = [];
-  const database = (options?: { migrate?: boolean }) => { const db = new SqliteD1(options); databases.push(db); return db; };
+  // 0035 tests certify the 71-recipe media baseline; the ledger is replayed through 0035 (T14F growth migrations follow it).
+  const database = (options?: { migrate?: boolean }) => { const db = new SqliteD1({ ...options, through: LEGACY_CATALOG_MIGRATION_TIP }); databases.push(db); return db; };
   afterEach(() => { for (const db of databases.splice(0)) db.close(); });
 
   it('is exactly the 35th migration, renders byte-for-byte from ALL_RECIPES, and 0001–0034 are pinned (no drift)', () => {
     const files = migrationFiles();
-    expect(files).toHaveLength(35);
-    expect(files.at(-1)).toBe(RECIPE_MEDIA_MIGRATION_FILENAME);
-    expect(files.filter((name) => name.startsWith('0036'))).toEqual([]);
+    expect(files).toHaveLength(MIGRATION_LEDGER.count);
+    expect(files[34]).toBe(RECIPE_MEDIA_MIGRATION_FILENAME);
+    // T14F: catalog growth migrations follow 0035; they are data-only and certified in recipe-catalog-growth tests.
+    expect(files.slice(35)).toEqual(MIGRATION_LEDGER.catalogGrowth);
     expect(readFileSync(path.join('migrations', RECIPE_MEDIA_MIGRATION_FILENAME), 'utf8')).toBe(renderRecipeMediaLayerSql(ALL_RECIPES));
     const pinned = migrationManifest.migrations as Record<string, string>;
     expect(Object.keys(pinned)).toHaveLength(34);
@@ -48,6 +50,7 @@ describe('T14C — 0035 recipe media layer: migration, schema invariants, seed',
     const db = database();
     expect(db.migrations).toHaveLength(35);
     expect(db.migrations.at(-1)).toBe(RECIPE_MEDIA_MIGRATION_FILENAME);
+    expect(migrationFiles()[34]).toBe(RECIPE_MEDIA_MIGRATION_FILENAME);
     expect(db.query<{ n: number }>(`SELECT COUNT(*) AS n FROM recipe_media`)[0].n).toBe(71);
     expect(db.query<{ n: number }>(`SELECT COUNT(*) AS n FROM recipe_media WHERE status = 'pending' AND role = 'hero' AND version = 1 AND storage_key IS NULL AND source_type IS NULL`)[0].n).toBe(71);
     expect(db.query<{ n: number }>(`SELECT COUNT(*) AS n FROM recipe_media WHERE status = 'ready'`)[0].n).toBe(0);

@@ -17,6 +17,7 @@ import {
   recipeCanaryBucket,
   StaticRecipeAuthority,
 } from '../../packages/recipes/src/recipe-authority';
+import { composeCatalogRelease, type CatalogReleaseManifest } from '../../packages/recipes/src/import/release-manifest';
 import { hydrateRuntimeRecipes } from '../../packages/recipes/src/runtime-hydration';
 import { RUNTIME_RECIPE_FIELDS } from '../../packages/recipes/src/runtime-recipe';
 import {
@@ -30,7 +31,7 @@ import {
 } from '../../src/worker/services/recipe-authority';
 import { resetRecipeCatalogShadowThrottle } from '../../src/worker/services/recipe-catalog-shadow';
 import type { Env } from '../../src/worker/types';
-import { SqliteD1, type SqliteStatementEvent } from '../helpers/sqlite-d1';
+import { LEGACY_CATALOG_MIGRATION_TIP, SqliteD1, type SqliteStatementEvent } from '../helpers/sqlite-d1';
 
 const ids = (recipes: readonly { id: string }[]) => recipes.map((recipe) => recipe.id);
 
@@ -84,7 +85,13 @@ describe('T14D — catalog fingerprint and D1 readiness (pure)', () => {
   let db: SqliteD1;
   let content: D1RecipeContentSnapshot;
   const staticAuthority = new StaticRecipeAuthority(ALL_RECIPES, () => 1);
-  beforeEach(async () => { db = new SqliteD1(); content = await readRecipeContent(db); });
+  // T14D baseline certification: the 0035 ledger == the 71-recipe static baseline, assessed against the legacy-only
+  // (71, zero batches) manifest. The SHIPPED manifest now approves T14F growth and is certified in recipe-catalog-growth tests.
+  let legacyRelease: CatalogReleaseManifest;
+  beforeEach(async () => {
+    db = new SqliteD1({ through: LEGACY_CATALOG_MIGRATION_TIP }); content = await readRecipeContent(db);
+    legacyRelease = (await composeCatalogRelease(ALL_RECIPES, [])).manifest;
+  });
   afterEach(() => db.close());
 
   it('fingerprint covers every runtime field in canonical order, is deterministic, key-order independent and media-free', async () => {
@@ -123,13 +130,14 @@ describe('T14D — catalog fingerprint and D1 readiness (pure)', () => {
   });
 
   it('D1 authority is ready against the real ledger: same count, IDs, order, fields and fingerprint; snapshot lists are strict-equal', async () => {
-    const authority = new D1RecipeAuthority(() => Promise.resolve(content), staticAuthority, () => 2);
+    const authority = new D1RecipeAuthority(() => Promise.resolve(content), staticAuthority, () => 2, () => legacyRelease);
     const loaded = await authority.load();
     expect(loaded.status).toBe('ready');
     if (loaded.status !== 'ready') return;
     const staticSnapshot = await staticAuthority.load();
-    // T14E: readiness also names the reviewed release; with today's manifest it is the 71-recipe static baseline.
-    expect(loaded.readiness).toEqual({ status: 'ready', source: 'd1', fingerprint: staticSnapshot.fingerprint, recipeCount: 71, releaseId: currentCatalogRelease().releaseId });
+    // T14E: readiness also names the reviewed release; the legacy-only manifest is the 71-recipe static baseline.
+    expect(loaded.readiness).toEqual({ status: 'ready', source: 'd1', fingerprint: staticSnapshot.fingerprint, recipeCount: 71, releaseId: legacyRelease.releaseId });
+    expect(legacyRelease.releaseId).not.toBe(currentCatalogRelease().releaseId); // the shipped release has grown (T14F)
     expect(loaded.snapshot.source).toBe('d1');
     expect(loaded.snapshot.fingerprint).toBe(staticSnapshot.fingerprint);
     expect(loaded.snapshot.list()).toStrictEqual(staticSnapshot.list()); // no normalisation through ALL_RECIPES
@@ -138,7 +146,7 @@ describe('T14D — catalog fingerprint and D1 readiness (pure)', () => {
 
   it('readiness negative controls: count, id, order, ingredient order, field and duplicate drift are each detected with a specific code', async () => {
     const baseline = await staticAuthority.load();
-    const assess = (snapshot: D1RecipeContentSnapshot) => assessD1Readiness(baseline, hydrateRuntimeRecipes(snapshot)).then((result) => result.readiness);
+    const assess = (snapshot: D1RecipeContentSnapshot) => assessD1Readiness(baseline, hydrateRuntimeRecipes(snapshot), legacyRelease).then((result) => result.readiness);
     expect((await assess(content)).status).toBe('ready');
     expect(await assess(reorder(content))).toMatchObject({ status: 'not_ready', code: 'ORDER_DRIFT' });
     expect(await assess(dropRecipe(content, 'gl-05'))).toMatchObject({ status: 'not_ready', code: 'COUNT_DRIFT', detail: { expectedCount: 71, actualCount: 70 } });
@@ -162,9 +170,9 @@ describe('T14D — catalog fingerprint and D1 readiness (pure)', () => {
     const drift = await assess(retitle(content, 'gl-01'));
     if (drift.status === 'not_ready') expect(JSON.stringify(drift.detail)).not.toMatch(/edited|Trứng|instruction/);
     // A D1 read failure is an error, not "not ready", and never a snapshot.
-    const failing = new D1RecipeAuthority(() => Promise.reject(new Error('boom')), staticAuthority);
+    const failing = new D1RecipeAuthority(() => Promise.reject(new Error('boom')), staticAuthority, () => 2, () => legacyRelease);
     expect(await failing.load()).toMatchObject({ status: 'error', snapshot: null, readiness: { code: 'D1_READ_FAILED', error: 'Error' } });
-    const notReady = new D1RecipeAuthority(() => Promise.resolve(reorder(content)), staticAuthority);
+    const notReady = new D1RecipeAuthority(() => Promise.resolve(reorder(content)), staticAuthority, () => 2, () => legacyRelease);
     expect((await notReady.load()).snapshot).toBeNull();
   });
 });
@@ -228,6 +236,8 @@ describe('T14D — authority router: modes, fallback, cache/singleflight, observ
   const d1Env = (overrides: Partial<Env> = {}) => env({ RECIPE_CATALOG_MODE: 'd1', RECIPE_CATALOG_CUTOVER_ENABLED: 'true', ...overrides });
   const broken = { prepare: () => { throw new Error('boom'); }, batch: () => { throw new Error('boom'); } } as unknown as Env['DB'];
 
+  // The router verifies D1 against the SHIPPED manifest, so it runs on the full ledger (legacy 71 + approved T14F batches).
+  const release = currentCatalogRelease();
   beforeEach(() => { db = new SqliteD1(); diagnostics.length = 0; resetRecipeAuthorityCacheForTests(); resetRecipeAuthorityCountersForTests(); resetRecipeCatalogShadowThrottle(); });
   afterEach(() => db.close());
 
@@ -256,10 +266,12 @@ describe('T14D — authority router: modes, fallback, cache/singleflight, observ
     const first = await resolveRecipeAuthority(d1Env(), { tenantKey: 'hh', now, log });
     expect(first).toMatchObject({ configuredMode: 'd1', selectedSource: 'd1', actualSource: 'd1', fallbackReason: null });
     expect(first.snapshot.source).toBe('d1');
-    expect(first.snapshot.list()).toStrictEqual(JSON.parse(JSON.stringify(ALL_RECIPES)));
+    expect(first.snapshot.size).toBe(release.expectedRecipeCount);
+    expect(first.snapshot.list().slice(0, 71)).toStrictEqual(JSON.parse(JSON.stringify(ALL_RECIPES)));
+    expect(ids(first.snapshot.list())).toEqual(release.orderedRecipeIds);
     expect(batches).toEqual([5]);
     expect(single).toEqual([]);
-    expect(diagnostics).toEqual([expect.objectContaining({ level: 'info', event: 'recipe_catalog_authority_selected', configuredMode: 'd1', selectedSource: 'd1', actualSource: 'd1', fingerprintMatch: true, recipeCount: 71 })]);
+    expect(diagnostics).toEqual([expect.objectContaining({ level: 'info', event: 'recipe_catalog_authority_selected', configuredMode: 'd1', selectedSource: 'd1', actualSource: 'd1', fingerprintMatch: true, recipeCount: release.expectedRecipeCount })]);
     clock += RECIPE_AUTHORITY_D1_TTL_MS - 1;
     const second = await resolveRecipeAuthority(d1Env(), { tenantKey: 'other', now, log });
     expect(second.snapshot).toBe(first.snapshot);
@@ -319,7 +331,7 @@ describe('T14D — authority router: modes, fallback, cache/singleflight, observ
     diagnostics.length = 0;
     // Parity drift on a real database: the content is reordered in D1 (fixture) → not ready → static.
     // Two-phase update sidesteps the UNIQUE(runtime_order) constraint while reversing the canonical order.
-    db.seed(`UPDATE recipe_runtime_fields SET runtime_order = runtime_order + 1000; UPDATE recipe_runtime_fields SET runtime_order = 1070 - runtime_order`);
+    db.seed(`UPDATE recipe_runtime_fields SET runtime_order = runtime_order + 100000; UPDATE recipe_runtime_fields SET runtime_order = ${100000 + release.expectedRecipeCount - 1} - runtime_order`);
     const drifted = await resolveRecipeAuthority(canaryEnv('50'), { tenantKey: tenant, now, log });
     expect(drifted).toMatchObject({ actualSource: 'static', selectedSource: 'd1', fallbackReason: 'ORDER_DRIFT' });
     expect(diagnostics[0]).toMatchObject({ event: 'recipe_catalog_d1_not_ready', reasonCode: 'ORDER_DRIFT', fingerprintMatch: false });
@@ -370,7 +382,7 @@ describe('T14D — authority router: modes, fallback, cache/singleflight, observ
     expect(ids(rolledBack.snapshot.list())).toEqual(ids(ALL_RECIPES));
     expect(statements).toEqual([]);
     expect(db.query('SELECT id, title FROM recipes ORDER BY id')).toEqual(before);
-    expect(db.query<{ n: number }>('SELECT COUNT(*) AS n FROM recipe_runtime_fields')[0].n).toBe(71);
+    expect(db.query<{ n: number }>('SELECT COUNT(*) AS n FROM recipe_runtime_fields')[0].n).toBe(release.expectedRecipeCount);
     diagnostics.length = 0;
     const invalid = await resolveRecipeAuthority(env({ RECIPE_CATALOG_MODE: 'd1' }), { tenantKey: 'hh', now, log }); // fence missing
     expect(invalid).toMatchObject({ configuredMode: 'static', actualSource: 'static', fallbackReason: 'CUTOVER_NOT_ENABLED' });
