@@ -160,3 +160,23 @@ double deterministic compile, candidate-500 composition proven, all repository g
 `T14F_B_SCALE_BATCH_CERTIFIED` / `T14F_SCALE_DATA_COMPLETE` / `T14F_C_NOT_STARTED`.
 Exact head and handoff: `T14F_B_SCALE_BATCH_CERTIFICATION.md` + PR #25 receipt.
 Next task: **T14F-C** (promote 0037, 500 shipped manifest, 500-authority certification) — separate authorization.
+
+## T14F-C status (final) — T14F development complete
+
+T14F-C **closed** on 2026-09-17: 0037 promoted byte-identical (`68e52e6d…`), shipped manifest
+500 recipes / 2 batches (`rel-bd00a4f53fcaeee4`), replay / D1 readiness / authority modes / user
+flows certified, full closure gates green (171 files / 3913 tests) and hosted exact-head validate
+SUCCESS on the final head. One closure fix (`8c6080aa…`, tests only) keeps the five real-D1 suites
+under workerd's 1 MiB statement cache now that the migration chain carries 0037.
+
+```text
+T14F-A=CERTIFIED  T14F-B=CERTIFIED  T14F-C=CERTIFIED
+T14F_DEVELOPMENT_COMPLETE  T14F_REAL_CATALOG_500_COMPLETE  T14F_500_AUTHORITY_CERTIFIED
+PRODUCTION_ROLLOUT_DEFERRED  MEDIA_POPULATION_DEFERRED  T14G_NOT_STARTED
+PR_25=READY_FOR_REVIEW  PR_25_MERGED=NO
+```
+
+Certificate: `T14F_C_500_CATALOG_CERTIFICATION.md`; exact final head + validate ids: PR #25 final
+certification receipt. Production does **not** contain 500 recipes; rollout (production ledger →
+0036/0037 via the OPS workflow, readiness verify, shadow → canary → d1), media population and T14G
+each require separate authorization.

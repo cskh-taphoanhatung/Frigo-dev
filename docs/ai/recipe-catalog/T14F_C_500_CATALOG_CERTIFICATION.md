@@ -6,6 +6,7 @@
 classification=T14F_DEVELOPMENT_COMPLETE
 T14F_REAL_CATALOG_500_COMPLETE
 T14F_500_AUTHORITY_CERTIFIED
+T14F_C_CLOSED
 PRODUCTION_ROLLOUT_DEFERRED
 MEDIA_POPULATION_DEFERRED
 T14G_NOT_STARTED
@@ -13,10 +14,12 @@ P0=0 P1=0 release_blocking_P2=0 P3=1 (list payload size, see Performance)
 repository_id=1368281478
 repository_full_name=frigo-4/Frigo-dev
 T14F_C_base=7d6675232aea5389b421747dc7d728ad1aeb9b50
+T14F_C_safe_stop_head=44c0ad382c9296ab0a416e127b6150c80e803449 (resolved; see Closure)
+T14F_C_closure_fix_head=8c6080aa85ed20b21ef4cbd4f610eebe1425415c (test harness only)
 branch=hoplite/massalia-c2862d7c
 origin_main=f0c229f2e2b134904a8c0e355479394cbf53c954 (untouched)
-PR=25 (merge remains a separate explicit decision)
-T14F_FINAL_CERTIFIED_HEAD=<bound in the PR #25 certification receipt; a committed file cannot hash itself>
+PR=25 (ready for review; merge remains a separate explicit decision)
+T14F_FINAL_CERTIFIED_HEAD=<bound in the PR #25 final certification receipt; a committed file cannot hash itself>
 ```
 
 This certifies that the **repository** now carries a complete, reviewed, deterministic
@@ -148,7 +151,31 @@ performance_blocker=NONE (P3: the unpaginated 500-item list is ~780 KB; paginati
 Worker bundle grep: `scale-399.jsonl`/`pilot-30.jsonl`/record ids/concept text → 0 hits;
 release manifest id present. Runtime ships only compiled release metadata/code.
 
-## Repository gates (filled from the final local run)
+## Closure — safe stop resolved
+
+The safe stop at `44c0ad38…` (`T14F_C_WIP_HANDOFF.md`) left `pnpm lint`, `pnpm build`,
+the full `pnpm test` and hosted validate outstanding. Running them surfaced one real
+closure blocker, fixed forward-only in `8c6080aa…` (tests only):
+
+```text
+finding=hosted validate on 44c0ad38… (run 35266591460 attempt 2, job 105359053711) FAILED:
+  5 real-D1 suites (inventory-lot-d1, inventory-closed-loop-d1, inventory-observation-d1,
+  inventory-read-authority-d1, t13-receipt-vision-d1) → "Error: Network connection lost";
+  reproduced locally (166/171 files, 92 tests skipped after beforeAll failure).
+root_cause=workerd 1.20250718 SqlStorage keeps a 1 MiB LRU of prepared statements
+  (SQL_STATEMENT_CACHE_MAX_SIZE); replaying 0001→0037 in one process crosses it once
+  0037 (829,117 bytes of INSERT SQL) lands (cumulative 1,223,932 > 1,048,576). Eviction
+  corrupts the kj HashIndex and workerd SIGSEGVs (cloudflare/workerd#5977). Not a
+  migration, catalog, or runtime defect: 0037 replays cleanly one file per process,
+  `migration-smoke` and every SqliteD1 suite already passed.
+fix=tests/helpers/local-d1-worker.mjs — persisted local D1, one batch per migration file
+  (semantics unchanged), workerd restarted before cumulative SQL exceeds 512 KiB, and a
+  hard error if any single migration ever exceeds 1 MiB. All five suites use it.
+not_changed=migrations/0037, approved-batches.json, catalog-release.current.json, recipe
+  data, authority runtime, Inventory Truth, worker/test helper script.
+```
+
+## Repository gates (final local run on 8c6080aa…, 2026-09-17)
 
 ```text
 recipe_seed_check=PASS
@@ -157,15 +184,26 @@ typecheck=PASS
 lint=PASS
 check_migrations=PASS (migration-smoke through 0037)
 build=PASS
-full_vitest_files=<see receipt>  full_vitest_tests=<see receipt>
+full_vitest_files=171/171  full_vitest_tests=3913/3913 (0 skipped)  duration=419.58 s
+  (historical 171 / 3911 + 2 T14F-C tests; no coverage removed)
+real_d1_suites=5 files / 92 tests PASS (22.75 s focused; also inside the full run)
 git_diff_check=PASS
-working_tree=clean (local-only .hoplite/settings.json delta intentionally uncommitted)
+working_tree=clean
 secret_scan=PASS (no keys/tokens/private URLs/local paths in the T14F-C diff)
 ```
 
 ## Hosted CI
 
-Implementation and final-head validate run/check ids are bound in the PR #25 receipt.
+```text
+safe_stop_head_validate=44c0ad38… run 35266591460: attempt 1 CANCELLED (runner shutdown),
+  attempt 2 FAILURE (job 105359053711, Vitest step — the five real-D1 suites above)
+closure_fix_head_validate=8c6080aa… run 35271630025 / job 105372187543 SUCCESS
+  (ESLint, typecheck, full Vitest, migration smoke, build all green)
+final_head_validate=recorded in the PR #25 final certification receipt (run + job ids, SUCCESS)
+```
+
+The exact final certified SHA, its validate run/job ids and result are bound in the PR #25
+final certification receipt (a committed file cannot contain its own commit SHA).
 
 ## Production safety
 

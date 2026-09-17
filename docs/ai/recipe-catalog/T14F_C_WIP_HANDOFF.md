@@ -1,5 +1,22 @@
 # T14F-C — SAFE STOP / DURABLE HANDOFF — 2026-09-17
 
+> **SAFE STOP RESOLVED — HISTORICAL EVIDENCE ONLY.**
+>
+> ```text
+> SAFE_STOP_HEAD=44c0ad382c9296ab0a416e127b6150c80e803449 (resumed and closed 2026-09-17)
+> FULL_CLOSURE_GATES=PASS (lint, build, full vitest 171 files / 3913 tests, typecheck,
+>   check:migrations, recipe:seed:check, recipe:import:check, git diff --check)
+> CLOSURE_FIX=8c6080aa85ed20b21ef4cbd4f610eebe1425415c (tests only: real-D1 harness stays
+>   under workerd's 1 MiB statement cache; hosted validate on 44c0ad38… had failed there)
+> HOSTED_EXACT_HEAD_VALIDATE=SUCCESS on the final head, bound in the PR #25 final receipt
+> FINAL_CERTIFICATION_COMPLETED_AT=<T14F_FINAL_CERTIFIED_HEAD in the PR #25 final receipt>
+> ```
+>
+> Do **not** resume from this file. Current truth and resume coordinates:
+> `T14F_C_500_CATALOG_CERTIFICATION.md` (development certificate + closure section) and the
+> PR #25 final certification receipt. Production rollout, media population and T14G remain
+> separately authorized work.
+
 ```text
 classification=T14F_C_SAFE_STOPPED_DOCS_CLOSURE
 repository_id=1368281478

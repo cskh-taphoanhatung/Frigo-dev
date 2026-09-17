@@ -1,6 +1,16 @@
 # Frigo / Takosan current task board — 2026-09-17
 
-## Current T14F — T14F_B_SCALE_BATCH_CERTIFIED
+## Current T14F — T14F_DEVELOPMENT_COMPLETE (T14F-A/B/C certified; production untouched)
+
+- [done] T14F-C: 0037 promoted byte-identical (`68e52e6d…`; 0036 `04228788…` unchanged), shipped manifest 500 / 2 batches (`rel-bd00a4f53fcaeee4`), `ALL_RECIPES` 71.
+- [done] Replay fresh 0001→0037 / 0036→0037 / 0034→…→0037 PASS; D1 readiness READY 500; static/shadow/canary/full-D1 PASS; reader 5 statements, no N+1; user flows incl. Batch B VN/CN/JP/KR/TH/IT PASS; T09/T11 unchanged.
+- [done] Closure gates (safe stop `44c0ad38…` resolved): lint, build, full test **171 files / 3913 tests**, typecheck, migration smoke, seed/import checks, diff check — PASS.
+- [done] Closure blocker fixed forward-only `8c6080aa…` (tests only): real-D1 suites now recycle workerd before its 1 MiB statement cache overflows on the 0001→0037 replay (cloudflare/workerd#5977). Hosted validate on `44c0ad38…` had failed exactly there.
+- [done] Hosted exact-final-head validate SUCCESS + `T14F_FINAL_CERTIFIED_HEAD` bound in the PR #25 final certification receipt. PR #25 ready for review, **unmerged**.
+- [next] **STOP.** Merge = separate decision after independent review. Production rollout, media population and T14G = separate authorization. Production does not contain 500 recipes.
+- [P3] Unpaginated `GET /recipes` ≈ 780 KB at 500 recipes — T14G scope, not release-blocking for development certification.
+
+## Historical T14F — T14F_B_SCALE_BATCH_CERTIFIED
 
 - [done] T14F-A pilot certified at `b0150d0…` (routing fix, 171/3911).
 - [done] T14F-B resumed: ingredient preflight + 399-concept matrix committed.

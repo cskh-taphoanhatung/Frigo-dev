@@ -1,8 +1,9 @@
-## Current T14F — T14F_C_SAFE_STOPPED (500 dev-certified, production untouched) — 2026-09-17
+## Current T14F — T14F_DEVELOPMENT_COMPLETE (T14F-A/B/C certified; production untouched) — 2026-09-17
 
 - T14F-C completed and committed (on top of authorized base `7d667523…`): 0037 promoted byte-identical (`68e52e6d…`), shipped manifest regenerated to 500/2 batches (`rel-bd00a4f53fcaeee4`, `fa47d31f…`), replay (fresh 0001→0037, 0036→0037, 0034→…→0037) PASS, D1 readiness READY 500, static/shadow/canary/full-D1 PASS, user flows incl. Batch B cuisines PASS. Development certificate: `docs/ai/recipe-catalog/T14F_C_500_CATALOG_CERTIFICATION.md`.
-- **SAFE STOP** (`T14F_C_SAFE_STOPPED_DOCS_CLOSURE`): 3 T14F-C commits + safe-stop handoff committed; production untouched. Checks: growth 23/23, typecheck, migration smoke through 0037, import check, diff check PASS; lint/build/full suite NOT run (safe stop). Exact state: `docs/ai/recipe-catalog/T14F_C_WIP_HANDOFF.md`.
-- Next: T14F-C closure (lint/build/full suite + hosted CI on the safe-stop head) from the PR #25 safe-stop receipt head; production rollout/media/T14G only with separate authorization. PR #25 stays draft/unmerged.
+- **T14F-C CLOSED**: safe stop `44c0ad38…` resolved. Full closure gates PASS — lint, build, full `pnpm test` **171 files / 3913 tests**, typecheck, migration smoke through 0037, seed/import checks (500/2), diff check. One real blocker fixed forward-only in `8c6080aa…` (tests only): the five real-D1 suites overflowed workerd 1.20250718's 1 MiB statement cache when replaying 0001→0037 in one process (cloudflare/workerd#5977); `tests/helpers/local-d1-worker.mjs` recycles workerd before that. No migration/catalog/runtime change.
+- Final head + hosted exact-head validate SUCCESS bound in the PR #25 final certification receipt. Classification: `T14F_DEVELOPMENT_COMPLETE` · `T14F_REAL_CATALOG_500_COMPLETE` · `T14F_500_AUTHORITY_CERTIFIED` · `PRODUCTION_ROLLOUT_DEFERRED` · `MEDIA_POPULATION_DEFERRED` · `T14G_NOT_STARTED`; P3 = 1 (~780 KB unpaginated `/recipes`, T14G).
+- PR #25 **ready for review, unmerged**. Production does **not** contain 500 recipes. Merge, production rollout, media population and T14G each need separate authorization.
 
 ## Historical T14F — T14F_B_SCALE_BATCH_CERTIFIED — 2026-09-17
 
