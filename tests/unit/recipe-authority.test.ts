@@ -4,6 +4,7 @@ import type { D1RecipeContentSnapshot } from '../../packages/recipes/src/catalog
 import { ALL_RECIPES } from '../../packages/recipes/src/data';
 import {
   assessD1Readiness,
+  currentCatalogRelease,
   canonicalRecipeProjection,
   createRecipeAuthoritySnapshot,
   D1RecipeAuthority,
@@ -127,7 +128,8 @@ describe('T14D — catalog fingerprint and D1 readiness (pure)', () => {
     expect(loaded.status).toBe('ready');
     if (loaded.status !== 'ready') return;
     const staticSnapshot = await staticAuthority.load();
-    expect(loaded.readiness).toEqual({ status: 'ready', source: 'd1', fingerprint: staticSnapshot.fingerprint, recipeCount: 71 });
+    // T14E: readiness also names the reviewed release; with today's manifest it is the 71-recipe static baseline.
+    expect(loaded.readiness).toEqual({ status: 'ready', source: 'd1', fingerprint: staticSnapshot.fingerprint, recipeCount: 71, releaseId: currentCatalogRelease().releaseId });
     expect(loaded.snapshot.source).toBe('d1');
     expect(loaded.snapshot.fingerprint).toBe(staticSnapshot.fingerprint);
     expect(loaded.snapshot.list()).toStrictEqual(staticSnapshot.list()); // no normalisation through ALL_RECIPES
@@ -141,9 +143,11 @@ describe('T14D — catalog fingerprint and D1 readiness (pure)', () => {
     expect(await assess(reorder(content))).toMatchObject({ status: 'not_ready', code: 'ORDER_DRIFT' });
     expect(await assess(dropRecipe(content, 'gl-05'))).toMatchObject({ status: 'not_ready', code: 'COUNT_DRIFT', detail: { expectedCount: 71, actualCount: 70 } });
     expect(await assess(duplicateRecipe(content, 'gl-05'))).toMatchObject({ status: 'not_ready', code: 'CATALOG_DIAGNOSTICS' });
+    // T14E (ADR-027): a field change inside one of the 71 legacy recipes is LEGACY_BASELINE_DRIFT — the
+    // rollback baseline is protected explicitly even when a release manifest approves extra recipes.
     for (const mutate of [retitle, reverseIngredients, changeQuantity, changeStep, changeTag]) {
       const readiness = await assess(mutate(content, 'vn-canh-02'));
-      expect(readiness, mutate.name).toMatchObject({ status: 'not_ready', code: 'FINGERPRINT_DRIFT' });
+      expect(readiness, mutate.name).toMatchObject({ status: 'not_ready', code: 'LEGACY_BASELINE_DRIFT' });
       if (readiness.status === 'not_ready') {
         expect(readiness.detail.fieldDriftSample[0]?.id, mutate.name).toBe('vn-canh-02');
         expect(readiness.detail.actualFingerprint, mutate.name).not.toBe(readiness.detail.expectedFingerprint);

@@ -1,5 +1,41 @@
 # Frigo / Takosan current handoff — 2026-09-17
 
+## Current handoff — T14E remediation (P1/P2/P3) on the feature branch; PR #23 unmerged, awaiting re-review (2026-09-17)
+
+- **Implementation state:** forward commit after `7b4edcc8…`. `packages/recipes/src/import/{types,schema,normalize,compiler,
+  sql-render,release-manifest}.ts`: `nutritionEvidence` + `duplicateReview` on the normalized model; `canonicalBatchProjection`
+  (single hash projection); SQL renders `nutrition_profiles` (`<id>_nutrition_v1`, per serving, source_type/source_reference from the
+  reviewed evidence) + `recipe_nutrition` rows; `normalized-recipes.json` carries batch metadata (incl. license/usageNote) and per-recipe
+  evidence/review; `NUTRITION_EVIDENCE_LOST` guard. `recipe-authority.ts`: error union `D1_READ_FAILED | RELEASE_MANIFEST_INVALID`;
+  manifest supplier failure ⇒ `RELEASE_MANIFEST_INVALID`. Migrations 35 / 0035 / no 0036; hash set unchanged. Protected paths untouched.
+- **Executed checks:** `pnpm install --frozen-lockfile`, `recipe:seed:check` 3× ok, `recipe:import:check` ok (`rel-1a047444a3632771`, 71/0),
+  `typecheck`, `lint`, `check:migrations` (`migration-smoke=ok`), `build`, `pnpm test` **169 files / 3889 tests PASS**; focused:
+  provenance 11, factory 16, scale 4, output-policy+CLI 25, release-readiness 15, authority 17 (88); `git diff --check` clean.
+  Scale (50 % evidence-backed): 500 → 826,455 B; 2,000 → 3,326,028 B; 5,000 → 8,322,981 B SQL.
+- **Not done — by design:** merge, 0036, real recipes, media population, production/Cloudflare action, authority activation, T14F.
+- **Next action:** independent re-review of PR #23 (exact head recorded in the PR post-push comment) → merge → freeze
+  `T14E_FINAL_CANONICAL_MAIN` → T14F per `recipe-catalog/T14E_NEXT_HANDOFF.md`. Production dispatch still pending per
+  `T14CD_PRODUCTION_ROLLOUT_HANDOFF.md`.
+
+## Current handoff — T14E import factory development complete on feature branch; PR open, NOT merged (2026-09-17)
+
+- **Implementation state:** `packages/recipes/src/import/{types,schema,parse,identity,ingredients,normalize,duplicates,
+  sql-render,release-manifest,compiler,index}.ts` + `catalog-release.current.json`; `packages/recipes/src/catalog-fingerprint.ts`
+  (extracted, re-exported); `recipe-authority.ts` readiness now takes a release manifest (default = shipped manifest) and
+  `D1RecipeAuthority` a release supplier; `scripts/recipe-import.mjs` + `recipe-import-output-policy.mjs`; `pnpm recipe:import:check`;
+  tests + fixtures listed in `recipe-catalog/T14E_NEXT_HANDOFF.md`; ADR-027; design doc. Migrations 35 / tip 0035 / no 0036;
+  0001–0035 byte-identical (hash set unchanged). `ALL_RECIPES` = 71. Worker router, D1 reader, hydrator, Inventory Truth untouched.
+- **Executed checks:** `pnpm lint`, `pnpm typecheck`, `pnpm recipe:seed:check` (3× ok), `pnpm recipe:import:check` (ok,
+  `rel-1a047444a3632771`, 71/0), `pnpm check:migrations` (`migration-smoke=ok`), `pnpm build`, `pnpm test` **168 files /
+  3878 tests PASS** (baseline 164/3818); focused: import factory 16, scale 4 (500/2000/5000), output policy + CLI 25, release
+  readiness 15, updated T14D authority 17; `git diff --check` clean. Synthetic 500/2000/5000 SQL ≈ 0.78/3.1/7.9 MB.
+- **Behavioural equivalence:** T14D negative controls now report `LEGACY_BASELINE_DRIFT` for a legacy field change (was
+  `FINGERPRINT_DRIFT`); `ready` readiness carries `releaseId`. Everything else identical; client bundle unchanged.
+- **Not done — by design:** 0036, real recipe growth, media population, any production/Cloudflare action, authority activation,
+  T14F. Production remains `4ed98514…` / D1 0034 / static (operator dispatch pending per `T14CD_PRODUCTION_ROLLOUT_HANDOFF.md`).
+- **Next action:** independent review of the T14E PR (do not merge automatically) → merge → record `T14E_FINAL_CANONICAL_MAIN`
+  → T14F only per `recipe-catalog/T14E_NEXT_HANDOFF.md`.
+
 ## Current handoff — T14C/T14D OPS workflow merged (main 6910a7b4…); production D1/Worker untouched; operator dispatch required (2026-09-17)
 
 - **Implementation state:** OPS-only. `.github/workflows/production-d1-migrate.yml`, `scripts/d1-migration-check.mjs`,

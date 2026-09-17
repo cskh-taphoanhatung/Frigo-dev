@@ -1,5 +1,77 @@
 # Architecture Decisions
 
+## ADR-027 — Reviewed Bulk Recipe Imports and Catalog Release Manifests (T14E)
+
+**Status:** Accepted 2026-09-17; remediated 2026-09-17 after independent review (nutrition evidence persistence, complete
+immutable batch hash, manifest-failure telemetry). Factory + manifest architecture open for re-review; no real catalog
+growth; production remains `4ed98514…` / D1 0034 / `static`.
+
+**Context:** T14D certifies D1 authority only when the hydrated catalog equals `ALL_RECIPES` exactly. That is correct for
+71 recipes but makes intentional growth (500 → 5,000+ recipes, T14F) impossible: either `ALL_RECIPES` would have to grow
+into a multi-megabyte static bundle, or readiness would have to be weakened to "D1 has some recipes". Neither is acceptable.
+Bulk import also needs a safe, deterministic path from an authorized dataset to reviewable SQL without touching
+`migrations/`, the static source, D1 or R2, and without inventing ingredient IDs.
+
+**Decision:**
+1. **`ALL_RECIPES` stays the immutable legacy/static rollback baseline (71).** It is never the scale strategy. Emergency
+   fallback (`RECIPE_CATALOG_MODE=static`, or a D1 fallback) deliberately serves only the 71-recipe baseline; diagnostics
+   must show reduced coverage rather than pretend the expanded release is served.
+2. **A versioned Catalog Release Manifest** (`packages/recipes/src/import/catalog-release.current.json`, schema v1:
+   `releaseId`, `legacyBaselineCount/Fingerprint`, `expectedRecipeCount`, `orderedRecipeIds`,
+   `expectedRuntimeFingerprint`, `approvedImportBatches[{batchId, batchHash, recipeCount, releaseBaseCount, …}]`) is the
+   reviewed expectation of the COMPLETE D1 catalog. It is composed deterministically (`composeCatalogRelease(legacy,
+   approvedBatches)`), ships with the application, is verified by `pnpm recipe:import:check` + tests, and is never loaded
+   from a request, header, D1 row, KV or URL. Today it describes exactly the 71-recipe baseline with zero batches, so
+   current D1 readiness is unchanged (same fingerprint, same READY result).
+3. **Growth-ready readiness** (`assessD1Readiness(baseline, hydration, release)`): manifest must describe this build's
+   static baseline (`RELEASE_MANIFEST_INVALID`), zero hydration failures (`CATALOG_DIAGNOSTICS`), count == manifest
+   (`COUNT_DRIFT`), ordered IDs == manifest (`ID_DRIFT` / `ORDER_DRIFT`), the legacy prefix byte-equal to `ALL_RECIPES`
+   (`LEGACY_BASELINE_DRIFT`, protects the rollback baseline even inside an expanded release), and the full release
+   fingerprint (`FINGERPRINT_DRIFT`). Unmanifested D1 growth is never READY.
+4. **Import batches are immutable and reviewed.** Each batch carries `schemaVersion`, `batchId`, provenance
+   (`sourceType ∈ curated|imported|ai_generated`, `sourceNamespace`, non-empty `sourceReference`, optional `license` /
+   `usageNote`), and records with stable `sourceRecordId`, explicit `batchOrder` (0..N-1; physical row order is never
+   authority), reviewer-supplied romanized `slug`, `verificationState` and optional `duplicateReview`. Only `reviewed`
+   records are publishable. `batchHash = SHA-256(canonicalBatchProjection)` — one function for compile, verify, release
+   composition and CLI — commits to schema version, batch identity, full source provenance (license, usage note) and, per
+   recipe, batch order, source key, runtime content, provenance, classifications, nutrition evidence and the duplicate-review
+   decision; it ignores row order, whitespace, key order, paths, timestamps and diagnostics. Any reviewed-meaning change ⇒
+   new `batchHash` ⇒ new `releaseId`; a mutated approved batch fails composition (`BATCH_COLLISION`). The runtime
+   fingerprint commits only to runtime recipe semantics, so provenance-only changes alter `releaseId` but not
+   `expectedRuntimeFingerprint`. `ApprovedImportBatch` stays compact because the hash commits to everything and the batch's
+   `normalized-recipes.json` artifact preserves it for audit.
+5. **Deterministic identity:** `imp-` + 16 hex of SHA-256(`sourceNamespace:sourceRecordId`); compatible with the T14C
+   media identity rule and outside the `vn-*`/`gl-*` namespaces. Any collision (ID, slug, source, content fingerprint,
+   legacy, within batch, across batches) fails closed; IDs are never renumbered.
+6. **Ingredient Truth boundary:** exact canonical-ID or exact normalized name/alias match against `CANONICAL_INGREDIENTS`
+   only. No substring matching, no invented IDs, no automatic merge of look-alikes; ambiguity and misses are reported
+   (bounded candidates) and make the record non-publishable. Units are the closed `StandardUnitSchema`; cuisine/region are
+   the closed runtime vocabularies; category stays typed-open; `imageUrl` must be an audited same-origin path (default
+   placeholder), never an external URL. **Nutrition is evidence-only and the evidence is never dropped:** macros require an
+   `evidence` reference (+ optional ADR-004 `sourceType`, default `imported`); the evidence travels on
+   `NormalizedImportRecipe.nutritionEvidence`, in `normalized-recipes.json`, in the batch hash, and is persisted by the
+   generated SQL as a per-serving `nutrition_profiles` row (`<recipe-id>_nutrition_v1`, `source_reference` = evidence)
+   linked via `recipe_nutrition` at version 1 — reusing the existing ADR-004/ADR-009 model, not a parallel one. The macros
+   also fill `recipe_runtime_fields.legacy_*` for the runtime contract. A compiler guard (`NUTRITION_EVIDENCE_LOST`) and a
+   renderer invariant make "macros without evidence" impossible in publishable output.
+7. **The compiler emits artifacts, never migrations.** Output goes only beneath `.artifacts/recipe-import/` (segment-aware
+   containment + symlink defense). `migration.sql` is plain `INSERT` (no `ON CONFLICT DO UPDATE`), data-only, with
+   `runtime_order = releaseBaseCount + batchOrder`, explicit ingredient positions, classifications and truthful PENDING
+   hero media slots (prerequisite 0035). Promotion into `0036+` and into the committed manifest is a human-reviewed T14F step.
+8. **Duplicate detection is bucketed** (hash maps keyed by source, ID, slug, content fingerprint, normalized title per
+   cuisine, ingredient signature): O(N + M), never N×M. Semantic candidates require an explicit
+   `duplicateReview { decision: "distinct", reason }`; hard duplicates cannot be waived.
+
+9. **Telemetry:** `D1RecipeAuthority.load()` reports a release-manifest load/parse failure as
+   `status=error, code=RELEASE_MANIFEST_INVALID` — never as `D1_READ_FAILED`, which is reserved for the content read.
+
+**Consequences:** T14F can grow D1 by promoting reviewed batches and regenerating the manifest without touching
+`ALL_RECIPES`, the D1 reader (still 5 statements), the hydrator or the authority router. Readiness reason codes gain
+`RELEASE_MANIFEST_INVALID` and `LEGACY_BASELINE_DRIFT` (a field change inside a legacy recipe is now reported as the latter
+instead of `FINGERPRINT_DRIFT`). Generated SQL for 5,000 synthetic recipes is ≈7.9 MB, so T14F must plan deterministic
+chunking across consecutive migrations with the manifest certifying only the complete release. Cuisine expansion beyond the
+six runtime values is an explicit T14F taxonomy decision, not an import-time coercion.
+
 ## ADR-026 — Recipe Catalog Authority Routing, Verified D1 Authority, Deterministic Canary and Config-only Rollback (T14D)
 
 **Status:** Accepted 2026-09-16 (architecture merged for review; production remains `static`; no deployment)

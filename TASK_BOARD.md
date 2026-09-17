@@ -1,3 +1,14 @@
+## T14E — REMEDIATION — 2026-09-17 (review P1/P2/P3 closed; PR #23 ready for re-review, unmerged)
+
+- Nutrition evidence preserved end-to-end (ADR-004 `nutrition_profiles` persistence), immutable batch hash covers all reviewed
+  metadata, manifest failure telemetry corrected. No 0036, no real recipes, no production action.
+
+## T14E — BULK RECIPE IMPORT FACTORY — 2026-09-17 (development complete on feature branch; PR unmerged)
+
+- Import factory (`packages/recipes/src/import/`), CLI, 71-recipe Catalog Release Manifest, manifest-driven D1 readiness
+  (ALL_RECIPES stays the 71 rollback baseline). No 0036, no real recipes, no production action, T14F not started.
+  Docs: `docs/ai/recipe-catalog/T14E_BULK_RECIPE_IMPORT_FACTORY.md`, ADR-027, `T14E_NEXT_HANDOFF.md`.
+
 ## T14C/T14D OPS — PRODUCTION D1 MIGRATION WORKFLOW — 2026-09-17 (MERGED main 6910a7b4…; awaiting operator dispatch)
 
 - PR #21 merged; main CI green; app tree unchanged. Production still `4ed98514…` / 0034 / static. Operator dispatch inputs in

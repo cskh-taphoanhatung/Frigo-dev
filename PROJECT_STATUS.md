@@ -1,5 +1,22 @@
 # Frigo Project Status
 
+## T14E remediation complete — PR #23 ready for re-review (2026-09-17)
+
+Independent review blockers closed on the feature branch: nutrition evidence is preserved end-to-end and persisted as ADR-004
+evidence in the generated SQL; the immutable batch hash now commits to schema version, license, usage note, nutrition evidence and
+duplicate-review decisions (any change ⇒ new `batchHash`/`releaseId`); a release-manifest load failure is reported as
+`RELEASE_MANIFEST_INVALID`. Current 71-recipe release unchanged. 169 files / 3889 tests. Status `T14E_REMEDIATED` ·
+`T14E_READY_FOR_RE_REVIEW`; PR unmerged; production unchanged (`4ed98514…` / D1 0034 / static).
+
+## T14E — Bulk Recipe Import Factory + Catalog Release Manifest: development complete, PR open (2026-09-17)
+
+Builds the deterministic, fail-closed machinery for future catalog growth (authorized batch → schema → normalization → exact
+ingredient resolution → duplicate/quality gates → reviewed SQL artifact → Catalog Release Manifest) and makes D1 authority
+readiness manifest-driven so D1 can later hold 500+ recipes while `ALL_RECIPES` remains the 71-recipe rollback baseline.
+Today's manifest is exactly 71 recipes / 0 batches — zero behavioural change. No migration, no real recipe, no production or
+Cloudflare action, recipe authority still static, T14F not started. Status `T14E_DEVELOPMENT_COMPLETE` · `T14E_READY_FOR_REVIEW`
+· `REAL_CATALOG_GROWTH_NOT_STARTED` · `PRODUCTION_ROLLOUT_DEFERRED`. Details: `docs/ai/recipe-catalog/T14E_BULK_RECIPE_IMPORT_FACTORY.md`, ADR-027.
+
 ## T14C/T14D OPS — Production D1 Migration workflow merged to main `6910a7b4…`; production rollout awaiting operator dispatch (2026-09-17)
 
 PR #21 adds a manual, fail-closed `Production D1 Migration` workflow (production Environment approval, exact-SHA gate, Cloudflare/D1

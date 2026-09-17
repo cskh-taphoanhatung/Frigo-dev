@@ -1,5 +1,19 @@
 # Frigo / Takosan current task board — 2026-09-17
 
+## T14E remediation — 2026-09-17 (P1 nutrition evidence, P2 immutable batch hash, P3 manifest telemetry; PR #23 unmerged)
+
+- [done, local-verified] evidence preserved + persisted as ADR-004 profiles; `canonicalBatchProjection` covers all reviewed metadata;
+  `RELEASE_MANIFEST_INVALID` error classification; `tests/unit/recipe-import-provenance.test.ts` (11); 169 files / 3889 tests.
+- [next] independent re-review of PR #23 → merge → `T14E_FINAL_CANONICAL_MAIN` → T14F per `recipe-catalog/T14E_NEXT_HANDOFF.md`.
+
+## T14E — Bulk Recipe Import Factory + Release Manifest — 2026-09-17 (development complete; PR open, NOT merged)
+
+- [done, local-verified] import factory module + CLI + output policy; 71-recipe Catalog Release Manifest committed and checked;
+  manifest-driven growth-ready readiness (legacy baseline protected); synthetic expanded-release READY proof; 500/5000 scale.
+- [not done — by design] 0036, real recipes, media population, production/Cloudflare action, authority activation, T14F.
+- [next] independent review of the T14E PR → merge → freeze `T14E_FINAL_CANONICAL_MAIN` → T14F per `recipe-catalog/T14E_NEXT_HANDOFF.md`.
+  Production debt unchanged (operator dispatch pending).
+
 ## T14C/T14D OPS — Production D1 Migration workflow — 2026-09-17 (MERGED main 6910a7b4…; production NOT yet mutated)
 
 - [done] PR #21: `production-d1-migrate.yml` (manual, fail-closed, production Environment) + `d1-migration-check.mjs` (+17 tests);
