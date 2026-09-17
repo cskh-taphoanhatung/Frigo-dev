@@ -314,4 +314,70 @@ describe(`T14F — HTTP user flows on the ${TOTAL}-recipe D1 release (list, deta
     expect(staticStart.status).toBe(404);
     expect(db.query<{ n: number }>('SELECT COUNT(*) AS n FROM inventory_events')[0].n).toBe(eventsAfter);
   });
+
+  it('T14F-C: Batch B (t14f-scale-399-v1) recipes from several cuisines participate in list/detail, recommendations, planner swap and cooking under the 500 D1 authority; pilot recipes still resolve', async () => {
+    const batches = await compileApprovedBatches();
+    const scale = batches.find((batch) => batch.entry.batchId === 't14f-scale-399-v1')!;
+    const pilot = batches.find((batch) => batch.entry.batchId === 't14f-pilot-30-v1')!;
+    expect(scale.result.recipes).toHaveLength(399);
+    const scaleRecipes = scale.result.recipes.map((recipe) => recipe.runtime as Recipe);
+    const pilotRecipe = pilot.result.recipes[0].runtime as Recipe;
+    // One Batch B sample per cuisine (deterministic: first in release order).
+    const sample = ['vietnamese', 'chinese', 'japanese', 'korean', 'thai', 'italian'].map((cuisine) => scaleRecipes.find((recipe) => recipe.cuisine === cuisine)!);
+    expect(sample.every(Boolean)).toBe(true);
+
+    const d1List = await request('d1', 'GET', '/recipes');
+    const listIds = new Set(d1List.json.recipes.map((recipe: any) => recipe.id));
+    for (const recipe of [pilotRecipe, ...sample]) {
+      expect(listIds.has(recipe.id), recipe.slug).toBe(true);
+      for (const key of [recipe.id, recipe.slug]) {
+        const detail = await request('d1', 'GET', `/recipes/${key}`);
+        expect(detail.status, key).toBe(200);
+        const { media, ...body } = detail.json.recipe;
+        expect(body).toStrictEqual(JSON.parse(JSON.stringify(recipe)));
+        // Imported recipes have pending hero media: the resolver falls back, never fabricates canonical_r2.
+        expect(media.hero.source).not.toBe('canonical_r2');
+      }
+      expect((await request('static', 'GET', `/recipes/${recipe.id}`)).status).toBe(404);
+    }
+    // Stock the household with one Batch B recipe's exact ingredient lines (a Thai dish, so the sample is not Vietnamese-only),
+    // through the ordinary inventory_items table: no recipe-specific writer is introduced.
+    const cook = sample.find((recipe) => recipe.cuisine === 'thai')!;
+    const stocked = new Set(STOCK.map(([id]) => id as string));
+    db.seed(cook.ingredients.filter((line) => !stocked.has(line.ingredientId)).map((line) =>
+      `INSERT INTO inventory_items (id, household_id, ingredient_id, name, quantity, unit, category, storage, freshness, data_source) VALUES ('g-scale-${line.ingredientId.toLowerCase()}', '${INSIDE}', '${line.ingredientId}', '${line.ingredientId}', ${line.requiredQuantity * 4}, '${line.unit}', 'other', 'fridge', 'fresh', 'manual');`).join('\n'));
+    // Batch B recipes rank in recommendations (release-order ties) and the stocked one is cookable without buying.
+    const recommendations = await request('d1', 'GET', '/recommendations');
+    const recommended = new Set(recommendations.json.recommendations.map((entry: any) => entry.recipe.id));
+    const scaleIds = new Set(scaleRecipes.map((recipe) => recipe.id));
+    expect([...recommended].filter((id) => scaleIds.has(id as string)).length).toBeGreaterThan(50);
+    const cookableScale = recommendations.json.recommendations.find((entry: any) => entry.recipe.id === cook.id);
+    expect(cookableScale, 'the stocked Batch B recipe must be recommendable').toBeDefined();
+    expect(cookableScale.canCookWithoutBuying).toBe(true);
+
+    // Planner: an executed swap onto a Batch B recipe from a non-Vietnamese cuisine resolves through the D1 snapshot.
+    const setup = { startDate: '2026-09-21', householdSize: 2, mealSlotsPreset: 'dinner_only', budgetTargetVnd: 600000, priorities: ['use_fridge'], shoppingFrequency: 'once', planId: 'plan_t14f_c_scale' };
+    expect([200, 201]).toContain((await request('d1', 'POST', '/week/plans', setup)).status);
+    const generated = await request('d1', 'POST', '/week/plans/plan_t14f_c_scale/generate');
+    expect(generated.status).toBe(200);
+    const slot = generated.json.plan.days.flatMap((day: any) => day.slots).find((item: any) => item.recipe);
+    const target = sample.find((recipe) => recipe.cuisine === 'korean' && recipe.id !== slot.recipe.id) ?? sample[3];
+    const swapped = await request('d1', 'POST', `/week/plans/${generated.json.plan.id}/meals/${slot.id}/swap`, { recipeId: target.id });
+    expect(swapped.status).toBe(200);
+    expect(swapped.json.plan.days.flatMap((day: any) => day.slots).find((item: any) => item.id === slot.id).recipe.id).toBe(target.id);
+
+    // Cooking the Batch B recipe deducts through the existing inventory mutation path and replays idempotently.
+    const start = await request('d1', 'POST', `/recipes/${cook.slug}/cook/start`);
+    expect(start).toMatchObject({ status: 200, json: { recipeId: cook.id, stepsCount: cook.steps.length } });
+    const deductions = cook.ingredients.map((line) => ({ ingredientId: line.ingredientId, quantityDeducted: line.requiredQuantity }));
+    const eventsBefore = db.query<{ n: number }>('SELECT COUNT(*) AS n FROM inventory_events')[0].n;
+    const first = await request('d1', 'POST', `/recipes/${cook.id}/cook/complete`, { servings: cook.servings, deductions }, { 'Idempotency-Key': 't14f-c-cook-scale' });
+    expect(first).toMatchObject({ status: 200, json: { success: true, recipeId: cook.id } });
+    const eventsAfter = db.query<{ n: number }>('SELECT COUNT(*) AS n FROM inventory_events')[0].n;
+    expect(eventsAfter - eventsBefore).toBe(cook.ingredients.length);
+    const replay = await request('d1', 'POST', `/recipes/${cook.id}/cook/complete`, { servings: cook.servings, deductions }, { 'Idempotency-Key': 't14f-c-cook-scale' });
+    expect(replay.json).toMatchObject({ success: true, idempotentReplay: true });
+    expect(db.query<{ n: number }>('SELECT COUNT(*) AS n FROM inventory_events')[0].n).toBe(eventsAfter);
+    expect(db.query<{ n: number }>('SELECT COUNT(*) AS n FROM recipes')[0].n).toBe(TOTAL);
+  });
 });
