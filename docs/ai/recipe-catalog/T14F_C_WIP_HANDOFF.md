@@ -8,6 +8,8 @@
 >   check:migrations, recipe:seed:check, recipe:import:check, git diff --check)
 > CLOSURE_FIX=8c6080aa85ed20b21ef4cbd4f610eebe1425415c (tests only: real-D1 harness stays
 >   under workerd's 1 MiB statement cache; hosted validate on 44c0ad38… had failed there)
+> CLOSURE_FIX_2=vitest setupFiles event-loop yield (tests/helpers/vitest-event-loop-yield.ts) — hosted
+>   Vitest had passed 3913/3913 yet exited 1 on a worker onTaskUpdate RPC timeout (test config only)
 > HOSTED_EXACT_HEAD_VALIDATE=SUCCESS on the final head, bound in the PR #25 final receipt
 > FINAL_CERTIFICATION_COMPLETED_AT=<T14F_FINAL_CERTIFIED_HEAD in the PR #25 final receipt>
 > ```

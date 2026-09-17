@@ -6,6 +6,7 @@
 - [done] Replay fresh 0001→0037 / 0036→0037 / 0034→…→0037 PASS; D1 readiness READY 500; static/shadow/canary/full-D1 PASS; reader 5 statements, no N+1; user flows incl. Batch B VN/CN/JP/KR/TH/IT PASS; T09/T11 unchanged.
 - [done] Closure gates (safe stop `44c0ad38…` resolved): lint, build, full test **171 files / 3913 tests**, typecheck, migration smoke, seed/import checks, diff check — PASS.
 - [done] Closure blocker fixed forward-only `8c6080aa…` (tests only): real-D1 suites now recycle workerd before its 1 MiB statement cache overflows on the 0001→0037 replay (cloudflare/workerd#5977). Hosted validate on `44c0ad38…` had failed exactly there.
+- [done] Second closure blocker fixed forward-only (test config only): docs-only heads passed 171/3913 on hosted CI but exited 1 on a vitest-worker `onTaskUpdate` birpc timeout starved by long synchronous SqliteD1 suites; `tests/helpers/vitest-event-loop-yield.ts` (setupFiles) yields once per test.
 - [done] Hosted exact-final-head validate SUCCESS + `T14F_FINAL_CERTIFIED_HEAD` bound in the PR #25 final certification receipt. PR #25 ready for review, **unmerged**.
 - [next] **STOP.** Merge = separate decision after independent review. Production rollout, media population and T14G = separate authorization. Production does not contain 500 recipes.
 - [P3] Unpaginated `GET /recipes` ≈ 780 KB at 500 recipes — T14G scope, not release-blocking for development certification.

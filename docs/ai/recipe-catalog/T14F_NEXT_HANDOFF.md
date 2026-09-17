@@ -167,7 +167,7 @@ T14F-C **closed** on 2026-09-17: 0037 promoted byte-identical (`68e52e6d…`), s
 500 recipes / 2 batches (`rel-bd00a4f53fcaeee4`), replay / D1 readiness / authority modes / user
 flows certified, full closure gates green (171 files / 3913 tests) and hosted exact-head validate
 SUCCESS on the final head. One closure fix (`8c6080aa…`, tests only) keeps the five real-D1 suites
-under workerd's 1 MiB statement cache now that the migration chain carries 0037.
+under workerd's 1 MiB statement cache now that the migration chain carries 0037; a second (`tests/helpers/vitest-event-loop-yield.ts`, vitest setupFiles) keeps workers from tripping the 60 s `onTaskUpdate` RPC timeout on the slow hosted runner after all tests pass.
 
 ```text
 T14F-A=CERTIFIED  T14F-B=CERTIFIED  T14F-C=CERTIFIED

@@ -199,12 +199,31 @@ safe_stop_head_validate=44c0ad38… run 35266591460: attempt 1 CANCELLED (runner
   attempt 2 FAILURE (job 105359053711, Vitest step — the five real-D1 suites above)
 closure_fix_head_validate=8c6080aa… run 35271630025 / job 105372187543 SUCCESS
   (ESLint, typecheck, full Vitest, migration smoke, build all green)
-docs_head_026c37c4_validate=run 35272118131 / job 105373779604 FAILURE — infrastructure only:
-  Vitest reported 171/171 files, 3913/3913 tests passed, then one unhandled
-  `[vitest-worker]: Timeout calling "onTaskUpdate"` (worker→main RPC timeout under runner
-  load) and exited 1. Same code as 8c6080aa… (docs-only delta). Rerun is not available to
-  the repository credential, so the head was superseded forward-only by this commit.
+docs_heads_validate=026c37c4… run 35272118131 / job 105373779604 FAILURE and
+  853a9822… run 35272924086 / job 105376418801 FAILURE — both with 171/171 files and
+  3913/3913 tests PASSED, then one unhandled `[vitest-worker]: Timeout calling
+  "onTaskUpdate"` → exit 1. Code-identical to 8c6080aa… (SUCCESS). Fixed forward-only, see
+  "Second closure blocker" below.
 final_head_validate=recorded in the PR #25 final certification receipt (run + job ids, SUCCESS)
+```
+
+### Second closure blocker — vitest worker RPC timeout (fixed forward-only, test config only)
+
+```text
+finding=on the 2-vCPU hosted runner the Vitest step passed every test but exited 1 with an
+  unhandled `[vitest-worker]: Timeout calling "onTaskUpdate"` (2 of 2 docs-only heads; the
+  code-identical fix head 8c6080aa… passed 20 min earlier — runner-load dependent).
+root_cause=vitest 3.2.7 workers report task progress to the main process over birpc with a
+  fixed 60 s reply timeout; the reply arrives as an IPC macrotask. Suites built on the
+  synchronous SqliteD1 adapter (inventory-lot-authority 306 tests ≈ 72 s, inventory-fefo
+  1,000-lot case ≈ 37 s, event-authority 205 tests ≈ 42 s on the slow run) resolve only
+  microtasks between tests, so a worker can go > 60 s without draining its IPC queue and the
+  overdue timer fires first. Not a test, migration or runtime defect.
+fix=tests/helpers/vitest-event-loop-yield.ts registered via vitest `setupFiles`: one
+  `setImmediate` yield in `afterEach` (real timer captured before fake timers), so every
+  worker drains pending RPC replies at least once per test. Focused check: lot-authority +
+  output-policy (execFileSync) + planner-hook (jsdom) + growth = 393/393 PASS.
+not_changed=test bodies, timeouts, thresholds, migrations, catalog, runtime.
 ```
 
 The exact final certified SHA, its validate run/job ids and result are bound in the PR #25
