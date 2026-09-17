@@ -43,7 +43,7 @@ lines — inventing IDs is forbidden. Recipes that would need a canonical ingred
 
 - Editorial QA: `node scripts/recipe-catalog-qa.mjs --input <batch> [--approved <earlier batch> …]`
   (title/description/cuisine plausibility, ingredient↔step consistency, servings/time, tags, duplicates,
-  ingredient coverage). Result JSON per batch: `pilot-review.json`, `scale-review.json`.
+  ingredient coverage). Result JSON per batch: `pilot-review.json`, `scale-review.json` (Batch B review file is written only when all 399 records exist).
 - Factory gates: `node scripts/recipe-import.mjs validate|compile|verify --input <batch>`.
 - Reviewer of record for T14F: Hoplite (AI coding agent) under the T14F packet; independent human review
   happens at PR review before merge (`T14F_READY_FOR_REVIEW`, not merged automatically).
@@ -53,6 +53,7 @@ lines — inventing IDs is forbidden. Recipes that would need a canonical ingred
 | Batch | File | Records | Migration |
 | --- | --- | --- | --- |
 | A — pilot | `pilot-30.jsonl` | 30 | `0036_recipe_catalog_pilot.sql` |
+| B — scale | `scale-399.jsonl` | 399 target; **56/399 authored, safe-stopped in progress** | none yet (T14F-C promotes) |
 
 `../approved-batches.json` is the release-order registry that `pnpm recipe:import:check` recompiles to
 prove the committed Catalog Release Manifest and migrations are generated from these sources.
