@@ -1,5 +1,22 @@
 # Frigo / Takosan current authority — 2026-09-17
 
+## T14E — Bulk Recipe Import Factory + Catalog Release Manifest — development complete on feature branch (2026-09-17)
+
+Base `9ff571995bf5f2a4381c2dfc6de796e6554fd43c`. Adds `packages/recipes/src/import/` (v1 batch schema, JSON/JSONL parser,
+`imp-<sha256(ns:record)>` identity, exact canonical ingredient resolution, closed unit/cuisine/region gates, bucketed duplicate
+detection with explicit waivers, deterministic plain-INSERT SQL renderer incl. pending hero media, Catalog Release Manifest
+composer), the committed 71-recipe manifest `import/catalog-release.current.json` (`rel-1a047444a3632771`, fingerprint ==
+static), `scripts/recipe-import.mjs` (validate/compile/verify/check; output only beneath `.artifacts/recipe-import/`),
+`pnpm recipe:import:check`. `assessD1Readiness` is now manifest-driven (ALL_RECIPES = 71 rollback baseline; D1 must equal
+the reviewed release: count/IDs/order/legacy-baseline fingerprint/full fingerprint; new codes `RELEASE_MANIFEST_INVALID`,
+`LEGACY_BASELINE_DRIFT`); current 71 readiness unchanged (same fingerprint, READY). Proven on real SQLite replay: 71+6 imported
+⇒ READY while ALL_RECIPES stays 71; extra/missing/drift/reorder/stub ⇒ NOT READY. Scale: 500/2,000/5,000 synthetic compiles
+deterministic (SQL ≈0.78/3.1/7.9 MB). **No 0036, no real recipe, no production/Cloudflare action, authority still static,
+T14F not started.** Gates: lint, typecheck, seed check, import check, `migration-smoke=ok` (35), build, **168 files / 3878
+tests**. ADR-027; design `recipe-catalog/T14E_BULK_RECIPE_IMPORT_FACTORY.md`; handoff `T14E_NEXT_HANDOFF.md`.
+Status `T14E_DEVELOPMENT_COMPLETE` · `T14E_READY_FOR_REVIEW` · `REAL_CATALOG_GROWTH_NOT_STARTED` · `PRODUCTION_ROLLOUT_DEFERRED`
+(PR unmerged; production still `4ed98514…` / D1 0034 / static — operator dispatch pending per `T14CD_PRODUCTION_ROLLOUT_HANDOFF.md`).
+
 ## T14C/T14D OPS — Production D1 Migration workflow merged (main `6910a7b4aee875f061454528daf6b4f0777e7f1a`); production still untouched, awaiting operator dispatch (2026-09-17)
 
 PR #21 merged (normal merge; exact-head validate SUCCESS run 35168563076). Adds `.github/workflows/production-d1-migrate.yml`

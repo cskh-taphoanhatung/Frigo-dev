@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "batchId": "fixture-batch-a",
+  "source": {
+    "sourceType": "curated",
+    "sourceNamespace": "fixture.editorial",
+    "sourceReference": "T14E synthetic fixture batch A (test-only, no real recipes)",
+    "license": "internal-test-fixture",
+    "usageNote": "Synthetic content for factory tests; never promote."
+  },
+  "recipes": [
+    {
+      "sourceRecordId": "rec-002",
+      "batchOrder": 1,
+      "verificationState": "reviewed",
+      "title": "Fixture Tomato Egg Bowl",
+      "description": "A synthetic test recipe: tomatoes and eggs over rice.",
+      "slug": "fixture-tomato-egg-bowl",
+      "cuisine": "chinese",
+      "category": "fixture_bowl",
+      "cookTimeMinutes": 15,
+      "servings": 2,
+      "difficulty": "easy",
+      "ingredients": [
+        { "text": "cà chua", "quantity": 3, "unit": "piece" },
+        { "text": "Chicken egg", "quantity": 4, "unit": "piece" },
+        { "text": "cooking oil", "ingredientId": "COOKING_OIL", "quantity": 15, "unit": "ml" },
+        { "text": "scallion", "ingredientId": "SCALLION", "quantity": 1, "unit": "bunch", "isOptional": true },
+        { "text": "gạo", "ingredientId": "RICE", "quantity": 300, "unit": "g" }
+      ],
+      "steps": [
+        { "stepNumber": 1, "instruction": "Whisk the eggs with a pinch of salt." },
+        { "stepNumber": 2, "instruction": "Stir-fry tomatoes until soft.", "timerMinutes": 4 },
+        { "stepNumber": 3, "instruction": "Fold in the eggs and finish with scallion.", "tip": "Do not overcook." }
+      ],
+      "tags": ["quick", "weeknight", "quick"],
+      "classifications": [
+        { "kind": "meal_type", "tag": "dinner" },
+        { "kind": "method", "tag": "stir_fry" }
+      ]
+    },
+    {
+      "sourceRecordId": "rec-001",
+      "batchOrder": 0,
+      "verificationState": "reviewed",
+      "title": "Fixture Pork Belly Braise",
+      "description": "A synthetic test recipe: slow braised pork belly.",
+      "slug": "fixture-pork-belly-braise",
+      "cuisine": "vietnamese",
+      "category": "mon_kho",
+      "region": "nam",
+      "cookTimeMinutes": 60,
+      "servings": 4,
+      "difficulty": "medium",
+      "imageUrl": "/frigo/illustrations/delicious-meal.png",
+      "nutrition": { "calories": 520, "proteinG": 24, "fatG": 40, "carbG": 6, "evidence": "fixture-nutrition-table v1" },
+      "ingredients": [
+        { "text": "Thịt ba chỉ", "quantity": 500, "unit": "g" },
+        { "text": "fish sauce", "ingredientId": "FISH_SAUCE", "quantity": 30, "unit": "ml" },
+        { "text": "tỏi", "ingredientId": "GARLIC", "quantity": 3, "unit": "piece" }
+      ],
+      "steps": [
+        { "stepNumber": 1, "instruction": "Sear the pork belly." },
+        { "stepNumber": 2, "instruction": "Add fish sauce and garlic; braise gently.", "timerMinutes": 45 }
+      ],
+      "tags": ["braise"]
+    }
+  ]
+}

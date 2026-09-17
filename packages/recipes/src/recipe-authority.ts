@@ -1,8 +1,13 @@
 import { ALL_RECIPES } from './data';
 import type { D1RecipeContentSnapshot } from './catalog-drift';
 import { hydrateRuntimeRecipes, type RuntimeHydrationResult } from './runtime-hydration';
-import { RUNTIME_RECIPE_FIELDS, stableRuntimeJson, toRuntimeRecipe, type RuntimeRecipe } from './runtime-recipe';
+import { canonicalRecipeProjection, fingerprintRecipes, RECIPE_FINGERPRINT_FIELDS } from './catalog-fingerprint';
+import currentCatalogRelease_json from './import/catalog-release.current.json';
+import { parseCatalogReleaseManifest, type CatalogReleaseManifest } from './import/release-manifest';
+import { stableRuntimeJson, toRuntimeRecipe, type RuntimeRecipe } from './runtime-recipe';
 import type { Recipe } from './types';
+
+export { canonicalRecipeProjection, fingerprintRecipes, RECIPE_FINGERPRINT_FIELDS };
 
 /**
  * T14D — Recipe catalog authority (ADR-026).
@@ -36,33 +41,6 @@ export interface RecipeAuthoritySnapshot {
   /** Mirrors how every route resolves recipes today: stable ID first, then slug. */
   findByIdOrSlug(idOrSlug: string): Recipe | null;
   readonly size: number;
-}
-
-/**
- * Fields that define recipe CONTENT identity for cutover parity. This is the full runtime
- * contract; `imageUrl` stays because it is still part of the semantic `Recipe` payload
- * (LEGACY_MEDIA_COMPATIBILITY_ONLY). No `recipe_media`, R2 or timestamp data is ever included.
- */
-export const RECIPE_FINGERPRINT_FIELDS: readonly (keyof RuntimeRecipe)[] = RUNTIME_RECIPE_FIELDS;
-
-/** Canonical projection of an ordered recipe list: array order and object keys are both deterministic. */
-export function canonicalRecipeProjection(recipes: readonly Recipe[]): string {
-  return stableRuntimeJson(recipes.map((recipe) => {
-    const runtime = toRuntimeRecipe(recipe);
-    const projected: Record<string, unknown> = {};
-    for (const field of RECIPE_FINGERPRINT_FIELDS) projected[field] = runtime[field];
-    return projected;
-  }));
-}
-
-async function sha256Hex(text: string): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
-}
-
-/** SHA-256 of {@link canonicalRecipeProjection}; identical input order and content ⇒ identical hash. */
-export async function fingerprintRecipes(recipes: readonly Recipe[]): Promise<string> {
-  return sha256Hex(canonicalRecipeProjection(recipes));
 }
 
 class IndexedRecipeSnapshot implements RecipeAuthoritySnapshot {
@@ -112,21 +90,25 @@ export class StaticRecipeAuthority {
 
 export type RecipeAuthorityReadinessCode =
   | 'D1_READ_FAILED'
+  | 'RELEASE_MANIFEST_INVALID'
   | 'CATALOG_DIAGNOSTICS'
   | 'COUNT_DRIFT'
   | 'ID_DRIFT'
   | 'ORDER_DRIFT'
+  | 'LEGACY_BASELINE_DRIFT'
   | 'FINGERPRINT_DRIFT';
 
 export type RecipeAuthorityReadiness =
-  | { status: 'ready'; source: 'd1'; fingerprint: string; recipeCount: number }
+  | { status: 'ready'; source: 'd1'; fingerprint: string; recipeCount: number; releaseId: string }
   | { status: 'not_ready'; source: 'd1'; code: Exclude<RecipeAuthorityReadinessCode, 'D1_READ_FAILED'>; detail: RecipeAuthorityReadinessDetail }
   | { status: 'error'; source: 'd1'; code: 'D1_READ_FAILED'; error: string };
 
 /** Bounded, PII-free evidence: counts and at most a few recipe IDs / field names. */
 export interface RecipeAuthorityReadinessDetail {
+  releaseId: string | null;
   expectedCount: number;
   actualCount: number;
+  legacyBaselineCount: number;
   hydrationFailureCount: number;
   hydrationFailureSample: Array<{ id: string; code: string }>;
   idDriftSample: string[];
@@ -134,56 +116,90 @@ export interface RecipeAuthorityReadinessDetail {
   fieldDriftSample: Array<{ id: string; fields: string[] }>;
   expectedFingerprint: string;
   actualFingerprint: string | null;
+  legacyBaselineMatch: boolean | null;
+  fingerprintMatch: boolean | null;
 }
 
 const SAMPLE = 5;
 
+let cachedCurrentRelease: CatalogReleaseManifest | null = null;
 /**
- * Strict cutover readiness: the hydrated D1 catalog must be the SAME catalog as the static
- * baseline — count, IDs, order, every runtime field, and therefore fingerprint. Checks are
- * ordered from cheapest/most diagnostic to the final hash so the reason code is specific.
- * T14D is a cutover of authority, not of content; intentional divergence is a later policy.
+ * The reviewed Catalog Release Manifest shipped with this build (`import/catalog-release.current.json`).
+ * Parsed lazily and once; never loaded from a request, D1 row, KV or URL. Today it describes exactly
+ * the 71-recipe static baseline with zero approved import batches.
+ */
+export function currentCatalogRelease(): CatalogReleaseManifest {
+  cachedCurrentRelease ??= parseCatalogReleaseManifest(currentCatalogRelease_json);
+  return cachedCurrentRelease;
+}
+
+/**
+ * Strict, growth-ready D1 readiness (T14D + T14E, ADR-026/ADR-027). The hydrated D1 catalog must be
+ * EXACTLY the reviewed Catalog Release: zero hydration failures, the release's count, its ordered IDs,
+ * the legacy prefix byte-equal to the static baseline (LEGACY_BASELINE_DRIFT protects the 71 rollback
+ * recipes even inside an expanded release) and the full release fingerprint. Checks run from the
+ * cheapest/most diagnostic to the final hash so the reason code is specific. With today's manifest
+ * (71, no batches) this is exactly the T14D "D1 == static" rule.
  */
 export async function assessD1Readiness(
   baseline: RecipeAuthoritySnapshot,
   hydration: RuntimeHydrationResult,
+  release: CatalogReleaseManifest = currentCatalogRelease(),
 ): Promise<{ readiness: RecipeAuthorityReadiness; recipes: RuntimeRecipe[] }> {
-  const expected = baseline.list();
+  const legacy = baseline.list();
   const actual = hydration.recipes;
   const actualFingerprint = await fingerprintRecipes(actual);
   const detail: RecipeAuthorityReadinessDetail = {
-    expectedCount: expected.length, actualCount: actual.length,
+    releaseId: release.releaseId,
+    expectedCount: release.expectedRecipeCount, actualCount: actual.length, legacyBaselineCount: release.legacyBaselineCount,
     hydrationFailureCount: hydration.failures.length,
     hydrationFailureSample: hydration.failures.slice(0, SAMPLE).map((failure) => ({ id: failure.id, code: failure.code })),
     idDriftSample: [], orderDriftSample: [], fieldDriftSample: [],
-    expectedFingerprint: baseline.fingerprint, actualFingerprint,
+    expectedFingerprint: release.expectedRuntimeFingerprint, actualFingerprint,
+    legacyBaselineMatch: null, fingerprintMatch: null,
   };
   const notReady = (code: Exclude<RecipeAuthorityReadinessCode, 'D1_READ_FAILED'>): { readiness: RecipeAuthorityReadiness; recipes: RuntimeRecipe[] } =>
     ({ readiness: { status: 'not_ready', source: 'd1', code, detail }, recipes: actual });
 
+  // The manifest must describe THIS build's static baseline; otherwise the release metadata is stale.
+  if (release.legacyBaselineCount !== legacy.length || release.legacyBaselineFingerprint !== baseline.fingerprint
+    || release.orderedRecipeIds.slice(0, legacy.length).some((id, index) => id !== legacy[index].id)) {
+    return notReady('RELEASE_MANIFEST_INVALID');
+  }
   if (hydration.failures.length > 0) return notReady('CATALOG_DIAGNOSTICS');
-  if (actual.length !== expected.length) return notReady('COUNT_DRIFT');
+  if (actual.length !== release.expectedRecipeCount) return notReady('COUNT_DRIFT');
   const actualIds = new Set(actual.map((recipe) => recipe.id));
-  const expectedIds = new Set(expected.map((recipe) => recipe.id));
-  const missing = expected.filter((recipe) => !actualIds.has(recipe.id)).map((recipe) => recipe.id);
+  const expectedIds = new Set(release.orderedRecipeIds);
+  const missing = release.orderedRecipeIds.filter((id) => !actualIds.has(id));
   const extra = actual.filter((recipe) => !expectedIds.has(recipe.id)).map((recipe) => recipe.id);
   if (missing.length || extra.length) { detail.idDriftSample = [...missing, ...extra].slice(0, SAMPLE); return notReady('ID_DRIFT'); }
   const actualPosition = new Map(actual.map((recipe, index) => [recipe.id, index]));
-  expected.forEach((recipe, index) => {
-    const position = actualPosition.get(recipe.id)!;
-    if (position !== index && detail.orderDriftSample.length < SAMPLE) detail.orderDriftSample.push({ id: recipe.id, expected: index, actual: position });
+  release.orderedRecipeIds.forEach((id, index) => {
+    const position = actualPosition.get(id)!;
+    if (position !== index && detail.orderDriftSample.length < SAMPLE) detail.orderDriftSample.push({ id, expected: index, actual: position });
   });
   if (detail.orderDriftSample.length) return notReady('ORDER_DRIFT');
-  if (actualFingerprint !== baseline.fingerprint) {
-    for (let index = 0; index < expected.length && detail.fieldDriftSample.length < SAMPLE; index += 1) {
-      const left = toRuntimeRecipe(expected[index]);
-      const right = actual[index];
+  // Legacy baseline protection: the first N recipes must be the static rollback baseline, field for field.
+  const legacyPortion = actual.slice(0, legacy.length);
+  const legacyFingerprint = legacy.length === actual.length ? actualFingerprint : await fingerprintRecipes(legacyPortion);
+  detail.legacyBaselineMatch = legacyFingerprint === baseline.fingerprint;
+  if (!detail.legacyBaselineMatch) {
+    for (let index = 0; index < legacy.length && detail.fieldDriftSample.length < SAMPLE; index += 1) {
+      const left = toRuntimeRecipe(legacy[index]);
+      const right = legacyPortion[index];
       const fields = RECIPE_FINGERPRINT_FIELDS.filter((field) => stableRuntimeJson(left[field]) !== stableRuntimeJson(right[field]));
       if (fields.length) detail.fieldDriftSample.push({ id: left.id, fields: [...fields] });
     }
+    return notReady('LEGACY_BASELINE_DRIFT');
+  }
+  detail.fingerprintMatch = actualFingerprint === release.expectedRuntimeFingerprint;
+  // Imported recipes are certified by the release fingerprint alone (the manifest carries no field
+  // values), so drift there is reported by ID sample only.
+  if (!detail.fingerprintMatch) {
+    detail.idDriftSample = release.orderedRecipeIds.slice(legacy.length, legacy.length + SAMPLE);
     return notReady('FINGERPRINT_DRIFT');
   }
-  return { readiness: { status: 'ready', source: 'd1', fingerprint: actualFingerprint, recipeCount: actual.length }, recipes: actual };
+  return { readiness: { status: 'ready', source: 'd1', fingerprint: actualFingerprint, recipeCount: actual.length, releaseId: release.releaseId }, recipes: actual };
 }
 
 export type D1RecipeAuthorityLoad =
@@ -201,6 +217,8 @@ export class D1RecipeAuthority {
     private readonly readSnapshot: () => Promise<D1RecipeContentSnapshot>,
     private readonly baseline: StaticRecipeAuthority,
     private readonly now: () => number = () => Date.now(),
+    /** Reviewed release expectation; defaults to the manifest shipped with this build. */
+    private readonly release: () => CatalogReleaseManifest = currentCatalogRelease,
   ) {}
 
   async load(): Promise<D1RecipeAuthorityLoad> {
@@ -211,9 +229,15 @@ export class D1RecipeAuthority {
       return { status: 'error', snapshot: null, readiness: { status: 'error', source: 'd1', code: 'D1_READ_FAILED', error: error instanceof Error ? error.name : 'unknown' } };
     }
     const baseline = await this.baseline.load();
-    const { readiness, recipes } = await assessD1Readiness(baseline, hydrateRuntimeRecipes(content));
+    let release: CatalogReleaseManifest;
+    try {
+      release = this.release();
+    } catch (error) {
+      return { status: 'error', snapshot: null, readiness: { status: 'error', source: 'd1', code: 'D1_READ_FAILED', error: error instanceof Error ? `release manifest: ${error.name}` : 'release manifest' } };
+    }
+    const { readiness, recipes } = await assessD1Readiness(baseline, hydrateRuntimeRecipes(content), release);
     if (readiness.status !== 'ready') return { status: readiness.status, snapshot: null, readiness };
-    // Hydrated recipes are already RuntimeRecipe-validated; the fingerprint equals the baseline's by construction.
+    // Hydrated recipes are already RuntimeRecipe-validated; the fingerprint equals the release's by construction.
     return { status: 'ready', snapshot: new IndexedRecipeSnapshot('d1', recipes, readiness.fingerprint, this.now()), readiness };
   }
 }
