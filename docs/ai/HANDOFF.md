@@ -1,5 +1,26 @@
 # Frigo / Takosan current handoff — 2026-09-17
 
+## Current T14F takeover — T14F_PILOT_BLOCKED (supersedes the historical handoffs below)
+
+- Recovery: exact `aa7ca6a…` on `hoplite/massalia-c2862d7c`; repository ID 1368281478,
+  current name `frigo-4/Frigo-dev`; main remains certified `f0c229f2…`. PR #25 draft/unmerged.
+- Forward fix `486409c5155fde337380a5ff5f912c709226da96`: recipe timestamp exclusion with all
+  deterministic columns/regression controls; focused 21/21 PASS twice; no data/migration changes.
+- Pilot: reviewed 30 + legacy 71 = 101 READY locally; static/shadow 71, canary 71/101, D1 101;
+  complete 101, order 0..100, reader 5 statements; imported HTTP flows PASS.
+- Executed seed/import/typecheck/lint/migration smoke/build/diff PASS. Full `pnpm test` FAIL:
+  170/171 files, 3908/3910 tests pass. Routing suite alone FAIL 5/7 at lines 114 and 247;
+  0035/71 fixture uses shipped 101 manifest ⇒ COUNT_DRIFT fallback, D1 counter 0, no D1 cache.
+- Stop honored: no additional code fix, ingredient preflight, Batch B, 0037 or 500 manifest.
+  No production write/deploy/authority activation, no media population, no T14G.
+- Next: resume legacy test-local fixture/release alignment without weakening readiness or
+  selection/cache checks; rerun all pilot gates before ingredient preflight. Exact recovery,
+  commands, hashes, QA and bundle evidence: `recipe-catalog/T14F_NEXT_HANDOFF.md`,
+  `T14F_REAL_CATALOG_GROWTH.md`, `T14F_CATALOG_QUALITY_REPORT.md`.
+  Pre-existing `.hoplite/settings.json` delta preserved and intentionally not committed.
+
+## Historical handoffs (not current T14F status)
+
 ## Current handoff — T14F WIP SAFE STOP on `feat/t14f-recipe-catalog-500`; pilot 30 compiled + 0036 promoted; ONE focused test failing; Batch B not started (2026-09-17)
 
 - **Implementation state:** uncommitted T14F pilot WIP checkpointed and pushed on

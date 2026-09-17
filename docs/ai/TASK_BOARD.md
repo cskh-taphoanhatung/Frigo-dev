@@ -1,5 +1,20 @@
 # Frigo / Takosan current task board — 2026-09-17
 
+## Current T14F takeover — PILOT_BLOCKED (supersedes historical entries below)
+
+- [done] Exact recovery `aa7ca6a…`, repository ID 1368281478, main unchanged; PR #25 draft/unmerged.
+- [done] Timestamp test fix `486409c…`; focused 21/21 twice; independent review non-blocking.
+  Pilot 30 / manifest 101 / static 71 / 0036 unchanged; complete 101, order 0..100, 5 statements.
+- [done] Seed/import/typecheck/lint/migration smoke/build/diff checks PASS; QA and bundle accounting.
+- [blocked] Full `pnpm test`: 170/171 files and 3908/3910 tests pass. Routing suite alone 5/7:
+  lines 114/247 expose historical 71 fixture versus shipped 101 manifest (COUNT_DRIFT/no D1 cache).
+- [next] Resume test-local legacy fixture/release alignment, retain selection/cache assertions,
+  rerun all pilot gates. Exact instructions: `recipe-catalog/T14F_NEXT_HANDOFF.md`.
+- [not started] Ingredient preflight, Batch B 399, 0037, final 500 release. No additional code fix
+  after failed gate. PR draft/unmerged; no production/media/T14G action.
+
+## Historical entries (not current T14F status)
+
 ## T14F — WIP safe stop — 2026-09-17 (branch `feat/t14f-recipe-catalog-500`, unpushed→pushed checkpoint; pilot NOT certified)
 
 - [done] Pilot 30 (`t14f-pilot-30-v1`) authored, reviewed, T14E-compiled; `0036` promoted byte-identical;

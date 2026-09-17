@@ -1,5 +1,29 @@
 # T14F — WIP HANDOFF (SAFE STOP)
 
+## Superseding takeover checkpoint — 2026-09-17
+
+**Current status: T14F_PILOT_BLOCKED; T14F_SCALE_NOT_STARTED.** The historical
+safe-stop record below is retained, not the current recovery procedure. Read
+`T14F_NEXT_HANDOFF.md` and `T14F_REAL_CATALOG_GROWTH.md` first for continuation.
+
+Recovered exact `aa7ca6ae426eb784cf5d1e9d04f753c04074a23f` on
+`hoplite/massalia-c2862d7c`; repository ID 1368281478 now resolves to
+`frigo-4/Frigo-dev`. PR #25 is draft/open/unmerged, with auto-fix subscribed.
+Forward fix `486409c5155fde337380a5ff5f912c709226da96` diagnoses and removes only
+`recipes.created_at` from independent-replay equality (all semantic fields remain).
+Focused suites pass 21/21 twice. Pilot source/manifest and 0001–0036 remain unchanged.
+
+Full gates were executed: seed/import/typecheck/lint/migration smoke/build PASS;
+`pnpm test` FAIL (170/171 files, 3908/3910 tests pass). The two additional failures
+are `recipe-authority-routing.test.ts:114,247`: the historical 71-recipe fixture
+is rejected by the shipped 101 manifest, causing static fallback and no D1 cache.
+Both reproduce alone. The user's failed-gate stop was honored: no further code
+fix, ingredient preflight, Batch B, or 0037. See the next handoff for exact commands.
+
+---
+
+## Historical original safe-stop record (superseded above)
+
 Status: **T14F_SAFE_STOPPED_PILOT_WIP** — pilot batch is compiled and promoted, but pilot
 certification has one known failing focused test and the full T14F gates were NOT run.
 Batch B (scale, 399) has NOT been started. This file was created by the safe-stop

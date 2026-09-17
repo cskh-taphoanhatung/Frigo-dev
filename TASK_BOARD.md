@@ -1,4 +1,16 @@
-## T14F — WIP SAFE STOP — 2026-09-17 (branch `feat/t14f-recipe-catalog-500`; pilot NOT certified; unmerged, unPR'd)
+## Current T14F takeover — PILOT_BLOCKED — 2026-09-17
+
+- Exact recovery `aa7ca6a…` on `hoplite/massalia-c2862d7c`; PR #25 remains draft/unmerged.
+- Forward timestamp-comparison fix `486409c…`; focused 21/21 PASS twice. Pilot/0036 unchanged;
+  manifest `rel-193ac2b16c64a260` 101/1 batch; static 71; complete 101; order 0..100; reader 5 statements.
+- Seed/import/typecheck/lint/migration smoke/build/diff PASS; QA and Worker bundle accounting completed.
+- Full `pnpm test` FAIL: 170/171 files, 3908/3910 tests pass. `recipe-authority-routing.test.ts:114,247`
+  fails alone too (5/7): 0035/71 fixture + shipped 101 manifest ⇒ static COUNT_DRIFT fallback/no D1 cache.
+- Stop honored: no further code fix, ingredient preflight, Batch B, 0037 or 500 manifest.
+  Next: resume test-local fixture/release alignment, preserve selection/cache checks, rerun pilot gates.
+- Exact handoff: `docs/ai/recipe-catalog/T14F_NEXT_HANDOFF.md`. No production/media/T14G action; no merge.
+
+## Historical T14F — WIP SAFE STOP — 2026-09-17 (superseded by takeover above)
 
 - Pilot batch `t14f-pilot-30-v1`: 30 original recipes authored + reviewed + compiled via T14E (30/30
   publishable, 0 duplicates, 0 unresolved ingredients); `0036_recipe_catalog_pilot.sql` promoted

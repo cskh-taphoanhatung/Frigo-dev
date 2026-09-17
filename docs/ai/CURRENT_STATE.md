@@ -1,5 +1,26 @@
 # Frigo / Takosan current authority — 2026-09-17
 
+## Current T14F takeover — T14F_PILOT_BLOCKED (supersedes the historical checkpoints below)
+
+Recovered exact `aa7ca6ae426eb784cf5d1e9d04f753c04074a23f` on `hoplite/massalia-c2862d7c`;
+repository ID 1368281478 = `frigo-4/Frigo-dev`; main unchanged at `f0c229f2e2b134904a8c0e355479394cbf53c954`.
+PR #25 draft/open/unmerged, auto-fix subscribed. Forward fix `486409c5155fde337380a5ff5f912c709226da96`
+compares all deterministic recipe columns; the exact replay diff contained only wall-clock timestamps.
+Focused growth suites PASS 21/21 twice. Pilot source/review/manifest and 0001–0036 unchanged by takeover.
+Release `rel-193ac2b16c64a260` / 101 recipes / 1 batch; static 71; complete 101; order 0..100.
+
+Executed `pnpm recipe:seed:check`, `pnpm recipe:import:check`, `pnpm typecheck`, `pnpm lint`,
+`pnpm check:migrations`, `pnpm build`, `git diff --check`: PASS. Full `pnpm test`: **FAIL**,
+170/171 files and 3908/3910 tests pass. `recipe-authority-routing.test.ts:114,247` also fails alone
+(5/7 pass): historical 0035/71 fixture + shipped 101 manifest ⇒ COUNT_DRIFT/static fallback/no D1 cache.
+Per failed-gate stop: no additional code fix, ingredient preflight, Batch B or 0037.
+QA report and local Worker bundle accounting completed; no production/media/T14G action.
+Next: resume test-local legacy fixture/release alignment, preserve selection/cache checks, rerun all
+pilot gates before scale preflight. Exact evidence: `recipe-catalog/T14F_NEXT_HANDOFF.md` and
+`T14F_REAL_CATALOG_GROWTH.md`. Pre-existing `.hoplite/settings.json` delta remains uncommitted.
+
+## Historical checkpoints (not current T14F status)
+
 ## T14F — WIP SAFE STOP on branch `feat/t14f-recipe-catalog-500`; pilot compiled + promoted; NOT certified; Batch B not started (2026-09-17)
 
 Safe-stop checkpoint per `docs/ai/recipe-catalog/T14F_WIP_HANDOFF.md`. Pilot batch `t14f-pilot-30-v1`
