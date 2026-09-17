@@ -1,5 +1,16 @@
 # Frigo Project Status
 
+## T14E — Bulk Recipe Import Factory: MERGED to main `f7a55408…`, main certified, rollout deferred (2026-09-17)
+
+PR #23 (remediated head `ba1a45d4…`, original reviewed head `7b4edcc8…` kept in ancestry) merged by normal merge commit
+`f7a5540841db27be31cdab9e0c2010cd92bc3861`; exact-head main CI validate SUCCESS (run 35182568280); fresh local certification on
+the exact merge SHA: 169 files / 3889 tests, focused T14E 88, regression 435; seed/import/typecheck/lint/migration-smoke/build/diff
+all green. Current release still `rel-1a047444a3632771` (71 recipes, 0 batches). Migrations 35 / 0035 / no 0036. Status
+`T14E_DEVELOPMENT_COMPLETE` · `T14E_MAIN_CERTIFIED` · `REAL_CATALOG_GROWTH_NOT_STARTED` · `PRODUCTION_ROLLOUT_DEFERRED` ·
+`T14F_NOT_STARTED`. Not `T14E_PRODUCTION_COMPLETE`. Production remains `4ed98514…` / D1 0034 / static (operator dispatch pending).
+Receipt: `docs/ai/recipe-catalog/T14E_MERGE_RECEIPT.md`; T14F base and prerequisites: `docs/ai/recipe-catalog/T14E_NEXT_HANDOFF.md`
+(`T14E_FINAL_CANONICAL_MAIN` = merge SHA of the docs-closure PR carrying these files).
+
 ## T14E remediation complete — PR #23 ready for re-review (2026-09-17)
 
 Independent review blockers closed on the feature branch: nutrition evidence is preserved end-to-end and persisted as ADR-004

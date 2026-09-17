@@ -1,3 +1,9 @@
+## T14E — BULK RECIPE IMPORT FACTORY — 2026-09-17 (MERGED main f7a55408…; main certified; NOT deployed; T14F not started)
+
+- PR #23 merged (normal merge, remediated head `ba1a45d4…`); main CI green; 169/3889; app tree preserved. Release still
+  `rel-1a047444a3632771` 71/0; 35 migrations / no 0036; no real recipes. Production still `4ed98514…` / 0034 / static.
+  Receipt `docs/ai/recipe-catalog/T14E_MERGE_RECEIPT.md`; T14F only from `T14E_FINAL_CANONICAL_MAIN` per `T14E_NEXT_HANDOFF.md`.
+
 ## T14E — REMEDIATION — 2026-09-17 (review P1/P2/P3 closed; PR #23 ready for re-review, unmerged)
 
 - Nutrition evidence preserved end-to-end (ADR-004 `nutrition_profiles` persistence), immutable batch hash covers all reviewed

@@ -1,5 +1,28 @@
 # Frigo / Takosan current handoff — 2026-09-17
 
+## Current handoff — T14E MERGED to main `f7a55408…`; main certified; production untouched; T14F not started (2026-09-17)
+
+- **Implementation state:** PR #23 (`hoplite/syrakousai-f7b7c8a0-…-t14e-bulk-recipe-import-factory`, remediated head
+  `ba1a45d43f2f4b85d4f7500eba36fe094a7d3655`, original reviewed head `7b4edcc8…` as ancestor) merged by normal merge commit
+  `f7a5540841db27be31cdab9e0c2010cd92bc3861` onto `9ff57199…`. Main contains exactly the reviewed tree (diff PR head → main = 0).
+  Merged: `packages/recipes/src/import/*` + `catalog-release.current.json` (`rel-1a047444a3632771`, 71/0), `catalog-fingerprint.ts`,
+  manifest-driven `recipe-authority.ts`, `scripts/recipe-import*.mjs`, `pnpm recipe:import:check`, tests, ADR-027, docs.
+  Migrations 35 / tip 0035 / no 0036; protected paths (`migrations/`, `.github/`, wrangler, `src/`, `packages/db|domain|ai`) diff = 0.
+- **Executed checks (fresh, exact `f7a55408…`):** `pnpm install --frozen-lockfile`; `recipe:seed:check` ok ×3; `recipe:import:check`
+  ok (`rel-1a047444a3632771`, 71, 0); `typecheck` 0 errors; `lint` PASS; `check:migrations` `migration-smoke=ok`; `build` PASS;
+  `pnpm test` **169 files / 3889 tests PASS**; focused T14E 6 files / 88; regression 15 files / 275 (authority modes, catalog safety,
+  D1 parity, engine/candidates, planner, cooking, media, Inventory Truth) + 7 files / 160 (ranking ties, meal-planning http/persistence/
+  snapshot, week core flow); `git diff --check` clean; working tree clean. Hosted: PR validate 35179141504 SUCCESS; main validate
+  35182568280 / job 105077715190 SUCCESS; incidental staging Deploy 35182789974 SUCCESS (production job skipped).
+  Scale (50 % evidence-backed): 500 → 826,455 B; 2,000 → 3,326,028 B; 5,000 → 8,322,981 B SQL.
+- **Not done — by design:** 0036, real recipe growth, media population, production D1/R2/deploy, Cloudflare vars/secrets, authority
+  activation (production stays `static`), T14F. Production still `4ed98514…` / D1 0034 / static — `PENDING_OPERATOR` dispatch per
+  `recipe-catalog/T14CD_PRODUCTION_ROLLOUT_HANDOFF.md`.
+- **Next action:** merge the docs-only closure PR (this file, `T14E_MERGE_RECEIPT.md`, `T14E_NEXT_HANDOFF.md`, state docs) → freeze
+  `T14E_FINAL_CANONICAL_MAIN` = its merge SHA (exact-head validate SUCCESS required) → T14F only from that SHA per
+  `recipe-catalog/T14E_NEXT_HANDOFF.md` §4–§7 (authorized dataset, validation, ingredient/duplicate/provenance review, deterministic
+  compile, chunking decision, promotion, manifest update, SQLite replay, parity, independent review).
+
 ## Current handoff — T14E remediation (P1/P2/P3) on the feature branch; PR #23 unmerged, awaiting re-review (2026-09-17)
 
 - **Implementation state:** forward commit after `7b4edcc8…`. `packages/recipes/src/import/{types,schema,normalize,compiler,
