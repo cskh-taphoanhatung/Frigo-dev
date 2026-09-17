@@ -168,70 +168,69 @@ required_columns(table_name, column_name) AS (
     ,('recipe_media', 'storage_key')
     ,('recipe_media', 'content_hash')
 ),
-required_indexes(name) AS (
+-- Indexes and triggers share one sqlite_master lookup: D1 (workerd) caps compound SELECTs at
+-- 5 terms (SQLITE_LIMIT_COMPOUND_SELECT), so the gate must stay at five UNION ALL branches.
+required_schema_objects(type, name) AS (
   VALUES
     -- T14C (0035): at most one current-ready version per recipe/role; bounded bulk lookups.
-    ('idx_recipe_media_current_ready'),
-    ('idx_recipe_media_recipe_role_status'),
-    ('idx_recipe_media_content_hash')
-),
-required_triggers(name) AS (
-  VALUES
-    ('trg_meal_plans_household_immutable'),
+    ('index', 'idx_recipe_media_current_ready'),
+    ('index', 'idx_recipe_media_recipe_role_status'),
+    ('index', 'idx_recipe_media_content_hash'),
+    ('trigger', 'trg_meal_plans_household_immutable'),
     -- T14C (0035): ready media versions are immutable.
-    ('trg_recipe_media_ready_immutable_update'),
+    ('trigger', 'trg_recipe_media_ready_immutable_update'),
     -- T13 (0031): CONFIRMED review state and is_confirmed must stay one fact.
-    ('trg_scan_items_review_state_insert'),
-    ('trg_scan_items_review_state_update'),
+    ('trigger', 'trg_scan_items_review_state_insert'),
+    ('trigger', 'trg_scan_items_review_state_update'),
     -- T13R-A (0032): reviewed expiry kind/date pairing is fail-closed.
-    ('trg_scan_items_reviewed_expiry_insert'),
-    ('trg_scan_items_reviewed_expiry_update'),
-    ('trg_inventory_commands_immutable_update'),
-    ('trg_inventory_commands_immutable_insert'),
-    ('trg_inventory_commands_immutable_delete'),
-    ('trg_inventory_lots_live_insert'),
-    ('trg_inventory_lots_no_live_replace'),
-    ('trg_inventory_lots_backfill_after_live'),
-    ('trg_inventory_lots_live_update'),
-    ('trg_inventory_lots_live_delete'),
-    ('trg_inventory_items_projection_owner'),
-    ('trg_inventory_items_projection_replace'),
-    ('trg_inventory_events_command_insert'),
-    ('trg_inventory_events_command_authority_insert'),
-    ('trg_inventory_events_command_poststate_insert'),
-    ('trg_inventory_commands_fefo_authority_insert'),
-    ('trg_inventory_commands_fefo_envelope_insert'),
-    ('trg_inventory_events_command_fefo_authority_insert'),
-    ('trg_inventory_observations_immutable_update'),
-    ('trg_inventory_observations_immutable_delete'),
-    ('trg_inventory_observations_lot_household_insert'),
-    ('trg_inventory_observations_lot_household_update'),
-    ('trg_inventory_observations_projection_household_insert'),
-    ('trg_inventory_reconciliation_decisions_observation_guard'),
-    ('trg_inventory_reconciliation_decisions_immutable_update'),
-    ('trg_inventory_reconciliation_decisions_immutable_delete'),
-    ('trg_inventory_events_command_update'),
-    ('trg_inventory_events_command_replace'),
-    ('trg_inventory_events_command_delete'),
-    ('trg_inventory_items_revision_insert'),
-    ('trg_inventory_items_revision_update'),
-    ('trg_inventory_items_revision_delete'),
-    ('trg_inventory_lots_revision_insert'),
-    ('trg_inventory_lots_revision_update'),
-    ('trg_inventory_lots_revision_delete'),
-    ('trg_storage_locations_revision_insert'),
-    ('trg_storage_locations_revision_update'),
-    ('trg_storage_locations_revision_delete'),
-    ('trg_ingredients_canonical_id_insert'),
-    ('trg_ingredients_canonical_id_update'),
-    ('trg_recipe_nutrition_version_insert'),
-    ('trg_recipe_nutrition_version_update'),
-    ('trg_recipes_nutrition_version_insert'),
-    ('trg_recipes_nutrition_version_update'),
-    ('trg_recipes_source_reference_insert'),
-    ('trg_recipes_source_reference_update'),
-    ('trg_recipe_families_source_reference_insert'),
-    ('trg_recipe_families_source_reference_update')
+    ('trigger', 'trg_scan_items_reviewed_expiry_insert'),
+    ('trigger', 'trg_scan_items_reviewed_expiry_update'),
+    ('trigger', 'trg_inventory_commands_immutable_update'),
+    ('trigger', 'trg_inventory_commands_immutable_insert'),
+    ('trigger', 'trg_inventory_commands_immutable_delete'),
+    ('trigger', 'trg_inventory_lots_live_insert'),
+    ('trigger', 'trg_inventory_lots_no_live_replace'),
+    ('trigger', 'trg_inventory_lots_backfill_after_live'),
+    ('trigger', 'trg_inventory_lots_live_update'),
+    ('trigger', 'trg_inventory_lots_live_delete'),
+    ('trigger', 'trg_inventory_items_projection_owner'),
+    ('trigger', 'trg_inventory_items_projection_replace'),
+    ('trigger', 'trg_inventory_events_command_insert'),
+    ('trigger', 'trg_inventory_events_command_authority_insert'),
+    ('trigger', 'trg_inventory_events_command_poststate_insert'),
+    ('trigger', 'trg_inventory_commands_fefo_authority_insert'),
+    ('trigger', 'trg_inventory_commands_fefo_envelope_insert'),
+    ('trigger', 'trg_inventory_events_command_fefo_authority_insert'),
+    ('trigger', 'trg_inventory_observations_immutable_update'),
+    ('trigger', 'trg_inventory_observations_immutable_delete'),
+    ('trigger', 'trg_inventory_observations_lot_household_insert'),
+    ('trigger', 'trg_inventory_observations_lot_household_update'),
+    ('trigger', 'trg_inventory_observations_projection_household_insert'),
+    ('trigger', 'trg_inventory_reconciliation_decisions_observation_guard'),
+    ('trigger', 'trg_inventory_reconciliation_decisions_immutable_update'),
+    ('trigger', 'trg_inventory_reconciliation_decisions_immutable_delete'),
+    ('trigger', 'trg_inventory_events_command_update'),
+    ('trigger', 'trg_inventory_events_command_replace'),
+    ('trigger', 'trg_inventory_events_command_delete'),
+    ('trigger', 'trg_inventory_items_revision_insert'),
+    ('trigger', 'trg_inventory_items_revision_update'),
+    ('trigger', 'trg_inventory_items_revision_delete'),
+    ('trigger', 'trg_inventory_lots_revision_insert'),
+    ('trigger', 'trg_inventory_lots_revision_update'),
+    ('trigger', 'trg_inventory_lots_revision_delete'),
+    ('trigger', 'trg_storage_locations_revision_insert'),
+    ('trigger', 'trg_storage_locations_revision_update'),
+    ('trigger', 'trg_storage_locations_revision_delete'),
+    ('trigger', 'trg_ingredients_canonical_id_insert'),
+    ('trigger', 'trg_ingredients_canonical_id_update'),
+    ('trigger', 'trg_recipe_nutrition_version_insert'),
+    ('trigger', 'trg_recipe_nutrition_version_update'),
+    ('trigger', 'trg_recipes_nutrition_version_insert'),
+    ('trigger', 'trg_recipes_nutrition_version_update'),
+    ('trigger', 'trg_recipes_source_reference_insert'),
+    ('trigger', 'trg_recipes_source_reference_update'),
+    ('trigger', 'trg_recipe_families_source_reference_insert'),
+    ('trigger', 'trg_recipe_families_source_reference_update')
 )
 SELECT 'missing_migration' AS issue, migration.name AS detail
 FROM required_migrations migration
@@ -255,18 +254,11 @@ WHERE NOT EXISTS (
   WHERE column_info.name = required.column_name
 )
 UNION ALL
-SELECT 'missing_index', required.name
-FROM required_indexes required
+SELECT 'missing_' || required.type, required.name
+FROM required_schema_objects required
 WHERE NOT EXISTS (
   SELECT 1 FROM sqlite_master
-  WHERE type = 'index' AND name = required.name
-)
-UNION ALL
-SELECT 'missing_trigger', required.name
-FROM required_triggers required
-WHERE NOT EXISTS (
-  SELECT 1 FROM sqlite_master
-  WHERE type = 'trigger' AND name = required.name
+  WHERE type = required.type AND name = required.name
 )
 UNION ALL
 SELECT 'foreign_key_violation',

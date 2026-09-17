@@ -22,6 +22,12 @@ D1_DATABASE=frigo-staging pnpm schema:check:remote
 A failed gate is a release blocker. Export/backup the target, reconcile its
 migration history and schema, then rerun the gate before any apply or deploy.
 
+The gate is a single statement. Cloudflare D1 (workerd) caps compound SELECTs
+at five terms (`SQLITE_LIMIT_COMPOUND_SELECT`), so `scripts/d1-schema-gate.sql`
+must keep exactly five `UNION ALL` branches: migrations, tables, columns,
+indexes+triggers (one `required_schema_objects(type, name)` list) and foreign
+keys. Add new requirements to those lists; never add a sixth branch.
+
 For the complete production release gate, run:
 
 ```bash
