@@ -1,5 +1,14 @@
 # Frigo Project Status
 
+## T14C/T14D OPS — Production D1 Migration workflow merged to main `6910a7b4…`; production rollout awaiting operator dispatch (2026-09-17)
+
+PR #21 adds a manual, fail-closed `Production D1 Migration` workflow (production Environment approval, exact-SHA gate, Cloudflare/D1
+identity, Time Travel bookmark, counts-only baseline, exact single-migration plan, post-apply verification, sanitized receipt) and fixes
+the D1 schema gate to five compound-SELECT terms (hosted D1 limit; the T14C gate would have failed every production deploy). Application
+code unchanged. Production remains Worker `4ed98514…` / D1 0034 / recipe authority static. Hoplite cannot dispatch `workflow_dispatch`
+workflows; the operator runs the migration and then the production Deploy with the inputs in
+`docs/ai/recipe-catalog/T14CD_PRODUCTION_ROLLOUT_HANDOFF.md`. Status `OPS_WORKFLOW_MERGED` · `AWAITING_OPERATOR_WORKFLOW_DISPATCH`.
+
 ## T14D — Recipe Catalog Authority Cutover: merged to main `bb504cce…`, main certified, rollout deferred (2026-09-16)
 
 PR #19 merged by normal merge commit; exact-head main CI SUCCESS; 163 files / 3801 tests. `T14D_DEVELOPMENT_COMPLETE` ·

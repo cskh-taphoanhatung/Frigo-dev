@@ -1,4 +1,13 @@
-# Frigo / Takosan current task board — 2026-09-15
+# Frigo / Takosan current task board — 2026-09-17
+
+## T14C/T14D OPS — Production D1 Migration workflow — 2026-09-17 (MERGED main 6910a7b4…; production NOT yet mutated)
+
+- [done] PR #21: `production-d1-migrate.yml` (manual, fail-closed, production Environment) + `d1-migration-check.mjs` (+17 tests);
+  schema gate reduced to 5 compound terms (D1 limit); docs. Exact-head validate SUCCESS (35168563076). App tree unchanged.
+- [done] local rehearsal of the full migration path on a fresh local D1 (0034→0035: 71/71/0, FK [], quick_check ok, drift none, gate PASS).
+- [blocked — dispatch] operator must dispatch `Production D1 Migration` (ref 6910a7b4…, pre 0034, 0035, confirm=true) then
+  `Deploy` production (ref 6910a7b4…, hardened bb504cce…, confirm_production=true). Inputs: `recipe-catalog/T14CD_PRODUCTION_ROLLOUT_HANDOFF.md`.
+- [not started] shadow/canary/d1 activation; media population; T14E.
 
 ## T14D — Recipe Catalog Authority Cutover — 2026-09-16 (MERGED main bb504cce…; T14D_MAIN_CERTIFIED; rollout DEFERRED)
 

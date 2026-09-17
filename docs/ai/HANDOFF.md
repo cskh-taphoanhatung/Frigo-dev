@@ -1,4 +1,28 @@
-# Frigo / Takosan current handoff — 2026-09-16
+# Frigo / Takosan current handoff — 2026-09-17
+
+## Current handoff — T14C/T14D OPS workflow merged (main 6910a7b4…); production D1/Worker untouched; operator dispatch required (2026-09-17)
+
+- **Implementation state:** OPS-only. `.github/workflows/production-d1-migrate.yml`, `scripts/d1-migration-check.mjs`,
+  `tests/unit/d1-migration-check.test.mjs`, `scripts/d1-schema-gate.sql` (5-branch), `DEPLOYMENT.md`, `docs/D1_SCHEMA_GATE.md`
+  via PR #21 → `6910a7b4aee875f061454528daf6b4f0777e7f1a`. `deploy.yml`, migrations 0001–0035, `src/`, `packages/`, wrangler
+  configs unchanged. Production Worker `4ed98514…`, production D1 expected tip 0034 (not read this session), recipe mode static.
+- **Executed checks:** `pnpm lint`, `pnpm typecheck`, `pnpm check:migrations` (`migration-smoke=ok`), `pnpm build`, `pnpm test`
+  **164 files / 3818 tests PASS**; real-repo candidate gate dry run at `ed34c6b9…` (35 migrations, tip 0035, 34 pins, `ref=main`
+  rejected); full local-D1 rehearsal 0034→0035 (pre-ledger 34/apply, baseline 71/59/12 · 385/341/71/385, plan exactly 0035, post
+  35/0035, `recipe_media` 71/71/0, FK `[]`, `quick_check ok`, drift none, schema gate PASS; certify mode with empty plan OK);
+  schema-gate negative test (missing index + trigger → exit 1); 6-term gate reproduces `too many terms in compound SELECT` on local D1;
+  hosted validate SUCCESS on PR head `2c39e484…` (35168307081) and on main `6910a7b4…` (35168563076); auto staging Deploy
+  35168741683 SUCCESS with readiness `commit=6910a7b4…`; read-only prod probes (ready `4ed98514…`, recipes 71/59/12, media route 401
+  on old Worker).
+- **Not executed:** production ledger read, Time Travel bookmark, 0035 apply, production deploy, post-deploy smoke — all require the
+  GitHub Actions production Environment, which needs a `workflow_dispatch` the Hoplite toolset cannot issue (sandbox `gh`
+  unauthenticated; API 401). Reported as missing tooling.
+- **Limitations:** `PRAGMA integrity_check` unsupported on hosted D1 (workflow uses `quick_check` + FK); `d1 info` may need extra
+  token scope (workflow falls back to `d1 list` identity and warns); `CONFIG_PLUS_GRANT_SECRET_MISSING` pre-existing; Wrangler 3.114.17.
+- **Next action:** operator dispatches `Production D1 Migration` (ref `6910a7b4…`, `0034_global_recipe_catalog_parity.sql`,
+  `0035_recipe_media_layer.sql`, confirm=true) and approves the production Environment; on PASS dispatch `Deploy`
+  (production, ref `6910a7b4…`, hardened `bb504cce…`, confirm_production=true); then smoke + write `T14C_FINAL_COMPLETION.md` /
+  `T14D_PRODUCTION_DEPLOY_RECEIPT.md` per `recipe-catalog/T14CD_PRODUCTION_ROLLOUT_HANDOFF.md`. Do NOT set `RECIPE_CATALOG_MODE`.
 
 ## Current handoff — T14D merged and certified on main (bb504cce…); production rollout deferred to OPS
 

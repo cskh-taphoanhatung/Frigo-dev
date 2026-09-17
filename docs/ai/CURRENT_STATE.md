@@ -1,4 +1,19 @@
-# Frigo / Takosan current authority — 2026-09-15
+# Frigo / Takosan current authority — 2026-09-17
+
+## T14C/T14D OPS — Production D1 Migration workflow merged (main `6910a7b4aee875f061454528daf6b4f0777e7f1a`); production still untouched, awaiting operator dispatch (2026-09-17)
+
+PR #21 merged (normal merge; exact-head validate SUCCESS run 35168563076). Adds `.github/workflows/production-d1-migrate.yml`
+(`workflow_dispatch` only; `environment: production`; exact-SHA + pinned-history + hosted-CI gate; Cloudflare/D1 identity
+`frigo-db` / `f975ec39-…`; ledger apply-vs-certify classification; D1 Time Travel bookmark; counts-only baseline; plan must be
+exactly one migration; post-apply ledger/FK/quick_check/drift/`recipe_media` seed + schema gate; sanitized receipt only) with
+`scripts/d1-migration-check.mjs` (17 unit tests). Fixes `scripts/d1-schema-gate.sql` to 5 `UNION ALL` branches — hosted D1
+caps compound SELECTs at 5, so the 6-branch T14C gate would have failed every production pre-deploy gate. Application tree
+unchanged vs `ed34c6b9…`. **Production unchanged:** Worker `4ed98514…`, D1 tip 0034 (0035 pending), recipe authority static.
+Staging auto-deploy 35168741683 serves `6910a7b4…` (exact-SHA receipt SUCCESS; media hero sources 59 legacy_external /
+12 legacy_static / 0 canonical_r2). Blocker: Hoplite cannot dispatch `workflow_dispatch` workflows and the sandbox has no
+GitHub/Cloudflare credential — an operator must run the two dispatches with the exact inputs in
+`recipe-catalog/T14CD_PRODUCTION_ROLLOUT_HANDOFF.md`. `DEPLOY_SHA=6910a7b4…`, `hardened_sha=bb504cce…`. Status:
+`OPS_WORKFLOW_MERGED` · `AWAITING_OPERATOR_WORKFLOW_DISPATCH`; not `T14C_PRODUCTION_COMPLETE`, not `T14D_PRODUCTION_RUNTIME_DEPLOYED`.
 
 ## T14D — MERGED into main `bb504cce7476927249b3c6e4d5bc634600a45883`; main certified; production rollout DEFERRED (2026-09-16)
 
