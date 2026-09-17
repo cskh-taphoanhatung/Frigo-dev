@@ -1,5 +1,16 @@
 # Frigo / Takosan current task board — 2026-09-17
 
+## T14E — merged + main certified — 2026-09-17 (PR #23 → main `f7a55408…`; production untouched; T14F not started)
+
+- [done] PR #23 merged by normal merge (`f7a5540841db27be31cdab9e0c2010cd92bc3861`); `ba1a45d4…` and `7b4edcc8…` in main ancestry;
+  tree delta PR head → main = 0; exact-head main validate SUCCESS (run 35182568280 / job 105077715190).
+- [done, fresh on exact merge SHA] install, seed check ×3, import check (71/0), typecheck, lint, `migration-smoke=ok` (35, no 0036),
+  build, `pnpm test` 169 files / 3889 tests, focused 88, regression 275 + 160, `git diff --check` clean.
+- [done] `recipe-catalog/T14E_MERGE_RECEIPT.md`; `T14E_NEXT_HANDOFF.md` finalized (T14F prerequisites, chunking evaluation, release strategy).
+- [not done, by design] 0036, real recipe growth, media population, production D1/R2/deploy, authority activation, T14F.
+- [next] T14F starts ONLY from `T14E_FINAL_CANONICAL_MAIN` (docs-closure merge SHA). Production 0035 + T14D deploy still
+  `PENDING_OPERATOR` per `recipe-catalog/T14CD_PRODUCTION_ROLLOUT_HANDOFF.md`.
+
 ## T14E remediation — 2026-09-17 (P1 nutrition evidence, P2 immutable batch hash, P3 manifest telemetry; PR #23 unmerged)
 
 - [done, local-verified] evidence preserved + persisted as ADR-004 profiles; `canonicalBatchProjection` covers all reviewed metadata;

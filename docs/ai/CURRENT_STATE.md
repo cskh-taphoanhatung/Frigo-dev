@@ -1,5 +1,24 @@
 # Frigo / Takosan current authority — 2026-09-17
 
+## T14E — MERGED into main `f7a5540841db27be31cdab9e0c2010cd92bc3861`; main certified; production rollout DEFERRED (2026-09-17)
+
+PR #23 (remediated head `ba1a45d4…`; original reviewed head `7b4edcc8…` remains an ancestor — forward-only remediation) merged by
+normal merge commit; PR exact-head validate SUCCESS (run 35179141504 / check 105067327285); post-merge exact-head main validate
+SUCCESS (run 35182568280 / job 105077715190); application tree PR head → main preserved (0 files). Fresh local certification on the
+exact merge SHA: 169 files / 3889 tests, focused T14E 88, regression 435; seed/import/typecheck/lint/`migration-smoke=ok`/build/
+diff-check green. Invariants on main: `ALL_RECIPES` = 71 rollback baseline; release `rel-1a047444a3632771` (71 / 0 batches,
+fingerprint `9ae153e6…7c3f` == static == expected runtime); migrations 35 / tip 0035 / no 0036; nutrition evidence persisted via
+`nutrition_profiles` + `recipe_nutrition` (real SQLite replay: hydrate OK, ranking reader sees profile, readiness READY);
+`batchHash` commits to license/usageNote/evidence/duplicateReview (⇒ `releaseId`), runtime fingerprint provenance-independent;
+`RELEASE_MANIFEST_INVALID` ≠ `D1_READ_FAILED`; growth readiness 71 READY, 71+6 synthetic READY with `ALL_RECIPES` still 71,
+extra/missing/ID/order/legacy/imported/stub drift each NOT READY with its specific code. Inventory Truth, media architecture,
+worker router, deploy workflows unchanged. Incidental staging Deploy 35182789974 SUCCESS (production job skipped — not a rollout).
+Status `T14E_DEVELOPMENT_COMPLETE` · `T14E_MAIN_CERTIFIED` · `REAL_CATALOG_GROWTH_NOT_STARTED` · `PRODUCTION_ROLLOUT_DEFERRED` ·
+`T14F_NOT_STARTED`. Not `T14E_PRODUCTION_COMPLETE`. **Production unchanged:** application `4ed98514…`, D1 tip 0034 (0035 pending),
+recipe authority static, operator dispatch pending (`recipe-catalog/T14CD_PRODUCTION_ROLLOUT_HANDOFF.md`). Receipt:
+`recipe-catalog/T14E_MERGE_RECEIPT.md`; T14F base/prerequisites/chunking evaluation: `recipe-catalog/T14E_NEXT_HANDOFF.md`.
+`T14E_FINAL_CANONICAL_MAIN` = the merge SHA of the docs-closure PR carrying these files (recorded in its post-merge comment).
+
 ## T14E remediation — review P1/P2/P3 closed on the feature branch; PR #23 re-review pending (2026-09-17)
 
 Forward commit on the T14E branch (old head `7b4edcc8…` kept). **P1 nutrition evidence** now survives end-to-end:
