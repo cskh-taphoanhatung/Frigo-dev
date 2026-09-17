@@ -55,7 +55,7 @@ export const LEGACY_CATALOG_MIGRATION_TIP = '0035_recipe_media_layer.sql';
  */
 export const MIGRATION_LEDGER = Object.freeze({
   legacyTip: LEGACY_CATALOG_MIGRATION_TIP,
-  catalogGrowth: Object.freeze(['0036_recipe_catalog_pilot.sql']),
+  catalogGrowth: Object.freeze(['0036_recipe_catalog_pilot.sql', '0037_recipe_catalog_scale.sql']),
   get count() { return 35 + this.catalogGrowth.length; },
   get tip(): string { return this.catalogGrowth.at(-1) ?? this.legacyTip; },
 });

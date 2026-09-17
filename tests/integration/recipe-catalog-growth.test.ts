@@ -218,6 +218,7 @@ describe('T14F — fresh SQLite replay of the full ledger (0001 → tip)', () =>
   });
 
   it('production forward path 0034 → 0035 → growth: a 0034-tip database applies the same chain and lands on the same catalog', () => {
+    expect(MIGRATION_LEDGER.catalogGrowth).toEqual(['0036_recipe_catalog_pilot.sql', '0037_recipe_catalog_scale.sql']);
     const files = migrationFiles();
     const fresh = database();
     const staged = database({ migrate: false });
@@ -244,6 +245,34 @@ describe('T14F — fresh SQLite replay of the full ledger (0001 → tip)', () =>
     expect(recipes(staged)).toEqual(recipes(fresh));
     staged.seed("UPDATE recipes SET title = title || ' drift'");
     expect(recipes(staged)).not.toEqual(recipes(fresh));
+  });
+
+  it('T14F-C: a certified pilot-tip database (0036, 101 recipes) receives 0037 alone and lands on the 500 catalog with legacy + pilot rows byte-preserved', () => {
+    const pilotTip = MIGRATION_LEDGER.catalogGrowth[0];
+    const scale = MIGRATION_LEDGER.catalogGrowth[1];
+    const db = database({ through: pilotTip });
+    expect(n(db, 'recipes')).toBe(101);
+    expect(db.query<{ n: number }>("SELECT COUNT(*) AS n FROM recipes WHERE id LIKE 'imp-%'")[0].n).toBe(30);
+    const before = db.query('SELECT * FROM recipes ORDER BY id');
+    const fieldsBefore = db.query('SELECT * FROM recipe_runtime_fields ORDER BY recipe_id');
+    const mediaBefore = db.query('SELECT id, recipe_id, role, version, status, storage_key FROM recipe_media ORDER BY id');
+    db.seed(readFileSync(path.join(root, 'migrations', scale), 'utf8'));
+    expect(n(db, 'recipes')).toBe(500);
+    expect(n(db, 'recipe_runtime_fields')).toBe(500);
+    // Existing 101 rows are untouched; the 399 new rows continue the runtime order 101..499 without gaps.
+    const beforeIds = new Set(before.map((row: any) => row.id));
+    expect(db.query('SELECT * FROM recipes ORDER BY id').filter((row: any) => beforeIds.has(row.id))).toEqual(before);
+    expect(db.query('SELECT * FROM recipe_runtime_fields ORDER BY recipe_id').filter((row: any) => beforeIds.has(row.recipe_id))).toEqual(fieldsBefore);
+    expect(db.query('SELECT id, recipe_id, role, version, status, storage_key FROM recipe_media ORDER BY id').filter((row: any) => beforeIds.has(row.recipe_id))).toEqual(mediaBefore);
+    const order = db.query<{ lo: number; hi: number; uniq: number }>('SELECT MIN(runtime_order) AS lo, MAX(runtime_order) AS hi, COUNT(DISTINCT runtime_order) AS uniq FROM recipe_runtime_fields')[0];
+    expect(order).toEqual({ lo: 0, hi: 499, uniq: 500 });
+    expect(db.query<{ lo: number; hi: number }>("SELECT MIN(f.runtime_order) AS lo, MAX(f.runtime_order) AS hi FROM recipe_runtime_fields f JOIN recipes r ON r.id = f.recipe_id WHERE r.source_reference LIKE '%t14f-scale-399-v1%'")[0]).toEqual({ lo: 101, hi: 499 });
+    expect(db.query<{ n: number }>('SELECT COUNT(DISTINCT id) AS n FROM recipes')[0].n).toBe(500);
+    expect(db.query('PRAGMA foreign_key_check')).toEqual([]);
+    expect(db.query<{ quick_check: string }>('PRAGMA quick_check')).toEqual([{ quick_check: 'ok' }]);
+    // 0037 is a plain additive INSERT: a second application aborts on the primary key instead of duplicating rows.
+    expect(() => db.seed(readFileSync(path.join(root, 'migrations', scale), 'utf8'))).toThrow(/UNIQUE|PRIMARY KEY/i);
+    expect(n(db, 'recipes')).toBe(500);
   });
 });
 
