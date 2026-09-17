@@ -199,6 +199,11 @@ safe_stop_head_validate=44c0ad38… run 35266591460: attempt 1 CANCELLED (runner
   attempt 2 FAILURE (job 105359053711, Vitest step — the five real-D1 suites above)
 closure_fix_head_validate=8c6080aa… run 35271630025 / job 105372187543 SUCCESS
   (ESLint, typecheck, full Vitest, migration smoke, build all green)
+docs_head_026c37c4_validate=run 35272118131 / job 105373779604 FAILURE — infrastructure only:
+  Vitest reported 171/171 files, 3913/3913 tests passed, then one unhandled
+  `[vitest-worker]: Timeout calling "onTaskUpdate"` (worker→main RPC timeout under runner
+  load) and exited 1. Same code as 8c6080aa… (docs-only delta). Rerun is not available to
+  the repository credential, so the head was superseded forward-only by this commit.
 final_head_validate=recorded in the PR #25 final certification receipt (run + job ids, SUCCESS)
 ```
 
