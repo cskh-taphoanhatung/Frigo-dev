@@ -16,7 +16,7 @@ repository_id=1368281478
 repository_full_name=frigo-4/Frigo-dev
 T14F_A_certified_base=b0150d0af73af1a6fd2f0f322645830e75102890
 branch=hoplite/massalia-c2862d7c
-T14F_B_CERTIFIED_HEAD=<final remote head, recorded in the PR #25 certification receipt>
+T14F_B_CERTIFIED_HEAD=c7ecf909de9f88b2256cce72093311ebd55d9b6d
 PR=25 draft=YES merged=NO
 ```
 

@@ -95,7 +95,7 @@ PR #25 remains draft/open/unmerged with auto-fix subscribed.
 
 ## CERTIFIED — supersedes the safe-stop section below
 
-T14F-B completed: **399 records** (`t14f-scale-399-v1`) validated 399/399 publishable, 0 hard duplicates, 0 unresolved ingredients, QA `ok` with 0 editorial findings, byte-identical double compile, candidate-500 composition verified. Full gates green (171 files / 3911 tests). See `T14F_B_SCALE_BATCH_CERTIFICATION.md` and the PR #25 receipt for the certified head. Do NOT promote 0037; T14F-C owns promotion.
+T14F-B completed at certified head `c7ecf909de9f88b2256cce72093311ebd55d9b6d`: **399 records** (`t14f-scale-399-v1`) validated 399/399 publishable, 0 hard duplicates, 0 unresolved ingredients, QA `ok` with 0 editorial findings, byte-identical double compile, candidate-500 composition verified. Full gates green (171 files / 3911 tests). See `T14F_B_SCALE_BATCH_CERTIFICATION.md` and the PR #25 receipt for the certified head. Do NOT promote 0037; T14F-C owns promotion.
 
 ## Historical safe-stop WIP (superseded)
 
