@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ALL_RECIPES } from '../../packages/recipes/src/data';
 import { rankRecipes } from '../../packages/recipes/src/engine';
-import { isRecipeCanaryTenant } from '../../packages/recipes/src/recipe-authority';
+import { currentCatalogRelease, isRecipeCanaryTenant } from '../../packages/recipes/src/recipe-authority';
 import { promoteRecipeMediaVersion, stageRecipeMediaVersion } from '../../packages/db/src/recipe-media';
 import { authMiddleware } from '../../src/worker/middleware/auth';
 import { recipeRoutes } from '../../src/worker/routes/recipes';
@@ -14,6 +14,13 @@ import type { AuthContext, Env } from '../../src/worker/types';
 import { signJwt } from '../../src/worker/utils/jwt';
 import { FakeR2, WEBP_FIXTURE_BYTES, WEBP_FIXTURE_SHA256 } from '../helpers/recipe-media-r2';
 import { LEGACY_CATALOG_MIGRATION_TIP, SqliteD1, type SqliteStatementEvent } from '../helpers/sqlite-d1';
+
+// Pair this historical 0035 fixture with its release; growth suites use the real shipped manifest.
+vi.mock('../../packages/recipes/src/import/catalog-release.current.json', async () => {
+  const { ALL_RECIPES } = await import('../../packages/recipes/src/data');
+  const { composeCatalogRelease } = await import('../../packages/recipes/src/import/release-manifest');
+  return { default: (await composeCatalogRelease(ALL_RECIPES, [])).manifest };
+});
 
 // The Workers-only cloudflare:email module cannot load in Node; no network mail is sent.
 vi.mock('../../src/worker/services/email', () => ({
@@ -68,6 +75,7 @@ describe('T14D — HTTP parity of every runtime recipe consumer across static / 
 
   beforeEach(async () => {
     db = new SqliteD1({ through: LEGACY_CATALOG_MIGRATION_TIP }); // 71 == 71 parity; T14F growth parity lives in recipe-catalog-growth-authority
+    expect(currentCatalogRelease()).toMatchObject({ expectedRecipeCount: 71, approvedImportBatches: [] });
     seed(db, HOUSEHOLD);
     seed(db, OUTSIDE_HOUSEHOLD);
     token = await signJwt({ sub: USER, hid: HOUSEHOLD, typ: 'access', exp: Math.floor(Date.now() / 1000) + 3600 }, secret);
@@ -86,7 +94,16 @@ describe('T14D — HTTP parity of every runtime recipe consumer across static / 
   }
   const bothModes = async (method: string, path: string, body?: unknown, headers?: Record<string, string>) => {
     const out: Record<Mode, Awaited<ReturnType<typeof request>>> = {} as never;
-    for (const mode of ['static', 'd1', 'canary'] as Mode[]) { resetRecipeAuthorityCacheForTests(); out[mode] = await request(mode, method, path, body, headers); }
+    for (const mode of ['static', 'd1', 'canary'] as Mode[]) {
+      resetRecipeAuthorityCacheForTests();
+      const before = recipeAuthorityCounters();
+      out[mode] = await request(mode, method, path, body, headers);
+      const after = recipeAuthorityCounters();
+      const source = mode === 'static' ? 'static' : 'd1';
+      expect(after[source] - before[source], `${mode} must use ${source}, not fallback`).toBe(1);
+      expect(after.canaryFallback).toBe(before.canaryFallback);
+      expect(after.d1Fallback).toBe(before.d1Fallback);
+    }
     return out;
   };
 
@@ -242,8 +259,19 @@ describe('T14D — HTTP parity of every runtime recipe consumer across static / 
     db.hooks = { beforeBatch: (batch) => { if (batch.some((event) => /FROM recipe_runtime_fields/.test(event.sql))) batches.push(batch.length); } };
     await request('d1', 'GET', '/recommendations');
     expect(batches).toEqual([5]);
+    expect(recipeAuthorityCounters()).toMatchObject({ d1: 1, static: 0, d1Fallback: 0, notReady: 0 });
     batches.length = 0;
     await request('d1', 'POST', '/week/plans', { startDate: '2026-09-21', householdSize: 2, mealSlotsPreset: 'dinner_only', budgetTargetVnd: 500000, priorities: ['use_fridge'], shoppingFrequency: 'once', planId: 'plan_single_snapshot' });
     expect(batches).toEqual([]); // still within the TTL: cached snapshot, zero content reads
+    expect(recipeAuthorityCounters()).toMatchObject({ d1: 2, static: 0, d1Fallback: 0, notReady: 0 });
+  });
+
+  it('the historical release fixture still rejects semantic drift instead of bypassing readiness', async () => {
+    db.seed("UPDATE recipes SET title = title || ' drift' WHERE id = 'gl-01'");
+    const response = await request('d1', 'GET', '/recipes');
+    expect(response.status).toBe(200);
+    expect(response.json.recipes.find((recipe: { id: string }) => recipe.id === 'gl-01').title).toBe(ALL_RECIPES.find((recipe) => recipe.id === 'gl-01')!.title);
+    expect(recipeAuthorityCounters()).toMatchObject({ d1: 0, static: 1, d1Fallback: 1, notReady: 1 });
+    expect(warnings.some((line) => line.includes('LEGACY_BASELINE_DRIFT'))).toBe(true);
   });
 });
