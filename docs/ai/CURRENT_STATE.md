@@ -1,6 +1,12 @@
 # Frigo / Takosan current authority — 2026-09-17
 
-## Current T14F-A — T14F_PILOT_CERTIFIED / T14F_SCALE_NOT_STARTED
+## Current T14F — PILOT CERTIFIED + T14F-B SCALE BATCH CERTIFIED
+
+T14F-A pilot certified at `b0150d0…`. T14F-B continued to completion: **399 reviewed records** (`t14f-scale-399-v1`, `data/recipe-import/t14f/scale-399.jsonl`) — 399/399 publishable, 0 hard duplicates, 0 unresolved ingredients, QA `ok` 0 findings, byte-identical double compile, candidate-500 (71+30+399=500) composition verified. Full gates green: 171 files / 3911 tests (2026-09-17). Shipped release stays 101 (`rel-193ac2b16c64a260`), 0037 NOT created, shipped manifest/approved-batches unchanged; 0036 SHA-256 `04228788…`; 0001-0035 drift 0.
+
+Certification/handoff: `recipe-catalog/T14F_B_SCALE_BATCH_CERTIFICATION.md`, `recipe-catalog/T14F_B_WIP_HANDOFF.md`, `recipe-catalog/T14F_NEXT_HANDOFF.md`, PR #25 receipt for `T14F_B_CERTIFIED_HEAD`. **STOP: T14F-C (0037 promotion, 500 manifest, 500-authority) requires separate authorization.**
+
+### T14F-A — T14F_PILOT_CERTIFIED / T14F_SCALE_NOT_STARTED (certified earlier)
 
 Repository ID 1368281478 = `frigo-4/Frigo-dev`; branch `hoplite/massalia-c2862d7c`;
 main unchanged at `f0c229f2e2b134904a8c0e355479394cbf53c954`. PR #25 draft/open/unmerged,

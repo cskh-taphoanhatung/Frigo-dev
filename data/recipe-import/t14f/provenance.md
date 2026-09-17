@@ -53,7 +53,7 @@ lines — inventing IDs is forbidden. Recipes that would need a canonical ingred
 | Batch | File | Records | Migration |
 | --- | --- | --- | --- |
 | A — pilot | `pilot-30.jsonl` | 30 | `0036_recipe_catalog_pilot.sql` |
-| B — scale | `scale-399.jsonl` | 399 target; **56/399 authored, safe-stopped in progress** | none yet (T14F-C promotes) |
+| B — scale | `scale-399.jsonl` | 399 certified candidate (`t14f-scale-399-v1`, batchHash `1bdf29bd…`) | none yet (T14F-C promotes) |
 
 `../approved-batches.json` is the release-order registry that `pnpm recipe:import:check` recompiles to
 prove the committed Catalog Release Manifest and migrations are generated from these sources.

@@ -150,10 +150,13 @@ PRODUCTION_ROLLOUT_DEFERRED. No production D1/R2 write, deployment, authority
 switch, PayOS/payment/auth change, or merge. PR #25 remains draft, open, unmerged,
 and subscribed to auto-fix updates. Preserve the unrelated local settings delta.
 
-## T14F-B status (updated by the T14F-B run)
 
-A T14F-B run started from the certified base `b0150d0…` and safe-stopped during data
-generation: ingredient preflight committed, 399-concept matrix committed, **56/399 records**
-authored and factory-validated (56/56 publishable, 0 duplicates). Shipped release untouched.
-Exact resume procedure: `T14F_B_WIP_HANDOFF.md` (resume at `t14f-b-057`). Classification:
-`T14F_B_SAFE_STOPPED_DATA_WIP`. `T14F_B_CERTIFIED_HEAD` remains NONE.
+
+## T14F-B status (final)
+
+T14F-B resumed from the certified base and **completed**: 399 reviewed records authored/QA-clean,
+double deterministic compile, candidate-500 composition proven, all repository gates green
+(171 files / 3911 tests). Shipped release still 101; 0037 NOT created. Classification:
+`T14F_B_SCALE_BATCH_CERTIFIED` / `T14F_SCALE_DATA_COMPLETE` / `T14F_C_NOT_STARTED`.
+Exact head and handoff: `T14F_B_SCALE_BATCH_CERTIFICATION.md` + PR #25 receipt.
+Next task: **T14F-C** (promote 0037, 500 shipped manifest, 500-authority certification) — separate authorization.

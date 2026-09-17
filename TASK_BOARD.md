@@ -1,4 +1,9 @@
-## Current T14F-A — PILOT_CERTIFIED / SCALE_NOT_STARTED — 2026-09-17
+## Current T14F — T14F_B_SCALE_BATCH_CERTIFIED — 2026-09-17
+
+- T14F-A pilot certified (`b0150d0…`). T14F-B scale batch completed: **399/399 records** (`t14f-scale-399-v1`) validated publishable, 0 hard duplicates, 0 unresolved ingredients; QA `ok` 0 findings; double compile byte-identical; candidate-500 composition proven (500 unique, order verified).
+- Shipped release remains 101 (`rel-193ac2b16c64a260`); approved-batches/current manifest unchanged; 0036 SHA-256 unchanged; 0037 NOT created; no production action.
+- Full gates PASS (171 files / 3911 tests, 2026-09-17). Certified head in PR #25 receipt / `T14F_B_SCALE_BATCH_CERTIFICATION.md`.
+- Next: T14F-C only with separate authorization (0037 + 500 manifest). PR #25 stays draft/unmerged.
 
 - Repository ID 1368281478; unchanged main; forward-only `hoplite/massalia-c2862d7c`;
   PR #25 draft/unmerged. Inherited routing fix `8079a37`, verification commit `2ee6f5cc…`.

@@ -1,6 +1,14 @@
 # Frigo / Takosan current handoff — 2026-09-17
 
-## Current T14F-A — T14F_PILOT_CERTIFIED / T14F_SCALE_NOT_STARTED
+## Current T14F — T14F_B_SCALE_BATCH_CERTIFIED / T14F_SCALE_DATA_COMPLETE
+
+T14F-B continued from the certified pilot base `b0150d0…` to **399/399 reviewed scale recipes** (`t14f-scale-399-v1`): ingredient preflight PASS, 399-concept matrix, factory 399/399 publishable with 0 hard duplicates and 0 unresolved ingredients, QA `ok` (0 editorial findings; 22 identical-signature candidates waived with culinary reasons), double deterministic compile byte-identical, candidate-500 composition (71/30/399, 500 unique, order matches) verified. Shipped release remains 101, approved-batches and current manifest unchanged, 0036 unchanged, no 0037.
+
+Full gates PASS: seed/import/typecheck/lint/migrations/build and `pnpm test` 171 files / 3911 tests (2026-09-17). Certification: `recipe-catalog/T14F_B_SCALE_BATCH_CERTIFICATION.md`; handoffs: `T14F_B_WIP_HANDOFF.md`, `T14F_NEXT_HANDOFF.md`; certified head recorded in PR #25 receipt.
+
+Next action: **WAIT for T14F-C authorization** (0037 promotion + 500 shipped manifest + 500-authority certification, recommended GPT-5.6 Sol High). No Batch B action, no production action, PR #25 stays draft/unmerged.
+
+### T14F-A — pilot certified (earlier)
 
 - Recovery: repository ID 1368281478; `frigo-4/Frigo-dev`; `hoplite/massalia-c2862d7c`;
   main `f0c229f2…` unchanged; start `8079a37` inspected as a compatible test-only fix.

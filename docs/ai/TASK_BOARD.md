@@ -1,6 +1,14 @@
 # Frigo / Takosan current task board — 2026-09-17
 
-## Current T14F-A — PILOT_CERTIFIED / SCALE_NOT_STARTED
+## Current T14F — T14F_B_SCALE_BATCH_CERTIFIED
+
+- [done] T14F-A pilot certified at `b0150d0…` (routing fix, 171/3911).
+- [done] T14F-B resumed: ingredient preflight + 399-concept matrix committed.
+- [done] **399 records authored** (`t14f-scale-399-v1`); factory 399/399 publishable, 0 hard dups, 0 unresolved; QA `ok` 0 findings.
+- [done] Deterministic double compile (byte-identical) with hashes; candidate-500 (71+30+399=500) composition verified; shipped 101 manifest + 0036 unchanged; 0037 absent.
+- [done] Full gates: seed/import/typecheck/lint/migrations/build/test (171 files / 3911) PASS.
+- [next] **T14F-C only under separate authorization**: promote 0037 from the artifact, regenerate shipped 500 manifest, 500-authority certification. Do NOT start here.
+- [not started] 0037 promotion, 500 shipped manifest, production/media/T14G. PR #25 draft/unmerged.
 
 - [done] Verified repository ID 1368281478, unchanged main, forward-only branch and inherited
   test-only `8079a37`; PR #25 remains draft/unmerged. Preserved timestamp fix `486409c…`.
