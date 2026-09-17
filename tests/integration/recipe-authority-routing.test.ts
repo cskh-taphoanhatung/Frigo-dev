@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ALL_RECIPES } from '../../packages/recipes/src/data';
 import { rankRecipes } from '../../packages/recipes/src/engine';
 import { currentCatalogRelease, isRecipeCanaryTenant } from '../../packages/recipes/src/recipe-authority';
@@ -8,11 +8,12 @@ import { authMiddleware } from '../../src/worker/middleware/auth';
 import { recipeRoutes } from '../../src/worker/routes/recipes';
 import { shoppingRoutes } from '../../src/worker/routes/shopping';
 import { weekRoutes } from '../../src/worker/routes/week';
-import { resetRecipeAuthorityCacheForTests, resetRecipeAuthorityCountersForTests, recipeAuthorityCounters } from '../../src/worker/services/recipe-authority';
+import { resetRecipeAuthorityCacheForTests, resetRecipeAuthorityCountersForTests, recipeAuthorityCounters, resolveRecipeAuthority } from '../../src/worker/services/recipe-authority';
 import { resetRecipeCatalogShadowThrottle } from '../../src/worker/services/recipe-catalog-shadow';
 import type { AuthContext, Env } from '../../src/worker/types';
 import { signJwt } from '../../src/worker/utils/jwt';
 import { FakeR2, WEBP_FIXTURE_BYTES, WEBP_FIXTURE_SHA256 } from '../helpers/recipe-media-r2';
+import { LEGACY_BASELINE_FINGERPRINT } from '../helpers/recipe-catalog-growth';
 import { LEGACY_CATALOG_MIGRATION_TIP, SqliteD1, type SqliteStatementEvent } from '../helpers/sqlite-d1';
 
 // Pair this historical 0035 fixture with its release; growth suites use the real shipped manifest.
@@ -75,7 +76,12 @@ describe('T14D — HTTP parity of every runtime recipe consumer across static / 
 
   beforeEach(async () => {
     db = new SqliteD1({ through: LEGACY_CATALOG_MIGRATION_TIP }); // 71 == 71 parity; T14F growth parity lives in recipe-catalog-growth-authority
-    expect(currentCatalogRelease()).toMatchObject({ expectedRecipeCount: 71, approvedImportBatches: [] });
+    expect(currentCatalogRelease()).toMatchObject({
+      legacyBaselineCount: 71, expectedRecipeCount: 71, approvedImportBatches: [],
+      orderedRecipeIds: ALL_RECIPES.map((recipe) => recipe.id),
+      legacyBaselineFingerprint: LEGACY_BASELINE_FINGERPRINT,
+      expectedRuntimeFingerprint: LEGACY_BASELINE_FINGERPRINT,
+    });
     seed(db, HOUSEHOLD);
     seed(db, OUTSIDE_HOUSEHOLD);
     token = await signJwt({ sub: USER, hid: HOUSEHOLD, typ: 'access', exp: Math.floor(Date.now() / 1000) + 3600 }, secret);
@@ -83,7 +89,15 @@ describe('T14D — HTTP parity of every runtime recipe consumer across static / 
     console.warn = (line?: unknown) => { warnings.push(String(line)); };
     resetRecipeAuthorityCacheForTests(); resetRecipeAuthorityCountersForTests(); resetRecipeCatalogShadowThrottle();
   });
-  afterEach(() => { console.warn = originalWarn; db.close(); });
+  afterEach(() => {
+    console.warn = originalWarn;
+    resetRecipeAuthorityCacheForTests(); resetRecipeAuthorityCountersForTests();
+    db.close();
+  });
+  afterAll(() => {
+    vi.doUnmock('../../packages/recipes/src/import/catalog-release.current.json');
+    vi.resetModules();
+  });
 
   async function request(mode: Mode, method: string, path: string, body?: unknown, headers: Record<string, string> = {}, env: Partial<Env> = {}, bearer = token) {
     const response = await app.fetch(new Request(`https://authority.local${path}`, {
@@ -129,6 +143,14 @@ describe('T14D — HTTP parity of every runtime recipe consumer across static / 
     const spoof = await request('static', 'GET', '/recipes?recipeCatalogMode=d1&mode=d1', undefined, { 'X-Recipe-Mode': 'd1' });
     expect(spoof.status).toBe(200);
     expect(recipeAuthorityCounters().d1).toBeGreaterThan(0); // from the d1/canary runs above
+    for (const mode of ['d1', 'canary'] as const) {
+      const resolution = await resolveRecipeAuthority({ DB: db, ...MODE_ENV[mode] }, { tenantKey: HOUSEHOLD });
+      expect(resolution).toMatchObject({ configuredMode: mode, selectedSource: 'd1', actualSource: 'd1', fallbackReason: null });
+      expect(resolution.diagnostics).toEqual([expect.objectContaining({
+        event: 'recipe_catalog_authority_selected', configuredMode: mode,
+        selectedSource: 'd1', actualSource: 'd1', fingerprintMatch: true, recipeCount: 71,
+      })]);
+    }
   });
 
   it('GET /recommendations: identical IDs, scores, match percentages and order; equals rankRecipes on ALL_RECIPES; media additive', async () => {
@@ -250,6 +272,8 @@ describe('T14D — HTTP parity of every runtime recipe consumer across static / 
     db.hooks = { beforeBatch: (batch) => { for (const event of batch) if (/FROM recipe_runtime_fields/.test(event.sql)) contentReads.push(event); } };
     const outside = await request('canary', 'GET', '/recipes', undefined, {}, {}, outsideToken);
     expect(outside.status).toBe(200);
+    const resolution = await resolveRecipeAuthority({ DB: db, ...MODE_ENV.canary }, { tenantKey: OUTSIDE_HOUSEHOLD });
+    expect(resolution).toMatchObject({ configuredMode: 'canary', selectedSource: 'static', actualSource: 'static', fallbackReason: null, canaryTenant: false });
     expect(contentReads).toEqual([]);
     expect(recipeAuthorityCounters().d1).toBe(0);
   });
@@ -268,10 +292,16 @@ describe('T14D — HTTP parity of every runtime recipe consumer across static / 
 
   it('the historical release fixture still rejects semantic drift instead of bypassing readiness', async () => {
     db.seed("UPDATE recipes SET title = title || ' drift' WHERE id = 'gl-01'");
+    const batches: number[] = [];
+    db.hooks = { beforeBatch: (batch) => { if (batch.some((event) => /FROM recipe_runtime_fields/.test(event.sql))) batches.push(batch.length); } };
     const response = await request('d1', 'GET', '/recipes');
     expect(response.status).toBe(200);
     expect(response.json.recipes.find((recipe: { id: string }) => recipe.id === 'gl-01').title).toBe(ALL_RECIPES.find((recipe) => recipe.id === 'gl-01')!.title);
     expect(recipeAuthorityCounters()).toMatchObject({ d1: 0, static: 1, d1Fallback: 1, notReady: 1 });
     expect(warnings.some((line) => line.includes('LEGACY_BASELINE_DRIFT'))).toBe(true);
+    const rejected = await resolveRecipeAuthority({ DB: db, ...MODE_ENV.d1 });
+    expect(rejected).toMatchObject({ selectedSource: 'd1', actualSource: 'static', fallbackReason: 'LEGACY_BASELINE_DRIFT' });
+    expect(rejected.diagnostics).toContainEqual(expect.objectContaining({ event: 'recipe_catalog_d1_fallback', reasonCode: 'LEGACY_BASELINE_DRIFT' }));
+    expect(batches).toEqual([5, 5]); // Rejected snapshots never populate the verified cache.
   });
 });
