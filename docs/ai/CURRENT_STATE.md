@@ -1,5 +1,9 @@
 # Frigo / Takosan current authority — 2026-09-19
 
+## Current T15C — production Canary safe stop; authority still shadow (2026-09-18)
+
+Fresh audit on canonical main `b41aa4682481447795350fc1a9eeb1e80887bd0e` passed every local gate (`pnpm test` 176 files / 4008 tests PASS). Public read-only production checks: readiness commit equals main, database ok, five `/api/v1/recipes` reads at 71 in deterministic order, legacy IDs 200, reviewed D1-only IDs 404; the latest production Deploy receipt (run 35404106102) records `recipeCatalogMode=shadow`, canary 0, cutover false on that exact SHA. No authorized operator-owned inside/outside 1% cohort and no Cloudflare credentials were available, so Canary was not dispatched and nothing in production changed. Classification `T15C_CANARY_BLOCKED_AUTHORIZED_COHORT_UNAVAILABLE`; receipt `recipe-catalog/T15C_PRODUCTION_CANARY_SAFE_STOP.md`.
+
 ## Current T16 follow-up — OTP sender fix and guest account gates ready for release (2026-09-19)
 
 A production-bound Email Service diagnostic isolated the OTP failure to the
