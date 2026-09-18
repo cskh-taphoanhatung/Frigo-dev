@@ -1,5 +1,39 @@
 # Frigo / Takosan current authority — 2026-09-18
 
+## Current T15C-B — merged control plane; safe stop before production Canary (2026-09-18)
+
+PR #32 was merged normally with the expected-head guard: certified head
+`a7b3d23f2ad8b48203328116d0e35425390d2127` → main merge
+`a6e81cd89b9e4c6b923cfc39947b01faf44ff5f3`. The PR head is an ancestor of main
+with a zero-file tree delta. Exact-head PR CI `35344089103` was SUCCESS with zero
+unresolved review threads; exact-main CI `35347246583` / job `105606601599` was
+SUCCESS.
+
+Automatic Deploy `35347579284` passed release and staging job `105607807690`,
+skipped production job `105607809241`, and deployed staging SHA
+`a6e81cd89b9e4c6b923cfc39947b01faf44ff5f3` on Worker
+`12623f3b-ac64-4255-9fbf-c429b6225e1d`. Both release manifests certify
+`static/0/false`; no automatic Canary leak occurred.
+
+Read-only production recheck remains Shadow/static authority: Worker
+`c6fa2ce8-f35b-4485-ad38-09dbc19738d1`, SHA
+`88e8b54de121125866b2ff813e56e33277decf1c`, five catalog responses at 71,
+legacy IDs 200, reviewed D1-only IDs 404. Production D1 `frigo-db` remains
+ledger 37 / tip `0037_recipe_catalog_scale.sql`, 500 recipes, 500 runtime
+fields, and 500 media rows pending / 0 ready. Read-only SELECTs reported
+`changes=0`, `rows_written=0`; a fresh aggregate catalog certification passed at
+500 recipes / 2 approved batches / release `rel-bd00a4f53fcaeee4`. No migration
+or production D1 write occurred.
+
+No authorized operator-owned inside-1% or outside-1% production test cohort was
+available in repository/env/operator inputs, and no customer household IDs were
+inspected. Production Canary was not dispatched and no Environment approval was
+requested. Durable evidence: `recipe-catalog/T15C_B_AUTHORIZED_COHORT_SAFE_STOP.md`.
+Classification: `T15C_B_AUTHORIZED_TEST_COHORT_UNAVAILABLE`; next action is to
+obtain both authorized cohorts, then resume at exactly 1% through the protected
+workflow. Full D1, media/R2, T14G, Inventory Truth/T09/T11, PayOS/auth remain
+out of scope.
+
 ## Current T15C-A — bounded canary control-plane wiring in review (2026-09-18)
 
 Certified base main is `6f589d0201499a3729d343e42ccb6d19fdff217a`, the normal

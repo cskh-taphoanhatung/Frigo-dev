@@ -1,5 +1,36 @@
 # Frigo / Takosan current handoff — 2026-09-18
 
+## Current handoff — T15C-B merged control plane; authorized-cohort safe stop (2026-09-18)
+
+PR #32 merged with expected head `a7b3d23f2ad8b48203328116d0e35425390d2127` as
+`a6e81cd89b9e4c6b923cfc39947b01faf44ff5f3`. Exact-head PR CI `35344089103`,
+unresolved threads `0`, and exact-main CI `35347246583` / job `105606601599`
+are SUCCESS. Automatic Deploy `35347579284` passed release and staging, skipped
+production, and its release/staging manifests are `static/0/false`; staging
+deployed the exact merge SHA on Worker `12623f3b-ac64-4255-9fbf-c429b6225e1d`.
+
+Production was rechecked read-only and remains Shadow/static user authority on
+Worker `c6fa2ce8-f35b-4485-ad38-09dbc19738d1`, SHA
+`88e8b54de121125866b2ff813e56e33277decf1c`: five catalog responses at 71,
+legacy IDs 200, reviewed D1-only IDs 404. D1 `frigo-db` remains ledger 37 / tip
+0037, 500 recipes, 500 runtime fields, 500 pending media / 0 ready; all SELECTs
+reported `changes=0`, `rows_written=0`, and fresh aggregate catalog certification
+passed at 500 recipes / 2 approved batches / release `rel-bd00a4f53fcaeee4`.
+No migration, D1 write, R2/media write, or production deployment occurred in
+this task.
+
+The required authorized operator-owned inside-1% and outside-1% production test
+cohorts were unavailable in repository/env/operator inputs. No arbitrary customer
+households were inspected. Production Canary was not dispatched, so no
+Environment approval was requested and no Canary certification fields exist.
+Classification: `T15C_B_AUTHORIZED_TEST_COHORT_UNAVAILABLE`.
+
+Next exact action: an authorized operator provides both cohorts; then recheck
+production pre-state and dispatch exactly 1% through the protected workflow.
+Do not widen above 1%, enable full D1, populate media/R2, start T14G, or modify
+Inventory Truth/T09/T11, PayOS, or auth. Durable receipt:
+`docs/ai/recipe-catalog/T15C_B_AUTHORIZED_COHORT_SAFE_STOP.md`.
+
 ## Current handoff — T15C-A bounded canary control plane (stop before activation)
 
 - **Base:** certified main `6f589d0201499a3729d343e42ccb6d19fdff217a`; branch `codex/t15c-canary-control-plane`.
