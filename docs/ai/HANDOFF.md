@@ -1,6 +1,30 @@
 # Frigo / Takosan current handoff — 2026-09-18
 
-## Current — T15A pre-production hardening (T15A-R2); Phase B (production) not started
+## Current — T15P privileged closure safe stop at required production approval
+
+Canonical repository is live-verified as `1368281478 / frigo-6/Frigo-dev`. PR #27 was completed forward-only:
+the checksum-verified wired series was applied, pushed, exact-head CI `35328638198` / job `105547551265` passed,
+and normal merge commit `0fe2cf071693208f6c642d8cbd994f5a79b5a2cf` was created with expected-head protection.
+The certified PR head was `776422fb7b141669df7a29973bbf4ac0a5516a01`; merge tree delta was zero. Exact-main CI
+`35329100767` / job `105549031408` passed.
+
+Deploy `35329500028` passed release and staging and explicitly skipped production. Staging receipt:
+Worker version `479efd73-12c0-4403-93e9-9bbfd8ee85ef`, deployed SHA `0fe2cf0…`, exact-SHA helper convergence
+attempt `1`, wait `547 ms`. Production D1 workflow `35329772751` was dispatched from `main` and passed its
+exact-SHA gate, then entered the required `production` Environment approval gate. Reviewer `vn-taphoanhatung`
+is configured; the current identity cannot approve. The workflow has not produced its live pre-ledger receipt,
+so production D1 tip/counts, Cloudflare identity, Time Travel bookmark, migration plan, and catalog certification
+remain unknown. No production D1 write, Worker deployment, static certification, or shadow activation occurred.
+
+Resume exactly: authorized reviewer approves run `35329772751`; inspect the sanitized pre-ledger receipt first;
+confirm database `frigo-db` / expected D1 identity, supported live tip, and exact pending chain; then let only the
+approved workflow apply/certify through 0037. Record the Time Travel bookmark and catalog/health/schema receipt.
+After D1 certification, dispatch the approved deploy workflow in STATIC, certify user-facing 71 vs D1 candidate 500,
+then inspect the repository-authorized shadow configuration path and activate SHADOW only with another Environment
+approval. Do not enable canary/full D1, populate R2/media, or start T14G. Classification:
+`T15P_BLOCKED_PRODUCTION_ENV_APPROVAL`.
+
+## Historical — T15A pre-production hardening (T15A-R2); superseded by the safe stop above
 
 See `recipe-catalog/T15A_WIP_HANDOFF.md` for exact heads, the T15A-R2 safe stop (`T15A_R2_BLOCKED_WORKFLOW_PERMISSION`: commit identity contract pushed; workflow wiring + unconditional guardrails committed locally but rejected by GitHub — the App still lacks `workflows` scope; ready-made `git am` series in `recipe-catalog/t15a-r/r2-wired-series.mbox`), and the production resume requirements. PR #27 is not merged. Historical last verified production tip = 0034; Phase B must re-query the live ledger before any mutation. No production D1/R2/deploy/authority change has occurred.
 

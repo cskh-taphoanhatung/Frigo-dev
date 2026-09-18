@@ -1,6 +1,35 @@
 # Frigo / Takosan current authority — 2026-09-18
 
-## Current T15A — pre-production rollout hardening (production untouched)
+## Current T15P — privileged closure safe stop at production approval (2026-09-18)
+
+Canonical identity is verified live: `repository_id=1368281478`, `repository_full_name=frigo-6/Frigo-dev`.
+PR #27 workflow wiring was applied from the checksum-verified `r2-wired-series.mbox`, pushed normally, and
+merged by merge commit `0fe2cf071693208f6c642d8cbd994f5a79b5a2cf` with expected-head protection. The certified PR
+head was `776422fb7b141669df7a29973bbf4ac0a5516a01`; exact-head validate run `35328638198` / job
+`105547551265` passed. The merge preserved the PR tree (`tree_delta_to_main=0`), and exact-main CI
+`35329100767` / job `105549031408` passed on the merge SHA.
+
+Automatic Deploy run `35329500028` passed release and staging; production was skipped. Staging receipt proves
+Worker version `479efd73-12c0-4403-93e9-9bbfd8ee85ef`, deployed SHA `0fe2cf0…`, exact-SHA convergence on
+attempt 1 after `547 ms`, and readiness/liveness smoke green. `deploy.yml` now uses the bounded helper for both
+staging and production; `production-d1-migrate.yml` now verifies the pinned chain and runs aggregate catalog
+certification after generic verify and before the schema gate. No migration, source, PayOS, auth or media files
+changed in PR #27; migration hashes 0036/0037 remain pinned and no 0038 exists.
+
+Production D1 workflow run `35329772751` was dispatched from `main` with candidate SHA `0fe2cf0…`, requested
+`expected_pre_tip=0034_global_recipe_catalog_parity.sql`, target `0037_recipe_catalog_scale.sql`, and confirmation
+true. Its exact-SHA gate passed, but the production `migrate` job is waiting for required reviewer `vn-taphoanhatung`.
+The live ledger read and all mutation steps are therefore not yet observed; no production D1 write, Worker deploy,
+static certification, or shadow activation has occurred. The current classification is
+`T15P_BLOCKED_PRODUCTION_ENV_APPROVAL`; next action is for the authorized reviewer to approve run `35329772751`,
+then record the workflow's sanitized pre-ledger receipt before continuing. Do not bypass the Environment gate.
+
+Privilege preflight: GitHub workflow write/push and dispatch are available; PR merge succeeded; branch protection
+was not bypassed. Production Environment required reviewers are present; secret names
+`CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` are present without exposing values. Local Cloudflare credentials
+are absent, so production D1 access remains workflow-only. No canary, full D1 authority, R2/media, or T14G action.
+
+## Historical T15A — pre-production rollout hardening (superseded by the safe stop above)
 
 T14F merged to main `9be395d0…`. T15A schema-gate hardening merged via PR #26 → main `70cf7e0d…` (`scripts/d1-schema-gate.mjs` derives required migrations from `migrations/`; `d1-migration-check.mjs` pinned chain + `catalog` certification). T15A-R / T15A-R2 (PR #27, open, not merged): `scripts/wait-for-deployed-release.mjs` (bounded exact-SHA polling; root cause of Deploy 35288137887's false negative) and `verifyDeployedRelease` requiring `readiness.commit` to be a canonical 40-hex SHA (malformed/missing fail closed; only a healthy, correct-environment body with a *different valid* SHA is `RELEASE_PROPAGATION_PENDING`) are pushed. The workflow wiring itself — `catalog` step in `production-d1-migrate.yml` (after `verify`, before the remote schema gate), shell-interpolated input removed, staging + production deploy proof via the helper — plus the unconditional guardrail tests are committed locally but **not on the remote**: GitHub rejects the App's workflow pushes (`workflows` scope). They are tracked as `recipe-catalog/t15a-r/r2-wired-series.mbox` (`git am`) and `t15a-r/workflows.patch`. Remote workflow files still equal `main`. Production: D1 not migrated (historical last verified tip 0034 — re-query live before Phase B), Worker `4ed98514…`, static 71, no shadow/canary/media/T14G. Safe stop + resume requirements: `recipe-catalog/T15A_WIP_HANDOFF.md`.
 

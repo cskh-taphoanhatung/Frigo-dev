@@ -1,4 +1,13 @@
-## Current T15A — pre-production rollout hardening — 2026-09-18
+## Current T15P — privileged operations closure safe stop — 2026-09-18
+
+- [done] Canonical identity verified: repository `1368281478` = `frigo-6/Frigo-dev`; PR #27 wired series checksum matched and applied.
+- [done] Focused `123/123` (zero skips) and full local gates `173 files / 3969 tests` passed; migrations and source tree unchanged.
+- [done] PR #27 pushed and merged normally: certified head `776422fb…`, merge `0fe2cf0…`; PR CI `35328638198`, main CI `35329100767`, both SUCCESS; merge tree delta `0 files`.
+- [done] Deploy `35329500028`: release/staging SUCCESS, production SKIPPED; staging Worker `479efd73-12c0-4403-93e9-9bbfd8ee85ef`, deployed SHA `0fe2cf0…`, convergence `1` attempt / `547 ms`.
+- [blocked] Production migration run `35329772751` is waiting for required reviewer `vn-taphoanhatung` after exact-SHA gate; current user cannot approve. No production D1/Worker mutation has occurred.
+- [next] After authorized approval, record the workflow's live pre-ledger receipt and proceed only through the pinned 0037 chain; stop on any mismatch. No canary/full-D1/media/T14G.
+
+## Historical T15A — pre-production rollout hardening — 2026-09-18
 
 - [done] PR #26 merged (`70cf7e0d…`): schema gate derived from `migrations/`, pinned migration chain, `catalog` certification command.
 - [done, PR #27 / T15A-R2, pushed] `wait-for-deployed-release.mjs` bounded exact-SHA convergence helper; `readiness.commit` must be a canonical 40-hex SHA (malformed/missing → fail closed, only a different *valid* SHA retries; regression tests A–J).

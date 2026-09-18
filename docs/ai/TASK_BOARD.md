@@ -1,4 +1,13 @@
-# Frigo / Takosan current task board — 2026-09-17
+# Frigo / Takosan current task board — 2026-09-18
+
+## Current T15P — privileged operations closure safe stop
+
+- [done] Canonical identity live-verified: repository `1368281478` = `frigo-6/Frigo-dev`; PR #27 base/main and head were checked.
+- [done] Applied checksum-verified `docs/ai/recipe-catalog/t15a-r/r2-wired-series.mbox`; focused guardrails `123/123`, zero skips; full local gates PASS (`173 files / 3969 tests`, seed/import, typecheck, lint, migration smoke, build, diff check).
+- [done] Pushed workflow files normally; exact-head PR CI `35328638198` / job `105547551265` SUCCESS; PR #27 merged with merge commit `0fe2cf0…`; exact-main CI `35329100767` / job `105549031408` SUCCESS; PR tree delta to main `0 files`.
+- [done] Automatic Deploy `35329500028`: release SUCCESS, staging SUCCESS, production SKIPPED; staging Worker `479efd73-12c0-4403-93e9-9bbfd8ee85ef`, deployed SHA `0fe2cf0…`, helper convergence attempt `1`, waited `547 ms`.
+- [blocked] Production D1 workflow `35329772751` passed the exact-SHA gate and is waiting at the required `production` Environment reviewer `vn-taphoanhatung`; current user cannot approve. No D1 write/deploy/authority change has occurred.
+- [next] Authorized reviewer approves `35329772751`; then capture live pre-ledger identity/tip/counts and continue the pinned 0035→0036→0037 chain only if the workflow receipt is coherent. Stop on any unexpected tip, identity mismatch, plan mismatch, or certification failure. No canary/full-D1/media/T14G.
 
 ## Current T14F — T14F_DEVELOPMENT_COMPLETE (T14F-A/B/C certified; production untouched)
 

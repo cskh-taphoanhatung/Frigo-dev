@@ -1,5 +1,21 @@
 # T15A — production rollout preflight handoff (T15A + T15A-R)
 
+## T15P continuation checkpoint — 2026-09-18
+
+PR #27 workflow wiring is now on canonical `main` after normal merge commit
+`0fe2cf071693208f6c642d8cbd994f5a79b5a2cf`. Certified PR head `776422fb…` had exact-head CI
+`35328638198` / `105547551265` SUCCESS; merge tree delta to main was 0; exact-main CI
+`35329100767` / `105549031408` SUCCESS. Automatic Deploy `35329500028` passed release and staging,
+skipped production; staging Worker `479efd73-12c0-4403-93e9-9bbfd8ee85ef` converged on SHA `0fe2cf0…`
+in 1 attempt / 547 ms.
+
+Production migration run `35329772751` was dispatched from `main` with target 0037 and is waiting for the
+required `production` Environment reviewer `vn-taphoanhatung` after its exact-SHA gate. The current identity
+cannot approve. No production mutation has started and the live pre-ledger receipt is not yet available.
+Classification: `T15P_BLOCKED_PRODUCTION_ENV_APPROVAL`. Resume only after authorized approval, then inspect
+the sanitized pre-ledger/identity/Time Travel receipts before allowing the pinned chain to apply. No canary,
+full D1, media/R2 or T14G.
+
 ```text
 classification=T15A_PRE_PRODUCTION_HARDENING (exact heads/CI bound in the PR receipts below)
 T15A_SCHEMA_GATE_HARDENED=YES (PR #26 → main 70cf7e0dae675ca19efbac2ceed0d1380d837024)
