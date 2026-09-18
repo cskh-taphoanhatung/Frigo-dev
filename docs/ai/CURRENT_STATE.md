@@ -1,5 +1,49 @@
 # Frigo / Takosan current authority — 2026-09-19
 
+## Current T16 follow-up — OTP sender fix and guest account gates ready for release (2026-09-19)
+
+A production-bound Email Service diagnostic isolated the OTP failure to the
+sender identity: Cloudflare rejected `no-reply@frigo.tungjpstore.net` with
+`email sending not authorized for subdomain 'frigo.tungjpstore.net'`. The zone
+apex `tungjpstore.net` is the domain currently onboarded for Email Service, and
+the same remote binding accepted a harmless diagnostic from
+`no-reply@tungjpstore.net` and returned a provider `messageId`. This proves the
+request reached the email provider and removes D1, Turnstile and OTP generation
+as the root cause for the observed registration failures. Actual inbox receipt
+of a real OTP is still pending and must not be claimed yet.
+
+Implementation commit `31006994849ee9f6d78ae6114f82d77d41efc784`
+changes the transactional sender to the onboarded apex,
+maps the provider's subdomain authorization message to the sanitized
+`sender_not_verified` category, keeps resend available when the optional KV
+cooldown store is unavailable, clears cooldown best-effort after failed sends,
+and returns actionable `503 OTP_RESEND_UNAVAILABLE` for unexpected resend
+failures. The OTP screen now waits for a fresh Turnstile token before resend and
+recreates the widget after each consumed token.
+
+Guest account boundaries are explicit. A guest may open `/auth`; `/plus`
+replaces prices and payment UI with an account-required explanation and a link
+to `/auth?mode=login&returnTo=%2Fplus`; the profile upgrade CTA points to the
+same login flow. A successfully authenticated, already-onboarded account safely
+returns to `/plus`. Authenticated users retain the existing Plus screen and no
+PayOS, checkout, billing, webhook or settlement implementation changed.
+
+Local verification is green: focused auth/email/account-gate suites passed **86
+tests / 4 files**; full `pnpm test` passed **176 files / 4008 tests**; `pnpm
+lint`, `pnpm typecheck`, `pnpm check:migrations` (`migration-smoke=ok`), `pnpm
+build`, and `git diff --check` passed. Real-browser checks at 390x844 and
+1440x1000 confirmed the guest pricing/payment UI is absent, profile and Plus
+CTAs route to auth, `returnTo=%2Fplus` is retained, and the auth page remains
+available to a guest session.
+
+This candidate is not yet merged or deployed. Production remains on Worker
+`e8164168-9566-475b-b0fa-7508368bf3e7` at main
+`0cb5d2c08fa24479ecce6b4c4e5f73b31a920ff5`, D1 ledger 38 / tip 0038, and
+recipe authority `shadow/0/false`. No migration or production data write is
+required. Next action: commit, exact-head CI, normal merge, exact-main CI,
+protected production deploy preserving `shadow/0/false`, then verify a real
+registration/resend or forgot-password email arrives without exposing its OTP.
+
 ## Current T16 — auth funnel and CSP hotfix deployed; OTP receipt pending (2026-09-19)
 
 PR #34 merged the auth-funnel implementation commit
