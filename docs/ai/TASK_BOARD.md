@@ -9,8 +9,8 @@
 - [done] Audited existing runtime canary: deterministic household FNV-1a assignment, readiness-gated D1, static fallback, 30s TTL / 5m stale grace; runtime left unchanged.
 - [done] Branch `codex/t15c-canary-control-plane` from certified main; implemented bounded `static|shadow|canary` release policy, 0/1/2/5 choices, derived cutover, immutable manifest fields, and validated Wrangler propagation.
 - [done] Focused 121/121; full 173 files / 3995 tests; seed/import/lint/typecheck/check:migrations/build/diff-check PASS. No migration or production action.
-- [done] Opened Canary wiring PR #32; implementation/receipt head `44c1e80b…`, exact-head CI `35342478247` SUCCESS.
-- [in review] Add the final docs checkpoint, require exact-head CI on that final head, then stop. Do not merge or activate canary.
+- [done] Opened Canary wiring PR #32; implementation/receipt head `44c1e80b…` passed CI, then final docs checkpoint `642b4f8b…` passed exact-head CI `35342967116`.
+- [in review] PR #32 remains OPEN with zero unresolved review threads; stop for independent review. Do not merge or activate canary.
 
 ## Current T15B-SHADOW — production Shadow certified; stop before canary — 2026-09-18
 

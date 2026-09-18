@@ -8,10 +8,9 @@ without merge as superseded. Branch `codex/t15c-canary-control-plane` adds only
 Deploy workflow policy, release-manifest validation/tests, and the T15C-A receipt
 (`docs/ai/recipe-catalog/T15C_A_CANARY_CONTROL_PLANE.md`).
 
-Canary wiring PR #32 is open at its current implementation/receipt head
-`44c1e80b1e096040543806897a90ab794d212d6e`; exact-head CI run `35342478247`
-passed. A final docs-only checkpoint is being added now, after which the new
-head must receive its own exact-head CI success.
+Canary wiring PR #32 remains open and mergeable; its final docs checkpoint has
+passed exact-head CI and is awaiting independent review. It must not be merged
+or used to dispatch production canary from this task.
 
 The release matrix is `static/0/false`, `shadow/0/false`, or
 `canary/{1,2,5}/true`; `d1`, `full`, `full_d1`, arbitrary percentages, and

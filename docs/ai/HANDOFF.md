@@ -8,8 +8,8 @@
 - **Receipt:** `docs/ai/recipe-catalog/T15C_A_CANARY_CONTROL_PLANE.md` distinguishes runtime support from production authorization and documents T15C-B only.
 - **Verification:** focused 121/121; full `pnpm test` 173 files / 3995 tests; `pnpm recipe:seed:check`, `pnpm recipe:import:check`, `pnpm lint`, `pnpm typecheck`, `pnpm check:migrations`, `pnpm build`, and `git diff --check` PASS. Migration 0036 SHA-256 `04228788e60d59a2427d70956d4d8a108d0a6c1c4a643c47641402f658120ba9`; 0037 SHA-256 `68e52e6d8b9d44054f609a3d405c9fa329d093521ffc8c97009c76fbf7317ad6`; no 0038.
 - **Safety:** no production redeploy, canary activation, D1 write/migration dispatch, R2/media population, T14G, T09/T11, PayOS/auth, force-push, or history rewrite. Production remains Shadow/static user authority with 71 served and D1 500 READY per T15B receipt.
-- **Canary PR:** #32 is open at implementation/receipt head `44c1e80b1e096040543806897a90ab794d212d6e`; exact-head CI run `35342478247` is SUCCESS and there are no unresolved review threads observed. This final docs checkpoint changes the head, so require one new exact-head CI SUCCESS before stopping.
-- **Next exact action:** push this final docs checkpoint, verify the new exact-head CI and zero unresolved review threads, then stop with PR #32 open for independent review. Do not merge or dispatch production.
+- **Canary PR:** #32 is open and mergeable; final head `642b4f8bc88c4a5987c047570ef408ef277efd1b` has exact-head CI run `35342967116` SUCCESS and zero unresolved review threads.
+- **Next exact action:** independent review of PR #32. Do not merge, dispatch production, activate canary, or widen the policy in this task.
 
 ## Current — T15B-SHADOW production certification complete; stop before canary (2026-09-18)
 
