@@ -1,5 +1,11 @@
 # Frigo / Takosan current handoff — 2026-09-18
 
+## Current — T15B-PRE STATIC certified; SHADOW wiring PR ready (2026-09-18)
+
+See `recipe-catalog/T15B_PRE_STATIC_RECEIPT.md` for the durable receipt. Main stayed at `0fe2cf071693208f6c642d8cbd994f5a79b5a2cf`; PR #29 was not merged. Existing D1 migration run `35329772751` is SUCCESS at 0037/500 and was not rerun. Static Deploy run `35333517052` is SUCCESS with required Environment approval, Worker version `ab8ff038-2aaa-468b-a9de-8c5d94f14052`, exact SHA convergence in one attempt/587 ms, and five repeated live STATIC71 checks. Previous Worker `56979cb5-e1a8-4241-8a4c-2432d41cc439` remains available for rollback.
+
+No approved Shadow switch existed in the certified main workflow/config path, so no undocumented Cloudflare mutation was attempted. Branch `codex/t15b-shadow-wiring` adds only validated `static|shadow` deploy input/manifest propagation plus tests; canary/full-D1 remain unavailable. Full local gates pass: focused 99/99; lint, typecheck, full 173 files/3976 tests, migration smoke, build, diff-check. Open the PR, require independent review and exact-head CI, then stop. Do not merge, activate Shadow, enable canary/full D1, write R2/media, start T14G, change Inventory Truth/T09/T11, PayOS, auth, or production infrastructure.
+
 ## Current — T15A pre-production hardening (T15A-R2); Phase B (production) not started
 
 See `recipe-catalog/T15A_WIP_HANDOFF.md` for exact heads, the T15A-R2 safe stop (`T15A_R2_BLOCKED_WORKFLOW_PERMISSION`: commit identity contract pushed; workflow wiring + unconditional guardrails committed locally but rejected by GitHub — the App still lacks `workflows` scope; ready-made `git am` series in `recipe-catalog/t15a-r/r2-wired-series.mbox`), and the production resume requirements. PR #27 is not merged. Historical last verified production tip = 0034; Phase B must re-query the live ledger before any mutation. No production D1/R2/deploy/authority change has occurred.

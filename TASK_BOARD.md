@@ -196,3 +196,11 @@
 - Readiness exact-SHA PASS; DB/queue/AI/config healthy, PLUS-grant warning only.
 - Full Vitest `3630/3630`, lint/typecheck/build and frozen install PASS.
 - Follow-up blocked on hosted CI/review for open PR #4; no protection bypass.
+## Current T15B-PRE — STATIC certified; SHADOW wiring PR ready — 2026-09-18
+
+- [done] Canonical repository `1368281478` / `frigo-6/Frigo-dev`, main `0fe2cf071693208f6c642d8cbd994f5a79b5a2cf`; PR #29 remained open and unmerged.
+- [done] Immutable production D1 receipt `35329772751`: tip 0037, 500 recipes, release `rel-bd00a4f53fcaeee4`, schema gate PASS, FK `[]`, quick check `ok`, 500 pending media rows / 0 ready.
+- [done] Static Deploy `35333517052` approved and SUCCESS: Worker `ab8ff038-2aaa-468b-a9de-8c5d94f14052`, exact SHA convergence PASS, five repeated live checks served 71 static recipes.
+- [done] Rollback evidence: previous Worker `56979cb5-e1a8-4241-8a4c-2432d41cc439`; rollback mode `RECIPE_CATALOG_MODE=static`.
+- [blocked] No approved existing Shadow path. Wiring branch `codex/t15b-shadow-wiring` adds validated `static|shadow` workflow plumbing and tests; require independent review + exact-head CI, then stop.
+- [not started] Shadow activation/certification, canary, full D1, media/R2, T14G; Inventory Truth/T09/T11 unchanged.

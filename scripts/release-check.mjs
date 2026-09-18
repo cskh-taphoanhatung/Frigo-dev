@@ -7,6 +7,13 @@ import { pathToFileURL } from 'node:url';
 export const REVIEWED_HARDENING_BASE = 'af661af467ba8620ba6b2919ee958195d179380c';
 const SHA = /^[a-f0-9]{40}$/;
 
+export function validateRecipeCatalogMode(value) {
+  if (!['static', 'shadow'].includes(value)) {
+    throw new Error('Release recipe catalog mode must be static or shadow');
+  }
+  return value;
+}
+
 function git(cwd, ...args) {
   return execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 }
@@ -128,12 +135,13 @@ async function main() {
   if (command === 'gate') {
     const environment = process.env.RELEASE_ENVIRONMENT;
     if (!['production', 'staging'].includes(environment)) throw new Error('Invalid release environment');
+    const recipeCatalogMode = validateRecipeCatalogMode(process.env.RECIPE_CATALOG_MODE);
     const hardenedSha = process.env.HARDENED_SHA ||
       (environment === 'staging' && process.env.GITHUB_EVENT_NAME === 'workflow_run' ? REVIEWED_HARDENING_BASE : undefined);
     const source = validateReleaseSource({ ref: process.env.RELEASE_REF, hardenedSha });
     const repository = process.env.GITHUB_REPOSITORY;
     const manifest = {
-      ...source, repository, environment,
+      ...source, repository, environment, recipeCatalogMode,
       ci: await hostedCi(source.sha, repository),
       schema: migrationManifest(process.cwd(), source.sha),
       workflowRunId: process.env.GITHUB_RUN_ID,
@@ -141,12 +149,14 @@ async function main() {
       createdAt: new Date().toISOString(),
     };
     writeManifest(file, manifest);
-    if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `deploy_sha=${source.sha}\n`);
+    if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT,
+      `deploy_sha=${source.sha}\nrecipe_catalog_mode=${recipeCatalogMode}\n`);
     if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY,
       `## Approved release candidate\n\n- SHA: \`${source.sha}\`\n- Main: \`${source.mainSha}\`\n- Hardened ancestor: \`${source.hardenedSha}\`\n- Schema: \`${manifest.schema.version}\` (${manifest.schema.sha256})\n- Exact-head CI: ${manifest.ci.url}\n\nCandidate validation is not proof of deployment; see the deployment receipt artifact.\n`);
   } else {
     const manifest = JSON.parse(readFileSync(file, 'utf8'));
     if (command === 'recheck') {
+      validateRecipeCatalogMode(manifest.recipeCatalogMode);
       if (git(process.cwd(), 'rev-parse', 'HEAD') !== manifest.sha) throw new Error('Checkout differs from approved release SHA');
       const source = validateReleaseSource({ ref: manifest.sha, hardenedSha: manifest.hardenedSha });
       if (migrationManifest(process.cwd(), source.sha).sha256 !== manifest.schema.sha256) throw new Error('Migration manifest changed');
