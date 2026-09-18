@@ -128,6 +128,8 @@ production_safety=D1 write NO · R2 write NO · deploy NO · authority switch NO
 historical_production_tip=0034 (NOT re-queried live in T15A-R2; Phase B must re-query before any mutation)
 P3_FUTURE_MEDIA_GATE_COMPATIBILITY=open (catalog requires media_ready=0; revisit before any post-media migration)
 merge=NOT PERFORMED (merge gate unmet: workflow files not on remote); main_CI=n/a; staging_convergence=n/a; production_job=n/a
+final_PR_head=309d049e17c692d197e4c03660e6e992ab1cd764 (local == remote; VERIFIED_LIVE) — exact-head validate run 35304048116 / job 105472477135 SUCCESS
+PR_state=OPEN draft=NO merged=NO mergeable=MERGEABLE/CLEAN unresolved_threads=0 (must NOT merge: wiring absent on remote)
 ```
 
 **Next session (resume rule, T15A-R2 → R3):** fetch; verify `origin/main` (`70cf7e0d…` at this stop) and the
