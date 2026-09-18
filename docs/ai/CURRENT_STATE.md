@@ -1,5 +1,25 @@
 # Frigo / Takosan current authority — 2026-09-18
 
+## Current T15C-A — bounded canary control-plane wiring in review (2026-09-18)
+
+Certified base main is `6f589d0201499a3729d343e42ccb6d19fdff217a`, the normal
+merge of PR #31 (`bb14ba3dcf594fdf4a71fa6bbd6e72fefa52e02e`). PR #29 was closed
+without merge as superseded. Branch `codex/t15c-canary-control-plane` adds only
+Deploy workflow policy, release-manifest validation/tests, and the T15C-A receipt
+(`docs/ai/recipe-catalog/T15C_A_CANARY_CONTROL_PLANE.md`).
+
+The release matrix is `static/0/false`, `shadow/0/false`, or
+`canary/{1,2,5}/true`; `d1`, `full`, `full_d1`, arbitrary percentages, and
+100% canary fail closed. Automatic `workflow_run` deploys remain static/0/false.
+Mode, percent, and derived cutover are recorded in the immutable release
+manifest and passed to both Wrangler jobs from validated release outputs.
+
+Local focused tests pass (121/121), full suite passes (173 files / 3995 tests),
+and seed/import/lint/typecheck/migration/build/diff gates pass. No runtime
+canary code, migrations, production D1, Worker, media/R2, Inventory Truth,
+PayOS/auth, or T14G changed. Production canary remains unauthorized and
+unactivated; stop after opening the new PR and exact-head hosted CI review.
+
 ## Current T15B-SHADOW — production Shadow certified; safe stop before canary (2026-09-18)
 
 Production Shadow certification is complete on canonical main `88e8b54de121125866b2ff813e56e33277decf1c` in repository `1368281478` (`frigo-6/Frigo-dev`). PR #30 (`ad3e1d1656418aaf495b130443d6514926b8bdca`) merged with a zero-file tree delta; exact-main CI `35336548833` passed, automatic staging Deploy `35336830786` passed with STATIC71, and production Shadow Deploy `35337110268` passed release `105574386006` and production `105574426707` after the required Environment approval. Production now serves Worker `c6fa2ce8-f35b-4485-ad38-09dbc19738d1` at exact SHA `88e8b54de121125866b2ff813e56e33277decf1c`; bounded convergence passed in one attempt / 574 ms.
