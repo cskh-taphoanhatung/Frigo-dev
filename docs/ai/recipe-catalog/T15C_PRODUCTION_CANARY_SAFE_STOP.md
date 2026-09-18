@@ -18,7 +18,7 @@ repository_full_name=frigo-6/Frigo-dev (resolved by ID)
 CANONICAL_MAIN_START=b41aa4682481447795350fc1a9eeb1e80887bd0e
 ending_main=b41aa4682481447795350fc1a9eeb1e80887bd0e (unchanged during the session)
 TASK_BRANCH=hoplite/aigeai-eca96ae8--t15c-canary (from main; docs-only)
-PR=<docs-only receipt PR; see PR body>
+PR=#38 (docs-only receipt; code head 3b8e4653aa9f7fee8ce93f79988f637de70286f5, exact-head validate run 35406083881 SUCCESS)
 merge_sha=NOT MERGED
 working_tree_clean=YES at start (after checkout of main)
 ```
