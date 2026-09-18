@@ -1,5 +1,14 @@
 # Frigo / Takosan current task board — 2026-09-17
 
+## Current T15C-B — merged control plane; safe stop before production Canary — 2026-09-18
+
+- [done] Merged PR #32 with expected head `a7b3d23f2ad8b48203328116d0e35425390d2127` as `a6e81cd89b9e4c6b923cfc39947b01faf44ff5f3`; PR head ancestor and tree delta 0 files.
+- [done] Exact-head PR CI `35344089103` SUCCESS; unresolved review threads `0`; exact-main CI `35347246583` / job `105606601599` SUCCESS.
+- [done] Automatic Deploy `35347579284`: release/staging SUCCESS, production SKIPPED; staging Worker `12623f3b-ac64-4255-9fbf-c429b6225e1d`, exact merge SHA, `static/0/false`.
+- [done] Read-only production recheck: Shadow/static Worker `c6fa2ce8-f35b-4485-ad38-09dbc19738d1`, SHA `88e8b54d…`, five 71-count checks, legacy 200, reviewed D1-only 404; D1 500 READY.
+- [stop] No authorized operator-owned inside/outside 1% cohorts were available; no customer households were inspected and no Canary dispatch/approval was attempted. Classification `T15C_B_AUTHORIZED_TEST_COHORT_UNAVAILABLE`.
+- [next] Operator must provide both authorized cohorts. Resume only with exactly 1%; do not widen, enable full D1, populate media/R2, start T14G, or touch Inventory Truth/T09/T11/PayOS/auth. Receipt: `docs/ai/recipe-catalog/T15C_B_AUTHORIZED_COHORT_SAFE_STOP.md`.
+
 ## Current T15C-A — bounded canary control plane — 2026-09-18
 
 - [done] Re-verified repository `1368281478` / `frigo-6/Frigo-dev`, main `88e8b54d…`, PR #31 exact head and docs-only tree; exact-head CI `35338372250` SUCCESS.
