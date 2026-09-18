@@ -1,4 +1,11 @@
-## Current T14F — T14F_DEVELOPMENT_COMPLETE (T14F-A/B/C certified; production untouched) — 2026-09-17
+## Current T15A — pre-production rollout hardening — 2026-09-18
+
+- [done] PR #26 merged (`70cf7e0d…`): schema gate derived from `migrations/`, pinned migration chain, `catalog` certification command.
+- [done, PR #27] `catalog` step wired into `production-d1-migrate.yml`; input interpolation removed; `wait-for-deployed-release.mjs` bounded exact-SHA convergence for staging + production deploy proof; guardrail/order tests.
+- [blocked] App credential lacks `workflows` permission → workflow diffs attached as a patch for a maintainer.
+- [next] T15A Phase B (production re-query → migrate 0035–0037 via workflow → static deploy → shadow) only with credentials + operator approval. No canary/d1/media/T14G.
+
+## Historical T14F — T14F_DEVELOPMENT_COMPLETE (T14F-A/B/C certified; production untouched) — 2026-09-17
 
 - T14F-C completed and committed (on top of authorized base `7d667523…`): 0037 promoted byte-identical (`68e52e6d…`), shipped manifest regenerated to 500/2 batches (`rel-bd00a4f53fcaeee4`, `fa47d31f…`), replay (fresh 0001→0037, 0036→0037, 0034→…→0037) PASS, D1 readiness READY 500, static/shadow/canary/full-D1 PASS, user flows incl. Batch B cuisines PASS. Development certificate: `docs/ai/recipe-catalog/T14F_C_500_CATALOG_CERTIFICATION.md`.
 - **T14F-C CLOSED**: safe stop `44c0ad38…` resolved. Full closure gates PASS — lint, build, full `pnpm test` **171 files / 3913 tests**, typecheck, migration smoke through 0037, seed/import checks (500/2), diff check. One real blocker fixed forward-only in `8c6080aa…` (tests only): the five real-D1 suites overflowed workerd 1.20250718's 1 MiB statement cache when replaying 0001→0037 in one process (cloudflare/workerd#5977); `tests/helpers/local-d1-worker.mjs` recycles workerd before that. No migration/catalog/runtime change. Second blocker (docs heads): hosted Vitest passed 171/3913 but exited 1 on a vitest-worker `onTaskUpdate` RPC timeout — fixed forward-only via `tests/helpers/vitest-event-loop-yield.ts` (setupFiles; test config only).

@@ -90,12 +90,26 @@ export function verifyMigrationLedger(schema, statements) {
   return { version: schema.version, names, checkedAt: new Date().toISOString() };
 }
 
+export const RELEASE_PROPAGATION_PENDING = 'RELEASE_PROPAGATION_PENDING';
+
+/**
+ * Exact deployment proof. A readiness body that is healthy, in the right environment, but still
+ * reports an earlier release SHA is the only *retryable* outcome (edge propagation after a Worker
+ * upload); `error.code === RELEASE_PROPAGATION_PENDING` marks it. Everything else fails closed.
+ */
 export function verifyDeployedRelease(manifest, readiness) {
-  if (readiness?.commit !== manifest.sha || readiness.environment !== manifest.environment) {
+  if (typeof readiness !== 'object' || readiness === null) throw new Error('Readiness response is not an object');
+  if (readiness.environment !== manifest.environment) {
     throw new Error('Readiness does not identify the exact approved release SHA/environment');
   }
   if (!['ok', 'degraded'].includes(readiness.status) || readiness.services?.database !== 'ok' || readiness.config?.ok !== true) {
     throw new Error('Deployed release is not ready');
+  }
+  if (readiness.commit !== manifest.sha) {
+    const error = new Error('Readiness does not identify the exact approved release SHA/environment');
+    error.code = RELEASE_PROPAGATION_PENDING;
+    error.observedSha = typeof readiness.commit === 'string' ? readiness.commit : null;
+    throw error;
   }
   return { sha: readiness.commit, environment: readiness.environment, checkedAt: new Date().toISOString() };
 }

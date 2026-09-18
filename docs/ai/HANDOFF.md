@@ -1,4 +1,8 @@
-# Frigo / Takosan current handoff — 2026-09-17
+# Frigo / Takosan current handoff — 2026-09-18
+
+## Current — T15A pre-production hardening; Phase B (production) not started
+
+See `recipe-catalog/T15A_WIP_HANDOFF.md` for exact heads, the workflow-permission blocker (App cannot push `.github/workflows/*`; patch attached to the PR), and the production resume requirements. No production D1/R2/deploy/authority change has occurred.
 
 ## Current T14F — T14F_DEVELOPMENT_COMPLETE (T14F-C certified + closed; production untouched)
 

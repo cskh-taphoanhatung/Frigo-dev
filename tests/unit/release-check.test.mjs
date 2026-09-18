@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
+  RELEASE_PROPAGATION_PENDING,
   migrationManifest, requireSuccessfulCi, validateReleaseSource,
   verifyDeployedRelease, verifyMigrationLedger,
 } from '../../scripts/release-check.mjs';
@@ -138,11 +139,27 @@ describe('schema and deployment receipts', () => {
     expect(verifyDeployedRelease(manifest, ready)).toMatchObject({ sha: goodSha, environment: 'production' });
   });
   it.each([
-    { commit: null }, { commit: 'b'.repeat(40) }, { environment: 'staging' },
+    { environment: 'staging' },
     { status: 'unhealthy' }, { status: undefined }, { services: { database: 'error' } },
     { config: { ok: false } }, { config: undefined },
   ])('rejects misleading or unhealthy deployment proof: %j', (changes) => {
-    expect(() => verifyDeployedRelease(manifest, { ...ready, ...changes })).toThrow();
+    let caught;
+    try { verifyDeployedRelease(manifest, { ...ready, ...changes }); } catch (error) { caught = error; }
+    expect(caught).toBeInstanceOf(Error);
+    expect(caught.code).toBeUndefined(); // never retryable
+  });
+  it.each([{ commit: null }, { commit: 'b'.repeat(40) }])('marks a healthy previous-release SHA as the only retryable outcome: %j', (changes) => {
+    let caught;
+    try { verifyDeployedRelease(manifest, { ...ready, ...changes }); } catch (error) { caught = error; }
+    expect(caught).toMatchObject({ code: RELEASE_PROPAGATION_PENDING, observedSha: changes.commit });
+  });
+  it('a stale SHA on an unhealthy or wrong-environment body is not retryable', () => {
+    for (const changes of [{ commit: 'b'.repeat(40), environment: 'staging' }, { commit: 'b'.repeat(40), status: 'unhealthy' }, { commit: 'b'.repeat(40), services: { database: 'error' } }]) {
+      let caught;
+      try { verifyDeployedRelease(manifest, { ...ready, ...changes }); } catch (error) { caught = error; }
+      expect(caught.code).toBeUndefined();
+    }
+    expect(() => verifyDeployedRelease(manifest, null)).toThrow('not an object');
   });
 });
 
@@ -167,13 +184,50 @@ describe('release workflow guardrails', () => {
     const production = deploy.slice(deploy.indexOf('\n  production:'));
     expect(production.indexOf('release-check.mjs recheck')).toBeLessThan(production.indexOf('d1-schema-gate.sh remote'));
     expect(production.indexOf('release-check.mjs schema')).toBeLessThan(production.indexOf('command: deploy'));
-    expect(production).toContain('release-check.mjs deployed');
+    expect(production.indexOf('command: deploy')).toBeLessThan(production.indexOf('wait-for-deployed-release.mjs'));
     expect(production).not.toContain('migrations apply');
     expect(production).not.toContain('frigo.tungjpstore.net');
+  });
+  it('both staging and production prove the exact deployed SHA through bounded convergence, never a single-shot curl', () => {
+    const staging = deploy.slice(deploy.indexOf('\n  staging:'), deploy.indexOf('\n  production:'));
+    const production = deploy.slice(deploy.indexOf('\n  production:'));
+    for (const job of [staging, production]) {
+      expect(job).toContain('post-deploy-smoke.sh');
+      expect(job).toContain('node scripts/wait-for-deployed-release.mjs release-manifest.json');
+      expect(job).not.toMatch(/curl[^\n]*health\/ready[^\n]*> readiness\.json/);
+      expect(job).not.toContain('release-check.mjs deployed');
+      expect(job.indexOf('post-deploy-smoke.sh')).toBeLessThan(job.indexOf('wait-for-deployed-release.mjs'));
+      // Forensic receipt survives a failed convergence.
+      expect(job.slice(job.indexOf('wait-for-deployed-release.mjs'))).toMatch(/if: always\(\)[\s\S]*upload-artifact/);
+    }
   });
   it('carries no write permission or shell-interpolated dispatch input', () => {
     expect(deploy).not.toMatch(/(?:contents|actions|id-token|deployments): write/);
     expect(deploy).not.toMatch(/run:.*\$\{\{.*(?:inputs\.|github.event.inputs)/);
     expect(deploy).toContain('persist-credentials: false');
+  });
+
+  it('production D1 migration workflow keeps every fail-closed gate in order (pinned chain + catalog certification)', () => {
+    const migrate = readFileSync(new URL('../../.github/workflows/production-d1-migrate.yml', import.meta.url), 'utf8');
+    expect(migrate).toContain('workflow_dispatch:');
+    expect(migrate).not.toMatch(/\n\s+(?:push|pull_request|schedule|workflow_run):/);
+    expect(migrate).toContain("github.ref == 'refs/heads/main'");
+    expect(migrate).toContain('inputs.confirm_production_migration == true');
+    expect(migrate).toContain('environment: production');
+    expect(migrate).toContain('cancel-in-progress: false');
+    expect(migrate).toContain('persist-credentials: false');
+    expect(migrate).toMatch(/permissions:\n\s+contents: read\n\s+actions: read/);
+    expect(migrate).not.toMatch(/(?:contents|actions|id-token|deployments): write/);
+    expect(migrate).not.toMatch(/run:.*\$\{\{.*(?:inputs\.|github.event.inputs)/);
+    const order = ['d1-migration-check.mjs gate', 'd1-migration-check.mjs identity', 'd1-migration-check.mjs pre-ledger', 'time-travel info',
+      'd1-migration-check.mjs bookmark', 'd1-migration-check.mjs baseline', 'd1-migration-check.mjs plan', 'migrations apply frigo-db --remote',
+      'd1-migration-check.mjs post-ledger', 'd1-migration-check.mjs verify', 'd1-migration-check.mjs catalog', 'd1-schema-gate.sh remote'];
+    const positions = order.map((needle) => migrate.indexOf(needle));
+    expect(positions.every((position) => position >= 0)).toBe(true);
+    expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+    expect(migrate).toMatch(/if: steps\.pre_ledger\.outputs\.mode == 'apply'/);
+    expect(migrate).toContain('m.catalogQuery()');
+    // The receipt artifact is always saved, even when a gate fails.
+    expect(migrate.slice(migrate.indexOf('d1-schema-gate.sh remote'))).toMatch(/if: always\(\)[\s\S]*upload-artifact/);
   });
 });

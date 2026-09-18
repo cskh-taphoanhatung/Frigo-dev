@@ -1,4 +1,8 @@
-# Frigo / Takosan current authority — 2026-09-17
+# Frigo / Takosan current authority — 2026-09-18
+
+## Current T15A — pre-production rollout hardening (production untouched)
+
+T14F merged to main `9be395d0…`. T15A schema-gate hardening merged via PR #26 → main `70cf7e0d…` (`scripts/d1-schema-gate.mjs` derives required migrations from `migrations/`; `d1-migration-check.mjs` pinned chain + `catalog` certification). T15A-R (PR #27) wires the `catalog` step into `production-d1-migrate.yml`, removes the shell-interpolated input, and replaces the single-shot post-deploy SHA check in `deploy.yml` with `scripts/wait-for-deployed-release.mjs` (bounded exact-SHA polling; root cause of Deploy 35288137887's false negative). Production: D1 not migrated, Worker `4ed98514…`, static 71, no shadow/canary/media/T14G. Handoff + resume requirements: `recipe-catalog/T15A_WIP_HANDOFF.md`.
 
 ## Current T14F — T14F_DEVELOPMENT_COMPLETE (T14F-A/B/C certified; 500-recipe catalog dev-certified; production untouched)
 
