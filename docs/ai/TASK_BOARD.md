@@ -1,6 +1,15 @@
 # Frigo / Takosan current task board — 2026-09-17
 
-## Current T15B-PRE — STATIC certified; SHADOW wiring PR ready — 2026-09-18
+## Current T15B-SHADOW — production Shadow certified; stop before canary — 2026-09-18
+
+- [done] PR #30 merged as `88e8b54de121125866b2ff813e56e33277decf1c`; PR head `ad3e1d1656418aaf495b130443d6514926b8bdca` is an ancestor and tree delta is 0 files. Exact-main CI `35336548833` SUCCESS.
+- [done] Automatic staging Deploy `35336830786` SUCCESS: staging Worker `580acb76-a006-4c0a-b991-618ebde07e88`, STATIC authority, exact SHA, 71 recipes; production skipped.
+- [done] Production Shadow Deploy `35337110268` SUCCESS: release `105574386006`, production `105574426707`, required Environment approval, Worker `c6fa2ce8-f35b-4485-ad38-09dbc19738d1`, exact-SHA convergence 1 attempt / 574 ms.
+- [done] Live Shadow certification: 5/5 catalog reads served 71, legacy IDs 200, five D1-only IDs 404; tail diagnostics show Shadow/static, D1 500 hydrated, release `rel-bd00a4f53fcaeee4`, readiness `ready`, zero drift/order/hydration errors, zero Shadow errors.
+- [done] Durable receipt added at `docs/ai/recipe-catalog/T15B_SHADOW_CERTIFICATION.md`; rollback Worker `ab8ff038-2aaa-468b-a9de-8c5d94f14052` retained and static config rollback documented.
+- [stop] Do not enable canary/full D1/cutover, write media/R2, start T14G, alter Inventory Truth/T09/T11, or merge stale PR #29. Classification `T15B_SHADOW_COMPLETE`.
+
+## Previous T15B-PRE checkpoint — STATIC certified; SHADOW wiring PR ready — superseded 2026-09-18
 
 - [done] Re-verified canonical repository `1368281478` / `frigo-6/Frigo-dev`, main `0fe2cf071693208f6c642d8cbd994f5a79b5a2cf`, and PR #29 remained unmerged.
 - [done] Re-read immutable migration receipt run `35329772751`: D1 tip 0037, 500 catalog, release `rel-bd00a4f53fcaeee4`, schema gate PASS, FK `[]`, quick check `ok`, media 500 pending/0 ready.

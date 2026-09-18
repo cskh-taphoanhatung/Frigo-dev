@@ -1,6 +1,16 @@
 # Frigo / Takosan current handoff — 2026-09-18
 
-## Current — T15B-PRE STATIC certified; SHADOW wiring PR ready (2026-09-18)
+## Current — T15B-SHADOW production certification complete; stop before canary (2026-09-18)
+
+See `recipe-catalog/T15B_SHADOW_CERTIFICATION.md` for the durable receipt. Canonical repository `1368281478` is `frigo-6/Frigo-dev`; PR #30 head `ad3e1d1656418aaf495b130443d6514926b8bdca` merged as main `88e8b54de121125866b2ff813e56e33277decf1c` with zero tree delta. Exact-main CI `35336548833` succeeded. Automatic staging Deploy `35336830786` succeeded and remained STATIC71 on Worker `580acb76-a006-4c0a-b991-618ebde07e88`.
+
+Production Shadow Deploy `35337110268` succeeded after the normal required Environment reviewer gate: release job `105574386006`, production job `105574426707`, Worker `c6fa2ce8-f35b-4485-ad38-09dbc19738d1`, exact SHA convergence in one attempt / 574 ms. The immutable manifest records `recipeCatalogMode=shadow`, schema tip 0037 and ledger 37. Existing production D1 migration run `35329772751` was not rerun and no manual/additional D1 write occurred.
+
+Independent production certification performed five repeated readiness/catalog checks: every request returned exact SHA and 71 user-facing recipes; `vn-canh-01` and `gl-12` remained HTTP 200; five reviewed imported IDs remained HTTP 404. Sanitized Cloudflare tail diagnostics proved `catalog_mode=shadow`, `catalog_source=static`, D1 500 complete/hydrated, release `rel-bd00a4f53fcaeee4` READY, zero drift/order/hydration errors, zero Shadow errors, and no authority leak. Previous Worker `ab8ff038-2aaa-468b-a9de-8c5d94f14052` remains retained; rollback is the approved Deploy workflow with the same SHA and `recipe_catalog_mode=static` plus normal approval.
+
+Next action: independent review of the docs-only receipt PR. Do not merge stale/conflicting PR #29 as-is. Do not enable canary, full D1, or cutover; do not populate media/R2; do not start T14G; do not modify Inventory Truth/T09/T11, PayOS, or auth. Classification: `T15B_SHADOW_COMPLETE`.
+
+## Previous — T15B-PRE STATIC certified; SHADOW wiring PR ready (superseded 2026-09-18)
 
 See `recipe-catalog/T15B_PRE_STATIC_RECEIPT.md` for the durable receipt. Main stayed at `0fe2cf071693208f6c642d8cbd994f5a79b5a2cf`; PR #29 was not merged. Existing D1 migration run `35329772751` is SUCCESS at 0037/500 and was not rerun. Static Deploy run `35333517052` is SUCCESS with required Environment approval, Worker version `ab8ff038-2aaa-468b-a9de-8c5d94f14052`, exact SHA convergence in one attempt/587 ms, and five repeated live STATIC71 checks. Previous Worker `56979cb5-e1a8-4241-8a4c-2432d41cc439` remains available for rollback.
 
