@@ -5,7 +5,7 @@ import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   RELEASE_PROPAGATION_PENDING,
-  migrationManifest, requireSuccessfulCi, validateReleaseSource,
+  migrationManifest, requireSuccessfulCi, validateRecipeCatalogMode, validateReleaseSource,
   verifyDeployedRelease, verifyMigrationLedger,
 } from '../../scripts/release-check.mjs';
 
@@ -17,6 +17,16 @@ const successful = {
   repository: { full_name: repository }, head_repository: { full_name: repository },
   html_url: 'https://github.com/release-fixture/Frigo/actions/runs/2',
 };
+
+describe('recipe catalog rollout mode validation', () => {
+  it.each(['static', 'shadow'])('accepts the reviewed %s mode', (mode) => {
+    expect(validateRecipeCatalogMode(mode)).toBe(mode);
+  });
+
+  it.each([undefined, '', 'canary', 'd1', 'SHADOW'])('rejects unreviewed mode %s', (mode) => {
+    expect(() => validateRecipeCatalogMode(mode)).toThrow('must be static or shadow');
+  });
+});
 
 describe('release source of truth (local Git only)', () => {
   let cwd, baselineSha, hardenedSha, releaseSha, outsideSha;
@@ -243,6 +253,11 @@ describe('release workflow guardrails', () => {
     expect(deploy).toContain('environment: production');
     expect(deploy).toContain('ref: ${{ needs.release.outputs.deploy_sha }}');
     expect(deploy).toContain('GIT_COMMIT:${{ needs.release.outputs.deploy_sha }}');
+    expect(deploy).toContain('options: [static, shadow]');
+    expect(deploy).toContain("RECIPE_CATALOG_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.recipe_catalog_mode || 'static' }}");
+    expect(deploy.match(/RECIPE_CATALOG_MODE:\$\{\{ needs\.release\.outputs\.recipe_catalog_mode \}\}/g)).toHaveLength(2);
+    expect(deploy).not.toContain('options: [static, shadow, canary');
+    expect(deploy).not.toContain('options: [static, shadow, d1');
     expect(deploy).toContain('cancel-in-progress: false');
     const production = deploy.slice(deploy.indexOf('\n  production:'));
     expect(production.indexOf('release-check.mjs recheck')).toBeLessThan(production.indexOf('d1-schema-gate.sh remote'));
