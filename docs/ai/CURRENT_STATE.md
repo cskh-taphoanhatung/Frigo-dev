@@ -1,6 +1,6 @@
 # Frigo / Takosan current authority — 2026-09-19
 
-## Current T16 — production deployed; CSP hotfix ready for release (2026-09-19)
+## Current T16 — auth funnel and CSP hotfix deployed; OTP receipt pending (2026-09-19)
 
 PR #34 merged the auth-funnel implementation commit
 `3633a2fa8a0827a6aa31a3c86da7fb680a6e0f2a` and documentation commit
@@ -44,19 +44,38 @@ app; `PATCH /api/v1/preferences` returned 200 and the
 `__Host-frigo_session` cookie remained `HttpOnly`, `Secure`, `SameSite=Lax`.
 
 The production console exposed CSP blocks for Google Fonts, Google GSI styles,
-and Cloudflare Web Analytics. Branch `codex/auth-csp-production-hotfix` contains
-implementation commit `79dfca6483d90fcf33380acfe33f880c1e6ff7a5`, which adds only
-the required explicit origins in `src/worker/config/csp.ts` and
-`public/_headers`, plus unit coverage. No wildcard or script `unsafe-inline` was
-added. Hotfix verification passed lint, typecheck, migration check, build, full
-Vitest **174 files / 4002 tests**, focused CSP 3/3, and diff check. It still
-requires PR review, exact-head/main CI, and a production deploy.
+and Cloudflare Web Analytics. Hotfix implementation
+`79dfca6483d90fcf33380acfe33f880c1e6ff7a5` adds only the required explicit
+origins in `src/worker/config/csp.ts` and `public/_headers`, plus unit coverage;
+no wildcard or script `unsafe-inline` was added. PR #35 head
+`c14a3755d95ddae316d5e6636ef85f9784ac4a54` passed CI `35388666150` and merged
+normally as main `0cb5d2c08fa24479ecce6b4c4e5f73b31a920ff5`; exact-main CI
+`35388963509` passed.
+
+Production hotfix Deploy `35389274233` passed the Environment gate, full local
+gates, exact-head CI recheck, read-only D1 ledger/schema gate, Cloudflare deploy,
+post-deploy smoke and exact-SHA convergence in one attempt. Worker version
+`e8164168-9566-475b-b0fa-7508368bf3e7` serves exact SHA
+`0cb5d2c08fa24479ecce6b4c4e5f73b31a920ff5`; previous Worker
+`c0161a22-1987-42dd-99c4-0a5874d4fadb` is the immediate rollback reference.
+The immutable manifest and live catalog confirm recipe authority remains
+`shadow`, canary `0`, cutover `false`, and 71 user-facing recipes. D1 remains
+ledger 38 / tip 0038; no migration was run for the CSP hotfix.
+
+Independent production checks confirmed the exact SHA, expected Google client
+ID, configured email service, database/queue OK, and only the pre-existing
+`CONFIG_PLUS_GRANT_SECRET_MISSING` warning. The live CSP header contains the
+explicit Google Fonts/GSI/Cloudflare Insights origins. Playwright at 390x844 and
+1440x900 found no horizontal overflow, loaded fonts, rendered one Google iframe,
+and captured no CSP console violation. The Insights script was allowed by CSP
+but its host returned `ERR_CONNECTION_REFUSED` from the verification network.
 
 Real OTP delivery remains unverified. `tungjpstore@gmail.com` already exists in
-`auth_accounts`, and headless Playwright could not complete Turnstile, so no
-forgot-password request was sent and no email receipt may be claimed. One
-legitimate production guest test record was created and intentionally retained.
-No PayOS/payment, recipe authority, Inventory Truth, or Week behavior changed.
+`auth_accounts`; both headless and headed automated Chrome displayed the real
+Turnstile checkbox but could not produce a token, so no forgot-password request
+was sent and no email receipt may be claimed. One legitimate production guest
+test record was created and intentionally retained. No PayOS/payment, recipe
+authority, Inventory Truth, or Week behavior changed.
 
 ## Current T15C-B — merged control plane; safe stop before production Canary (2026-09-18)
 

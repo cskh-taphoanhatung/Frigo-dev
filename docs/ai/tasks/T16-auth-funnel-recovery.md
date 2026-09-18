@@ -2,7 +2,7 @@
 
 ## Status
 
-`PRODUCTION_DEPLOYED_CSP_HOTFIX_PENDING`
+`PRODUCTION_DEPLOYED_OTP_RECEIPT_PENDING`
 
 ## Goal
 
@@ -84,5 +84,18 @@ Production browser verification exposed missing explicit CSP origins for Google
 Fonts, Google GSI styles, and Cloudflare Web Analytics. Commit
 `79dfca6483d90fcf33380acfe33f880c1e6ff7a5` fixes only those allowlists and adds
 unit coverage, with no wildcard or script `unsafe-inline`. Full local gates pass
-at 174 files / 4002 tests. The hotfix still needs PR/main CI, production deploy,
-and a CSP-clean browser-console receipt before T16 can close.
+at 174 files / 4002 tests. PR #35 head
+`c14a3755d95ddae316d5e6636ef85f9784ac4a54` passed CI `35388666150`, merged as
+main `0cb5d2c08fa24479ecce6b4c4e5f73b31a920ff5`, and exact-main CI
+`35388963509` passed.
+
+Production hotfix Deploy `35389274233` succeeded on Worker
+`e8164168-9566-475b-b0fa-7508368bf3e7`, preserving `shadow/0/false` and ledger
+38/tip 0038. Independent mobile/desktop verification found the exact SHA, loaded
+fonts and Google iframe, no overflow, and no CSP console violation. Cloudflare
+Insights was allowlisted but unreachable from the verification network.
+
+The only remaining T16 acceptance evidence is a real OTP receipt. Automated
+headed/headless Chrome could render the real Turnstile checkbox but could not
+obtain a token, so no OTP request was sent. Complete one manual forgot-password
+request in a normal browser and confirm arrival without exposing the OTP.
