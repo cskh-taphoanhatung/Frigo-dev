@@ -560,6 +560,20 @@ describe('D1-authoritative OTP verification', () => {
     expect(otp().used).toBe(1);
   });
 
+  it('keeps resend available when the optional KV cooldown store is unavailable', async () => {
+    await register();
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    env.CACHE = {
+      get: vi.fn(async () => { throw new Error('KV unavailable'); }),
+      put: vi.fn(),
+      delete: vi.fn(),
+    } as unknown as Env['CACHE'];
+    const result = await request('/auth/resend-otp', { body: { email: EMAIL, purpose: 'register' } });
+    expect(result.status).toBe(200);
+    expect(result.json.success).toBe(true);
+    expect(log).toHaveBeenCalledWith(JSON.stringify({ event: 'otp_resend_cooldown_unavailable' }));
+  });
+
   it('stores contextual v2 HMAC only and consumes a correct registration OTP exactly once', async () => {
     const { code } = await register();
     expect(otp().code_digest).toBe(await createOtpDigest(EMAIL, 'register', code, OTP_SECRET));

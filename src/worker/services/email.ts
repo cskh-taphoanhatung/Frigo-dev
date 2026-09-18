@@ -29,11 +29,15 @@ export interface EmailResult {
 }
 
 const FROM_NAME = 'Takosan';
-const FROM_EMAIL = 'no-reply@frigo.tungjpstore.net';
+// This apex domain is the sending domain currently onboarded in Cloudflare
+// Email Service. A subdomain must be onboarded separately before it can send.
+const FROM_EMAIL = 'no-reply@tungjpstore.net';
 
 function classifyWorkersEmailError(error: unknown): EmailResult['error'] {
   const code = typeof error === 'object' && error && 'code' in error ? String(error.code) : '';
+  const message = error instanceof Error ? error.message : '';
   if (code === 'E_SENDER_NOT_VERIFIED' || code === 'E_SENDER_DOMAIN_NOT_AVAILABLE') return 'sender_not_verified';
+  if (message.includes('email sending not authorized for subdomain')) return 'sender_not_verified';
   if (code === 'E_RECIPIENT_NOT_ALLOWED') return 'recipient_not_allowed';
   if (code === 'E_RATE_LIMIT_EXCEEDED') return 'rate_limited';
   if (code === 'E_DAILY_LIMIT_EXCEEDED') return 'daily_limit';

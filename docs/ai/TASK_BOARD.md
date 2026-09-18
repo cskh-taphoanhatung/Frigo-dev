@@ -1,5 +1,21 @@
 # Frigo / Takosan current task board — 2026-09-19
 
+## Current T16 follow-up — OTP sender and guest account gate release candidate — 2026-09-19
+
+- [done] Reproduced the production email-provider failure through the real Cloudflare Email Service binding: sender `no-reply@frigo.tungjpstore.net` is unauthorized because the subdomain is not onboarded separately.
+- [done] Proved the onboarded apex sender path: `no-reply@tungjpstore.net` was accepted by the same binding and returned a provider `messageId`; real OTP inbox receipt remains pending.
+- [done] Changed the transactional sender to the onboarded apex and sanitized the known provider error as `sender_not_verified`; no recipient, OTP, subject, or provider exception text is retained in logs.
+- [done] Hardened resend: optional KV cooldown failure no longer blocks recovery, failed delivery clears the cooldown best-effort, unexpected failures return `503 OTP_RESEND_UNAVAILABLE`, and the frontend requires a fresh Turnstile token for each resend.
+- [done] Added guest account gates: guest `/plus` hides prices and payment UI, presents an explicit login CTA, and preserves `/plus` through a safe local `returnTo`; the guest profile upgrade CTA points to the same auth flow.
+- [done] Preserved authenticated Plus behavior and left PayOS, billing, checkout, payment webhooks and settlement untouched.
+- [done] Added regression coverage for the apex sender, provider-error sanitization, KV outage, Turnstile token renewal, guest Plus gate, guest profile CTA, and authenticated Plus visibility.
+- [done] Application/test checkpoint committed as `31006994849ee9f6d78ae6114f82d77d41efc784`.
+- [done] Local gates: focused **86 tests / 4 files**, full `pnpm test` **176 files / 4008 tests**, lint, typecheck, migration smoke, build and diff check PASS.
+- [done] Browser checks at 390x844 and 1440x1000: guest pricing/payment absent, auth CTA correct, auth accessible to guests, `returnTo=%2Fplus` retained, authenticated prices unchanged.
+- [pending] Commit/push, exact-head hosted CI, merge, exact-main CI, and protected production deploy with recipe authority fixed at `shadow/0/false`.
+- [pending] After deploy, perform one normal-browser OTP request/resend and confirm actual email receipt without exposing the code. Provider acceptance alone is not delivery certification.
+- [safety] No migration, D1 write, recipe authority/canary change, Inventory Truth change, Week change, or production infrastructure redesign.
+
 ## Current T16 — production + CSP hotfix deployed; OTP receipt pending — 2026-09-19
 
 - [done] Replaced the landing/auth/onboarding loop with one funnel: guest or account on landing; returning accounts enter the app; new accounts complete three preference-only steps once.

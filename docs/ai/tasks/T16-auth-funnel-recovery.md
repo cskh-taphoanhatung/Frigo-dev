@@ -2,7 +2,7 @@
 
 ## Status
 
-`PRODUCTION_DEPLOYED_OTP_RECEIPT_PENDING`
+`OTP_SENDER_FIX_RELEASE_CANDIDATE_RECEIPT_PENDING`
 
 ## Goal
 
@@ -99,3 +99,29 @@ The only remaining T16 acceptance evidence is a real OTP receipt. Automated
 headed/headless Chrome could render the real Turnstile checkbox but could not
 obtain a token, so no OTP request was sent. Complete one manual forgot-password
 request in a normal browser and confirm arrival without exposing the OTP.
+
+## OTP resend and guest account gate follow-up — 2026-09-19
+
+A remote-binding diagnostic reproduced the delivery failure as
+`email sending not authorized for subdomain 'frigo.tungjpstore.net'`. The
+Cloudflare Email Service onboarding applies to `tungjpstore.net`, not the
+`frigo.tungjpstore.net` subdomain. A harmless diagnostic sent through the same
+binding from `no-reply@tungjpstore.net` was accepted and returned a provider
+`messageId`; this is provider-acceptance evidence only, not a real OTP receipt.
+
+Implementation commit `31006994849ee9f6d78ae6114f82d77d41efc784`
+therefore uses the apex sender, maps the known provider
+message to `sender_not_verified`, keeps resend usable during optional KV
+cooldown outages, clears cooldown after failed delivery, and requires a new
+Turnstile token before each resend. Guest sessions can open auth; account-bound
+Plus UI hides all prices/payment controls and links to
+`/auth?mode=login&returnTo=%2Fplus`; successful login returns an onboarded
+account to Plus. Authenticated pricing remains unchanged and protected payment
+code is untouched.
+
+Verification: focused **86 tests / 4 files**, full **176 files / 4008 tests**,
+lint, typecheck, migration smoke, build and diff check PASS. Browser checks at
+390x844 and 1440x1000 confirm guest price/payment suppression, login routing,
+auth access and safe return-to behavior. Production is still the prior CSP
+hotfix release with D1 38/0038 and recipe `shadow/0/false`; merge, deploy and a
+real inbox receipt are pending.

@@ -1,5 +1,17 @@
 # Frigo / Takosan current handoff — 2026-09-19
 
+## Current handoff — T16 OTP resend and guest account gates ready for release
+
+- **Branch/base:** `codex/auth-otp-guest-account-gates` from canonical main `14f06ff7f3ede72e676e2cb42b9949cca074a070`; this checkpoint contains the application, tests and documentation candidate, while production is unchanged.
+- **Implementation checkpoint:** `31006994849ee9f6d78ae6114f82d77d41efc784` (`fix(auth): restore OTP resend and gate guest upgrades`).
+- **Confirmed root cause:** the real Cloudflare Email Service binding rejects `no-reply@frigo.tungjpstore.net` because that subdomain is not onboarded as a sending domain. The onboarded apex sender `no-reply@tungjpstore.net` was accepted and returned a provider `messageId`. Do not claim inbox delivery until a real OTP message is received.
+- **OTP fix:** `src/worker/services/email.ts` uses the apex sender and sanitizes the known subdomain error. `src/worker/routes/auth.ts` tolerates optional KV cooldown outages, releases cooldown after failed sends, and returns `503 OTP_RESEND_UNAVAILABLE` for unexpected failures. `src/web/pages/AuthPage.tsx` requires and renews a Turnstile token for resend.
+- **Guest UX:** guest `/plus` shows an account-required state with `/auth?mode=login&returnTo=%2Fplus`, never the price cards or `VietQRModal`. The guest profile CTA links directly to that login path. Auth accepts guest sessions and safe local `returnTo` routing sends an onboarded account back to Plus after login.
+- **Payment boundary:** no PayOS, billing, checkout, payment webhook or settlement code changed; authenticated users retain the existing pricing/payment flow.
+- **Verification:** focused **86 tests / 4 files PASS**; full `pnpm test` **176 files / 4008 tests PASS**; `pnpm lint`, `pnpm typecheck`, `pnpm check:migrations` (`migration-smoke=ok`), `pnpm build`, and `git diff --check` PASS. Browser checks at 390x844 and 1440x1000 confirmed the guest gate and return path.
+- **Production pre-state:** Worker `e8164168-9566-475b-b0fa-7508368bf3e7`, main `0cb5d2c08fa24479ecce6b4c4e5f73b31a920ff5`, D1 ledger 38 / tip 0038, recipe `shadow/0/false`; only the known `CONFIG_PLUS_GRANT_SECRET_MISSING` readiness warning.
+- **Next exact action:** commit coherently, push/open PR, require exact-head CI and review, merge normally, require exact-main CI, dispatch `.github/workflows/deploy.yml` with production confirmation and `shadow/0/false`, verify exact SHA/ledger/readiness, then use a normal browser to request/resend one OTP and confirm receipt without recording the code.
+
 ## Current handoff — T16 production and CSP hotfix deployed; OTP receipt pending
 
 - **Merged release:** PR #34 contains implementation `3633a2fa8a0827a6aa31a3c86da7fb680a6e0f2a` plus docs `66e8073161cf418ffe4df2ed6cece75d56087af1`, merged as main `d6c981b1a67001b807f03166109f661bc753728c`. PR CI `35385363064` and exact-main CI `35385844667` passed.
