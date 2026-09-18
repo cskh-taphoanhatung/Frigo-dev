@@ -488,5 +488,17 @@ INSERT INTO assert_zero SELECT COUNT(*) FROM (
   UNION ALL SELECT 'cooked_meals', COUNT(*) FROM cooked_meals
   EXCEPT SELECT * FROM smoke_pre_scale_counts);
 
+-- T16 (0038): onboarding completion is a nullable profile marker. Existing
+-- users stay incomplete and every prior catalog/data invariant remains intact.
+.read migrations/0038_auth_onboarding_completion.sql
+
+INSERT INTO assert_one SELECT COUNT(*) FROM pragma_table_info('profiles') WHERE name = 'onboarding_completed_at';
+INSERT INTO assert_one SELECT COUNT(*) FROM sqlite_master WHERE type = 'index' AND name = 'idx_profiles_onboarding_completed';
+INSERT INTO assert_zero SELECT COUNT(*) FROM profiles WHERE onboarding_completed_at IS NOT NULL;
+INSERT INTO assert_zero SELECT COUNT(*) FROM pragma_foreign_key_check;
+INSERT INTO assert_zero SELECT COUNT(*) FROM pragma_integrity_check WHERE integrity_check <> 'ok';
+INSERT INTO assert_one SELECT COUNT(*) = 500 FROM recipes;
+INSERT INTO assert_one SELECT COUNT(*) = 500 FROM recipe_runtime_fields;
+
 SELECT 'migration-smoke=ok';
 SQL

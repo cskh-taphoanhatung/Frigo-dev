@@ -121,9 +121,15 @@ export const App: React.FC = () => {
             <Suspense fallback={<RouteFallback />}>
               <Routes key={`${userId}:${householdId}`}>
                 {/* Public / Intro Routes */}
-                <Route path="/landing" element={<LandingPage />} />
-                <Route path="/auth" element={<AuthPage />} />
-                <Route path="/onboarding" element={<OnboardingPage />} />
+                <Route path="/landing" element={userId && householdId
+                  ? <Navigate to={isOnboarded ? '/' : '/onboarding'} replace />
+                  : <LandingPage />} />
+                <Route path="/auth" element={userId && householdId
+                  ? <Navigate to={isOnboarded ? '/' : '/onboarding'} replace />
+                  : <AuthPage />} />
+                <Route path="/onboarding" element={userId && householdId
+                  ? isOnboarded ? <Navigate to="/" replace /> : <OnboardingPage />
+                  : <Navigate to="/landing" replace />} />
 
                 {/* Core App Shell */}
                 <Route
@@ -133,7 +139,7 @@ export const App: React.FC = () => {
                 >
                   <Route
                     path="/"
-                    element={isOnboarded ? <HomePage /> : <Navigate to="/landing" replace />}
+                    element={isOnboarded ? <HomePage /> : <Navigate to="/onboarding" replace />}
                   />
 
                   {/* Fridge / Inventory */}

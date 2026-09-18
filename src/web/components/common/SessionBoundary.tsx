@@ -7,7 +7,7 @@ import { queryClient } from '../../lib/query-client';
 import { queryKeys } from '../../lib/queryKeys';
 
 export const SessionBoundary: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { userId, householdId, isGuest, logoutStatus, logoutError, logout } = useAuthStore();
+  const { userId, householdId, isGuest, logoutStatus, logoutError, logout, setOnboardingFromServer } = useAuthStore();
   const identity = `${userId}:${householdId}`;
   const [verifiedIdentity, setVerifiedIdentity] = useState<string | null>(null);
   const [verificationFailed, setVerificationFailed] = useState(false);
@@ -22,8 +22,11 @@ export const SessionBoundary: React.FC<{ children: React.ReactNode }> = ({ child
       queryFn: () => api.getMe({ requireServer: !isOfflineGuestSession() }),
       staleTime: 0,
       retry: false,
-    }).then(() => {
-      if (!cancelled) setVerifiedIdentity(identity);
+    }).then((me) => {
+      if (!cancelled) {
+        setOnboardingFromServer(me?.user?.onboardingCompleted === true, me?.user?.preferences);
+        setVerifiedIdentity(identity);
+      }
     }).catch(() => {
       if (!cancelled) setVerificationFailed(true);
     });

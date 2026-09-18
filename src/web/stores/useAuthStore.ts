@@ -11,6 +11,7 @@ interface AuthUser {
   displayName: string;
   avatarUrl?: string;
   householdId?: string;
+  onboardingCompleted?: boolean;
 }
 
 interface AuthState {
@@ -31,6 +32,7 @@ interface AuthState {
   syncPlusFromServer: () => Promise<void>;
   setGuestSession: () => Promise<void>;
   setAuthSession: (user: AuthUser) => void;
+  setOnboardingFromServer: (completed: boolean, preferences?: Partial<Pick<AuthState, 'householdSize' | 'spicyLevel' | 'favoriteCuisines' | 'dietaryRestrictions'>>) => void;
   setOnboardingData: (data: {
     householdSize: number;
     spicyLevel: string;
@@ -97,7 +99,9 @@ export const useAuthStore = create<AuthState>((set, get) => {
         const sub = me?.user?.subscription;
         const isPlus = me?.user?.isPlus === true || sub?.plan === 'plus';
         localStorage.setItem('frigo_is_plus', isPlus ? 'true' : 'false');
-        set({ isPlus });
+        const isOnboarded = me?.user?.onboardingCompleted === true;
+        localStorage.setItem('frigo_onboarded', isOnboarded ? 'true' : 'false');
+        set({ isPlus, isOnboarded, ...(me?.user?.preferences || {}) });
       } catch {
         // keep cached value if the server is unreachable
       }
@@ -122,6 +126,11 @@ export const useAuthStore = create<AuthState>((set, get) => {
       sessionStorage.removeItem('frigo_guest_token');
       localStorage.setItem('frigo_is_guest', 'false');
       localStorage.removeItem(OFFLINE_GUEST_KEY);
+      const identityChanged = current.userId !== user.id || current.householdId !== hid;
+      const isOnboarded = typeof user.onboardingCompleted === 'boolean'
+        ? user.onboardingCompleted
+        : identityChanged ? false : get().isOnboarded;
+      localStorage.setItem('frigo_onboarded', isOnboarded ? 'true' : 'false');
 
       set({
         userId: user.id,
@@ -130,7 +139,14 @@ export const useAuthStore = create<AuthState>((set, get) => {
         displayName: user.displayName,
         avatarUrl: user.avatarUrl,
         isGuest: false,
+        isOnboarded,
       });
+    },
+
+    setOnboardingFromServer: (completed, preferences) => {
+      if (privateSessionBlocked() || !get().userId) return;
+      localStorage.setItem('frigo_onboarded', completed ? 'true' : 'false');
+      set({ isOnboarded: completed, ...preferences });
     },
 
     // Onboarding must not replace an existing guest or signed-in cookie.

@@ -4,9 +4,6 @@
 // check, an ID token minted for ANY other Google OAuth client would be accepted
 // (cross-client token substitution).
 
-export const GOOGLE_OAUTH_CLIENT_ID =
-  '509963441971-c9sofh0ueaf8nji4r2gd5kahjlerrjdl.apps.googleusercontent.com';
-
 export interface GoogleUserPayload {
   sub: string;
   email: string;
@@ -15,10 +12,17 @@ export interface GoogleUserPayload {
   email_verified: boolean;
 }
 
-export async function verifyGoogleToken(idToken: string): Promise<{ valid: boolean; user?: GoogleUserPayload; error?: string }> {
+export async function verifyGoogleToken(
+  idToken: string,
+  expectedAudience: string | undefined,
+): Promise<{ valid: boolean; user?: GoogleUserPayload; error?: string }> {
   try {
     if (!idToken || typeof idToken !== 'string') {
       return { valid: false, error: 'Missing or invalid Google token' };
+    }
+
+    if (!expectedAudience) {
+      return { valid: false, error: 'Google OAuth is not configured' };
     }
 
     // Query Google's tokeninfo API to cryptographically verify signature, audience and expiration
@@ -38,7 +42,7 @@ export async function verifyGoogleToken(idToken: string): Promise<{ valid: boole
     }
 
     // SEC-8: audience binding — token must have been issued FOR this app.
-    if (data.aud !== GOOGLE_OAUTH_CLIENT_ID) {
+    if (data.aud !== expectedAudience) {
       return { valid: false, error: 'Google token was issued for a different application (aud mismatch)' };
     }
 

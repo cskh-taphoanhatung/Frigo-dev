@@ -111,7 +111,8 @@ describe('T14F — migrations are the promoted T14E artifacts (additive, immutab
   it('each committed growth migration is byte-identical to the compiler render of its reviewed batch; 0001–0035 unchanged', async () => {
     const files = migrationFiles();
     expect(files).toHaveLength(MIGRATION_LEDGER.count);
-    expect(files.slice(35)).toEqual(MIGRATION_LEDGER.catalogGrowth);
+    expect(files.slice(35, 37)).toEqual(MIGRATION_LEDGER.catalogGrowth);
+    expect(files.slice(37)).toEqual(MIGRATION_LEDGER.postCatalog);
     for (const { entry, result } of await compiled()) {
       const committed = readFileSync(path.join(root, 'migrations', entry.migration), 'utf8');
       expect(committed).toBe(result.artifacts.get(IMPORT_ARTIFACT_FILES.migration));

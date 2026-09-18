@@ -16,7 +16,10 @@ describe('Google authentication entry point', () => {
     (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
     host = document.createElement('div');
     document.body.appendChild(host);
-    fetchMock.mockResolvedValue(new Response(JSON.stringify({ turnstileSiteKey: null }), {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({
+      turnstileSiteKey: null,
+      googleClientId: 'runtime-client.apps.googleusercontent.com',
+    }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     }));
@@ -44,7 +47,7 @@ describe('Google authentication entry point', () => {
     });
 
     expect(initialize).toHaveBeenCalledWith(expect.objectContaining({
-      client_id: expect.any(String),
+      client_id: 'runtime-client.apps.googleusercontent.com',
       callback: expect.any(Function),
     }));
     expect(renderButton).toHaveBeenCalledTimes(1);

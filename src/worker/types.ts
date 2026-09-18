@@ -92,6 +92,7 @@ export interface Env {
   AI_GATEWAY_URL?: string;
   TURNSTILE_SITE_KEY?: string;
   TURNSTILE_SECRET_KEY?: string;
+  GOOGLE_CLIENT_ID?: string;
   JWT_SECRET?: string;
   OTP_HASH_SECRET?: string;
   RESEND_API_KEY?: string;

@@ -439,10 +439,18 @@ describe('server-confirmed logout and private session isolation', () => {
     const client = await loadClient();
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('offline')));
     await client.auth.getState().setGuestSession();
+    client.auth.getState().setOnboardingData({
+      householdSize: 2,
+      spicyLevel: 'medium',
+      favoriteCuisines: ['vietnamese'],
+      dietaryRestrictions: [],
+    });
     vi.mocked(fetch).mockClear();
     vi.mocked(fetch).mockImplementation(async () => json({ user: { id: 'unrelated-user', household: { id: 'unrelated-household' } } }));
     await expect(client.api.getInventory()).resolves.toEqual([]);
-    await expect(client.api.getMe()).resolves.toMatchObject({ user: { id: client.auth.getState().userId } });
+    await expect(client.api.getMe()).resolves.toMatchObject({
+      user: { id: client.auth.getState().userId, onboardingCompleted: true },
+    });
     expect(fetch).not.toHaveBeenCalled();
   });
 

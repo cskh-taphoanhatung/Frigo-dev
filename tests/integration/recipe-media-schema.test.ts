@@ -25,7 +25,8 @@ describe('T14C — 0035 recipe media layer: migration, schema invariants, seed',
     expect(files).toHaveLength(MIGRATION_LEDGER.count);
     expect(files[34]).toBe(RECIPE_MEDIA_MIGRATION_FILENAME);
     // T14F: catalog growth migrations follow 0035; they are data-only and certified in recipe-catalog-growth tests.
-    expect(files.slice(35)).toEqual(MIGRATION_LEDGER.catalogGrowth);
+    expect(files.slice(35, 37)).toEqual(MIGRATION_LEDGER.catalogGrowth);
+    expect(files.slice(37)).toEqual(MIGRATION_LEDGER.postCatalog);
     expect(readFileSync(path.join('migrations', RECIPE_MEDIA_MIGRATION_FILENAME), 'utf8')).toBe(renderRecipeMediaLayerSql(ALL_RECIPES));
     const pinned = migrationManifest.migrations as Record<string, string>;
     expect(Object.keys(pinned)).toHaveLength(34);
