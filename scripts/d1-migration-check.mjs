@@ -85,7 +85,8 @@ export function verifyCatalogAtTip(release, tip, statements, registry) {
   for (const key of ['recipes_without_runtime_fields', 'recipes_without_ingredients', 'recipes_without_steps', 'ingredients_without_order', 'recipes_without_pending_hero']) {
     if (row[key] !== 0) problems.push(`${key}=${row[key]}`);
   }
-  // Media population is a separate task; a migration must never mark media ready.
+  // T15A pre-media-rollout condition: population is a separate task, so a catalog migration must
+  // never mark media ready. Revisit this invariant before any migration that follows media rollout.
   if (row.media_ready !== 0) problems.push(`media_ready=${row.media_ready}`);
   if (problems.length) throw new Error(`Catalog at ${tip} does not match the release manifest: ${problems.join('; ')}`);
   return { ...expected, actualRecipes: row.recipes, mediaReady: 0, checkedAt: new Date().toISOString() };

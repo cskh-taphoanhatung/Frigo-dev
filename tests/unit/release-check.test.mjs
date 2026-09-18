@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
+  RELEASE_PROPAGATION_PENDING,
   migrationManifest, requireSuccessfulCi, validateReleaseSource,
   verifyDeployedRelease, verifyMigrationLedger,
 } from '../../scripts/release-check.mjs';
@@ -138,17 +139,96 @@ describe('schema and deployment receipts', () => {
     expect(verifyDeployedRelease(manifest, ready)).toMatchObject({ sha: goodSha, environment: 'production' });
   });
   it.each([
-    { commit: null }, { commit: 'b'.repeat(40) }, { environment: 'staging' },
+    { environment: 'staging' },
     { status: 'unhealthy' }, { status: undefined }, { services: { database: 'error' } },
     { config: { ok: false } }, { config: undefined },
   ])('rejects misleading or unhealthy deployment proof: %j', (changes) => {
-    expect(() => verifyDeployedRelease(manifest, { ...ready, ...changes })).toThrow();
+    let caught;
+    try { verifyDeployedRelease(manifest, { ...ready, ...changes }); } catch (error) { caught = error; }
+    expect(caught).toBeInstanceOf(Error);
+    expect(caught.code).toBeUndefined(); // never retryable
+  });
+  // Commit identity contract: only a canonical full SHA (40 lowercase hex) is accepted at all.
+  const otherValidSha = 'b'.repeat(40);
+  const caught = (body) => { try { verifyDeployedRelease(manifest, body); } catch (error) { return error; } return undefined; };
+  it('A. exact expected canonical SHA passes', () => {
+    expect(verifyDeployedRelease(manifest, { ...ready, commit: goodSha })).toMatchObject({ sha: goodSha });
+  });
+  it('B. a different valid canonical SHA on a healthy correct-environment body is the only retryable outcome', () => {
+    expect(caught({ ...ready, commit: otherValidSha })).toMatchObject({ code: RELEASE_PROPAGATION_PENDING, observedSha: otherValidSha });
+  });
+  it.each([
+    ['C. missing commit', (body) => { const { commit, ...rest } = body; return rest; }],
+    ['D. null commit', (body) => ({ ...body, commit: null })],
+    ['E. empty commit', (body) => ({ ...body, commit: '' })],
+    ['F. short SHA', (body) => ({ ...body, commit: goodSha.slice(0, 8) })],
+    ['G. malformed SHA (branch name)', (body) => ({ ...body, commit: 'main' })],
+    ['G. malformed SHA (uppercase)', (body) => ({ ...body, commit: goodSha.toUpperCase() })],
+    ['G. malformed SHA (non-hex, right length)', (body) => ({ ...body, commit: 'g'.repeat(40) })],
+    ['G. malformed SHA (41 chars)', (body) => ({ ...body, commit: `${goodSha}0` })],
+    ['H. non-string commit (number)', (body) => ({ ...body, commit: 1234567890 })],
+    ['H. non-string commit (object)', (body) => ({ ...body, commit: { sha: goodSha } })],
+    ['H. non-string commit (array)', (body) => ({ ...body, commit: [goodSha] })],
+    ['H. non-string commit (boolean)', (body) => ({ ...body, commit: true })],
+  ])('%s fails closed immediately and is never retryable', (_label, mutate) => {
+    const error = caught(mutate(ready));
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toContain('not a canonical full Git SHA');
+    expect(error.code).toBeUndefined();
+  });
+  it('I. wrong environment with a valid different SHA fails closed, not retryable', () => {
+    const error = caught({ ...ready, commit: otherValidSha, environment: 'staging' });
+    expect(error.message).toContain('SHA/environment');
+    expect(error.code).toBeUndefined();
+  });
+  it.each([{ status: 'unhealthy' }, { services: { database: 'error' } }, { config: { ok: false } }])(
+    'J. unhealthy body with a valid different SHA fails closed, not retryable: %j', (changes) => {
+      const error = caught({ ...ready, commit: otherValidSha, ...changes });
+      expect(error.message).toBe('Deployed release is not ready');
+      expect(error.code).toBeUndefined();
+    },
+  );
+  it('non-object readiness fails closed', () => {
+    for (const body of [null, undefined, 'ok', 42]) expect(() => verifyDeployedRelease(manifest, body)).toThrow('not an object');
   });
 });
 
 describe('release workflow guardrails', () => {
   const ci = readFileSync(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8');
   const deploy = readFileSync(new URL('../../.github/workflows/deploy.yml', import.meta.url), 'utf8');
+  const migrate = readFileSync(new URL('../../.github/workflows/production-d1-migrate.yml', import.meta.url), 'utf8');
+  // Every `run:` shell body (inline or `|`/`>` block scalar) of a workflow. Expression
+  // interpolation of dispatch inputs inside these is a shell-injection vector; inputs must
+  // reach the shell through `env:` only.
+  const shellBodies = (workflow) => {
+    const lines = workflow.split('\n');
+    const bodies = [];
+    for (let i = 0; i < lines.length; i += 1) {
+      const match = /^(\s*)(?:- )?run:\s*(.*)$/.exec(lines[i]);
+      if (!match) continue;
+      const indent = match[1].length;
+      if (/^[|>]/.test(match[2])) {
+        const block = [];
+        for (let j = i + 1; j < lines.length; j += 1) {
+          const line = lines[j];
+          if (line.trim() !== '' && line.search(/\S/) <= indent) break;
+          block.push(line);
+        }
+        bodies.push(block.join('\n'));
+      } else {
+        bodies.push(match[2]);
+      }
+    }
+    return bodies;
+  };
+  const unsafeInput = /\$\{\{[^}]*(?:\binputs\.|github\.event\.inputs)/;
+  it('shell body extractor sees inline and block scalars and rejects interpolated inputs', () => {
+    const sample = 'steps:\n  - run: echo "${{ inputs.x }}"\n  - name: b\n    run: |\n      echo start\n      echo "${{ github.event.inputs.y }}"\n    env:\n      Z: ${{ inputs.z }}\n  - run: echo "$Z"\n';
+    const bodies = shellBodies(sample);
+    expect(bodies).toHaveLength(3);
+    expect(bodies.filter((body) => unsafeInput.test(body))).toHaveLength(2);
+    expect(unsafeInput.test('echo "$Z"')).toBe(false);
+  });
   it('validates the active hardening branch and PRs with all existing local gates', () => {
     expect(ci).toContain('branches: [main, master, codex/security-hardening-sync]');
     expect(ci).toContain('pull_request:');
@@ -167,13 +247,62 @@ describe('release workflow guardrails', () => {
     const production = deploy.slice(deploy.indexOf('\n  production:'));
     expect(production.indexOf('release-check.mjs recheck')).toBeLessThan(production.indexOf('d1-schema-gate.sh remote'));
     expect(production.indexOf('release-check.mjs schema')).toBeLessThan(production.indexOf('command: deploy'));
-    expect(production).toContain('release-check.mjs deployed');
+    expect(production.indexOf('command: deploy')).toBeLessThan(production.indexOf('wait-for-deployed-release.mjs'));
     expect(production).not.toContain('migrations apply');
     expect(production).not.toContain('frigo.tungjpstore.net');
   });
+  it('both staging and production prove the exact deployed SHA through bounded convergence, never a single-shot curl', () => {
+    const staging = deploy.slice(deploy.indexOf('\n  staging:'), deploy.indexOf('\n  production:'));
+    const production = deploy.slice(deploy.indexOf('\n  production:'));
+    expect(staging.length).toBeGreaterThan(0);
+    expect(production.length).toBeGreaterThan(0);
+    for (const job of [staging, production]) {
+      expect(job).toContain('post-deploy-smoke.sh');
+      expect(job).toContain('node scripts/wait-for-deployed-release.mjs release-manifest.json');
+      expect(job).not.toMatch(/curl[^\n]*health\/ready[^\n]*> readiness\.json/);
+      expect(job).not.toContain('release-check.mjs deployed');
+      expect(job.indexOf('post-deploy-smoke.sh')).toBeLessThan(job.indexOf('wait-for-deployed-release.mjs'));
+      // Forensic receipt survives a failed convergence.
+      expect(job.slice(job.indexOf('wait-for-deployed-release.mjs'))).toMatch(/if: always\(\)[\s\S]*upload-artifact/);
+    }
+    // The bounded helper is the single deployment proof; no other deploy step redeploys after it.
+    expect(deploy.match(/wait-for-deployed-release\.mjs/g)).toHaveLength(2);
+  });
   it('carries no write permission or shell-interpolated dispatch input', () => {
     expect(deploy).not.toMatch(/(?:contents|actions|id-token|deployments): write/);
-    expect(deploy).not.toMatch(/run:.*\$\{\{.*(?:inputs\.|github.event.inputs)/);
+    for (const body of shellBodies(deploy)) expect(body).not.toMatch(unsafeInput);
     expect(deploy).toContain('persist-credentials: false');
+  });
+
+  it('production D1 migration workflow keeps every fail-closed gate in order (pinned chain + catalog certification)', () => {
+    expect(migrate).toContain('workflow_dispatch:');
+    expect(migrate).not.toMatch(/\n\s+(?:push|pull_request|schedule|workflow_run):/);
+    expect(migrate).toContain("github.ref == 'refs/heads/main'");
+    expect(migrate).toContain('inputs.confirm_production_migration == true');
+    expect(migrate).toContain('environment: production');
+    expect(migrate).toContain('cancel-in-progress: false');
+    expect(migrate).toContain('persist-credentials: false');
+    expect(migrate).toMatch(/permissions:\n\s+contents: read\n\s+actions: read/);
+    expect(migrate).not.toMatch(/(?:contents|actions|id-token|deployments): write/);
+    for (const body of shellBodies(migrate)) expect(body).not.toMatch(unsafeInput);
+    // Dispatch inputs reach the shell only through env, including the certification-only notice.
+    expect(migrate).toMatch(/env:\n\s+MIGRATION: \$\{\{ inputs\.migration \}\}\n\s+run: echo "::notice::\$MIGRATION/);
+    const order = ['d1-migration-check.mjs gate', 'd1-migration-check.mjs identity', 'd1-migration-check.mjs pre-ledger', 'time-travel info',
+      'd1-migration-check.mjs bookmark', 'd1-migration-check.mjs baseline', 'd1-migration-check.mjs plan', 'migrations apply frigo-db --remote',
+      'd1-migration-check.mjs post-ledger', 'd1-migration-check.mjs verify', 'd1-migration-check.mjs catalog', 'd1-schema-gate.sh remote'];
+    const positions = order.map((needle) => migrate.indexOf(needle));
+    expect(positions.every((position) => position >= 0)).toBe(true);
+    expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+    // Exactly one catalog certification, aggregate-only, between generic verification and the schema gate.
+    expect(migrate.match(/d1-migration-check\.mjs catalog/g)).toHaveLength(1);
+    expect(migrate).toMatch(/if: steps\.pre_ledger\.outputs\.mode == 'apply'/);
+    expect(migrate).toContain('m.catalogQuery()');
+    // Chain-aware input contract: candidate chain = everything strictly after expected_pre_tip through migration.
+    expect(migrate).toMatch(/expected_pre_tip:\n\s+description: [^\n]*current production ledger tip/);
+    expect(migrate).toMatch(/migration:\n\s+description: [^\n]*ledger must end at after this run/);
+    expect(migrate).toMatch(/ref:\n\s+description: [^\n]*every migration after `expected_pre_tip` is applied in order/);
+    expect(migrate).not.toMatch(/single migration/i);
+    // The receipt artifact is always saved, even when a gate fails.
+    expect(migrate.slice(migrate.indexOf('d1-schema-gate.sh remote'))).toMatch(/if: always\(\)[\s\S]*upload-artifact/);
   });
 });

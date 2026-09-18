@@ -1,4 +1,8 @@
-# Frigo / Takosan current authority — 2026-09-17
+# Frigo / Takosan current authority — 2026-09-18
+
+## Current T15A — pre-production rollout hardening (production untouched)
+
+T14F merged to main `9be395d0…`. T15A schema-gate hardening merged via PR #26 → main `70cf7e0d…` (`scripts/d1-schema-gate.mjs` derives required migrations from `migrations/`; `d1-migration-check.mjs` pinned chain + `catalog` certification). T15A-R / T15A-R2 (PR #27, open, not merged): `scripts/wait-for-deployed-release.mjs` (bounded exact-SHA polling; root cause of Deploy 35288137887's false negative) and `verifyDeployedRelease` requiring `readiness.commit` to be a canonical 40-hex SHA (malformed/missing fail closed; only a healthy, correct-environment body with a *different valid* SHA is `RELEASE_PROPAGATION_PENDING`) are pushed. The workflow wiring itself — `catalog` step in `production-d1-migrate.yml` (after `verify`, before the remote schema gate), shell-interpolated input removed, staging + production deploy proof via the helper — plus the unconditional guardrail tests are committed locally but **not on the remote**: GitHub rejects the App's workflow pushes (`workflows` scope). They are tracked as `recipe-catalog/t15a-r/r2-wired-series.mbox` (`git am`) and `t15a-r/workflows.patch`. Remote workflow files still equal `main`. Production: D1 not migrated (historical last verified tip 0034 — re-query live before Phase B), Worker `4ed98514…`, static 71, no shadow/canary/media/T14G. Safe stop + resume requirements: `recipe-catalog/T15A_WIP_HANDOFF.md`.
 
 ## Current T14F — T14F_DEVELOPMENT_COMPLETE (T14F-A/B/C certified; 500-recipe catalog dev-certified; production untouched)
 

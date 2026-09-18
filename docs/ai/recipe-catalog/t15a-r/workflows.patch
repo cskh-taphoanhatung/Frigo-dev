@@ -1,0 +1,102 @@
+diff --git a/.github/workflows/deploy.yml b/.github/workflows/deploy.yml
+index 34f1ec7..5769092 100644
+--- a/.github/workflows/deploy.yml
++++ b/.github/workflows/deploy.yml
+@@ -130,14 +130,15 @@ jobs:
+           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+           command: deploy --config wrangler.staging.jsonc --var GIT_COMMIT:${{ needs.release.outputs.deploy_sha }}
+ 
++      # Exact-SHA proof polls readiness within a bounded deadline: the edge may briefly serve the
++      # previous Worker version after upload. Only that propagation case is retried; nothing redeploys.
+       - name: Staging post-deploy smoke and SHA receipt
+         if: env.STAGING_UNCONFIGURED != 'true' && vars.STAGING_URL != ''
+         env:
+           APP_SMOKE_URL: ${{ vars.STAGING_URL }}
+         run: |
+           bash scripts/post-deploy-smoke.sh "$APP_SMOKE_URL"
+-          curl --fail --silent --show-error --max-time 30 "$APP_SMOKE_URL/api/v1/health/ready" > readiness.json
+-          node scripts/release-check.mjs deployed release-manifest.json readiness.json
++          node scripts/wait-for-deployed-release.mjs release-manifest.json
+ 
+       - name: Save staging receipt (deployed field exists only after SHA smoke passes)
+         if: always()
+@@ -222,8 +223,7 @@ jobs:
+           APP_SMOKE_URL: ${{ vars.PRODUCTION_URL }}
+         run: |
+           bash scripts/post-deploy-smoke.sh "$APP_SMOKE_URL"
+-          curl --fail --silent --show-error --max-time 30 "$APP_SMOKE_URL/api/v1/health/ready" > readiness.json
+-          node scripts/release-check.mjs deployed release-manifest.json readiness.json
++          node scripts/wait-for-deployed-release.mjs release-manifest.json
+ 
+       - name: Save production receipt even on failure (inspect deployed field)
+         if: always()
+diff --git a/.github/workflows/production-d1-migrate.yml b/.github/workflows/production-d1-migrate.yml
+index afdda46..d37d141 100644
+--- a/.github/workflows/production-d1-migrate.yml
++++ b/.github/workflows/production-d1-migrate.yml
+@@ -7,7 +7,7 @@ on:
+   workflow_dispatch:
+     inputs:
+       ref:
+-        description: Full immutable SHA already contained in main whose migrations/ tip is the migration to apply
++        description: Full immutable SHA already contained in main whose migrations/ tip is `migration`; every migration after `expected_pre_tip` is applied in order, pinned by the hashes at this SHA
+         type: string
+         required: true
+       expected_pre_tip:
+@@ -15,7 +15,7 @@ on:
+         type: string
+         required: true
+       migration:
+-        description: Exact single migration file name to apply (e.g. 0035_recipe_media_layer.sql)
++        description: Exact migration file name the ledger must end at after this run (e.g. 0037_recipe_catalog_scale.sql)
+         type: string
+         required: true
+       confirm_production_migration:
+@@ -156,7 +156,7 @@ jobs:
+           node scripts/d1-migration-check.mjs baseline migration-manifest.json pre-baseline.json
+           node -p 'JSON.stringify(require("./pre-baseline.json")[0].results[0])'
+ 
+-      - name: Verify migration plan is exactly the requested migration
++      - name: Verify migration plan is exactly the pinned chain
+         env:
+           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+@@ -164,7 +164,7 @@ jobs:
+           pnpm wrangler d1 migrations list frigo-db --remote | tee migration-plan.txt
+           node scripts/d1-migration-check.mjs plan migration-manifest.json migration-plan.txt
+ 
+-      - name: Apply migration through the Wrangler ledger
++      - name: Apply the pinned chain through the Wrangler ledger
+         if: steps.pre_ledger.outputs.mode == 'apply'
+         env:
+           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+@@ -175,7 +175,9 @@ jobs:
+ 
+       - name: Certification-only (migration already present; nothing applied)
+         if: steps.pre_ledger.outputs.mode == 'certify'
+-        run: echo "::notice::${{ inputs.migration }} already present in the production ledger; certifying without re-applying."
++        env:
++          MIGRATION: ${{ inputs.migration }}
++        run: echo "::notice::$MIGRATION already present in the production ledger; certifying without re-applying."
+ 
+       - name: Post-migration ledger
+         env:
+@@ -201,6 +203,18 @@ jobs:
+           node scripts/d1-migration-check.mjs verify migration-manifest.json post-baseline.json fk.json quick.json media-summary.json media-slots.json media-schema.json
+           node -p 'const m = require("./migration-manifest.json"); JSON.stringify({ postLedger: m.postLedger, recipeMedia: m.recipeMedia, health: m.health, aggregateDrift: m.aggregateDrift, postBaseline: m.postBaseline })'
+ 
++      # The ledger tip promises a catalog (legacy 71 + every approved batch whose migration is
++      # applied). Counts/order/completeness only; media must still be entirely pending (T15A
++      # pre-media-rollout condition — revisit before any migration after media population).
++      - name: Catalog certification against the release manifest (aggregates only)
++        env:
++          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
++          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
++        run: |
++          query="$(node -e 'import("./scripts/d1-migration-check.mjs").then((m) => process.stdout.write(m.catalogQuery()))')"
++          pnpm wrangler d1 execute frigo-db --remote --yes --json --command "$query" > catalog.json
++          node scripts/d1-migration-check.mjs catalog migration-manifest.json catalog.json
++
+       - name: Production schema gate (read-only)
+         env:
+           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
