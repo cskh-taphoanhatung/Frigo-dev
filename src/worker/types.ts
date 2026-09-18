@@ -30,6 +30,11 @@ export interface Env {
   RECIPE_CATALOG_D1_CANARY_PERCENT?: string;
   // Explicit fence: production rejects canary/d1 unless this is exactly 'true'. Rollback = RECIPE_CATALOG_MODE=static.
   RECIPE_CATALOG_CUTOVER_ENABLED?: string;
+  // T15C-C operator test cohort (Worker secrets only; default disabled). Legal only with RECIPE_CATALOG_MODE=canary.
+  // INCLUDE/EXCLUDE are comma-separated SHA-256 hex digests of `recipe-catalog-test-cohort:<householdId>`; never raw IDs.
+  RECIPE_CATALOG_TEST_COHORT_ENABLED?: string;
+  RECIPE_CATALOG_TEST_INCLUDE?: string;
+  RECIPE_CATALOG_TEST_EXCLUDE?: string;
   // Shadow cost bound: minimum milliseconds between two catalog comparisons per isolate (default 60000).
   RECIPE_CATALOG_SHADOW_INTERVAL_MS?: string;
   APP_URL?: string;

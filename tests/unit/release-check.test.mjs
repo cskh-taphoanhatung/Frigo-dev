@@ -305,6 +305,15 @@ describe('release workflow guardrails', () => {
     expect(production).not.toContain('migrations apply');
     expect(production).not.toContain('frigo.tungjpstore.net');
   });
+  it('T15C-C: the operator test cohort never travels through the workflow, Wrangler config, release manifest, or example env', () => {
+    // Cohort digests are Worker secrets only; the deploy control plane must not know about them.
+    const forbidden = /RECIPE_CATALOG_TEST_(COHORT_ENABLED|INCLUDE|EXCLUDE)|recipe_catalog_test_/;
+    expect(deploy).not.toMatch(forbidden);
+    expect(migrate).not.toMatch(forbidden);
+    for (const file of ['../../wrangler.jsonc', '../../wrangler.staging.jsonc', '../../.dev.vars.example', '../../scripts/release-check.mjs']) {
+      expect(readFileSync(new URL(file, import.meta.url), 'utf8'), file).not.toMatch(forbidden);
+    }
+  });
   it('both staging and production prove the exact deployed SHA through bounded convergence, never a single-shot curl', () => {
     const staging = deploy.slice(deploy.indexOf('\n  staging:'), deploy.indexOf('\n  production:'));
     const production = deploy.slice(deploy.indexOf('\n  production:'));
