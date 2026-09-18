@@ -27,15 +27,14 @@ T15A_hardening_merge=70cf7e0dae675ca19efbac2ceed0d1380d837024 (push CI 352878271
 - **Workflow wiring** — `production-d1-migrate.yml`: `catalog` step between `verify` and the schema
   gate; `${{ inputs.migration }}` moved out of the shell into `env`; chain-aware input descriptions.
   Permissions unchanged (`contents: read`, `actions: read`); still `workflow_dispatch` only.
-  **Status (T15A-R2): APPLIED AND COMMITTED LOCALLY, PUSH REJECTED AGAIN** — the patch was applied
-  (`git apply` clean; resulting `git diff | sha256sum` byte-identical to `t15a-r/workflows.patch`,
-  `1d5097a5…`) and committed forward-only as `4e79600` (workflows) + `917ce63` (unconditional guardrails),
-  but GitHub rejected the push of both commits: `refusing to allow a GitHub App to create or update
-  workflow .github/workflows/deploy.yml without workflows permission` (twice, including after credential
-  rotation). Those two commits are tracked verbatim as a `git am` series in
-  `t15a-r/r2-wired-series.mbox` (+ `.sha256`); applying it on top of `eecbbf0` reproduces the `917ce63`
-  tree exactly (verified in a throwaway worktree). The workflow files on the remote branch are still
-  identical to `main`.
+  **Status: APPLIED TO PR #27** — the patch (`git apply` clean; `git diff | sha256sum` byte-identical to
+  `t15a-r/workflows.patch`, `1d5097a5…`) is committed on the remote branch as `366dbd1` (workflows) +
+  `776422f` (unconditional guardrails). The App's direct pushes of these commits were rejected during
+  T15A-R2 (`without workflows permission`), so they were preserved as the `git am` series
+  `t15a-r/r2-wired-series.mbox`; they were subsequently published to the branch through the platform's
+  authorized publisher and verified: `origin/main..branch` workflow diff equals the tracked patch, and
+  the `.github`/`scripts`/`tests` tree is identical to the locally certified `917ce63`. Both patch
+  artefacts are now consumed audit evidence; the workflow files are authoritative.
 - **Deploy readiness race** — Deploy run 35288137887 failed at `release-check.mjs deployed` although
   the staging Worker (`e00a78d3…`) was live: the edge briefly answered `/health/ready` from the previous
   version, so a single immediate curl saw the old `commit`. Fix: `scripts/wait-for-deployed-release.mjs`
@@ -54,14 +53,12 @@ T15A_hardening_merge=70cf7e0dae675ca19efbac2ceed0d1380d837024 (push CI 352878271
 - **P3_FUTURE_MEDIA_GATE_COMPATIBILITY** — the `catalog` invariant `media_ready == 0` is a
   pre-media-rollout condition. Revisit before any migration that follows media population.
 
-## Blocker (still live after T15A-R2): the App credential cannot push `.github/workflows/*`
+## Historical blocker (resolved): the App credential could not push `.github/workflows/*` directly
 
-During T15A-R and again in T15A-R2 the credential was rejected on workflow files (`without workflows
-permission`). Two artefacts now carry the intended change: `t15a-r/workflows.patch` (raw workflow diff,
-`1d5097a5…`) and `t15a-r/r2-wired-series.mbox` (the two ready-made commits: workflows + activated
-guardrails; apply with `git am docs/ai/recipe-catalog/t15a-r/r2-wired-series.mbox` on top of the branch
-head). A maintainer with `workflows` scope must push them (or grant the App `workflows`) before PR #27 can
-be merged and before any production migration is dispatched. Do not bypass this with alternate APIs.
+During T15A-R and T15A-R2 the App's `git push` was rejected on workflow files (`without workflows
+permission`). The intended change was carried as `t15a-r/workflows.patch` (raw diff, `1d5097a5…`) and
+`t15a-r/r2-wired-series.mbox` (two ready-made commits). Those two commits now exist on the PR branch
+(`366dbd1`, `776422f`), so the blocker is closed for PR #27. Keep both files as audit evidence.
 
 ## T15A-R safe stop (2026-09-18T01:4xZ, VERIFIED_LIVE) — superseded by the T15A-R2 safe stop below
 
@@ -97,7 +94,7 @@ forward-only (the guardrails self-activate), run focused + full gates, push, req
 then (only with separate authorization) merge with an expected-head guard and require exact-main CI SUCCESS.
 Do not dispatch `production-d1-migrate.yml` and do not deploy production from this branch.
 
-## T15A-R2 safe stop (2026-09-18T03:4xZ, VERIFIED_LIVE)
+## T15A-R2 safe stop (2026-09-18T03:4xZ) — superseded by the T15A-R2 wired-branch receipt below
 
 ```text
 classification=T15A_R2_BLOCKED_WORKFLOW_PERMISSION (NOT merged; NOT main-certified; NOT staging-certified; production untouched)
@@ -132,15 +129,34 @@ final_PR_head=309d049e17c692d197e4c03660e6e992ab1cd764 (local == remote; VERIFIE
 PR_state=OPEN draft=NO merged=NO mergeable=MERGEABLE/CLEAN unresolved_threads=0 (must NOT merge: wiring absent on remote)
 ```
 
-**Next session (resume rule, T15A-R2 → R3):** fetch; verify `origin/main` (`70cf7e0d…` at this stop) and the
-PR #27 head live; then, with a credential that has `workflows` scope (or a maintainer), `git checkout` the
-branch head and `git am docs/ai/recipe-catalog/t15a-r/r2-wired-series.mbox` (verify the `.sha256` first),
-run `pnpm vitest run tests/unit/release-check.test.mjs tests/unit/wait-for-deployed-release.test.mjs
-tests/unit/d1-migration-check.test.mjs tests/integration/d1-schema-gate.test.ts` (expect 0 skips), push,
-require exact-head CI SUCCESS, update the PR body, then (separately authorized) merge with an expected-head
-guard, require exact-main CI SUCCESS, observe the automatic staging deploy (release+staging SUCCESS,
-production SKIPPED, exact-SHA convergence via the helper). Do not dispatch `production-d1-migrate.yml`,
-do not deploy production, do not enable shadow.
+## T15A-R2 wired-branch receipt (2026-09-18T09:2xZ, VERIFIED_LIVE)
+
+```text
+classification=T15A_R2_WIRED_PRE_MERGE (workflow wiring ON the PR branch; NOT merged; NOT main-certified; NOT staging-certified; production untouched)
+origin_main=70cf7e0dae675ca19efbac2ceed0d1380d837024 (unchanged; VERIFIED_LIVE)
+branch_commits_after_309d049=d01f547 docs CI binding (App push) · 366dbd1 ops(t15a-r) workflow patch applied · 776422f test(t15a-r) unconditional guardrails
+  (366dbd1/776422f = the r2-wired-series.mbox commits published via the platform's authorized publisher; forward-only from d01f547; no rebase/force)
+workflow_wiring=ON REMOTE BRANCH — `git diff origin/main..branch -- .github/workflows` equals t15a-r/workflows.patch (1d5097a5…) minus index lines;
+  .github + scripts + tests tree identical to the locally certified 917ce63 (`git diff 917ce63 branch -- .github scripts tests` empty)
+remote_workflow_files=deploy.yml + production-d1-migrate.yml DIFFER FROM MAIN as intended (staging+production use wait-for-deployed-release.mjs after
+  post-deploy-smoke; catalog step after verify / before d1-schema-gate.sh remote; inputs.migration via env; chain-aware descriptions;
+  permissions contents:read/actions:read; workflow_dispatch only; cancel-in-progress:false; environment: production; no direct `run:` input interpolation)
+guardrails=unconditional on the branch head (no wiring skip); focused_tests=123 passed / 0 skipped on 776422f (release-check 70, wait 22, d1-migration-check 23,
+  d1-schema-gate 8) VERIFIED_LOCAL; full gates certified on the identical code tree (917ce63): 173 files / 3969 tests PASS, seed/import/typecheck/lint/
+  check:migrations/build PASS; hosted exact-head validate on 776422f: run 35328638198 SUCCESS
+migration_integrity=migrations/ diff vs main = 0; 0036 04228788…; 0037 68e52e6d…; 0038_created=NO (re-verified on 776422f)
+production_safety=D1 write NO · R2 write NO · deploy NO · authority switch NO · production-d1-migrate.yml dispatch NO · media NO · T14G NO
+historical_production_tip=0034 (NOT re-queried live; Phase B must re-query before any mutation)
+PR_state=OPEN draft=NO merged=NO mergeable=MERGEABLE/CLEAN unresolved_threads=0
+final_PR_head=<the docs commit that carries this receipt; exact-head CI bound in the PR body/receipt comment>
+```
+
+**Next session (resume rule, merge authorization required):** fetch; verify `origin/main` = `70cf7e0d…` and the
+PR #27 head live (exact-head CI SUCCESS on that head); then merge PR #27 with a **merge commit** and an
+expected-head guard, verify certified head and old main are ancestors of new main and `git diff <head> main`
+is empty, require exact-main push CI SUCCESS, observe the automatic `deploy.yml` run (release SUCCESS,
+staging SUCCESS with exact-SHA convergence through the helper, production SKIPPED). Do not dispatch
+`production-d1-migrate.yml`, do not deploy production, do not enable shadow.
 
 ## Production resume requirements (T15A Phase B — separate session, operator approval)
 
