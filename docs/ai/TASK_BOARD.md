@@ -1,6 +1,6 @@
 # Frigo / Takosan current task board — 2026-09-19
 
-## Current T16 — auth funnel recovery — 2026-09-19
+## Current T16 — production deployed; CSP hotfix release pending — 2026-09-19
 
 - [done] Replaced the landing/auth/onboarding loop with one funnel: guest or account on landing; returning accounts enter the app; new accounts complete three preference-only steps once.
 - [done] Added migration `0038_auth_onboarding_completion.sql`; `/me` and auth responses expose server-authoritative onboarding state; preferences and completion persist in one D1 batch.
@@ -9,8 +9,13 @@
 - [done] Added/updated auth, email, migration, and UI tests. Full gates pass: lint, typecheck, migration smoke, build, **174 files / 4002 tests**, seed/import checks, local schema gate through 0038, diff check.
 - [done with limits] Browser-sized pass at 390x844 and 1440x900 verified landing, three onboarding steps, offline guest completion, registration query entry, and no horizontal overflow. Local GIS reached Google but loopback origin is not authorized; Vite proxy mutation CSRF cannot represent the deployed same-origin path, while direct Worker and integration checks pass.
 - [known audit debt] UX audit remains repo-wide FAIL: repository 19 issues / 686 warnings / 47 passed; `src/web/pages` 6 unrelated existing issues / 303 warnings / 15 passed. No T16 landing/auth/onboarding blocker was reported by the audit.
-- [stop] No production action. Do not claim email is operational until the sender domain is onboarded and a real recipient succeeds.
-- [next] Independent review, then separately authorized release: verify Email Service sender domain and Google production origin, apply 0038, deploy, and run real OTP + Google smoke tests.
+- [done] PR #34 merged as main `d6c981b1a67001b807f03166109f661bc753728c`; PR CI `35385363064` and exact-main CI `35385844667` succeeded.
+- [done] Production D1 run `35386276549` applied 0038 only; ledger 38/tip 0038, bookmark `000000d3-00000000-000050ea-709daab542439d8e8fab731b65dab714`, FK/quick-check/drift/media/catalog gates passed.
+- [done] Production Deploy `35386532369` succeeded on Worker `c0161a22-1987-42dd-99c4-0a5874d4fadb`, exact main SHA, with recipe authority preserved at `shadow/0/false`; rollback Worker is `c6fa2ce8-f35b-4485-ad38-09dbc19738d1`.
+- [done] Production browser smoke at mobile/desktop passed landing, Google provider launch, guest session, reload-safe onboarding, preference persistence, cookie security, and responsive width.
+- [done] CSP hotfix commit `79dfca6483d90fcf33380acfe33f880c1e6ff7a5` permits only the observed Google Fonts/GSI and Cloudflare Insights origins; no wildcard or script `unsafe-inline`. Full local gates remain 174 files / 4002 tests plus focused CSP 3/3.
+- [limit] Real OTP receipt is not certified: automated Turnstile did not yield a token, no forgot-password request was sent, and the existing account prevents using that address as a new-registration proof.
+- [next] Push/open the CSP hotfix PR, require exact-head and exact-main CI, deploy with `shadow/0/false`, verify the production console is CSP-clean, then complete one manual real OTP receipt without exposing the code.
 
 ## Current T15C-B — merged control plane; safe stop before production Canary — 2026-09-18
 
