@@ -148,18 +148,48 @@ describe('schema and deployment receipts', () => {
     expect(caught).toBeInstanceOf(Error);
     expect(caught.code).toBeUndefined(); // never retryable
   });
-  it.each([{ commit: null }, { commit: 'b'.repeat(40) }])('marks a healthy previous-release SHA as the only retryable outcome: %j', (changes) => {
-    let caught;
-    try { verifyDeployedRelease(manifest, { ...ready, ...changes }); } catch (error) { caught = error; }
-    expect(caught).toMatchObject({ code: RELEASE_PROPAGATION_PENDING, observedSha: changes.commit });
+  // Commit identity contract: only a canonical full SHA (40 lowercase hex) is accepted at all.
+  const otherValidSha = 'b'.repeat(40);
+  const caught = (body) => { try { verifyDeployedRelease(manifest, body); } catch (error) { return error; } return undefined; };
+  it('A. exact expected canonical SHA passes', () => {
+    expect(verifyDeployedRelease(manifest, { ...ready, commit: goodSha })).toMatchObject({ sha: goodSha });
   });
-  it('a stale SHA on an unhealthy or wrong-environment body is not retryable', () => {
-    for (const changes of [{ commit: 'b'.repeat(40), environment: 'staging' }, { commit: 'b'.repeat(40), status: 'unhealthy' }, { commit: 'b'.repeat(40), services: { database: 'error' } }]) {
-      let caught;
-      try { verifyDeployedRelease(manifest, { ...ready, ...changes }); } catch (error) { caught = error; }
-      expect(caught.code).toBeUndefined();
-    }
-    expect(() => verifyDeployedRelease(manifest, null)).toThrow('not an object');
+  it('B. a different valid canonical SHA on a healthy correct-environment body is the only retryable outcome', () => {
+    expect(caught({ ...ready, commit: otherValidSha })).toMatchObject({ code: RELEASE_PROPAGATION_PENDING, observedSha: otherValidSha });
+  });
+  it.each([
+    ['C. missing commit', (body) => { const { commit, ...rest } = body; return rest; }],
+    ['D. null commit', (body) => ({ ...body, commit: null })],
+    ['E. empty commit', (body) => ({ ...body, commit: '' })],
+    ['F. short SHA', (body) => ({ ...body, commit: goodSha.slice(0, 8) })],
+    ['G. malformed SHA (branch name)', (body) => ({ ...body, commit: 'main' })],
+    ['G. malformed SHA (uppercase)', (body) => ({ ...body, commit: goodSha.toUpperCase() })],
+    ['G. malformed SHA (non-hex, right length)', (body) => ({ ...body, commit: 'g'.repeat(40) })],
+    ['G. malformed SHA (41 chars)', (body) => ({ ...body, commit: `${goodSha}0` })],
+    ['H. non-string commit (number)', (body) => ({ ...body, commit: 1234567890 })],
+    ['H. non-string commit (object)', (body) => ({ ...body, commit: { sha: goodSha } })],
+    ['H. non-string commit (array)', (body) => ({ ...body, commit: [goodSha] })],
+    ['H. non-string commit (boolean)', (body) => ({ ...body, commit: true })],
+  ])('%s fails closed immediately and is never retryable', (_label, mutate) => {
+    const error = caught(mutate(ready));
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toContain('not a canonical full Git SHA');
+    expect(error.code).toBeUndefined();
+  });
+  it('I. wrong environment with a valid different SHA fails closed, not retryable', () => {
+    const error = caught({ ...ready, commit: otherValidSha, environment: 'staging' });
+    expect(error.message).toContain('SHA/environment');
+    expect(error.code).toBeUndefined();
+  });
+  it.each([{ status: 'unhealthy' }, { services: { database: 'error' } }, { config: { ok: false } }])(
+    'J. unhealthy body with a valid different SHA fails closed, not retryable: %j', (changes) => {
+      const error = caught({ ...ready, commit: otherValidSha, ...changes });
+      expect(error.message).toBe('Deployed release is not ready');
+      expect(error.code).toBeUndefined();
+    },
+  );
+  it('non-object readiness fails closed', () => {
+    for (const body of [null, undefined, 'ok', 42]) expect(() => verifyDeployedRelease(manifest, body)).toThrow('not an object');
   });
 });
 

@@ -93,9 +93,11 @@ export function verifyMigrationLedger(schema, statements) {
 export const RELEASE_PROPAGATION_PENDING = 'RELEASE_PROPAGATION_PENDING';
 
 /**
- * Exact deployment proof. A readiness body that is healthy, in the right environment, but still
- * reports an earlier release SHA is the only *retryable* outcome (edge propagation after a Worker
- * upload); `error.code === RELEASE_PROPAGATION_PENDING` marks it. Everything else fails closed.
+ * Exact deployment proof. `readiness.commit` must be a canonical full Git SHA (40 lowercase hex);
+ * anything else (missing, short, uppercase, non-string) fails closed. A healthy body in the right
+ * environment that reports a *different valid* SHA is the only retryable outcome (the edge may still
+ * answer from another release during deployment convergence); `error.code ===
+ * RELEASE_PROPAGATION_PENDING` marks it. Nothing here proves which release that SHA belongs to.
  */
 export function verifyDeployedRelease(manifest, readiness) {
   if (typeof readiness !== 'object' || readiness === null) throw new Error('Readiness response is not an object');
@@ -105,10 +107,13 @@ export function verifyDeployedRelease(manifest, readiness) {
   if (!['ok', 'degraded'].includes(readiness.status) || readiness.services?.database !== 'ok' || readiness.config?.ok !== true) {
     throw new Error('Deployed release is not ready');
   }
+  if (typeof readiness.commit !== 'string' || !SHA.test(readiness.commit)) {
+    throw new Error('Readiness commit is not a canonical full Git SHA');
+  }
   if (readiness.commit !== manifest.sha) {
     const error = new Error('Readiness does not identify the exact approved release SHA/environment');
     error.code = RELEASE_PROPAGATION_PENDING;
-    error.observedSha = typeof readiness.commit === 'string' ? readiness.commit : null;
+    error.observedSha = readiness.commit;
     throw error;
   }
   return { sha: readiness.commit, environment: readiness.environment, checkedAt: new Date().toISOString() };

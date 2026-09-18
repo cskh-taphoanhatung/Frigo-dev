@@ -33,14 +33,16 @@ describe('wait-for-deployed-release — bounded exact-SHA convergence', () => {
     expect(h.calls[0].init.redirect).toBe('error');
   });
 
-  it('regression for Deploy run 35288137887: healthy endpoint still on the previous SHA, then the new SHA', async () => {
+  it('regression for Deploy run 35288137887: healthy endpoint reports a different valid SHA twice, then the exact SHA', async () => {
     const h = harness([body({ commit: oldSha }), body({ commit: oldSha }), body()]);
     await expect(waitForDeployedRelease(manifest, h.options)).resolves.toMatchObject({ sha: newSha, attempts: 3, waitedMs: 6_000 });
     expect(h.logs.filter((line) => line.includes(`observed_sha=${oldSha.slice(0, 8)}`))).toHaveLength(2);
+    expect(h.logs.filter((line) => line.includes('propagation pending'))).toHaveLength(2);
     expect(h.logs.join('\n')).not.toContain(oldSha); // sanitized: short SHAs only
+    expect(h.logs.join('\n')).not.toMatch(/previous Worker/i); // no unproven ancestry claim
   });
 
-  it('fails after the bounded deadline when the previous SHA never converges — and never redeploys', async () => {
+  it('fails after the bounded deadline when a different valid SHA never converges — and never redeploys', async () => {
     const h = harness(Array.from({ length: 40 }, () => body({ commit: oldSha })));
     await expect(waitForDeployedRelease(manifest, h.options)).rejects.toThrow('did not identify release aaaaaaaa within 90000 ms');
     // Attempts at t=0,3s,…,90s inclusive; the wait never runs past the deadline.
@@ -48,8 +50,27 @@ describe('wait-for-deployed-release — bounded exact-SHA convergence', () => {
     expect(h.calls.length).toBe(31);
   });
 
+  it.each([
+    ['missing', undefined], ['null', null], ['empty', ''], ['short', newSha.slice(0, 8)], ['branch name', 'main'],
+    ['uppercase', newSha.toUpperCase()], ['number', 42], ['object', { sha: newSha }],
+  ])('fails closed immediately on a non-canonical commit identity (%s) instead of polling', async (_label, commit) => {
+    const over = commit === undefined ? {} : { commit };
+    const readiness = body(over);
+    if (commit === undefined) delete readiness.commit;
+    const h = harness([readiness, body()]);
+    await expect(waitForDeployedRelease(manifest, h.options)).rejects.toThrow('not a canonical full Git SHA');
+    expect(h.calls).toHaveLength(1);
+    expect(h.clock()).toBe(0);
+  });
+
   it('fails closed immediately on the wrong environment, even with the expected SHA', async () => {
     const h = harness([body({ environment: 'production' }), body()]);
+    await expect(waitForDeployedRelease(manifest, h.options)).rejects.toThrow('exact approved release SHA/environment');
+    expect(h.calls).toHaveLength(1);
+  });
+
+  it('fails closed immediately on the wrong environment with a different valid SHA (not retryable)', async () => {
+    const h = harness([body({ environment: 'production', commit: oldSha }), body()]);
     await expect(waitForDeployedRelease(manifest, h.options)).rejects.toThrow('exact approved release SHA/environment');
     expect(h.calls).toHaveLength(1);
   });

@@ -2,12 +2,14 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { RELEASE_PROPAGATION_PENDING, verifyDeployedRelease } from './release-check.mjs';
 
-// After `wrangler deploy` the edge can keep answering /health/ready from the previous Worker
-// version for a short while. A single immediate check therefore produced a false-negative
-// deployment failure (Deploy run 35288137887). This helper polls readiness within a bounded
-// deadline, retrying ONLY the "healthy, right environment, previous SHA" case classified by
-// `verifyDeployedRelease`; every other failure stops immediately. On success it records the
-// same `deployed` receipt field `release-check.mjs deployed` would have written.
+// After `wrangler deploy` the edge can keep answering /health/ready from another Worker version
+// for a short while. A single immediate check therefore produced a false-negative deployment
+// failure (Deploy run 35288137887). This helper polls readiness within a bounded deadline,
+// retrying ONLY the case `verifyDeployedRelease` classifies as RELEASE_PROPAGATION_PENDING: a
+// healthy endpoint in the correct environment still reporting a different *valid* full SHA
+// (valid-SHA propagation pending; ancestry of that SHA is not proven here). Malformed or missing
+// commit identities and every other failure stop immediately. On success it records the same
+// `deployed` receipt field `release-check.mjs deployed` would have written.
 export const DEFAULT_DEADLINE_MS = 90_000;
 export const DEFAULT_INTERVAL_MS = 3_000;
 export const DEFAULT_REQUEST_TIMEOUT_MS = 15_000;
@@ -57,7 +59,7 @@ export async function waitForDeployedRelease(manifest, {
         return { ...deployed, attempts: attempt, waitedMs: now() - startedAt };
       } catch (error) {
         if (error?.code !== RELEASE_PROPAGATION_PENDING) throw error;
-        log(`attempt ${attempt}: healthy endpoint, observed_sha=${short(error.observedSha)}, expected_sha=${short(manifest.sha)}, retrying`);
+        log(`attempt ${attempt}: healthy ${manifest.environment} endpoint reports a different valid release, observed_sha=${short(error.observedSha)}, expected_sha=${short(manifest.sha)}; propagation pending, retrying`);
       }
     }
     if (now() - startedAt + intervalMs > deadlineMs) {
