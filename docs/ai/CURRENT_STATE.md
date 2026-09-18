@@ -1,16 +1,31 @@
 # Frigo / Takosan current authority — 2026-09-19
 
-## Current T16 — auth funnel recovery development complete; production unchanged (2026-09-19)
+## Current T16 — production deployed; CSP hotfix ready for release (2026-09-19)
 
-Branch `codex/auth-funnel-recovery` is based on canonical main
-`fe82d48bfe16d62a03d25630287d6b0d29ac5b86`; verified implementation commit is
-`3633a2fa8a0827a6aa31a3c86da7fb680a6e0f2a`. T16 now has one entry funnel:
-landing offers guest or account, auth sends returning onboarded accounts to the
-app and new accounts to three preference-only onboarding steps, and onboarding
-contains no duplicate login/Google/Apple chooser. Completion is authoritative in
-D1 through additive migration `0038_auth_onboarding_completion.sql`; local D1 was
-applied through 0038 only, and production remains at the previously certified
-0037 state.
+PR #34 merged the auth-funnel implementation commit
+`3633a2fa8a0827a6aa31a3c86da7fb680a6e0f2a` and documentation commit
+`66e8073161cf418ffe4df2ed6cece75d56087af1` to canonical main
+`d6c981b1a67001b807f03166109f661bc753728c`. Exact-head PR CI run
+`35385363064` and exact-main CI run `35385844667` succeeded. T16 now has one
+entry funnel: landing offers guest or account, auth sends returning onboarded
+accounts to the app and new accounts to three preference-only onboarding steps,
+and onboarding contains no duplicate login/Google/Apple chooser.
+
+Production D1 migration run `35386276549` succeeded and applied only
+`0038_auth_onboarding_completion.sql`. The ledger is 38 / tip
+`0038_auth_onboarding_completion.sql`; FK, quick check, aggregate drift, recipe
+media and catalog certification passed. The recoverable Time Travel bookmark is
+`000000d3-00000000-000050ea-709daab542439d8e8fab731b65dab714`.
+
+Production Deploy run `35386532369` succeeded after the required Environment
+approval. Worker version `c0161a22-1987-42dd-99c4-0a5874d4fadb` serves exact
+SHA `d6c981b1a67001b807f03166109f661bc753728c`; previous Worker
+`c6fa2ce8-f35b-4485-ad38-09dbc19738d1` remains the rollback reference. Recipe
+authority stayed `shadow`, canary stayed `0`, and cutover stayed `false`.
+`SEND_EMAIL` and `GOOGLE_CLIENT_ID` are present; `/api/v1/config` exposes the
+expected client ID. Readiness reports the exact SHA with database, queue and
+email configured; the only degradation is the existing
+`CONFIG_PLUS_GRANT_SECRET_MISSING`. `scripts/post-deploy-smoke.sh` passed.
 
 OTP delivery now uses the structured Cloudflare Email Service binding with
 Resend fallback and sanitized provider categories. Production registration and
@@ -19,23 +34,29 @@ and the undelivered challenge is invalidated. Google GIS and backend audience
 verification now consume the same runtime `GOOGLE_CLIENT_ID` exposed by
 `/config`; signed credentials remain mandatory.
 
-Verification passes: lint, typecheck, migration smoke, build, full Vitest
-**174 files / 4002 tests**, recipe seed/import checks, local D1 schema gate
-through 0038, and `git diff --check`. Playwright at 390x844 and 1440x900 verified
-the landing hierarchy, all three onboarding screens, no duplicate auth choices,
-offline guest completion, responsive width, and `/auth?mode=register`. The real
-GIS SDK loaded locally but Google rejected the unregistered loopback origin;
-production authorized JavaScript origins still require operator verification.
-The local Vite proxy also strips the browser CSRF signal on proxied mutations;
-direct Worker requests with trusted Origin/Referer and integration tests pass,
-so the security policy was not weakened.
+Local release verification passed lint, typecheck, migration smoke, build, full
+Vitest **174 files / 4002 tests**, recipe seed/import checks, local D1 schema gate
+through 0038, and diff check. Production Playwright at 390x844 and 1440x900
+verified no horizontal overflow, Google GIS rendering, and a Google click opening
+`accounts.google.com` without an origin error. The live guest path completed
+landing -> guest session -> reload-safe three-step onboarding -> preferences ->
+app; `PATCH /api/v1/preferences` returned 200 and the
+`__Host-frigo_session` cookie remained `HttpOnly`, `Secure`, `SameSite=Lax`.
 
-No production deploy, remote migration, Email Service domain onboarding, OAuth
-console mutation, real OTP send, PayOS/payment change, recipe authority change,
-or unrelated infrastructure change occurred. Release requires separate operator
-authorization: onboard/verify the Email Service sender domain, confirm the exact
-production Google origin, apply 0038, deploy, then run real arbitrary-recipient
-OTP and Google sign-in smoke tests.
+The production console exposed CSP blocks for Google Fonts, Google GSI styles,
+and Cloudflare Web Analytics. Branch `codex/auth-csp-production-hotfix` contains
+implementation commit `79dfca6483d90fcf33380acfe33f880c1e6ff7a5`, which adds only
+the required explicit origins in `src/worker/config/csp.ts` and
+`public/_headers`, plus unit coverage. No wildcard or script `unsafe-inline` was
+added. Hotfix verification passed lint, typecheck, migration check, build, full
+Vitest **174 files / 4002 tests**, focused CSP 3/3, and diff check. It still
+requires PR review, exact-head/main CI, and a production deploy.
+
+Real OTP delivery remains unverified. `tungjpstore@gmail.com` already exists in
+`auth_accounts`, and headless Playwright could not complete Turnstile, so no
+forgot-password request was sent and no email receipt may be claimed. One
+legitimate production guest test record was created and intentionally retained.
+No PayOS/payment, recipe authority, Inventory Truth, or Week behavior changed.
 
 ## Current T15C-B — merged control plane; safe stop before production Canary (2026-09-18)
 

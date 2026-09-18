@@ -2,7 +2,7 @@
 
 ## Status
 
-`DEVELOPMENT_COMPLETE_READY_FOR_REVIEW`
+`PRODUCTION_DEPLOYED_CSP_HOTFIX_PENDING`
 
 ## Goal
 
@@ -37,8 +37,6 @@ returning account is not forced through onboarding on a new browser.
 
 ## Non-goals and fences
 
-- No production deploy, migration dispatch, Worker setting mutation, or Email
-  Service domain onboarding in this task.
 - No PayOS, billing, checkout, payment webhook, recipe authority, Inventory
   Truth, or Week behavior changes.
 - Preserve HttpOnly cookie sessions, CSRF origin enforcement, Turnstile,
@@ -64,3 +62,27 @@ returning account is not forced through onboarding on a new browser.
    can still try the product without creating an account.
 8. Required repository checks and a desktop/mobile interaction pass are recorded
    in the handoff documents.
+
+## Production receipt — 2026-09-19
+
+- PR #34 merged to main `d6c981b1a67001b807f03166109f661bc753728c`;
+  exact-head PR CI `35385363064` and exact-main CI `35385844667` passed.
+- Production D1 workflow `35386276549` applied only migration 0038 and finished
+  at ledger 38/tip 0038 with Time Travel bookmark
+  `000000d3-00000000-000050ea-709daab542439d8e8fab731b65dab714`.
+- Production Deploy `35386532369` succeeded on Worker
+  `c0161a22-1987-42dd-99c4-0a5874d4fadb`, exact main SHA, while preserving
+  recipe authority `shadow`, canary `0`, cutover `false`.
+- Production desktop/mobile smoke passed Google provider launch and the complete
+  guest onboarding path with secure cookie attributes and preference persistence.
+- Real OTP delivery remains unverified because automated Turnstile did not yield
+  a token; no OTP request or email receipt is claimed.
+
+## CSP follow-up
+
+Production browser verification exposed missing explicit CSP origins for Google
+Fonts, Google GSI styles, and Cloudflare Web Analytics. Commit
+`79dfca6483d90fcf33380acfe33f880c1e6ff7a5` fixes only those allowlists and adds
+unit coverage, with no wildcard or script `unsafe-inline`. Full local gates pass
+at 174 files / 4002 tests. The hotfix still needs PR/main CI, production deploy,
+and a CSP-clean browser-console receipt before T16 can close.
