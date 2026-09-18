@@ -197,12 +197,38 @@ describe('release workflow guardrails', () => {
   const ci = readFileSync(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8');
   const deploy = readFileSync(new URL('../../.github/workflows/deploy.yml', import.meta.url), 'utf8');
   const migrate = readFileSync(new URL('../../.github/workflows/production-d1-migrate.yml', import.meta.url), 'utf8');
-  // The workflow edits ship as a patch (docs/ai/recipe-catalog/t15a-r/workflows.patch, sha256
-  // 1d5097a5…) because the App credential cannot push .github/workflows/*. The guardrails below
-  // assert the wired state; they activate automatically once the patch is applied. Until then
-  // the base workflow is asserted only against the invariants it already satisfies.
-  const deployWired = deploy.includes('wait-for-deployed-release.mjs');
-  const migrateWired = migrate.includes('d1-migration-check.mjs catalog');
+  // Every `run:` shell body (inline or `|`/`>` block scalar) of a workflow. Expression
+  // interpolation of dispatch inputs inside these is a shell-injection vector; inputs must
+  // reach the shell through `env:` only.
+  const shellBodies = (workflow) => {
+    const lines = workflow.split('\n');
+    const bodies = [];
+    for (let i = 0; i < lines.length; i += 1) {
+      const match = /^(\s*)(?:- )?run:\s*(.*)$/.exec(lines[i]);
+      if (!match) continue;
+      const indent = match[1].length;
+      if (/^[|>]/.test(match[2])) {
+        const block = [];
+        for (let j = i + 1; j < lines.length; j += 1) {
+          const line = lines[j];
+          if (line.trim() !== '' && line.search(/\S/) <= indent) break;
+          block.push(line);
+        }
+        bodies.push(block.join('\n'));
+      } else {
+        bodies.push(match[2]);
+      }
+    }
+    return bodies;
+  };
+  const unsafeInput = /\$\{\{[^}]*(?:\binputs\.|github\.event\.inputs)/;
+  it('shell body extractor sees inline and block scalars and rejects interpolated inputs', () => {
+    const sample = 'steps:\n  - run: echo "${{ inputs.x }}"\n  - name: b\n    run: |\n      echo start\n      echo "${{ github.event.inputs.y }}"\n    env:\n      Z: ${{ inputs.z }}\n  - run: echo "$Z"\n';
+    const bodies = shellBodies(sample);
+    expect(bodies).toHaveLength(3);
+    expect(bodies.filter((body) => unsafeInput.test(body))).toHaveLength(2);
+    expect(unsafeInput.test('echo "$Z"')).toBe(false);
+  });
   it('validates the active hardening branch and PRs with all existing local gates', () => {
     expect(ci).toContain('branches: [main, master, codex/security-hardening-sync]');
     expect(ci).toContain('pull_request:');
@@ -221,13 +247,15 @@ describe('release workflow guardrails', () => {
     const production = deploy.slice(deploy.indexOf('\n  production:'));
     expect(production.indexOf('release-check.mjs recheck')).toBeLessThan(production.indexOf('d1-schema-gate.sh remote'));
     expect(production.indexOf('release-check.mjs schema')).toBeLessThan(production.indexOf('command: deploy'));
-    if (deployWired) expect(production.indexOf('command: deploy')).toBeLessThan(production.indexOf('wait-for-deployed-release.mjs'));
+    expect(production.indexOf('command: deploy')).toBeLessThan(production.indexOf('wait-for-deployed-release.mjs'));
     expect(production).not.toContain('migrations apply');
     expect(production).not.toContain('frigo.tungjpstore.net');
   });
-  (deployWired ? it : it.skip)('both staging and production prove the exact deployed SHA through bounded convergence, never a single-shot curl', () => {
+  it('both staging and production prove the exact deployed SHA through bounded convergence, never a single-shot curl', () => {
     const staging = deploy.slice(deploy.indexOf('\n  staging:'), deploy.indexOf('\n  production:'));
     const production = deploy.slice(deploy.indexOf('\n  production:'));
+    expect(staging.length).toBeGreaterThan(0);
+    expect(production.length).toBeGreaterThan(0);
     for (const job of [staging, production]) {
       expect(job).toContain('post-deploy-smoke.sh');
       expect(job).toContain('node scripts/wait-for-deployed-release.mjs release-manifest.json');
@@ -237,14 +265,16 @@ describe('release workflow guardrails', () => {
       // Forensic receipt survives a failed convergence.
       expect(job.slice(job.indexOf('wait-for-deployed-release.mjs'))).toMatch(/if: always\(\)[\s\S]*upload-artifact/);
     }
+    // The bounded helper is the single deployment proof; no other deploy step redeploys after it.
+    expect(deploy.match(/wait-for-deployed-release\.mjs/g)).toHaveLength(2);
   });
   it('carries no write permission or shell-interpolated dispatch input', () => {
     expect(deploy).not.toMatch(/(?:contents|actions|id-token|deployments): write/);
-    expect(deploy).not.toMatch(/run:.*\$\{\{.*(?:inputs\.|github.event.inputs)/);
+    for (const body of shellBodies(deploy)) expect(body).not.toMatch(unsafeInput);
     expect(deploy).toContain('persist-credentials: false');
   });
 
-  (migrateWired ? it : it.skip)('production D1 migration workflow keeps every fail-closed gate in order (pinned chain + catalog certification)', () => {
+  it('production D1 migration workflow keeps every fail-closed gate in order (pinned chain + catalog certification)', () => {
     expect(migrate).toContain('workflow_dispatch:');
     expect(migrate).not.toMatch(/\n\s+(?:push|pull_request|schedule|workflow_run):/);
     expect(migrate).toContain("github.ref == 'refs/heads/main'");
@@ -254,15 +284,24 @@ describe('release workflow guardrails', () => {
     expect(migrate).toContain('persist-credentials: false');
     expect(migrate).toMatch(/permissions:\n\s+contents: read\n\s+actions: read/);
     expect(migrate).not.toMatch(/(?:contents|actions|id-token|deployments): write/);
-    expect(migrate).not.toMatch(/run:.*\$\{\{.*(?:inputs\.|github.event.inputs)/);
+    for (const body of shellBodies(migrate)) expect(body).not.toMatch(unsafeInput);
+    // Dispatch inputs reach the shell only through env, including the certification-only notice.
+    expect(migrate).toMatch(/env:\n\s+MIGRATION: \$\{\{ inputs\.migration \}\}\n\s+run: echo "::notice::\$MIGRATION/);
     const order = ['d1-migration-check.mjs gate', 'd1-migration-check.mjs identity', 'd1-migration-check.mjs pre-ledger', 'time-travel info',
       'd1-migration-check.mjs bookmark', 'd1-migration-check.mjs baseline', 'd1-migration-check.mjs plan', 'migrations apply frigo-db --remote',
       'd1-migration-check.mjs post-ledger', 'd1-migration-check.mjs verify', 'd1-migration-check.mjs catalog', 'd1-schema-gate.sh remote'];
     const positions = order.map((needle) => migrate.indexOf(needle));
     expect(positions.every((position) => position >= 0)).toBe(true);
     expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+    // Exactly one catalog certification, aggregate-only, between generic verification and the schema gate.
+    expect(migrate.match(/d1-migration-check\.mjs catalog/g)).toHaveLength(1);
     expect(migrate).toMatch(/if: steps\.pre_ledger\.outputs\.mode == 'apply'/);
     expect(migrate).toContain('m.catalogQuery()');
+    // Chain-aware input contract: candidate chain = everything strictly after expected_pre_tip through migration.
+    expect(migrate).toMatch(/expected_pre_tip:\n\s+description: [^\n]*current production ledger tip/);
+    expect(migrate).toMatch(/migration:\n\s+description: [^\n]*ledger must end at after this run/);
+    expect(migrate).toMatch(/ref:\n\s+description: [^\n]*every migration after `expected_pre_tip` is applied in order/);
+    expect(migrate).not.toMatch(/single migration/i);
     // The receipt artifact is always saved, even when a gate fails.
     expect(migrate.slice(migrate.indexOf('d1-schema-gate.sh remote'))).toMatch(/if: always\(\)[\s\S]*upload-artifact/);
   });
