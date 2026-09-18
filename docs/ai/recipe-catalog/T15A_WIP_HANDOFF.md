@@ -45,6 +45,40 @@ returns 403. The non-workflow code/tests on this branch are pushed; the two work
 as a patch on the PR (see receipt comment; sha256 recorded there). A maintainer must apply the patch on
 a follow-up branch (or grant the App `workflows`) before any production migration is dispatched.
 
+## T15A-R safe stop (2026-09-18T01:4xZ, VERIFIED_LIVE)
+
+```text
+classification=T15A_R_BLOCKED_WORKFLOW_PERMISSION (pre-PR phase: readiness fix implemented, focused tests pass, full gates pass; PR #27 open, NOT ready to merge)
+origin_main=70cf7e0dae675ca19efbac2ceed0d1380d837024 (unchanged throughout; VERIFIED_LIVE)
+branch=hoplite/sparta-lakedaimon-43461860--t15a-r-workflow-readiness (created from 70cf7e0d; no rebase/force push)
+resume_from_head=<branch HEAD at handoff, bound in the PR #27 body/receipt>
+PR=27 open base=main@70cf7e0d mergeable clean unresolved_threads=0 draft=NO merged=NO (do not merge until the patch is applied)
+readiness_fix=FULL_GATES_PASS on this tree (helper scripts/wait-for-deployed-release.mjs: deadline 90 s, interval 3 s, 15 s request timeout;
+  retryable = RELEASE_PROPAGATION_PENDING only; fail-closed = wrong env, unhealthy, malformed JSON, 4xx; ≤3 transient 5xx/429/timeouts)
+staging/production hooks=PATCH WITHHELD (deploy.yml single-shot replaced only in the patch); helper smoke-tested read-only against live staging
+workflow_wiring=PATCH WITHHELD for production-d1-migrate.yml too (catalog step order gate→…→verify→catalog→schema-gate; input interpolation removed in patch)
+guardrails=self-activating in tests/unit/release-check.test.mjs: unwired 51 passed / 2 skipped (CI green); patch applied 66 passed / 0 skipped (VERIFIED_LOCAL both ways)
+focused_tests=97/97 (release-check 53 incl. 2 skipped unwired, wait-for-deployed-release 13, d1-migration-check, d1-schema-gate)
+full_gates=seed ok · import ok (500/2) · typecheck 0 · lint PASS · migration-smoke ok · build PASS · vitest 173 files / 3943 tests PASS (586 s) · diff-check clean
+migration_integrity=migrations/ diff vs main = 0; 0036 04228788… ; 0037 68e52e6d… ; 0038_created=NO (VERIFIED_LIVE)
+production_safety=D1_write NO · R2 NO · deploy NO · authority NO · migration dispatch NO (0 runs) · media NO · T14G NO; prod Worker 4ed98514… / static 71 (VERIFIED_LIVE)
+CI=exact-head on the branch head must be SUCCESS before handoff ends (bound in the PR body; the 6ce20fc4 run 35295687199 failed on the pre-activation guardrails and was superseded by this fix)
+```
+
+Changed/pushed on the branch (relative to main `70cf7e0d`): `scripts/release-check.mjs` (propagation
+classification), `scripts/wait-for-deployed-release.mjs` (new), `scripts/d1-migration-check.mjs`
+(media-gate comment), `tests/unit/release-check.test.mjs`, `tests/unit/wait-for-deployed-release.test.mjs`
+(new), `docs/ai/recipe-catalog/T15A_WIP_HANDOFF.md` (this file), `docs/ai/recipe-catalog/t15a-r/workflows.patch`
+(+ `.sha256`, the withheld workflow diff), `docs/ai/CURRENT_STATE.md`, `docs/ai/HANDOFF.md`, `TASK_BOARD.md`.
+Local-only uncommitted (intentional, documented): `git diff` on `.github/workflows/deploy.yml` and
+`.github/workflows/production-d1-migrate.yml` — identical to the tracked patch; do not commit (push is rejected).
+
+**Next session (resume rule):** fetch, read this file, verify `origin/main` and the branch head live,
+then: apply `docs/ai/recipe-catalog/t15a-r/workflows.patch` on this branch (or a maintainer branch), commit
+forward-only (the guardrails self-activate), run focused + full gates, push, require exact-head CI SUCCESS,
+then (only with separate authorization) merge with an expected-head guard and require exact-main CI SUCCESS.
+Do not dispatch `production-d1-migrate.yml` and do not deploy production from this branch.
+
 ## Production resume requirements (T15A Phase B — separate session, operator approval)
 
 1. Workflow wiring (catalog step) **and** bounded exact-SHA convergence present on canonical `main`,
