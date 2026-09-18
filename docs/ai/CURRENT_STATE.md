@@ -1,5 +1,36 @@
 # Frigo / Takosan current authority — 2026-09-18
 
+## Current T15C-B1 — merged safe-stop receipt; operator auth required (2026-09-18)
+
+PR #33 merged with expected head `c6744eb03ee40d3f018fc87617e6a1b8396cdabf`
+as `fe82d48bfe16d62a03d25630287d6b0d29ac5b86`. Prior main and PR head are
+ancestors; the merge added zero protected application, runtime, workflow, or
+migration files. Exact-main CI `35356408446` passed all hosted gates.
+
+Automatic Deploy `35356893458` passed release `105638330878` and staging
+`105638386616`, skipped production `105638388068`, and deployed exact main SHA
+to staging Worker `15bbc3d8-0e6f-4c37-822e-a7c4ef4bf3e2`. Staging remained
+`static/0/false`.
+
+Read-only production checks remain unchanged: Worker
+`c6fa2ce8-f35b-4485-ad38-09dbc19738d1`, SHA
+`88e8b54de121125866b2ff813e56e33277decf1c`, Shadow/static authority, five
+catalog responses at 71, legacy IDs 200, reviewed D1-only IDs 404. D1 remains
+ledger 37 / tip `0037_recipe_catalog_scale.sql`, 500 recipes, 500 runtime
+fields, release `rel-bd00a4f53fcaeee4`, and media 500 pending / 0 ready. All
+read-only SELECTs reported `changes=0`, `rows_written=0`.
+
+No documented operator-owned production identity/session/household was available
+for audit, and no customer data was enumerated. Creating a QA account requires
+the real production registration flow with Turnstile and email OTP; Codex has no
+legitimate operator auth session. No account or household was created.
+
+Durable checkpoint: `recipe-catalog/T15C_B1_OPERATOR_AUTH_ACTION_REQUIRED.md`.
+Classification: `T15C_B1_OPERATOR_AUTH_ACTION_REQUIRED`. Next action is for an
+operator to provide an existing QA session or complete normal registration/OTP;
+then calculate buckets locally and continue with at most 20 new households.
+Production Canary remains unstarted.
+
 ## Current T15C-B — merged control plane; safe stop before production Canary (2026-09-18)
 
 PR #32 was merged normally with the expected-head guard: certified head

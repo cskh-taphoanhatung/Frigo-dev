@@ -1,5 +1,14 @@
 # Frigo / Takosan current task board — 2026-09-17
 
+## Current T15C-B1 — operator auth action required; stop before Canary — 2026-09-18
+
+- [done] Merged PR #33 as `fe82d48bfe16d62a03d25630287d6b0d29ac5b86`; prior main and PR head are ancestors, protected tree delta 0 files.
+- [done] Exact-main CI `35356408446` SUCCESS; automatic Deploy `35356893458` release/staging SUCCESS, production SKIPPED; staging `static/0/false` at exact main SHA.
+- [done] Read-only production remains Shadow/static Worker `c6fa2ce8-f35b-4485-ad38-09dbc19738d1`, 71 served, D1 500 READY, ledger 37/tip 0037, media 500 pending/0 ready, zero write metadata.
+- [done] Audited repository, environment, and documented QA sources; no operator-owned production identity/session/household was available. Customer households were not inspected.
+- [stop] Normal production account creation requires real Turnstile and email OTP; no legitimate operator auth session is available. Classification `T15C_B1_OPERATOR_AUTH_ACTION_REQUIRED`.
+- [next] Operator provides an existing QA session or completes normal registration/OTP. Then calculate canonical buckets locally, provision at most 20 per batch, stop at the first inside-1% household, and never activate Canary in this task. Receipt: `docs/ai/recipe-catalog/T15C_B1_OPERATOR_AUTH_ACTION_REQUIRED.md`.
+
 ## Current T15C-B — merged control plane; safe stop before production Canary — 2026-09-18
 
 - [done] Merged PR #32 with expected head `a7b3d23f2ad8b48203328116d0e35425390d2127` as `a6e81cd89b9e4c6b923cfc39947b01faf44ff5f3`; PR head ancestor and tree delta 0 files.

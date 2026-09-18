@@ -1,5 +1,31 @@
 # Frigo / Takosan current handoff — 2026-09-18
 
+## Current handoff — T15C-B1 operator auth action required (2026-09-18)
+
+PR #33 merged with expected head `c6744eb03ee40d3f018fc87617e6a1b8396cdabf`
+as `fe82d48bfe16d62a03d25630287d6b0d29ac5b86`. Exact-main CI `35356408446`
+passed. Automatic Deploy `35356893458` passed release/staging and skipped
+production; staging deployed the exact SHA with `static/0/false`.
+
+Production remains unchanged and read-only verified: Shadow/static Worker
+`c6fa2ce8-f35b-4485-ad38-09dbc19738d1`, deployed SHA
+`88e8b54de121125866b2ff813e56e33277decf1c`, five 71-count responses, legacy
+IDs 200, D1 500 READY, ledger 37/tip 0037, release
+`rel-bd00a4f53fcaeee4`, media 500 pending/0 ready, and all SELECTs with zero
+writes. No production deploy, approval, migration, D1 write, R2/media write, or
+Canary activation occurred.
+
+No operator-owned production QA identity/session/household was available in
+repository, environment, or documented sources. The normal registration flow
+requires real Turnstile and email OTP, so account provisioning cannot continue
+without operator action. No customer data was searched and no household was
+created. Classification: `T15C_B1_OPERATOR_AUTH_ACTION_REQUIRED`.
+
+Next exact action: operator provides an existing QA session or completes the
+normal production registration/OTP flow; then use at most 20 new households per
+batch, calculate canonical buckets privately, and stop before Canary deployment.
+Receipt: `docs/ai/recipe-catalog/T15C_B1_OPERATOR_AUTH_ACTION_REQUIRED.md`.
+
 ## Current handoff — T15C-B merged control plane; authorized-cohort safe stop (2026-09-18)
 
 PR #32 merged with expected head `a7b3d23f2ad8b48203328116d0e35425390d2127` as
