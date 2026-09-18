@@ -111,7 +111,7 @@ class AppErrorBoundary extends React.Component<{ children: React.ReactNode }, { 
 }
 
 export const App: React.FC = () => {
-  const { isOnboarded, userId, householdId } = useAuthStore();
+  const { isGuest, isOnboarded, userId, householdId } = useAuthStore();
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -124,7 +124,7 @@ export const App: React.FC = () => {
                 <Route path="/landing" element={userId && householdId
                   ? <Navigate to={isOnboarded ? '/' : '/onboarding'} replace />
                   : <LandingPage />} />
-                <Route path="/auth" element={userId && householdId
+                <Route path="/auth" element={userId && householdId && !isGuest
                   ? <Navigate to={isOnboarded ? '/' : '/onboarding'} replace />
                   : <AuthPage />} />
                 <Route path="/onboarding" element={userId && householdId

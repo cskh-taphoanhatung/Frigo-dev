@@ -29,7 +29,7 @@ it('uses the structured Cloudflare Email Service payload', async () => {
     .resolves.toEqual({ sent: true, provider: 'workers-email', messageId: 'message-123' });
   expect(send).toHaveBeenCalledWith({
     to: params.to,
-    from: { email: 'no-reply@frigo.tungjpstore.net', name: 'Takosan' },
+    from: { email: 'no-reply@tungjpstore.net', name: 'Takosan' },
     subject: params.subject,
     html: params.html,
     text: 'private text',
@@ -43,4 +43,12 @@ it('maps Cloudflare onboarding errors without retaining provider text', async ()
   const result = await sendEmail({ SEND_EMAIL: { send: async () => { throw error; } } } as unknown as Env, params);
   expect(result).toEqual({ sent: false, provider: 'workers-email', error: 'sender_not_verified' });
   expect(JSON.stringify(log.mock.calls)).not.toContain(params.to);
+});
+
+it('maps Cloudflare subdomain authorization failures without retaining provider text', async () => {
+  const error = new Error("email sending not authorized for subdomain 'private.example.com'");
+  const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+  const result = await sendEmail({ SEND_EMAIL: { send: async () => { throw error; } } } as unknown as Env, params);
+  expect(result).toEqual({ sent: false, provider: 'workers-email', error: 'sender_not_verified' });
+  expect(JSON.stringify(log.mock.calls)).not.toContain('private.example.com');
 });

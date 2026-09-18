@@ -20,6 +20,10 @@ export const AuthPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const requestedMode = searchParams.get('mode');
   const requestedProvider = searchParams.get('provider');
+  const requestedReturnTo = searchParams.get('returnTo');
+  const returnTo = requestedReturnTo?.startsWith('/') && !requestedReturnTo.startsWith('//')
+    ? requestedReturnTo
+    : '/';
   const { setAuthSession } = useAuthStore();
 
   const [mode, setMode] = useState<AuthMode>(() => requestedMode === 'register' ? 'register' : 'login');
@@ -116,7 +120,7 @@ export const AuthPage: React.FC = () => {
             avatarUrl: res.user.avatarUrl,
             householdId: res.user.householdId,
           });
-          navigate(res.user.onboardingCompleted ? '/' : '/onboarding', { replace: true });
+          navigate(res.user.onboardingCompleted ? returnTo : '/onboarding', { replace: true });
         } else {
           setErrorMessage('Không thể xác thực tài khoản Google.');
         }
@@ -205,7 +209,7 @@ export const AuthPage: React.FC = () => {
           avatarUrl: res.user.avatarUrl,
           householdId: res.user.householdId,
         });
-        navigate(res.user.onboardingCompleted ? '/' : '/onboarding', { replace: true });
+        navigate(res.user.onboardingCompleted ? returnTo : '/onboarding', { replace: true });
       }
     } catch (err: any) {
       if (err?.payload?.requireOtp === true) {
@@ -380,6 +384,10 @@ export const AuthPage: React.FC = () => {
   // Resend OTP
   const handleResendOtp = async () => {
     if (resendCountdown > 0) return;
+    if (turnstileSiteKey && !turnstileToken) {
+      setErrorMessage('Vui lòng hoàn tất xác minh chống bot trước khi gửi lại mã.');
+      return;
+    }
     setIsLoading(true);
     setErrorMessage(null);
     try {
@@ -796,12 +804,16 @@ export const AuthPage: React.FC = () => {
                 <span className="text-slate-500">Chưa nhận được mã?</span>
                 <button
                   type="button"
-                  disabled={resendCountdown > 0 || isLoading}
+                  disabled={resendCountdown > 0 || isLoading || Boolean(turnstileSiteKey && !turnstileToken)}
                   onClick={handleResendOtp}
                   className="font-semibold text-takosan-green disabled:opacity-40 hover:underline flex items-center gap-1 tap-target cursor-pointer"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
-                  <span>{resendCountdown > 0 ? `Gửi lại sau (${resendCountdown}s)` : 'Gửi lại mã OTP'}</span>
+                  <span>{resendCountdown > 0
+                    ? `Gửi lại sau (${resendCountdown}s)`
+                    : turnstileSiteKey && !turnstileToken
+                      ? 'Đang xác minh…'
+                      : 'Gửi lại mã OTP'}</span>
                 </button>
               </div>
             </form>

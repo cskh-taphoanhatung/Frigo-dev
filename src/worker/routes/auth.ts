@@ -537,6 +537,7 @@ authRoutes.post('/auth/resend-otp', async (c) => {
   const normalizedEmail = parsed.data.email.trim().toLowerCase();
   const purpose = parsed.data.purpose;
   const db = c.env.DB;
+  const cooldownKey = `otp_resend_${normalizedEmail}_${purpose}`;
 
   if (!db) {
     return c.json({ error: 'Database service unavailable', code: 'DATABASE_UNAVAILABLE' }, 503);
@@ -544,21 +545,26 @@ authRoutes.post('/auth/resend-otp', async (c) => {
 
   try {
     if (c.env.CACHE) {
-      const cooldownKey = `otp_resend_${normalizedEmail}_${purpose}`;
-      if (await c.env.CACHE.get(cooldownKey)) {
-        c.header('Retry-After', String(OTP_RESEND_COOLDOWN_SECONDS));
-        return c.json(
-          {
-            error: 'Vui lòng đợi 60 giây trước khi gửi lại mã OTP.',
-            retryAfterSeconds: OTP_RESEND_COOLDOWN_SECONDS,
-          },
-          429
-        );
+      try {
+        if (await c.env.CACHE.get(cooldownKey)) {
+          c.header('Retry-After', String(OTP_RESEND_COOLDOWN_SECONDS));
+          return c.json(
+            {
+              error: 'Vui lòng đợi 60 giây trước khi gửi lại mã OTP.',
+              retryAfterSeconds: OTP_RESEND_COOLDOWN_SECONDS,
+            },
+            429
+          );
+        }
+        // Set before email delivery to prevent rapid sequential requests.
+        await c.env.CACHE.put(cooldownKey, '1', {
+          expirationTtl: OTP_RESEND_COOLDOWN_SECONDS,
+        });
+      } catch {
+        // The route-level auth limiter still applies. A transient KV outage
+        // must not make a legitimate OTP recovery path unavailable.
+        console.error(JSON.stringify({ event: 'otp_resend_cooldown_unavailable' }));
       }
-      // Set before email delivery to prevent rapid sequential requests.
-      await c.env.CACHE.put(cooldownKey, '1', {
-        expirationTtl: OTP_RESEND_COOLDOWN_SECONDS,
-      });
     }
 
     if (purpose === 'forgot_password') {
@@ -589,12 +595,14 @@ authRoutes.post('/auth/resend-otp', async (c) => {
 
     if (!isProduction) responseData.devOtp = otpCode;
     if (!otpAvailable) {
-      if (c.env.CACHE) await c.env.CACHE.delete(`otp_resend_${normalizedEmail}_${purpose}`).catch(() => {});
+      if (c.env.CACHE) await c.env.CACHE.delete(cooldownKey).catch(() => {});
       return c.json({ ...responseData, code: 'OTP_DELIVERY_UNAVAILABLE' }, 503);
     }
     return c.json(responseData);
   } catch {
-    return c.json({ error: 'Không thể gửi lại OTP' }, 500);
+    if (c.env.CACHE) await c.env.CACHE.delete(cooldownKey).catch(() => {});
+    console.error(JSON.stringify({ event: 'otp_resend_failed' }));
+    return c.json({ error: 'Không thể gửi lại OTP lúc này. Vui lòng thử lại.', code: 'OTP_RESEND_UNAVAILABLE' }, 503);
   }
 });
 
