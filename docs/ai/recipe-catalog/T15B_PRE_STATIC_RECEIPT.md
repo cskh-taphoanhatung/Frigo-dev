@@ -67,7 +67,7 @@ Independent post-deploy checks: five repeated readiness/list requests all return
 
 The repository had no approved existing Shadow mutation path: `wrangler.jsonc` omits the mode, `deploy.yml` had no authority input, and no reviewed Cloudflare dashboard/API path was documented. No undocumented dashboard/API change was attempted.
 
-This branch adds the minimal reviewed workflow plumbing in `.github/workflows/deploy.yml`, `scripts/release-check.mjs`, and `tests/unit/release-check.test.mjs`: a validated `static|shadow` input, manifest/output propagation, and explicit rejection of `canary`/`d1`. Full gates pass locally. The branch is opened as a PR and must receive independent review and exact-head CI before any merge or Shadow deployment.
+PR #30 adds the minimal reviewed workflow plumbing in `.github/workflows/deploy.yml`, `scripts/release-check.mjs`, and `tests/unit/release-check.test.mjs`: a validated `static|shadow` input, manifest/output propagation, and explicit rejection of `canary`/`d1`. Full gates pass locally. Implementation head `97aff50d52b7448709e943aa7f861475689bcec6` has exact-head CI run `35335079345` SUCCESS. The final documentation head must also pass exact-head CI and the PR must receive independent review before any merge or Shadow deployment.
 
 ```text
 shadow_activation=NOT_PERFORMED

@@ -6,7 +6,7 @@
 - [done] Re-read immutable migration receipt run `35329772751`: D1 tip 0037, 500 catalog, release `rel-bd00a4f53fcaeee4`, schema gate PASS, FK `[]`, quick check `ok`, media 500 pending/0 ready.
 - [done] Static production Deploy `35333517052`: required reviewer approval, production SUCCESS, Worker `ab8ff038-2aaa-468b-a9de-8c5d94f14052`, exact SHA convergence PASS, live user-facing count 71 across five repeated checks.
 - [done] Rollback evidence retained: previous Worker `56979cb5-e1a8-4241-8a4c-2432d41cc439`; rollback contract is `RECIPE_CATALOG_MODE=static`.
-- [blocked] No approved existing Shadow config path was present. Minimal `static|shadow` workflow/config plumbing and tests are on branch `codex/t15b-shadow-wiring`; open PR and require independent review + exact-head CI. Do not merge or activate in this task.
+- [ready for review] No approved existing Shadow config path was present. PR #30 adds minimal `static|shadow` workflow/config plumbing and tests; implementation head `97aff50d…` exact CI `35335079345` SUCCESS. Require independent review and final docs-head CI. Do not merge or activate in this task.
 - [not started] Shadow activation/certification, canary, full D1, media/R2, T14G. T09/T11 and Inventory Truth unchanged.
 
 ## Current T14F — T14F_DEVELOPMENT_COMPLETE (T14F-A/B/C certified; production untouched)
