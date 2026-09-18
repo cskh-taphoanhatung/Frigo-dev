@@ -1,6 +1,14 @@
 # Frigo / Takosan current authority — 2026-09-18
 
-## Current T15B-PRE — STATIC certified; SHADOW stopped at reviewed wiring PR (2026-09-18)
+## Current T15B-SHADOW — production Shadow certified; safe stop before canary (2026-09-18)
+
+Production Shadow certification is complete on canonical main `88e8b54de121125866b2ff813e56e33277decf1c` in repository `1368281478` (`frigo-6/Frigo-dev`). PR #30 (`ad3e1d1656418aaf495b130443d6514926b8bdca`) merged with a zero-file tree delta; exact-main CI `35336548833` passed, automatic staging Deploy `35336830786` passed with STATIC71, and production Shadow Deploy `35337110268` passed release `105574386006` and production `105574426707` after the required Environment approval. Production now serves Worker `c6fa2ce8-f35b-4485-ad38-09dbc19738d1` at exact SHA `88e8b54de121125866b2ff813e56e33277decf1c`; bounded convergence passed in one attempt / 574 ms.
+
+Independent anonymous production checks prove `configured=shadow`, `selected/actual source=static`, five repeated `/api/v1/recipes` responses at 71, legacy `vn-canh-01` and `gl-12` HTTP 200, and five reviewed D1-only IDs HTTP 404. Cloudflare tail records sanitized Shadow comparisons with D1 500/500 hydrated, release `rel-bd00a4f53fcaeee4`, readiness `ready`, zero drift/order/hydration errors, `shadow_errors=0`, and no authority leak. Existing D1 migration receipt `35329772751` remains the only migration evidence: tip 0037, ledger 37, 500 recipes/runtime fields, 2/2 approved batches, FK `[]`, quick check `ok`; no migration or additional D1 write occurred.
+
+Durable receipt: `recipe-catalog/T15B_SHADOW_CERTIFICATION.md`. Rollback remains available through the approved Deploy workflow with `recipe_catalog_mode=static`; previous Worker `ab8ff038-2aaa-468b-a9de-8c5d94f14052` is retained. PR #29 remains open/conflicting and was not merged. Canary, full D1, cutover, media/R2, T14G, Inventory Truth/T09/T11, PayOS/auth changes remain out of scope. Classification: `T15B_SHADOW_COMPLETE`; stop before canary/full D1.
+
+## Previous T15B-PRE checkpoint — STATIC certified; SHADOW wiring PR ready (superseded 2026-09-18)
 
 Canonical main remained `0fe2cf071693208f6c642d8cbd994f5a79b5a2cf` in repository `1368281478` (`frigo-6/Frigo-dev`); PR #29 stayed open and unmerged. Existing production D1 receipt run `35329772751` is SUCCESS and independently records ledger 37/tip `0037_recipe_catalog_scale.sql`, 500 recipes/runtime fields, approved batches `2/2`, release `rel-bd00a4f53fcaeee4`, FK `[]`, `quick_check=ok`, and 500 pending/0 ready media rows. No migration was dispatched again.
 

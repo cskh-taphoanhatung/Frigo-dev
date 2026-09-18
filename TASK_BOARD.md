@@ -1,4 +1,12 @@
-## Current T15B-PRE — STATIC certified; SHADOW wiring PR ready — 2026-09-18
+## Current T15B-SHADOW — production Shadow certified; stop before canary — 2026-09-18
+
+- [done] PR #30 merged as `88e8b54de121125866b2ff813e56e33277decf1c`; exact-main CI `35336548833` and automatic staging Deploy `35336830786` succeeded. Staging stayed STATIC71 on Worker `580acb76-a006-4c0a-b991-618ebde07e88`.
+- [done] Production Shadow Deploy `35337110268` succeeded after the required Environment approval: Worker `c6fa2ce8-f35b-4485-ad38-09dbc19738d1`, exact SHA, convergence 1 attempt / 574 ms.
+- [done] Independent live checks: 5/5 catalog reads returned 71, legacy IDs returned 200, five D1-only IDs returned 404; Shadow tail showed D1 500/500 hydrated, release READY, zero drift/errors, no authority leak.
+- [done] D1 stayed tip 0037 / ledger 37 / release `rel-bd00a4f53fcaeee4`; no migration or other D1 write. Receipt: `docs/ai/recipe-catalog/T15B_SHADOW_CERTIFICATION.md`.
+- [stop] `T15B_SHADOW_COMPLETE`; no canary, full D1, cutover, media/R2, T14G, Inventory Truth/T09/T11, PayOS/auth, or stale PR #29 merge.
+
+## Previous T15B-PRE checkpoint — STATIC certified; SHADOW wiring PR ready — superseded 2026-09-18
 
 - [done] Canonical repository `1368281478` / `frigo-6/Frigo-dev`, main `0fe2cf071693208f6c642d8cbd994f5a79b5a2cf`; PR #29 remained open and unmerged.
 - [done] Immutable production D1 receipt `35329772751`: tip 0037, 500 recipes, release `rel-bd00a4f53fcaeee4`, schema gate PASS, FK `[]`, quick check `ok`, 500 pending media rows / 0 ready.
