@@ -130,14 +130,15 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy --config wrangler.staging.jsonc --var GIT_COMMIT:${{ needs.release.outputs.deploy_sha }}
 
+      # Exact-SHA proof polls readiness within a bounded deadline: the edge may briefly serve the
+      # previous Worker version after upload. Only that propagation case is retried; nothing redeploys.
       - name: Staging post-deploy smoke and SHA receipt
         if: env.STAGING_UNCONFIGURED != 'true' && vars.STAGING_URL != ''
         env:
           APP_SMOKE_URL: ${{ vars.STAGING_URL }}
         run: |
           bash scripts/post-deploy-smoke.sh "$APP_SMOKE_URL"
-          curl --fail --silent --show-error --max-time 30 "$APP_SMOKE_URL/api/v1/health/ready" > readiness.json
-          node scripts/release-check.mjs deployed release-manifest.json readiness.json
+          node scripts/wait-for-deployed-release.mjs release-manifest.json
 
       - name: Save staging receipt (deployed field exists only after SHA smoke passes)
         if: always()
@@ -222,8 +223,7 @@ jobs:
           APP_SMOKE_URL: ${{ vars.PRODUCTION_URL }}
         run: |
           bash scripts/post-deploy-smoke.sh "$APP_SMOKE_URL"
-          curl --fail --silent --show-error --max-time 30 "$APP_SMOKE_URL/api/v1/health/ready" > readiness.json
-          node scripts/release-check.mjs deployed release-manifest.json readiness.json
+          node scripts/wait-for-deployed-release.mjs release-manifest.json
 
       - name: Save production receipt even on failure (inspect deployed field)
         if: always()
