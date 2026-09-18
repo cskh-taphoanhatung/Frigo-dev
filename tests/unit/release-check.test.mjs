@@ -5,7 +5,8 @@ import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   RELEASE_PROPAGATION_PENDING,
-  migrationManifest, requireSuccessfulCi, validateRecipeCatalogMode, validateReleaseSource,
+  migrationManifest, requireSuccessfulCi, validateRecipeCatalogManifestPolicy, validateRecipeCatalogMode,
+  validateRecipeCatalogRollout, validateReleaseSource,
   verifyDeployedRelease, verifyMigrationLedger,
 } from '../../scripts/release-check.mjs';
 
@@ -19,12 +20,41 @@ const successful = {
 };
 
 describe('recipe catalog rollout mode validation', () => {
-  it.each(['static', 'shadow'])('accepts the reviewed %s mode', (mode) => {
+  it.each(['static', 'shadow', 'canary'])('accepts the reviewed %s mode', (mode) => {
     expect(validateRecipeCatalogMode(mode)).toBe(mode);
   });
 
-  it.each([undefined, '', 'canary', 'd1', 'SHADOW'])('rejects unreviewed mode %s', (mode) => {
-    expect(() => validateRecipeCatalogMode(mode)).toThrow('must be static or shadow');
+  it.each([undefined, '', 'd1', 'full', 'full_d1', 'SHADOW'])('rejects unreviewed mode %s', (mode) => {
+    expect(() => validateRecipeCatalogMode(mode)).toThrow('must be static, shadow, or canary');
+  });
+
+  it.each([
+    ['static', '0', false], ['shadow', '0', false],
+    ['canary', '1', true], ['canary', '2', true], ['canary', '5', true],
+  ])('%s/%s derives the reviewed immutable policy', (mode, canaryPercent, cutoverEnabled) => {
+    expect(validateRecipeCatalogRollout({ mode, canaryPercent })).toEqual({ mode, canaryPercent: Number(canaryPercent), cutoverEnabled });
+  });
+
+  it.each([
+    ['static', '1'], ['shadow', '1'], ['canary', '0'], ['canary', '10'], ['canary', '100'],
+    ['d1', '1'], ['full', '1'], ['canary', '05'], ['canary', '1.0'], ['canary', '-1'], ['canary', '1e0'],
+  ])('rejects unsafe rollout combination %s/%s', (mode, canaryPercent) => {
+    expect(() => validateRecipeCatalogRollout({ mode, canaryPercent })).toThrow();
+  });
+
+  it('revalidates every rollout field from the immutable release manifest', () => {
+    expect(validateRecipeCatalogManifestPolicy({
+      recipeCatalogMode: 'canary', recipeCatalogCanaryPercent: 2, recipeCatalogCutoverEnabled: true,
+    })).toEqual({ mode: 'canary', canaryPercent: 2, cutoverEnabled: true });
+    expect(() => validateRecipeCatalogManifestPolicy({
+      recipeCatalogMode: 'canary', recipeCatalogCanaryPercent: 2, recipeCatalogCutoverEnabled: false,
+    })).toThrow('cutover policy');
+    expect(() => validateRecipeCatalogManifestPolicy({
+      recipeCatalogMode: 'd1', recipeCatalogCanaryPercent: 1, recipeCatalogCutoverEnabled: true,
+    })).toThrow();
+    expect(() => validateRecipeCatalogManifestPolicy({
+      recipeCatalogMode: 'canary', recipeCatalogCanaryPercent: 100, recipeCatalogCutoverEnabled: true,
+    })).toThrow();
   });
 });
 
@@ -253,11 +283,20 @@ describe('release workflow guardrails', () => {
     expect(deploy).toContain('environment: production');
     expect(deploy).toContain('ref: ${{ needs.release.outputs.deploy_sha }}');
     expect(deploy).toContain('GIT_COMMIT:${{ needs.release.outputs.deploy_sha }}');
-    expect(deploy).toContain('options: [static, shadow]');
+    expect(deploy).toContain('options: [static, shadow, canary]');
+    expect(deploy).toContain("options: ['0', '1', '2', '5']");
+    expect(deploy).toContain('recipe_catalog_d1_canary_percent: ${{ steps.gate.outputs.recipe_catalog_d1_canary_percent }}');
+    expect(deploy).toContain('recipe_catalog_cutover_enabled: ${{ steps.gate.outputs.recipe_catalog_cutover_enabled }}');
     expect(deploy).toContain("RECIPE_CATALOG_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.recipe_catalog_mode || 'static' }}");
+    expect(deploy).toContain("RECIPE_CATALOG_D1_CANARY_PERCENT: ${{ github.event_name == 'workflow_dispatch' && inputs.recipe_catalog_d1_canary_percent || '0' }}");
     expect(deploy.match(/RECIPE_CATALOG_MODE:\$\{\{ needs\.release\.outputs\.recipe_catalog_mode \}\}/g)).toHaveLength(2);
-    expect(deploy).not.toContain('options: [static, shadow, canary');
+    expect(deploy.match(/RECIPE_CATALOG_D1_CANARY_PERCENT:\$\{\{ needs\.release\.outputs\.recipe_catalog_d1_canary_percent \}\}/g)).toHaveLength(2);
+    expect(deploy.match(/RECIPE_CATALOG_CUTOVER_ENABLED:\$\{\{ needs\.release\.outputs\.recipe_catalog_cutover_enabled \}\}/g)).toHaveLength(2);
     expect(deploy).not.toContain('options: [static, shadow, d1');
+    expect(deploy).not.toContain('options: [static, shadow, canary, d1');
+    expect(deploy).not.toContain("options: ['0', '1', '2', '5', '10'");
+    const dispatchInputs = deploy.slice(deploy.indexOf('workflow_dispatch:'), deploy.indexOf('\npermissions:'));
+    expect(dispatchInputs).not.toContain('recipe_catalog_cutover_enabled:');
     expect(deploy).toContain('cancel-in-progress: false');
     const production = deploy.slice(deploy.indexOf('\n  production:'));
     expect(production.indexOf('release-check.mjs recheck')).toBeLessThan(production.indexOf('d1-schema-gate.sh remote'));

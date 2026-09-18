@@ -1,5 +1,17 @@
 # Frigo / Takosan current task board — 2026-09-17
 
+## Current T15C-A — bounded canary control plane — 2026-09-18
+
+- [done] Re-verified repository `1368281478` / `frigo-6/Frigo-dev`, main `88e8b54d…`, PR #31 exact head and docs-only tree; exact-head CI `35338372250` SUCCESS.
+- [done] Merged PR #31 with expected-head guard as `6f589d0201499a3729d343e42ccb6d19fdff217a`; post-merge CI `35340599941` SUCCESS.
+- [done] Automatic Deploy `35340976739`: release/staging SUCCESS, production SKIPPED; automatic staging policy remained STATIC.
+- [done] Closed PR #29 without merge with supersession comment.
+- [done] Audited existing runtime canary: deterministic household FNV-1a assignment, readiness-gated D1, static fallback, 30s TTL / 5m stale grace; runtime left unchanged.
+- [done] Branch `codex/t15c-canary-control-plane` from certified main; implemented bounded `static|shadow|canary` release policy, 0/1/2/5 choices, derived cutover, immutable manifest fields, and validated Wrangler propagation.
+- [done] Focused 121/121; full 173 files / 3995 tests; seed/import/lint/typecheck/check:migrations/build/diff-check PASS. No migration or production action.
+- [done] Opened Canary wiring PR #32; implementation/receipt head `44c1e80b…` and later docs checkpoint `642b4f8b…` each passed exact-head CI. The authoritative final head/CI receipt is posted on the PR after the last docs commit because a commit cannot contain its own hash.
+- [in review] PR #32 remains OPEN; require the PR receipt to show final exact-head CI SUCCESS and zero unresolved review threads, then stop for independent review. Do not merge or activate canary.
+
 ## Current T15B-SHADOW — production Shadow certified; stop before canary — 2026-09-18
 
 - [done] PR #30 merged as `88e8b54de121125866b2ff813e56e33277decf1c`; PR head `ad3e1d1656418aaf495b130443d6514926b8bdca` is an ancestor and tree delta is 0 files. Exact-main CI `35336548833` SUCCESS.
