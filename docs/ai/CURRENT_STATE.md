@@ -1,4 +1,41 @@
-# Frigo / Takosan current authority — 2026-09-18
+# Frigo / Takosan current authority — 2026-09-19
+
+## Current T16 — auth funnel recovery development complete; production unchanged (2026-09-19)
+
+Branch `codex/auth-funnel-recovery` is based on canonical main
+`fe82d48bfe16d62a03d25630287d6b0d29ac5b86`; verified implementation commit is
+`3633a2fa8a0827a6aa31a3c86da7fb680a6e0f2a`. T16 now has one entry funnel:
+landing offers guest or account, auth sends returning onboarded accounts to the
+app and new accounts to three preference-only onboarding steps, and onboarding
+contains no duplicate login/Google/Apple chooser. Completion is authoritative in
+D1 through additive migration `0038_auth_onboarding_completion.sql`; local D1 was
+applied through 0038 only, and production remains at the previously certified
+0037 state.
+
+OTP delivery now uses the structured Cloudflare Email Service binding with
+Resend fallback and sanitized provider categories. Production registration and
+resend return `OTP_DELIVERY_UNAVAILABLE` when no provider accepts the message,
+and the undelivered challenge is invalidated. Google GIS and backend audience
+verification now consume the same runtime `GOOGLE_CLIENT_ID` exposed by
+`/config`; signed credentials remain mandatory.
+
+Verification passes: lint, typecheck, migration smoke, build, full Vitest
+**174 files / 4002 tests**, recipe seed/import checks, local D1 schema gate
+through 0038, and `git diff --check`. Playwright at 390x844 and 1440x900 verified
+the landing hierarchy, all three onboarding screens, no duplicate auth choices,
+offline guest completion, responsive width, and `/auth?mode=register`. The real
+GIS SDK loaded locally but Google rejected the unregistered loopback origin;
+production authorized JavaScript origins still require operator verification.
+The local Vite proxy also strips the browser CSRF signal on proxied mutations;
+direct Worker requests with trusted Origin/Referer and integration tests pass,
+so the security policy was not weakened.
+
+No production deploy, remote migration, Email Service domain onboarding, OAuth
+console mutation, real OTP send, PayOS/payment change, recipe authority change,
+or unrelated infrastructure change occurred. Release requires separate operator
+authorization: onboard/verify the Email Service sender domain, confirm the exact
+production Google origin, apply 0038, deploy, then run real arbitrary-recipient
+OTP and Google sign-in smoke tests.
 
 ## Current T15C-B — merged control plane; safe stop before production Canary (2026-09-18)
 

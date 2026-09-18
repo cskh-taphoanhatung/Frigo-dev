@@ -49,9 +49,8 @@
   "ai": {
     "binding": "AI"
   },
-  // B1: native email sending (Workers Paid). Requires destination address
-  // verification in Cloudflare Dashboard → Email → Email Routing, and a
-  // verified domain. Binding name must match Env.SEND_EMAIL.
+  // Cloudflare Email Service structured sending. The sender domain must be
+  // onboarded in Email Service before production delivery is enabled.
   "send_email": [
     {
       "name": "SEND_EMAIL"
@@ -88,7 +87,8 @@
     "DEEPSEEK_FALLBACK_ENABLED": "false",
     "CLEANUP_RESERVED_SCAN_RETENTION_MINUTES": "60",
     "WEEK_SCHEMA_MODE": "dual",
-    "TURNSTILE_SITE_KEY": "0x4AAAAAAEqYwPIUD6OGmNNQ"
+    "TURNSTILE_SITE_KEY": "0x4AAAAAAEqYwPIUD6OGmNNQ",
+    "GOOGLE_CLIENT_ID": "509963441971-c9sofh0ueaf8nji4r2gd5kahjlerrjdl.apps.googleusercontent.com"
   },
   "observability": {
     "logs": {

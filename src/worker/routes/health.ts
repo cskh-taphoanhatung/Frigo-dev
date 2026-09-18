@@ -79,10 +79,11 @@ healthRoutes.get('/health/ready', async (c) => {
   );
 });
 
-// SEC-6: public config for client-side Turnstile widget. siteKey is null when
-// Turnstile is not configured, and the client skips the widget entirely.
+// Public browser configuration only. OAuth client IDs and Turnstile site keys
+// identify applications; neither value is a secret.
 healthRoutes.get('/config', (c) => {
   return c.json({
     turnstileSiteKey: c.env.TURNSTILE_SITE_KEY || null,
+    googleClientId: c.env.GOOGLE_CLIENT_ID || null,
   });
 });

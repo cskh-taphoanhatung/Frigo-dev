@@ -9,6 +9,15 @@ import {
 // the OTP; the same code stays valid for a retry without the transfer field.
 export const INVENTORY_TRANSFER_DEFERRED = 'INVENTORY_TRANSFER_DEFERRED';
 
+interface AuthResponseUser {
+  id: string;
+  email: string;
+  displayName: string;
+  avatarUrl?: string;
+  householdId: string;
+  onboardingCompleted?: boolean;
+}
+
 export function isInventoryTransferDeferred(err: unknown): boolean {
   return err instanceof ApiError && err.status === 409 && err.code === INVENTORY_TRANSFER_DEFERRED;
 }
@@ -43,6 +52,7 @@ export const authApi = {
           id: getUserId(),
           displayName: 'Bạn mới của Takosan',
           isGuest: true,
+          onboardingCompleted: localStorage.getItem('frigo_onboarded') === 'true',
           household: { id: getHouseholdId(), name: 'Tủ lạnh nhà tôi' },
           subscription: null,
         }
@@ -52,12 +62,22 @@ export const authApi = {
 
   getPublicConfig: async () => {
     try {
-      return await fetchJson<{ turnstileSiteKey: string | null }>('/config');
+      return await fetchJson<{ turnstileSiteKey: string | null; googleClientId: string | null }>('/config');
     } catch (err) {
       if (!isOffline(err)) throw err;
-      return { turnstileSiteKey: null as string | null };
+      return { turnstileSiteKey: null as string | null, googleClientId: null as string | null };
     }
   },
+
+  completeOnboarding: async (preferences: {
+    householdSize: number;
+    spicyLevel: 'none' | 'mild' | 'medium' | 'hot';
+    favoriteCuisines: string[];
+    dietaryRestrictions: string[];
+  }) => fetchJson<{ success: boolean; onboardingCompleted: boolean }>('/preferences', {
+    method: 'PATCH',
+    body: JSON.stringify({ ...preferences, completeOnboarding: true }),
+  }),
 
   register: async (name: string, email: string, password: string, turnstileToken?: string | null) => {
     try {
@@ -80,7 +100,7 @@ export const authApi = {
   ) => {
     const assertCurrent = guardPrivateSession();
     try {
-      const result = await fetchJson<{ success: boolean; user?: any; resetToken?: string; migratedFromHouseholdId?: string }>('/auth/verify-otp', {
+      const result = await fetchJson<{ success: boolean; user?: AuthResponseUser; resetToken?: string; migratedFromHouseholdId?: string }>('/auth/verify-otp', {
         method: 'POST',
         body: JSON.stringify({
           email,
@@ -135,7 +155,7 @@ export const authApi = {
 
   login: async (email: string, password: string, turnstileToken?: string | null) => {
     try {
-      return await fetchJson<{ success: boolean; user: any }>('/auth/login', {
+      return await fetchJson<{ success: boolean; user: AuthResponseUser }>('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password, turnstileToken }),
       });
@@ -161,7 +181,7 @@ export const authApi = {
 
   resetPassword: async (email: string, code: string, newPassword: string) => {
     try {
-      return await fetchJson<{ success: boolean; message: string; user?: { id: string; email: string; displayName: string; householdId: string } }>('/auth/reset-password', {
+      return await fetchJson<{ success: boolean; message: string; user?: AuthResponseUser }>('/auth/reset-password', {
         method: 'POST',
         body: JSON.stringify({ email, code, newPassword }),
       });
@@ -174,7 +194,7 @@ export const authApi = {
 
   loginWithGoogle: async (credential?: string, userInfo?: any) => {
     try {
-      return await fetchJson<{ success: boolean; user: any }>('/auth/google', {
+      return await fetchJson<{ success: boolean; user: AuthResponseUser }>('/auth/google', {
         method: 'POST',
         body: JSON.stringify({ credential, userInfo }),
       });

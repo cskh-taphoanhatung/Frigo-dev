@@ -1,4 +1,16 @@
-# Frigo / Takosan current task board — 2026-09-17
+# Frigo / Takosan current task board — 2026-09-19
+
+## Current T16 — auth funnel recovery — 2026-09-19
+
+- [done] Replaced the landing/auth/onboarding loop with one funnel: guest or account on landing; returning accounts enter the app; new accounts complete three preference-only steps once.
+- [done] Added migration `0038_auth_onboarding_completion.sql`; `/me` and auth responses expose server-authoritative onboarding state; preferences and completion persist in one D1 batch.
+- [done] Migrated OTP delivery to structured Cloudflare Email Service with Resend fallback, sanitized errors, honest 503 responses, and production invalidation of undelivered OTPs.
+- [done] Unified Google client ID through `/config` and backend audience validation; retained signed-credential-only production auth and added a real GIS reload state.
+- [done] Added/updated auth, email, migration, and UI tests. Full gates pass: lint, typecheck, migration smoke, build, **174 files / 4002 tests**, seed/import checks, local schema gate through 0038, diff check.
+- [done with limits] Browser-sized pass at 390x844 and 1440x900 verified landing, three onboarding steps, offline guest completion, registration query entry, and no horizontal overflow. Local GIS reached Google but loopback origin is not authorized; Vite proxy mutation CSRF cannot represent the deployed same-origin path, while direct Worker and integration checks pass.
+- [known audit debt] UX audit remains repo-wide FAIL: repository 19 issues / 686 warnings / 47 passed; `src/web/pages` 6 unrelated existing issues / 303 warnings / 15 passed. No T16 landing/auth/onboarding blocker was reported by the audit.
+- [stop] No production action. Do not claim email is operational until the sender domain is onboarded and a real recipient succeeds.
+- [next] Independent review, then separately authorized release: verify Email Service sender domain and Google production origin, apply 0038, deploy, and run real OTP + Google smoke tests.
 
 ## Current T15C-B — merged control plane; safe stop before production Canary — 2026-09-18
 

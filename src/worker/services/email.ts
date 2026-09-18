@@ -1,19 +1,17 @@
 /**
  * Email delivery service for Frigo Workers.
  *
- * Primary: Cloudflare Workers native email (send_email binding, Paid plan) —
- *          no API key, no third party. Requires the destination address (or
- *          whole domain) to be verified in Cloudflare Email Routing.
+ * Primary: Cloudflare Email Service (send_email binding, Paid plan) — no API
+ *          key or third party. The sending domain must be onboarded before
+ *          arbitrary recipients are accepted.
  * Fallback 1: Resend HTTP API (if RESEND_API_KEY secret is configured)
  * Fallback 2: Cloudflare MailChannels (free, no key — subject to CF policy)
  *
- * All sends are fire-and-log: email failure never blocks OTP flow because the
- * code is persisted in D1 (auth_otps) and dev environments surface it via devOtp.
+ * Provider details are deliberately reduced to stable categories. Never retain
+ * recipients, subjects, message bodies, OTPs, or provider exception text.
  */
 
 import { Env } from '../types';
-// Runtime module: EmailMessage only exists via this import, not as a global.
-import { EmailMessage } from 'cloudflare:email';
 
 export interface SendEmailParams {
   to: string;
@@ -26,60 +24,44 @@ export interface SendEmailParams {
 export interface EmailResult {
   sent: boolean;
   provider: 'workers-email' | 'resend' | 'none';
-  error?: string;
+  messageId?: string;
+  error?: 'sender_not_verified' | 'recipient_not_allowed' | 'rate_limited' | 'daily_limit' | 'provider_unavailable' | 'not_configured';
 }
 
-const FROM_NAME = 'Frigo';
+const FROM_NAME = 'Takosan';
 const FROM_EMAIL = 'no-reply@frigo.tungjpstore.net';
 
-// Minimal MIME message for the native send_email binding (raw MIME format).
-function buildMimeMessage(params: SendEmailParams): string {
-  const boundary = `frigo_${crypto.randomUUID().replace(/-/g, '')}`;
-  const headers = [
-    `From: ${params.fromName || FROM_NAME} <${FROM_EMAIL}>`,
-    `To: ${params.to}`,
-    `Subject: ${params.subject}`,
-    'MIME-Version: 1.0',
-    `Content-Type: multipart/alternative; boundary="${boundary}"`,
-    `Date: ${new Date().toUTCString()}`,
-    'X-Frigo-Kind: transactional',
-  ].join('\r\n');
-
-  const textPart = [
-    `--${boundary}`,
-    'Content-Type: text/plain; charset=utf-8',
-    'Content-Transfer-Encoding: 8bit',
-    '',
-    params.text || params.html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
-  ].join('\r\n');
-
-  const htmlPart = [
-    `--${boundary}`,
-    'Content-Type: text/html; charset=utf-8',
-    'Content-Transfer-Encoding: 8bit',
-    '',
-    params.html,
-    `--${boundary}--`,
-  ].join('\r\n');
-
-  return `${headers}\r\n\r\n${textPart}\r\n${htmlPart}`;
+function classifyWorkersEmailError(error: unknown): EmailResult['error'] {
+  const code = typeof error === 'object' && error && 'code' in error ? String(error.code) : '';
+  if (code === 'E_SENDER_NOT_VERIFIED' || code === 'E_SENDER_DOMAIN_NOT_AVAILABLE') return 'sender_not_verified';
+  if (code === 'E_RECIPIENT_NOT_ALLOWED') return 'recipient_not_allowed';
+  if (code === 'E_RATE_LIMIT_EXCEEDED') return 'rate_limited';
+  if (code === 'E_DAILY_LIMIT_EXCEEDED') return 'daily_limit';
+  return 'provider_unavailable';
 }
 
 export async function sendEmail(
   env: Env,
   params: SendEmailParams
 ): Promise<EmailResult> {
-  // 0. Native Workers email (Paid plan, no API key). The binding only accepts
-  // a verified destination — errors are logged and we fall through.
+  let workersFailure: EmailResult['error'];
+
+  // Cloudflare Email Service structured API supports arbitrary recipients once
+  // the sending domain has completed Email Service onboarding.
   if (env.SEND_EMAIL) {
     try {
-      const message = buildMimeMessage(params);
-      await env.SEND_EMAIL.send(
-        new EmailMessage(FROM_EMAIL, params.to, message)
-      );
-      return { sent: true, provider: 'workers-email' };
-    } catch {
-      console.error(JSON.stringify({ event: 'email_delivery_failed', provider: 'workers-email' }));
+      const result = await env.SEND_EMAIL.send({
+        to: params.to,
+        from: { email: FROM_EMAIL, name: params.fromName || FROM_NAME },
+        subject: params.subject,
+        html: params.html,
+        text: params.text || params.html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
+        headers: { 'X-Frigo-Kind': 'transactional' },
+      });
+      return { sent: true, provider: 'workers-email', messageId: result.messageId };
+    } catch (error) {
+      workersFailure = classifyWorkersEmailError(error);
+      console.error(JSON.stringify({ event: 'email_delivery_failed', provider: 'workers-email', category: workersFailure }));
       // fall through to HTTP providers
     }
   }
@@ -105,17 +87,23 @@ export async function sendEmail(
         // Email send must not hang the request path
         signal: AbortSignal.timeout(8000),
       });
-      if (res.ok) return { sent: true, provider: 'resend' };
-      return { sent: false, provider: 'resend', error: `HTTP ${res.status}` };
+      if (res.ok) {
+        const body = await res.json().catch(() => ({})) as { id?: string };
+        return { sent: true, provider: 'resend', ...(body.id ? { messageId: body.id } : {}) };
+      }
+      const error = res.status === 429 ? 'rate_limited' : 'provider_unavailable';
+      return { sent: false, provider: 'resend', error };
     } catch {
-      return { sent: false, provider: 'resend', error: 'network error' };
+      return { sent: false, provider: 'resend', error: 'provider_unavailable' };
     }
   }
 
   // 2. MailChannels fallback removed: Cloudflare ended free MailChannels
   // support for Workers (returns HTTP 401 since 2024). Configure RESEND_API_KEY
   // as a Wrangler secret for a reliable HTTP fallback instead.
-  return { sent: false, provider: 'none', error: 'No email provider available (workers-email failed, RESEND_API_KEY not set)' };
+  return env.SEND_EMAIL
+    ? { sent: false, provider: 'workers-email', error: workersFailure || 'provider_unavailable' }
+    : { sent: false, provider: 'none', error: 'not_configured' };
 }
 
 /**
@@ -129,9 +117,9 @@ export function buildOtpEmail(code: string, purpose: 'register' | 'forgot_passwo
         ? 'đặt lại mật khẩu'
         : 'đăng nhập';
 
-  const subject = `Mã xác thực Frigo: ${code}`;
+  const subject = `Mã xác thực Takosan: ${code}`;
 
-  const text = `Mã ${action} của bạn là: ${code}\nMã có hiệu lực trong 10 phút. Không chia sẻ mã này với bất kỳ ai.\n\nNếu bạn không yêu cầu, hãy bỏ qua email này.\n— Frigo: Tủ lạnh thông minh, bữa ăn trọn vị Việt`;
+  const text = `Mã ${action} của bạn là: ${code}\nMã có hiệu lực trong 10 phút. Không chia sẻ mã này với bất kỳ ai.\n\nNếu bạn không yêu cầu, hãy bỏ qua email này.\n— Takosan: Ăn đủ. Mua đủ. Dùng hết.`;
 
   const html = `<!DOCTYPE html>
 <html>
@@ -141,7 +129,7 @@ export function buildOtpEmail(code: string, purpose: 'register' | 'forgot_passwo
     <tr><td align="center">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#FFFFFF;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,0.08);">
         <tr><td style="background:#059669;padding:24px 32px;text-align:center;">
-          <span style="font-size:22px;font-weight:800;color:#FFFFFF;letter-spacing:-0.02em;">🥬 Frigo</span>
+          <span style="font-size:22px;font-weight:800;color:#FFFFFF;letter-spacing:-0.02em;">Takosan</span>
         </td></tr>
         <tr><td style="padding:32px;">
           <h1 style="margin:0 0 8px;font-size:18px;color:#0F172A;">Mã ${action}</h1>
@@ -153,7 +141,7 @@ export function buildOtpEmail(code: string, purpose: 'register' | 'forgot_passwo
           <p style="margin:0;font-size:13px;color:#94A3B8;">Nếu bạn không yêu cầu mã này, hãy bỏ qua email.</p>
         </td></tr>
         <tr><td style="background:#F8FAF9;padding:16px 32px;text-align:center;">
-          <span style="font-size:12px;color:#94A3B8;">Frigo — Tủ lạnh thông minh, bữa ăn trọn vị Việt</span>
+          <span style="font-size:12px;color:#94A3B8;">Takosan — Ăn đủ. Mua đủ. Dùng hết.</span>
         </td></tr>
       </table>
     </td></tr>

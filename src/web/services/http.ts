@@ -16,24 +16,25 @@ export class ApiError extends Error {
   kind: ApiErrorKind;
   status?: number;
   retryable?: boolean;
+  payload: Record<string, unknown> | null;
   constructor(kind: ApiErrorKind, message: string, status?: number, options?: { retryable?: boolean }) {
     super(message);
     this.name = 'ApiError';
     this.kind = kind;
     this.status = status;
     this.retryable = options?.retryable;
+    const envelope = /^HTTP \d{3}: ([\s\S]*)$/.exec(message);
+    try {
+      const parsed = envelope ? JSON.parse(envelope[1]) : null;
+      this.payload = parsed && typeof parsed === 'object' ? parsed as Record<string, unknown> : null;
+    } catch {
+      this.payload = null;
+    }
   }
 
   /** Machine-readable `code` from an `HTTP <status>: {json}` envelope, or null. */
   get code(): string | null {
-    const envelope = /^HTTP \d{3}: ([\s\S]*)$/.exec(this.message);
-    if (!envelope) return null;
-    try {
-      const body: unknown = JSON.parse(envelope[1]);
-      return body && typeof body === 'object' && 'code' in body && typeof body.code === 'string' ? body.code : null;
-    } catch {
-      return null;
-    }
+    return typeof this.payload?.code === 'string' ? this.payload.code : null;
   }
 }
 

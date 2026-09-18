@@ -22,7 +22,7 @@ async function issueAndSendOtp(
   purpose: 'register' | 'forgot_password' | 'login',
   issue = true,
   scheduleDelivery?: (task: Promise<void>) => void,
-): Promise<{ code: string; emailSent: boolean; provider: string }> {
+): Promise<{ code: string; emailSent: boolean; provider: string; deliveryError?: string }> {
   const otpCode = generateOtp();
   const otpId = `otp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
@@ -50,7 +50,13 @@ async function issueAndSendOtp(
   const deliver = async () => {
     const result = await sendEmail(env, { to: email, subject, html, text });
     if (!result.sent) {
-      console.error(JSON.stringify({ event: 'otp_delivery_failed', provider: result.provider }));
+      if (env.ENVIRONMENT === 'production') {
+        await db.prepare("UPDATE auth_otps SET used = 1, used_at = datetime('now') WHERE id = ? AND used = 0")
+          .bind(otpId)
+          .run()
+          .catch(() => console.error(JSON.stringify({ event: 'otp_invalidation_failed' })));
+      }
+      console.error(JSON.stringify({ event: 'otp_delivery_failed', provider: result.provider, category: result.error }));
     }
     return result;
   };
@@ -61,7 +67,7 @@ async function issueAndSendOtp(
     return { code: otpCode, emailSent: false, provider: 'scheduled' };
   }
   const result = await deliver();
-  return { code: otpCode, emailSent: result.sent, provider: result.provider };
+  return { code: otpCode, emailSent: result.sent, provider: result.provider, deliveryError: result.error };
 }
 
 async function requestPasswordReset(db: Env['DB'], env: Env, email: string, scheduleDelivery: (task: Promise<void>) => void) {
@@ -208,6 +214,7 @@ authRoutes.get('/me', async (c) => {
         isPlus: quota.isPlus,
         displayName: userRow?.display_name || (auth.isGuest ? 'Khách ghé thăm' : 'Người dùng Frigo'),
         avatarUrl: userRow?.avatar_url || '/icons/favicon.svg',
+        onboardingCompleted: Boolean(userRow?.onboarding_completed_at),
         household: {
           id: userRow?.household_id || auth.householdId,
           name: userRow?.household_name || 'Tủ lạnh của tôi',
@@ -346,11 +353,14 @@ authRoutes.post('/auth/register', async (c) => {
     const { code: otpCode, emailSent } = await issueAndSendOtp(db, c.env, normalizedEmail, 'register');
 
     const isProduction = c.env.ENVIRONMENT === 'production';
+    const otpAvailable = emailSent || !isProduction;
     const responseData: any = {
-      success: true,
+      success: otpAvailable,
       message: emailSent
-        ? 'Mã xác thực OTP đã được tạo và gửi đến email của bạn'
-        : 'Tài khoản đã tạo. Không thể gửi email lúc này — vui lòng thử gửi lại mã sau.',
+        ? 'Mã xác thực OTP đã được gửi đến email của bạn.'
+        : isProduction
+          ? 'Tài khoản đã được lưu nhưng email OTP chưa gửi được. Hãy bấm gửi lại mã.'
+          : 'Email chưa được cấu hình; dùng mã OTP thử nghiệm bên dưới.',
       email: normalizedEmail,
       expiresInMinutes: 10,
     };
@@ -360,6 +370,13 @@ authRoutes.post('/auth/register', async (c) => {
       responseData.devOtp = otpCode;
     }
 
+    if (!otpAvailable) {
+      return c.json({
+        ...responseData,
+        code: 'OTP_DELIVERY_UNAVAILABLE',
+        accountCreated: true,
+      }, 503);
+    }
     return c.json(responseData);
   } catch {
     console.error(JSON.stringify({ event: 'registration_failed' }));
@@ -441,7 +458,7 @@ authRoutes.post('/auth/verify-otp', async (c) => {
 
       const userRow: any = await db
         .prepare(
-          'SELECT u.id, u.email, p.display_name, p.avatar_url FROM users u LEFT JOIN profiles p ON p.user_id = u.id WHERE u.email = ?'
+          'SELECT u.id, u.email, p.display_name, p.avatar_url, p.onboarding_completed_at FROM users u LEFT JOIN profiles p ON p.user_id = u.id WHERE u.email = ?'
         )
         .bind(normalizedEmail)
         .first();
@@ -468,6 +485,7 @@ authRoutes.post('/auth/verify-otp', async (c) => {
           avatarUrl: userRow?.avatar_url || '/icons/favicon.svg',
           householdId,
           isGuest: false,
+          onboardingCompleted: Boolean(userRow?.onboarding_completed_at),
         },
       });
     }
@@ -561,12 +579,19 @@ authRoutes.post('/auth/resend-otp', async (c) => {
     );
 
     const isProduction = c.env.ENVIRONMENT === 'production';
+    const otpAvailable = emailSent || !isProduction;
     const responseData: any = {
-      success: true,
-      message: emailSent ? 'Đã tạo và gửi lại mã OTP mới' : 'Không thể gửi email lúc này — vui lòng thử lại sau.',
+      success: otpAvailable,
+      message: emailSent ? 'Đã gửi lại mã OTP mới.' : isProduction
+        ? 'Email OTP chưa gửi được. Vui lòng thử lại sau.'
+        : 'Email chưa được cấu hình; dùng mã OTP thử nghiệm bên dưới.',
     };
 
     if (!isProduction) responseData.devOtp = otpCode;
+    if (!otpAvailable) {
+      if (c.env.CACHE) await c.env.CACHE.delete(`otp_resend_${normalizedEmail}_${purpose}`).catch(() => {});
+      return c.json({ ...responseData, code: 'OTP_DELIVERY_UNAVAILABLE' }, 503);
+    }
     return c.json(responseData);
   } catch {
     return c.json({ error: 'Không thể gửi lại OTP' }, 500);
@@ -610,7 +635,7 @@ authRoutes.post('/auth/login', async (c) => {
   try {
     const account: any = await db
       .prepare(
-        `SELECT a.user_id, a.password_hash, a.salt, a.is_verified, p.display_name, p.avatar_url
+        `SELECT a.user_id, a.password_hash, a.salt, a.is_verified, p.display_name, p.avatar_url, p.onboarding_completed_at
          FROM auth_accounts a
          LEFT JOIN profiles p ON p.user_id = a.user_id
          WHERE a.email = ?`
@@ -651,12 +676,15 @@ authRoutes.post('/auth/login', async (c) => {
       const { code: otpCode, emailSent } = await issueAndSendOtp(db, c.env, normalizedEmail, 'register');
 
       const isProduction = c.env.ENVIRONMENT === 'production';
+      const otpAvailable = emailSent || !isProduction;
       const responseData: any = {
         error: emailSent
           ? 'Tài khoản chưa hoàn tất xác thực OTP. Vui lòng xác thực mã gửi đến email.'
           : 'Tài khoản chưa hoàn tất xác thực OTP. Không thể gửi email lúc này — vui lòng thử gửi lại mã.',
         requireOtp: true,
         email: normalizedEmail,
+        code: otpAvailable ? 'OTP_REQUIRED' : 'OTP_DELIVERY_UNAVAILABLE',
+        otpDelivered: emailSent,
       };
 
       if (!isProduction) {
@@ -686,6 +714,7 @@ authRoutes.post('/auth/login', async (c) => {
         avatarUrl: account.avatar_url || '/icons/favicon.svg',
         householdId,
         isGuest: false,
+        onboardingCompleted: Boolean(account.onboarding_completed_at),
       },
     });
   } catch {
@@ -804,9 +833,10 @@ authRoutes.post('/auth/reset-password', async (c) => {
     // UX: auto-login after successful reset — issue a fresh session so the user
     // lands straight in the app instead of re-typing the new password.
     const account = await db
-      .prepare('SELECT user_id FROM auth_accounts WHERE email = ?')
+      .prepare(`SELECT a.user_id, p.display_name, p.avatar_url, p.onboarding_completed_at
+        FROM auth_accounts a LEFT JOIN profiles p ON p.user_id = a.user_id WHERE a.email = ?`)
       .bind(normalizedEmail)
-      .first<{ user_id: string }>();
+      .first<{ user_id: string; display_name?: string; avatar_url?: string; onboarding_completed_at?: string }>();
 
     if (account) {
       const token = await createSessionAndToken(db, c.env, {
@@ -820,8 +850,10 @@ authRoutes.post('/auth/reset-password', async (c) => {
         user: {
           id: account.user_id,
           email: normalizedEmail,
-          displayName: normalizedEmail.split('@')[0],
+          displayName: account.display_name || normalizedEmail.split('@')[0],
+          avatarUrl: account.avatar_url || '/icons/favicon.svg',
           householdId: `hh_${account.user_id}`,
+          onboardingCompleted: Boolean(account.onboarding_completed_at),
         },
         message: 'Đặt lại mật khẩu thành công!',
       });
@@ -855,7 +887,10 @@ authRoutes.post('/auth/google', async (c) => {
 
   // SEC-03 FIX: Cryptographically verify Google ID Token with Google's public endpoint
   if (credential) {
-    const googleVerify = await verifyGoogleToken(credential);
+    if (!c.env.GOOGLE_CLIENT_ID) {
+      return c.json({ error: 'Google Sign-In chưa được cấu hình', code: 'GOOGLE_NOT_CONFIGURED' }, 503);
+    }
+    const googleVerify = await verifyGoogleToken(credential, c.env.GOOGLE_CLIENT_ID);
     if (!googleVerify.valid || !googleVerify.user) {
       return c.json({ error: `Xác thực Google thất bại: ${googleVerify.error || 'Token không hợp lệ'}` }, 401);
     }
@@ -884,11 +919,13 @@ authRoutes.post('/auth/google', async (c) => {
     // silently point at two different local accounts; doing so would let a
     // later upsert rebind one account to another provider identity.
     const existingByEmail: any = await db
-      .prepare('SELECT id, user_id, email, google_id FROM auth_accounts WHERE email = ? LIMIT 1')
+      .prepare(`SELECT a.id, a.user_id, a.email, a.google_id, p.onboarding_completed_at
+        FROM auth_accounts a LEFT JOIN profiles p ON p.user_id = a.user_id WHERE a.email = ? LIMIT 1`)
       .bind(email)
       .first();
     const existingByGoogle: any = await db
-      .prepare('SELECT id, user_id, email, google_id FROM auth_accounts WHERE google_id = ? LIMIT 1')
+      .prepare(`SELECT a.id, a.user_id, a.email, a.google_id, p.onboarding_completed_at
+        FROM auth_accounts a LEFT JOIN profiles p ON p.user_id = a.user_id WHERE a.google_id = ? LIMIT 1`)
       .bind(googleId)
       .first();
 
@@ -986,6 +1023,7 @@ authRoutes.post('/auth/google', async (c) => {
         avatarUrl,
         householdId,
         isGuest: false,
+        onboardingCompleted: Boolean(existing?.onboarding_completed_at),
       },
     });
   } catch {
@@ -1070,6 +1108,7 @@ authRoutes.post('/auth/guest', async (c) => {
       avatarUrl: '/icons/favicon.svg',
       householdId,
       isGuest: true,
+      onboardingCompleted: false,
     },
   });
 });

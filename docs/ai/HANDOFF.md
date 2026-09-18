@@ -1,4 +1,17 @@
-# Frigo / Takosan current handoff — 2026-09-18
+# Frigo / Takosan current handoff — 2026-09-19
+
+## Current handoff — T16 auth funnel recovery ready for review; production unchanged
+
+- **Branch/base:** `codex/auth-funnel-recovery` from `fe82d48bfe16d62a03d25630287d6b0d29ac5b86`; verified implementation commit `3633a2fa8a0827a6aa31a3c86da7fb680a6e0f2a`.
+- **User-facing result:** landing has two explicit choices; auth supports query-driven registration/Google entry; returning users skip completed onboarding; new users see three preference-only steps; onboarding has no duplicate account or unsupported Apple choice.
+- **OTP/email:** `src/worker/services/email.ts` uses the structured Cloudflare Email Service API and sanitized error categories, with Resend fallback. Production delivery failure invalidates the challenge and register/resend return honest `503 OTP_DELIVERY_UNAVAILABLE`; development still exposes `devOtp` for local tests.
+- **Google:** `/config` exposes the runtime `GOOGLE_CLIENT_ID`; frontend GIS and backend `aud` validation use that same value. Missing config fails clearly, retry reloads the GIS script, and no credential-less production fallback exists.
+- **Persistence:** migration `0038_auth_onboarding_completion.sql` adds `profiles.onboarding_completed_at`; `/me`, auth responses, the auth store, and `SessionBoundary` hydrate server authority. `PATCH /preferences` validates input and batches preferences with completion.
+- **Verification:** `pnpm lint`; `pnpm typecheck`; `pnpm test` = **174/174 files, 4002/4002 tests**; `pnpm check:migrations`; `pnpm build`; `pnpm recipe:seed:check`; `pnpm recipe:import:check`; `pnpm schema:check:local`; `git diff --check` — all exit 0. Seed check emitted a non-blocking `Port 24678 is already in use` WebSocket warning and still reported all checks `ok`.
+- **Browser evidence:** Playwright mobile 390x844 and desktop 1440x900 show intentional responsive landing/auth/onboarding, no horizontal overflow, three complete onboarding screens, no duplicate auth choices, and successful offline-guest completion to `/`. Online guest creation preserved `__Host-frigo_session` with `HttpOnly; Secure; SameSite=Lax`. Local Vite proxy stripped the CSRF signal before proxied PATCH; direct Worker requests with trusted Origin/Referer returned 200 and integration coverage passed, so no cookie/CSRF weakening was made. Google GIS reached the provider locally, which rejected the unregistered loopback origin.
+- **UX audit:** repository audit remains FAIL with 19 issues / 686 warnings / 47 passed; pages-only audit remains FAIL with 6 issues / 303 warnings / 15 passed. Reported issues are existing unrelated pages/tests/styles, not the T16 landing/auth/onboarding surfaces.
+- **Production boundary:** no deploy, remote D1 migration, Cloudflare Email Service onboarding, OAuth-console mutation, real email send, PayOS/payment change, or production infrastructure mutation occurred. Wrangler showed `SEND_EMAIL` connected to a remote resource, so browser registration with a real address was deliberately not exercised.
+- **Next exact action:** independent review. A separately authorized operator must onboard `frigo.tungjpstore.net` (or the chosen sender domain) in Cloudflare Email Service, verify `https://frigo.tungjpstore.net` in the Google OAuth authorized JavaScript origins, apply 0038, deploy the Worker/app, then verify registration OTP delivery to an arbitrary recipient, resend failure behavior, Google login, and returning-user onboarding skip.
 
 ## Current handoff — T15C-B merged control plane; authorized-cohort safe stop (2026-09-18)
 

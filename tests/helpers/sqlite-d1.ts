@@ -56,8 +56,9 @@ export const LEGACY_CATALOG_MIGRATION_TIP = '0035_recipe_media_layer.sql';
 export const MIGRATION_LEDGER = Object.freeze({
   legacyTip: LEGACY_CATALOG_MIGRATION_TIP,
   catalogGrowth: Object.freeze(['0036_recipe_catalog_pilot.sql', '0037_recipe_catalog_scale.sql']),
-  get count() { return 35 + this.catalogGrowth.length; },
-  get tip(): string { return this.catalogGrowth.at(-1) ?? this.legacyTip; },
+  postCatalog: Object.freeze(['0038_auth_onboarding_completion.sql']),
+  get count() { return 35 + this.catalogGrowth.length + this.postCatalog.length; },
+  get tip(): string { return this.postCatalog.at(-1) ?? this.catalogGrowth.at(-1) ?? this.legacyTip; },
 });
 
 /** Real SQLite constraints and transactions, with async barriers only outside atomic batches. */

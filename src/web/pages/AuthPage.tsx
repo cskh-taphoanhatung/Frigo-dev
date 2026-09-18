@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { TAKOSAN_BRAND } from '../lib/takosan-brand';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../stores/useAuthStore';
 import { api } from '../services/api';
 import { isInventoryTransferDeferred } from '../services/auth';
@@ -9,16 +9,20 @@ import { Button } from '../components/common/Button';
 import { TurnstileWidget } from '../components/common/TurnstileWidget';
 import { ArrowLeft, Mail, Lock, User, Eye, EyeOff, ShieldCheck, CheckCircle2, AlertCircle, RefreshCw, KeyRound, Sparkles } from 'lucide-react';
 
-// Public OAuth client ID (not a secret — safe to embed; secret lives in Wrangler secrets)
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '509963441971-c9sofh0ueaf8nji4r2gd5kahjlerrjdl.apps.googleusercontent.com';
-
 type AuthMode = 'login' | 'register' | 'otp_verify' | 'forgot_password';
+
+function apiErrorMessage(error: any, fallback: string): string {
+  return typeof error?.payload?.error === 'string' ? error.payload.error : fallback;
+}
 
 export const AuthPage: React.FC = () => {
   const navigate = useNavigate();
-  const { setAuthSession, setGuestSession } = useAuthStore();
+  const [searchParams] = useSearchParams();
+  const requestedMode = searchParams.get('mode');
+  const requestedProvider = searchParams.get('provider');
+  const { setAuthSession } = useAuthStore();
 
-  const [mode, setMode] = useState<AuthMode>('login');
+  const [mode, setMode] = useState<AuthMode>(() => requestedMode === 'register' ? 'register' : 'login');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -46,6 +50,7 @@ export const AuthPage: React.FC = () => {
 
   // SEC-6: Turnstile bot protection (inactive when server has no site key)
   const [turnstileSiteKey, setTurnstileSiteKey] = useState<string | null>(null);
+  const [googleClientId, setGoogleClientId] = useState<string | null | undefined>(undefined);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [turnstileGeneration, setTurnstileGeneration] = useState(0);
   const handleTurnstileToken = useCallback((token: string | null) => setTurnstileToken(token), []);
@@ -55,9 +60,19 @@ export const AuthPage: React.FC = () => {
   useEffect(() => {
     api
       .getPublicConfig()
-      .then((cfg) => setTurnstileSiteKey(cfg.turnstileSiteKey || null))
-      .catch(() => setTurnstileSiteKey(null));
+      .then((cfg) => {
+        setTurnstileSiteKey(cfg.turnstileSiteKey || null);
+        setGoogleClientId(cfg.googleClientId || null);
+      })
+      .catch(() => {
+        setTurnstileSiteKey(null);
+        setGoogleClientId(null);
+      });
   }, []);
+
+  useEffect(() => {
+    if (requestedMode === 'register') setMode('register');
+  }, [requestedMode]);
 
   const otpInputsRef = useRef<(HTMLInputElement | null)[]>([]);
   const googleBtnRef = useRef<HTMLDivElement>(null);
@@ -68,6 +83,14 @@ export const AuthPage: React.FC = () => {
   useEffect(() => {
     if (mode !== 'login') {
       setGoogleStatus('idle');
+      return;
+    }
+    if (googleClientId === undefined) {
+      setGoogleStatus('loading');
+      return;
+    }
+    if (!googleClientId) {
+      setGoogleStatus('unavailable');
       return;
     }
     let active = true;
@@ -93,14 +116,12 @@ export const AuthPage: React.FC = () => {
             avatarUrl: res.user.avatarUrl,
             householdId: res.user.householdId,
           });
-          setSuccessMessage('Đăng nhập Google thành công!');
-          const isNewSession = capturePrivateSession();
-          setTimeout(() => { if (isNewSession()) navigate('/onboarding'); }, 400);
+          navigate(res.user.onboardingCompleted ? '/' : '/onboarding', { replace: true });
         } else {
           setErrorMessage('Không thể xác thực tài khoản Google.');
         }
       } catch (err: any) {
-        setErrorMessage(err?.message || 'Đăng nhập Google thất bại');
+        setErrorMessage(apiErrorMessage(err, 'Đăng nhập Google thất bại. Hãy thử lại hoặc dùng email.'));
       } finally {
         setIsLoading(false);
       }
@@ -111,7 +132,7 @@ export const AuthPage: React.FC = () => {
       const googleId = window.google?.accounts?.id;
       if (!googleId) {
         attempts += 1;
-        if (attempts < 24) {
+        if (attempts < 40) {
           timer = window.setTimeout(initializeGoogle, 250);
           return;
         }
@@ -121,7 +142,7 @@ export const AuthPage: React.FC = () => {
       try {
         setGoogleStatus('ready');
         googleId.initialize({
-          client_id: GOOGLE_CLIENT_ID,
+          client_id: googleClientId,
           callback: handleGoogleResponse,
           auto_select: false,
         });
@@ -136,6 +157,9 @@ export const AuthPage: React.FC = () => {
             shape: 'pill',
             locale: 'vi',
           });
+          if (requestedProvider === 'google') {
+            googleBtnRef.current.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          }
         }
       } catch (e) {
         console.warn('Google Sign-In init error:', e);
@@ -149,7 +173,7 @@ export const AuthPage: React.FC = () => {
       active = false;
       if (timer !== undefined) window.clearTimeout(timer);
     };
-  }, [mode, googleRetry]);
+  }, [mode, googleRetry, googleClientId, navigate, requestedProvider, setAuthSession]);
 
   // Resend OTP countdown timer
   useEffect(() => {
@@ -181,17 +205,23 @@ export const AuthPage: React.FC = () => {
           avatarUrl: res.user.avatarUrl,
           householdId: res.user.householdId,
         });
-        navigate('/onboarding');
+        navigate(res.user.onboardingCompleted ? '/' : '/onboarding', { replace: true });
       }
     } catch (err: any) {
-      if (err?.message?.includes('chưa kích hoạt OTP') || err?.requireOtp) {
+      if (err?.payload?.requireOtp === true) {
         setOtpPurpose('register');
-        if (err.devOtp) setDevOtp(err.devOtp);
+        if (typeof err.payload.devOtp === 'string') setDevOtp(err.payload.devOtp);
         setTransferDeferred(false);
         setMode('otp_verify');
-        setResendCountdown(60);
+        if (err.payload.otpDelivered === true) {
+          setResendCountdown(60);
+          setSuccessMessage('Mã OTP mới đã được gửi đến email của bạn.');
+        } else {
+          setResendCountdown(0);
+          setErrorMessage('Tài khoản chưa xác thực và email OTP chưa gửi được. Hãy bấm gửi lại mã.');
+        }
       } else {
-        setErrorMessage(err?.message || 'Email hoặc mật khẩu không chính xác');
+        setErrorMessage(apiErrorMessage(err, 'Email hoặc mật khẩu không chính xác'));
       }
     } finally {
       setTurnstileToken(null);
@@ -223,10 +253,19 @@ export const AuthPage: React.FC = () => {
         setTransferDeferred(false);
         setMode('otp_verify');
         setResendCountdown(60);
-        setSuccessMessage('Mã OTP đã được gửi đến email của bạn!');
+        setSuccessMessage(res.message);
       }
     } catch (err: any) {
-      setErrorMessage(err?.message || 'Đăng ký thất bại. Email có thể đã tồn tại.');
+      if (err?.code === 'OTP_DELIVERY_UNAVAILABLE') {
+        setOtpPurpose('register');
+        setTransferDeferred(false);
+        setMode('otp_verify');
+        setResendCountdown(0);
+        setSuccessMessage(null);
+        setErrorMessage('Tài khoản đã được lưu nhưng email OTP chưa gửi được. Hãy bấm gửi lại mã.');
+      } else {
+        setErrorMessage(apiErrorMessage(err, 'Đăng ký thất bại. Email có thể đã tồn tại.'));
+      }
     } finally {
       setTurnstileToken(null);
       setTurnstileGeneration((value) => value + 1);
@@ -308,7 +347,7 @@ export const AuthPage: React.FC = () => {
           }
           setSuccessMessage('Xác thực tài khoản thành công!');
           const isNewSession = capturePrivateSession();
-          setTimeout(() => { if (isNewSession()) navigate('/onboarding'); }, 500);
+          setTimeout(() => { if (isNewSession()) navigate('/onboarding', { replace: true }); }, 500);
         } else if (otpPurpose === 'forgot_password') {
           setSuccessMessage('Mã OTP chính xác. Hãy nhập mật khẩu mới.');
           // proceed to new password form
@@ -320,7 +359,7 @@ export const AuthPage: React.FC = () => {
         if (isCurrent()) setTransferDeferred(true);
         return;
       }
-      setErrorMessage(err?.message || 'Mã OTP không đúng hoặc đã hết hạn');
+      setErrorMessage(apiErrorMessage(err, 'Mã OTP không đúng hoặc đã hết hạn'));
     } finally {
       setIsLoading(false);
     }
@@ -352,7 +391,7 @@ export const AuthPage: React.FC = () => {
         setSuccessMessage(res.message);
       }
     } catch (err: any) {
-      setErrorMessage(err?.message || 'Không thể gửi lại OTP');
+      setErrorMessage(apiErrorMessage(err, 'Không thể gửi lại OTP'));
     } finally {
       setTurnstileToken(null);
       setTurnstileGeneration((value) => value + 1);
@@ -382,7 +421,7 @@ export const AuthPage: React.FC = () => {
         setSuccessMessage(res.message);
       }
     } catch (err: any) {
-      setErrorMessage(err?.message || 'Không thể tạo yêu cầu đặt lại mật khẩu lúc này');
+      setErrorMessage(apiErrorMessage(err, 'Không thể tạo yêu cầu đặt lại mật khẩu lúc này'));
     } finally {
       setTurnstileToken(null);
       setTurnstileGeneration((value) => value + 1);
@@ -412,7 +451,7 @@ export const AuthPage: React.FC = () => {
       if (res.success) {
         if (res.user) {
           setAuthSession(res.user);
-          navigate('/onboarding');
+          navigate(res.user.onboardingCompleted ? '/' : '/onboarding', { replace: true });
           return;
         }
         setSuccessMessage('Đặt lại mật khẩu thành công! Hãy đăng nhập với mật khẩu mới.');
@@ -426,14 +465,27 @@ export const AuthPage: React.FC = () => {
         }, 1500);
       }
     } catch (err: any) {
-      setErrorMessage(err?.message || 'Lỗi đặt lại mật khẩu');
+      setErrorMessage(apiErrorMessage(err, 'Lỗi đặt lại mật khẩu'));
     } finally {
       setIsLoading(false);
     }
   };
 
+  const retryGoogle = () => {
+    if (!googleClientId) return;
+    document.getElementById('google-identity-services')?.remove();
+    const script = document.createElement('script');
+    script.id = 'google-identity-services';
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+    setGoogleStatus('loading');
+    setGoogleRetry((value) => value + 1);
+  };
+
   return (
-    <div className="min-h-screen bg-takosan-cream px-6 py-8 flex flex-col justify-between text-takosan-navy animate-fade-in">
+    <div className="min-h-screen bg-takosan-cream px-6 py-8 flex flex-col justify-between text-takosan-navy animate-fade-in max-w-md mx-auto">
       <div>
         {/* Top bar back button */}
         <div className="flex items-center justify-between">
@@ -447,9 +499,7 @@ export const AuthPage: React.FC = () => {
                 setForgotOtpRequested(false);
                 setTransferDeferred(false);
                 setOtpDigits(['', '', '', '', '', '']);
-              } else {
-                navigate(-1);
-              }
+              } else navigate('/landing');
             }}
             className="p-2 -ml-2 rounded-xl hover:bg-slate-100 active:scale-95 text-slate-700 tap-target flex items-center justify-center transition-colors"
             aria-label="Quay lại"
@@ -457,20 +507,7 @@ export const AuthPage: React.FC = () => {
             <ArrowLeft className="w-5 h-5" />
           </button>
 
-          {/* Quick Guest mode shortcut */}
-          <button
-            onClick={async () => {
-              try {
-                await setGuestSession();
-                navigate('/onboarding');
-              } catch (error) {
-                setErrorMessage(error instanceof Error ? error.message : 'Không thể khởi tạo phiên khách. Vui lòng thử lại.');
-              }
-            }}
-            className="text-xs font-semibold text-slate-500 hover:text-takosan-green tap-target transition-colors"
-          >
-            Bỏ qua & Dùng thử ➔
-          </button>
+          <span className="text-xs font-semibold text-slate-400">Tài khoản Takosan</span>
         </div>
 
         {/* Brand Header */}
@@ -567,14 +604,12 @@ export const AuthPage: React.FC = () => {
               )}
               {googleStatus === 'unavailable' && (
                 <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-center text-xs text-amber-900">
-                  <p>Google chưa sẵn sàng. Bạn vẫn có thể đăng nhập bằng email.</p>
-                  <button
-                    type="button"
-                    onClick={() => setGoogleRetry((value) => value + 1)}
-                    className="mt-1 font-semibold underline tap-target"
-                  >
-                    Thử kết nối lại Google
-                  </button>
+                  <p>{googleClientId ? 'Không tải được Google Sign-In. Hãy kiểm tra chặn nội dung hoặc thử lại.' : 'Google Sign-In chưa được cấu hình. Bạn vẫn có thể đăng nhập bằng email.'}</p>
+                  {googleClientId && (
+                    <button type="button" onClick={retryGoogle} className="mt-1 font-semibold underline tap-target">
+                      Tải lại Google Sign-In
+                    </button>
+                  )}
                 </div>
               )}
             </div>
