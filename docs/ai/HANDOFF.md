@@ -1,8 +1,8 @@
 # Frigo / Takosan current handoff — 2026-09-18
 
-## Current — T15A pre-production hardening (T15A-R2); Phase B (production) not started
+## Current — T15A pre-production hardening COMPLETE; Phase B (production) not started
 
-See `recipe-catalog/T15A_WIP_HANDOFF.md` for exact heads, the T15A-R2 wired-branch receipt (`T15A_R2_WIRED_PRE_MERGE`: commit identity contract, workflow wiring and unconditional guardrails are all on the PR #27 branch with exact-head CI SUCCESS; the earlier `workflows`-permission blocker is resolved for this PR), and the production resume requirements. PR #27 is open and not merged — merge, exact-main CI and staging exact-SHA convergence are the next authorized steps. Historical last verified production tip = 0034; Phase B must re-query the live ledger before any mutation. No production D1/R2/deploy/authority change has occurred.
+See `recipe-catalog/T15A_WIP_HANDOFF.md` for the final T15A-R receipt: PR #27 merged to main `0fe2cf071693208f6c642d8cbd994f5a79b5a2cf` (merge commit by maintainer; certified head `776422fb…`; tree delta 0), exact-main CI SUCCESS, automatic staging deploy SUCCESS with exact-SHA convergence through `wait-for-deployed-release.mjs`, production job SKIPPED. Historical last verified production tip = 0034; Phase B must re-query the live ledger before any mutation. No production D1/R2/deploy/authority change has occurred.
 
 ## Current T14F — T14F_DEVELOPMENT_COMPLETE (T14F-C certified + closed; production untouched)
 

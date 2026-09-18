@@ -1,14 +1,16 @@
 # T15A — production rollout preflight handoff (T15A + T15A-R)
 
 ```text
-classification=T15A_PRE_PRODUCTION_HARDENING (exact heads/CI bound in the PR receipts below)
+classification=T15A_PRE_PRODUCTION_HARDENING_COMPLETE (PR #26 + PR #27 on main; production rollout NOT started)
 T15A_SCHEMA_GATE_HARDENED=YES (PR #26 → main 70cf7e0dae675ca19efbac2ceed0d1380d837024)
-T15A_WORKFLOW_WIRING_HARDENED / T15A_DEPLOY_READINESS_RACE_HARDENED = this branch (PR #27 receipt)
+T15A_WORKFLOW_WIRING_HARDENED=YES  T15A_DEPLOY_READINESS_RACE_HARDENED=YES (PR #27 → main 0fe2cf071693208f6c642d8cbd994f5a79b5a2cf)
+T15A_R_MERGED_TO_MAIN=YES  T15A_R_MAIN_CERTIFIED=YES  T15A_R_STAGING_CERTIFIED=YES (receipt at the end of this file)
 T15A_PRODUCTION_D1_0037=NOT_STARTED  T15A_STATIC_DEPLOY_CERTIFIED=NO  T15A_SHADOW_CERTIFIED=NO
 T15B_CANARY_NOT_STARTED  MEDIA_POPULATION_DEFERRED  T14G_NOT_STARTED
-repository_id=1368281478  repository_full_name=frigo-5/Frigo-dev
+repository_id=1368281478  repository_full_name=frigo-6/Frigo-dev (ID authoritative; owner display was frigo-5 in older receipts)
 T14F_main=9be395d0a2e7437fb22b78415489444fa42e600f
 T15A_hardening_merge=70cf7e0dae675ca19efbac2ceed0d1380d837024 (push CI 35287827109 SUCCESS)
+T15A_R_merge=0fe2cf071693208f6c642d8cbd994f5a79b5a2cf (push CI 35329100767 SUCCESS; Deploy 35329500028 release/staging SUCCESS, production SKIPPED)
 ```
 
 ## What is on main after PR #26 (T15A)
@@ -129,10 +131,10 @@ final_PR_head=309d049e17c692d197e4c03660e6e992ab1cd764 (local == remote; VERIFIE
 PR_state=OPEN draft=NO merged=NO mergeable=MERGEABLE/CLEAN unresolved_threads=0 (must NOT merge: wiring absent on remote)
 ```
 
-## T15A-R2 wired-branch receipt (2026-09-18T09:2xZ, VERIFIED_LIVE)
+## T15A-R2 wired-branch receipt (2026-09-18T09:2xZ) — superseded by the final receipt below
 
 ```text
-classification=T15A_R2_WIRED_PRE_MERGE (workflow wiring ON the PR branch; NOT merged; NOT main-certified; NOT staging-certified; production untouched)
+classification=T15A_R2_WIRED_PRE_MERGE (state at 09:2xZ before the merge was observed)
 origin_main=70cf7e0dae675ca19efbac2ceed0d1380d837024 (unchanged; VERIFIED_LIVE)
 branch_commits_after_309d049=d01f547 docs CI binding (App push) · 366dbd1 ops(t15a-r) workflow patch applied · 776422f test(t15a-r) unconditional guardrails
   (366dbd1/776422f = the r2-wired-series.mbox commits published via the platform's authorized publisher; forward-only from d01f547; no rebase/force)
@@ -148,15 +150,34 @@ migration_integrity=migrations/ diff vs main = 0; 0036 04228788…; 0037 68e52e6
 production_safety=D1 write NO · R2 write NO · deploy NO · authority switch NO · production-d1-migrate.yml dispatch NO · media NO · T14G NO
 historical_production_tip=0034 (NOT re-queried live; Phase B must re-query before any mutation)
 PR_state=OPEN draft=NO merged=NO mergeable=MERGEABLE/CLEAN unresolved_threads=0
-final_PR_head=<the docs commit that carries this receipt; exact-head CI bound in the PR body/receipt comment>
 ```
 
-**Next session (resume rule, merge authorization required):** fetch; verify `origin/main` = `70cf7e0d…` and the
-PR #27 head live (exact-head CI SUCCESS on that head); then merge PR #27 with a **merge commit** and an
-expected-head guard, verify certified head and old main are ancestors of new main and `git diff <head> main`
-is empty, require exact-main push CI SUCCESS, observe the automatic `deploy.yml` run (release SUCCESS,
-staging SUCCESS with exact-SHA convergence through the helper, production SKIPPED). Do not dispatch
-`production-d1-migrate.yml`, do not deploy production, do not enable shadow.
+## T15A-R final receipt (2026-09-18T09:3xZ, VERIFIED_LIVE) — pre-production hardening COMPLETE
+
+```text
+classification=T15A_PRE_PRODUCTION_HARDENING_COMPLETE  P0=0 P1=0 release_blocking_P2=0 P3=1 (P3_FUTURE_MEDIA_GATE_COMPATIBILITY)
+T15A_R_CERTIFIED_HEAD=776422fb7b141669df7a29973bbf4ac0a5516a01 (PR #27 head at merge; exact-head validate run 35328638198 SUCCESS)
+merge=PR #27 merged by maintainer vn-dlo at 2026-09-18T09:21:22Z via merge commit (2 parents; not squash/rebase); merge performed by a human, not by the agent
+T15A_R_MERGE_SHA=0fe2cf071693208f6c642d8cbd994f5a79b5a2cf = origin/main (VERIFIED_LIVE)
+merge_tree=certified head 776422fb is ancestor of main YES · old main 70cf7e0d is ancestor of main YES · `git diff 776422fb 0fe2cf07` = 0 files
+main_CI=push validate run 35329100767 / job 105549031408 SUCCESS on exact SHA 0fe2cf07
+staging=automatic Deploy run 35329500028 (workflow_run on 0fe2cf07): release job 105550302971 SUCCESS · staging job 105550350571 SUCCESS ·
+  production job 105550351700 SKIPPED (no production deploy)
+staging_convergence=helper `wait-for-deployed-release.mjs` used (log: "attempt 1: readiness identifies release 0fe2cf07 in staging");
+  receipt artifact release-staging-35329500028-1: deployed.sha=0fe2cf071693208f6c642d8cbd994f5a79b5a2cf environment=staging attempts=1 waitedMs=547;
+  staging Worker version 479efd73-12c0-4403-93e9-9bbfd8ee85ef; post-deploy smoke ok (landing 200, liveness 200, readiness ok/db ok/staging)
+workflow_wiring_on_main=deploy.yml (staging+production via helper) + production-d1-migrate.yml (catalog after verify, before schema gate; env-passed input;
+  chain-aware descriptions; contents:read/actions:read; workflow_dispatch only) — identical to t15a-r/workflows.patch (consumed audit evidence)
+late_docs_commit=637a848 (docs only) was pushed to the PR branch ~3 min after the merge and is NOT in main; its content is re-applied by the follow-up docs PR
+  that carries this receipt
+production_safety=D1 write NO · R2 write NO · production deploy NO (job SKIPPED) · authority switch NO · production-d1-migrate.yml dispatch NO (0 runs) ·
+  media NO · T14G NO · T09/T11 unchanged · migrations/ unchanged (0036 04228788…, 0037 68e52e6d…, no 0038)
+historical_production_tip=0034  live_production_tip_requeried=NO (Phase B must re-query the live ledger before any mutation)
+```
+
+**Next phase (T15A Phase B — separate session, operator approval):** start from the live production state; see the
+resume requirements below. Do not dispatch `production-d1-migrate.yml`, deploy production, or enable shadow
+without that authorization.
 
 ## Production resume requirements (T15A Phase B — separate session, operator approval)
 
