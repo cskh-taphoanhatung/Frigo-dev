@@ -954,3 +954,39 @@ existing Qwen, evidence, ownership or confirmation contracts.
 token verification, sessions, CSRF, Turnstile, queue processing, migrations,
 PayOS and production resources remain unchanged. Promote only after exact-head
 review and browser auth/OCR smoke; no deployment is implied by this branch.
+
+## ADR-028 — Honest OTP delivery, unified OAuth configuration, and durable onboarding
+
+**Status:** Accepted 2026-09-19 for T16 development; production rollout requires
+separate operator authorization.
+
+**Decision:** Treat provider acceptance as part of issuing a usable production
+OTP. Use Cloudflare Email Service's structured message API as primary delivery
+and Resend as fallback. Reduce provider failures to stable non-sensitive
+categories; never log recipients, subjects, message bodies, OTPs, provider
+response bodies, or exception text. If no provider accepts a registration or
+resend message in production, invalidate the newly issued challenge and return
+an honest machine-readable failure instead of claiming delivery. Development may
+surface `devOtp`, but production may not.
+
+Extend ADR-022 by using one runtime `GOOGLE_CLIENT_ID` for both GIS initialization
+and backend audience validation. The public `/config` endpoint may expose the
+client ID because it identifies the OAuth application and is not a secret.
+Production Google auth remains signed-ID-token-only; missing configuration or a
+blocked GIS SDK produces an explicit unavailable/retry state, never synthetic
+user information or a credential-less request.
+
+Persist onboarding completion on the profile and return it from authoritative
+session/auth responses. Local storage is only a same-device cache. The funnel is
+landing → guest or account; new sessions complete preference onboarding once;
+returning completed accounts enter the app. Preference persistence and marking
+completion occur in one D1 batch. Guest-to-account inventory transfer remains
+deferred and retains its existing retry fence.
+
+**Consequences:** Migration 0038 is additive. Existing opaque HttpOnly Secure
+cookies, CSRF origin checks, Turnstile, household isolation, private-session
+fencing, Inventory Truth, Week compatibility, and PayOS boundaries are unchanged.
+Email Service binding presence is not delivery evidence: release still requires
+sender-domain onboarding and a real recipient smoke test. Google release still
+requires the exact production origin in the OAuth client's authorized JavaScript
+origins. No production deployment is implied by this ADR.
