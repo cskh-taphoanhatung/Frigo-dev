@@ -1,9 +1,10 @@
 ## Current T15A — pre-production rollout hardening — 2026-09-18
 
 - [done] PR #26 merged (`70cf7e0d…`): schema gate derived from `migrations/`, pinned migration chain, `catalog` certification command.
-- [done, PR #27] `catalog` step wired into `production-d1-migrate.yml`; input interpolation removed; `wait-for-deployed-release.mjs` bounded exact-SHA convergence for staging + production deploy proof; guardrail/order tests.
-- [blocked] App credential lacks `workflows` permission → workflow diffs attached as a patch for a maintainer.
-- [next] T15A Phase B (production re-query → migrate 0035–0037 via workflow → static deploy → shadow) only with credentials + operator approval. No canary/d1/media/T14G.
+- [done, PR #27 / T15A-R2, pushed] `wait-for-deployed-release.mjs` bounded exact-SHA convergence helper; `readiness.commit` must be a canonical 40-hex SHA (malformed/missing → fail closed, only a different *valid* SHA retries; regression tests A–J).
+- [blocked, T15A-R2] Workflow wiring (`catalog` step in `production-d1-migrate.yml`, input interpolation removed, staging+production using the helper) and the unconditional guardrail tests are committed locally but the App credential still lacks `workflows` permission → push rejected twice. Ready-made commits tracked as `docs/ai/recipe-catalog/t15a-r/r2-wired-series.mbox` (`git am`); raw diff `t15a-r/workflows.patch`. PR #27 must NOT be merged until they are on the branch with exact-head CI SUCCESS. Classification `T15A_R2_BLOCKED_WORKFLOW_PERMISSION`.
+- [status] T15A pre-production hardening NOT complete (not merged, not main/staging certified). Production rollout still NOT started.
+- [next] T15A Phase B (live production re-query → migrate 0035–0037 via workflow → static deploy → shadow) only with credentials + operator approval; historical last verified production tip = 0034 (must be re-queried live first). No canary/d1/media/T14G. P3_FUTURE_MEDIA_GATE_COMPATIBILITY: `catalog` requires `media_ready=0`; revisit before any migration after media population.
 
 ## Historical T14F — T14F_DEVELOPMENT_COMPLETE (T14F-A/B/C certified; production untouched) — 2026-09-17
 

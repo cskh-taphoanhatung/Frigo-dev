@@ -27,25 +27,43 @@ T15A_hardening_merge=70cf7e0dae675ca19efbac2ceed0d1380d837024 (push CI 352878271
 - **Workflow wiring** — `production-d1-migrate.yml`: `catalog` step between `verify` and the schema
   gate; `${{ inputs.migration }}` moved out of the shell into `env`; chain-aware input descriptions.
   Permissions unchanged (`contents: read`, `actions: read`); still `workflow_dispatch` only.
+  **Status (T15A-R2): APPLIED AND COMMITTED LOCALLY, PUSH REJECTED AGAIN** — the patch was applied
+  (`git apply` clean; resulting `git diff | sha256sum` byte-identical to `t15a-r/workflows.patch`,
+  `1d5097a5…`) and committed forward-only as `4e79600` (workflows) + `917ce63` (unconditional guardrails),
+  but GitHub rejected the push of both commits: `refusing to allow a GitHub App to create or update
+  workflow .github/workflows/deploy.yml without workflows permission` (twice, including after credential
+  rotation). Those two commits are tracked verbatim as a `git am` series in
+  `t15a-r/r2-wired-series.mbox` (+ `.sha256`); applying it on top of `eecbbf0` reproduces the `917ce63`
+  tree exactly (verified in a throwaway worktree). The workflow files on the remote branch are still
+  identical to `main`.
 - **Deploy readiness race** — Deploy run 35288137887 failed at `release-check.mjs deployed` although
   the staging Worker (`e00a78d3…`) was live: the edge briefly answered `/health/ready` from the previous
   version, so a single immediate curl saw the old `commit`. Fix: `scripts/wait-for-deployed-release.mjs`
   polls readiness (deadline 90 s, interval 3 s, 15 s request timeout) and retries **only** the case
   `verifyDeployedRelease` now classifies as `RELEASE_PROPAGATION_PENDING` (healthy, right environment,
-  previous SHA). Wrong environment, unhealthy status/DB/config, malformed JSON, 4xx → fail immediately;
+  *different valid full SHA* — valid-SHA propagation pending; the helper does not claim that SHA is the
+  previous Worker). Wrong environment, unhealthy status/DB/config, malformed JSON, 4xx → fail immediately;
   5xx/429/timeouts tolerated up to 3 times. Both staging and production jobs use it; on timeout the job
   fails and the `if: always()` receipt upload keeps the manifest. Nothing redeploys.
+- **Commit identity contract (T15A-R2)** — `readiness.commit` must be a canonical full Git SHA
+  (`/^[a-f0-9]{40}$/`, same convention as `release-check.mjs` / `d1-migration-check.mjs`). Missing, null,
+  empty, short, uppercase, non-hex, or non-string commit identities fail closed immediately
+  (`Readiness commit is not a canonical full Git SHA`) and are never `RELEASE_PROPAGATION_PENDING`.
+  Regression tests A–J in `tests/unit/release-check.test.mjs` + polling-level tests in
+  `tests/unit/wait-for-deployed-release.test.mjs`.
 - **P3_FUTURE_MEDIA_GATE_COMPATIBILITY** — the `catalog` invariant `media_ready == 0` is a
   pre-media-rollout condition. Revisit before any migration that follows media population.
 
-## Blocked here: the App credential cannot push `.github/workflows/*`
+## Blocker (still live after T15A-R2): the App credential cannot push `.github/workflows/*`
 
-GitHub rejects pushes touching workflow files (`without workflows permission`) and `workflow_dispatch`
-returns 403. The non-workflow code/tests on this branch are pushed; the two workflow diffs are attached
-as a patch on the PR (see receipt comment; sha256 recorded there). A maintainer must apply the patch on
-a follow-up branch (or grant the App `workflows`) before any production migration is dispatched.
+During T15A-R and again in T15A-R2 the credential was rejected on workflow files (`without workflows
+permission`). Two artefacts now carry the intended change: `t15a-r/workflows.patch` (raw workflow diff,
+`1d5097a5…`) and `t15a-r/r2-wired-series.mbox` (the two ready-made commits: workflows + activated
+guardrails; apply with `git am docs/ai/recipe-catalog/t15a-r/r2-wired-series.mbox` on top of the branch
+head). A maintainer with `workflows` scope must push them (or grant the App `workflows`) before PR #27 can
+be merged and before any production migration is dispatched. Do not bypass this with alternate APIs.
 
-## T15A-R safe stop (2026-09-18T01:4xZ, VERIFIED_LIVE)
+## T15A-R safe stop (2026-09-18T01:4xZ, VERIFIED_LIVE) — superseded by the T15A-R2 safe stop below
 
 ```text
 classification=T15A_R_BLOCKED_WORKFLOW_PERMISSION (pre-PR phase: readiness fix implemented, focused tests pass, full gates pass; PR #27 open, NOT ready to merge)
@@ -78,6 +96,49 @@ then: apply `docs/ai/recipe-catalog/t15a-r/workflows.patch` on this branch (or a
 forward-only (the guardrails self-activate), run focused + full gates, push, require exact-head CI SUCCESS,
 then (only with separate authorization) merge with an expected-head guard and require exact-main CI SUCCESS.
 Do not dispatch `production-d1-migrate.yml` and do not deploy production from this branch.
+
+## T15A-R2 safe stop (2026-09-18T03:4xZ, VERIFIED_LIVE)
+
+```text
+classification=T15A_R2_BLOCKED_WORKFLOW_PERMISSION (NOT merged; NOT main-certified; NOT staging-certified; production untouched)
+repository_id=1368281478  repository_full_name=frigo-6/Frigo-dev (GitHub owner display; ID authoritative)
+starting_main=70cf7e0dae675ca19efbac2ceed0d1380d837024  starting_head=9ca4bae426f4adf8ee6ddd05a5d5fe04e8d2f8f5 (4 ahead / 0 behind; VERIFIED_LIVE)
+pushed_forward_commits=eecbbf0090c037adb5d6f5a90da9af2a63e5ae06 fix(t15a-r) commit identity · docs(t15a-r) this commit (both non-workflow; push ACCEPTED)
+rejected_forward_commits=4e79600 ops(t15a-r) workflow patch applied · 917ce63 test(t15a-r) unconditional guardrails (push REJECTED: no `workflows` permission,
+  twice incl. after credential rotation; preserved verbatim in t15a-r/r2-wired-series.mbox, sha256 in the sibling .sha256 file; `git am` on eecbbf0 → 917ce63 tree)
+workflow_patch=APPLIED LOCALLY, NOT ON REMOTE — tracked patch sha256 1d5097a571c8e4826e9436920c7c427fd8ee5753e853c7891f1243e6333bb8e4 verified; `git apply --check` clean;
+  local `git diff` sha256 identical to the tracked patch (semantics match: staging+production use wait-for-deployed-release.mjs after
+  post-deploy-smoke; catalog step after verify / before d1-schema-gate.sh remote; inputs.migration via env; chain-aware descriptions;
+  permissions contents:read/actions:read; workflow_dispatch only; cancel-in-progress:false; environment: production)
+remote_workflow_files=IDENTICAL TO MAIN (deploy.yml, production-d1-migrate.yml) — T15A workflow wiring is NOT shipped on the remote branch
+commit_identity_contract=/^[a-f0-9]{40}$/ — missing/null/empty/short/uppercase/non-hex/non-string → immediate FAIL (no code); different valid SHA on healthy
+  correct-environment body → RELEASE_PROPAGATION_PENDING (only retryable class); wrong env or unhealthy + valid different SHA → immediate FAIL
+guardrails=unconditional (no `it.skip` wiring gate); against unwired main workflows they FAIL (verified by stashing the workflow diff); wired: PASS
+  (that unconditional version lives only in the rejected 917ce63 / mbox series; the PUSHED head keeps the self-activating guardrails
+  from 7241cc8, which skip 2 workflow-wiring tests while the remote workflow files equal main)
+focused_tests(local wired tree 917ce63)=123 passed / 0 skipped (release-check 70, wait-for-deployed-release 22, d1-migration-check 23, d1-schema-gate 8)
+focused_tests(pushed tree eecbbf0)=release-check 69 (67 passed / 2 skipped unwired) + wait-for-deployed-release 22 passed
+full_gates(local wired tree)=recipe:seed:check PASS · recipe:import:check PASS · typecheck PASS · lint PASS · check:migrations PASS · build PASS ·
+  pnpm test 173 files / 3969 tests PASS (7m13s; previous baseline 3943, +26 new) · git diff --check clean
+migration_integrity=migrations/ diff vs origin/main = 0; 0036 04228788e60d59a2427d70956d4d8a108d0a6c1c4a643c47641402f658120ba9;
+  0037 68e52e6d8b9d44054f609a3d405c9fa329d093521ffc8c97009c76fbf7317ad6; 0038_created=NO
+application_safety=src/ diff vs main = 0; ALL_RECIPES=71 static; shipped catalog expectation 500 / approved batches 2; T09/T11 unchanged;
+  new inventory writers 0; PayOS/payment/auth untouched
+production_safety=D1 write NO · R2 write NO · deploy NO · authority switch NO · production-d1-migrate.yml dispatch NO · media NO · T14G NO
+historical_production_tip=0034 (NOT re-queried live in T15A-R2; Phase B must re-query before any mutation)
+P3_FUTURE_MEDIA_GATE_COMPATIBILITY=open (catalog requires media_ready=0; revisit before any post-media migration)
+merge=NOT PERFORMED (merge gate unmet: workflow files not on remote); main_CI=n/a; staging_convergence=n/a; production_job=n/a
+```
+
+**Next session (resume rule, T15A-R2 → R3):** fetch; verify `origin/main` (`70cf7e0d…` at this stop) and the
+PR #27 head live; then, with a credential that has `workflows` scope (or a maintainer), `git checkout` the
+branch head and `git am docs/ai/recipe-catalog/t15a-r/r2-wired-series.mbox` (verify the `.sha256` first),
+run `pnpm vitest run tests/unit/release-check.test.mjs tests/unit/wait-for-deployed-release.test.mjs
+tests/unit/d1-migration-check.test.mjs tests/integration/d1-schema-gate.test.ts` (expect 0 skips), push,
+require exact-head CI SUCCESS, update the PR body, then (separately authorized) merge with an expected-head
+guard, require exact-main CI SUCCESS, observe the automatic staging deploy (release+staging SUCCESS,
+production SKIPPED, exact-SHA convergence via the helper). Do not dispatch `production-d1-migrate.yml`,
+do not deploy production, do not enable shadow.
 
 ## Production resume requirements (T15A Phase B — separate session, operator approval)
 
