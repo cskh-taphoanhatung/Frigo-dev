@@ -13,10 +13,15 @@ describe('CSP policies', () => {
     expect(scriptDirective).not.toContain("'unsafe-inline'");
     expect(scriptDirective).toContain('https://accounts.google.com');
     expect(scriptDirective).toContain('https://challenges.cloudflare.com');
+    expect(scriptDirective).toContain('https://static.cloudflareinsights.com');
   });
 
-  it('keeps the documented style-src unsafe-inline dependency for dynamic width attributes', () => {
+  it('allows only the external style and font origins used by the production shell', () => {
     const styleDirective = spaCsp().match(/style-src [^;]+/)?.[0] ?? '';
     expect(styleDirective).toContain("'unsafe-inline'");
+    expect(styleDirective).toContain('https://accounts.google.com');
+    expect(styleDirective).toContain('https://fonts.googleapis.com');
+    expect(spaCsp()).toContain("font-src 'self' data: https://fonts.gstatic.com");
+    expect(spaCsp()).toContain('https://cloudflareinsights.com');
   });
 });
