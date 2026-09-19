@@ -8,6 +8,7 @@
 - [done] Public production audit: Worker `6c336889-680d-4cc3-b03b-1007849aa738` / SHA `b41aa468...`; readiness config-valid, DB/queue/email OK; recipe authority receipt `shadow/0/false`; 5/5 lists = 71 and D1-only samples remain 404.
 - [blocked] Mandatory operator-owned INCLUDE + EXCLUDE household pair was not supplied. Local Wrangler is unauthenticated, so the fresh direct D1/tail certification and cohort secret provisioning are unavailable. No customer IDs were inspected and no production mutation occurred.
 - [status] `T15C_D_BLOCKED_AUTHORIZED_TEST_HOUSEHOLDS_UNAVAILABLE`; final production remains `shadow/0/false`. Receipt: `docs/ai/recipe-catalog/T15C_D_PRODUCTION_1PCT_CANARY_CERTIFICATION.md`.
+- [done] Receipt commit `16958c6...` passed CI `35410893001`; PR #40 merged as `763d7e9...`; exact-main CI `35411093064` and automatic staging Deploy `35411300235` passed with `static/0/false` and production skipped.
 - [next] Supply both authorized household IDs privately and authenticate the Cloudflare operator session; then repeat D1 certification, provision hashed secrets, prove retained-secret Shadow, run only 1% protected Canary, certify both cohorts/E2E, and rollback to Shadow. No 2%, 5%, full D1, media, or T14G.
 
 ## Current T15C-C — authorized canary test cohort mechanism (dormant) — 2026-09-19
