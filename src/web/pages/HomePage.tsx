@@ -102,7 +102,7 @@ export const HomePage: React.FC = () => {
   const firstName = displayName ? displayName.split(' ').pop() : null;
 
   return (
-    <div className="min-h-screen bg-takosan-cream pb-28 max-w-md sm:max-w-lg md:max-w-2xl mx-auto">
+    <div className="min-h-screen bg-takosan-cream pb-28">
       {/* HEADER: Avatar + Xin chào + Notification Bell */}
       <header className="sticky top-0 z-30 bg-takosan-cream/95 backdrop-blur-md px-4 py-3.5 border-b border-takosan-cream-line flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-3">

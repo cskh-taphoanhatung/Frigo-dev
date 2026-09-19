@@ -57,6 +57,30 @@
   .animate-slide-up {
     animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
+
+  /* T17 skeleton pulse — opacity only, no spatial motion (states/loading.md). */
+  .t17-skeleton {
+    animation: t17SkeletonPulse 1.4s ease-in-out infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t17-skeleton {
+    animation: none;
+  }
+  /* Reduced motion is mandatory (motion/reduced-motion.md): the runtime
+     honors it via MotionConfig; CSS-driven motion stops here too. */
+  .animate-fade-in,
+  .animate-slide-up {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes t17SkeletonPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
 }
 
 @keyframes fadeIn {

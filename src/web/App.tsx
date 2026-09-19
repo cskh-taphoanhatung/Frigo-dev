@@ -7,6 +7,7 @@ import { RouteFallback } from './components/common/RouteFallback';
 import { useAuthStore } from './stores/useAuthStore';
 import { AppLayout } from './components/layout/AppLayout';
 import { isMealPlannerEnabled } from './features/planner/feature';
+import { MotionProvider } from './design-system/motion';
 
 const PlannerPage = lazy(() => import('./pages/PlannerPage').then((m) => ({ default: m.PlannerPage })));
 
@@ -64,6 +65,18 @@ const SettingsPage = lazy(() =>
 const PlusPaywallPage = lazy(() =>
   import('./pages/PlusPaywallPage').then((m) => ({ default: m.PlusPaywallPage })),
 );
+const FoodPreferencesPage = lazy(() =>
+  import('./pages/settings/FoodPreferencesPage').then((m) => ({ default: m.FoodPreferencesPage })),
+);
+const PlanningSettingsPage = lazy(() =>
+  import('./pages/settings/PlanningSettingsPage').then((m) => ({ default: m.PlanningSettingsPage })),
+);
+const NotificationPreferencesPage = lazy(() =>
+  import('./pages/settings/NotificationPreferencesPage').then((m) => ({ default: m.NotificationPreferencesPage })),
+);
+const PrivacyDataPage = lazy(() =>
+  import('./pages/settings/PrivacyDataPage').then((m) => ({ default: m.PrivacyDataPage })),
+);
 const WeekDashboardPage = lazy(() =>
   import('./pages/WeekDashboardPage').then((m) => ({ default: m.WeekDashboardPage })),
 );
@@ -116,6 +129,7 @@ export const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <MotionProvider>
         <AppErrorBoundary key={`${userId}:${householdId}`}>
           <SessionBoundary>
             <Suspense fallback={<RouteFallback />}>
@@ -145,6 +159,7 @@ export const App: React.FC = () => {
                   {/* Fridge / Inventory */}
                   <Route path="/fridge" element={<InventoryPage />} />
                   <Route path="/inventory" element={<Navigate to="/fridge" replace />} />
+                  <Route path="/fridge/:id" element={<IngredientDetailPage />} />
                   <Route path="/ingredients/:id" element={<IngredientDetailPage />} />
                   <Route path="/inventory/:id" element={<IngredientDetailPage />} />
                   <Route path="/inventory-reconciliation" element={<ReconciliationPage />} />
@@ -163,26 +178,35 @@ export const App: React.FC = () => {
                   <Route path="/cooking/:id" element={<CookingModePage />} />
                   <Route path="/cooking/complete" element={<CookingCompletePage />} />
 
-                  {/* Frigo Week / Thực đơn tuần */}
-                  <Route path="/week" element={<WeekDashboardPage />} />
-                  <Route path="/week/setup" element={<WeekSetupPage />} />
-                  <Route path="/week/generating" element={<WeekGeneratingPage />} />
-                  <Route path="/week/:planId" element={<WeekDashboardPage />} />
-                  <Route path="/week/:planId/meal/:mealId" element={<MealDetailPage />} />
-                  <Route path="/week/:planId/shopping" element={<WeekShoppingPage />} />
-                  <Route path="/week/:planId/settings" element={<WeekSettingsPage />} />
+                  {/* Planner is canonical when enabled; Week stays the visible
+                      compatibility surface while the flag is off. Params are
+                      preserved in both redirect directions. */}
+                  <Route path="/week" element={isMealPlannerEnabled() ? <Navigate to="/planner" replace /> : <WeekDashboardPage />} />
+                  <Route path="/week/setup" element={isMealPlannerEnabled() ? <Navigate to="/planner/new" replace /> : <WeekSetupPage />} />
+                  <Route path="/week/generating" element={isMealPlannerEnabled() ? <Navigate to="/planner" replace /> : <WeekGeneratingPage />} />
+                  <Route path="/week/:planId" element={isMealPlannerEnabled() ? <Navigate to="/planner/:planId" replace /> : <WeekDashboardPage />} />
+                  <Route path="/week/:planId/meal/:mealId" element={isMealPlannerEnabled() ? <Navigate to="/planner/:planId/meal/:mealId" replace /> : <MealDetailPage />} />
+                  <Route path="/week/:planId/shopping" element={isMealPlannerEnabled() ? <Navigate to="/planner/:planId/shopping" replace /> : <WeekShoppingPage />} />
+                  <Route path="/week/:planId/settings" element={isMealPlannerEnabled() ? <Navigate to="/settings/planning" replace /> : <WeekSettingsPage />} />
                   <Route path="/planner" element={isMealPlannerEnabled() ? <PlannerPage /> : <Navigate to="/week" replace />} />
                   <Route path="/planner/new" element={isMealPlannerEnabled() ? <PlannerPage /> : <Navigate to="/week" replace />} />
                   <Route path="/planner/:planId" element={isMealPlannerEnabled() ? <PlannerPage /> : <Navigate to="/week" replace />} />
                   <Route path="/planner/:planId/meal/:slotId" element={isMealPlannerEnabled() ? <PlannerPage /> : <Navigate to="/week" replace />} />
                   <Route path="/planner/:planId/shopping" element={isMealPlannerEnabled() ? <PlannerPage /> : <Navigate to="/week" replace />} />
 
-                  {/* Shopping, Profile, Settings, Notifications, Plus, Family */}
+                  {/* Shopping, Profile/Me, Settings, Notifications, Plus, Household */}
                   <Route path="/shopping" element={<ShoppingPage />} />
                   <Route path="/notifications" element={<NotificationsPage />} />
-                  <Route path="/profile" element={<ProfilePage />} />
-                  <Route path="/family" element={<FamilySharingPage />} />
-                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/me" element={<ProfilePage />} />
+                  <Route path="/profile" element={<Navigate to="/me" replace />} />
+                  <Route path="/me/preferences" element={<FoodPreferencesPage />} />
+                  <Route path="/family" element={<Navigate to="/me/household" replace />} />
+                  <Route path="/me/household" element={<FamilySharingPage />} />
+                  <Route path="/settings" element={<Navigate to="/settings/app" replace />} />
+                  <Route path="/settings/app" element={<SettingsPage />} />
+                  <Route path="/settings/notifications" element={<NotificationPreferencesPage />} />
+                  <Route path="/settings/planning" element={<PlanningSettingsPage />} />
+                  <Route path="/settings/privacy" element={<PrivacyDataPage />} />
                   <Route path="/plus" element={<PlusPaywallPage />} />
                 </Route>
 
@@ -192,6 +216,7 @@ export const App: React.FC = () => {
             </Suspense>
           </SessionBoundary>
         </AppErrorBoundary>
+        </MotionProvider>
       </BrowserRouter>
     </QueryClientProvider>
   );

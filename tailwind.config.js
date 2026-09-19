@@ -7,6 +7,36 @@ export default {
   theme: {
     extend: {
       colors: {
+        // T17 semantic layer — single naming authority for new UI
+        // (Takosan Redesign OS v2.0.0 design-tokens.json). rgb channels keep
+        // alpha modifiers (bg-semantic-action-primary/10) working.
+        semantic: {
+          background: "rgb(255 248 243 / <alpha-value>)",
+          backgroundSubtle: "rgb(252 251 248 / <alpha-value>)",
+          surface: "rgb(255 255 255 / <alpha-value>)",
+          surfaceRaised: "rgb(255 255 255 / <alpha-value>)",
+          textPrimary: "rgb(31 41 55 / <alpha-value>)",
+          textSecondary: "rgb(74 71 65 / <alpha-value>)",
+          textMuted: "rgb(123 119 111 / <alpha-value>)",
+          textInverse: "rgb(255 255 255 / <alpha-value>)",
+          actionPrimary: "rgb(46 125 91 / <alpha-value>)",
+          actionPrimaryHover: "rgb(36 102 72 / <alpha-value>)",
+          actionPrimaryPressed: "rgb(29 85 61 / <alpha-value>)",
+          onActionPrimary: "rgb(255 255 255 / <alpha-value>)",
+          accent: "rgb(255 123 107 / <alpha-value>)",
+          accentSoft: "rgb(255 240 237 / <alpha-value>)",
+          success: "rgb(46 125 91 / <alpha-value>)",
+          successSoft: "rgb(231 245 236 / <alpha-value>)",
+          warning: "rgb(182 106 9 / <alpha-value>)",
+          warningSoft: "rgb(255 243 214 / <alpha-value>)",
+          danger: "rgb(201 61 61 / <alpha-value>)",
+          dangerSoft: "rgb(255 240 240 / <alpha-value>)",
+          info: "rgb(47 111 159 / <alpha-value>)",
+          infoSoft: "rgb(234 244 251 / <alpha-value>)",
+          border: "rgb(231 227 218 / <alpha-value>)",
+          borderStrong: "rgb(201 194 182 / <alpha-value>)",
+          focus: "rgb(46 125 91 / <alpha-value>)",
+        },
         // Takosan locked palette (design-tokens/brand-tokens.json v1.1.0) plus a few
         // derived shades for hover/depth/borders so runtime UI never falls back to emerald.
         takosan: {
@@ -69,11 +99,26 @@ export default {
         body: ["Nunito", "system-ui", "sans-serif"],
         sans: ["Nunito", "system-ui", "sans-serif"],
       },
+      // T17 type scale (design-system/typography.json) — size/line-height/weight triples.
+      fontSize: {
+        "type-display": ["36px", { lineHeight: "43px", fontWeight: "800", letterSpacing: "-0.02em" }],
+        "type-title": ["24px", { lineHeight: "31px", fontWeight: "700", letterSpacing: "-0.01em" }],
+        "type-heading": ["20px", { lineHeight: "27px", fontWeight: "700" }],
+        "type-body-lg": ["16px", { lineHeight: "24px" }],
+        "type-label": ["13px", { lineHeight: "18px", fontWeight: "700" }],
+        "type-caption": ["12px", { lineHeight: "18px", fontWeight: "500" }],
+      },
       borderRadius: {
         "lg": "10px",
         "xl": "12px",
         "2xl": "16px",
         "3xl": "20px",
+        // T17 radius scale (design-system/radius.json) — additive keys;
+        // legacy rounded-* values above stay untouched.
+        "card": "16px",
+        "feature": "24px",
+        "hero": "32px",
+        "pill": "9999px",
       },
       // Fractional spacing used across the UI (w-4.5, w-12.5...) — without these
       // Tailwind silently drops the class and icons render at default size.
@@ -94,6 +139,11 @@ export default {
         // Brand-tinted shadows derive from Takosan green rgb(46, 125, 91).
         "float": "0 8px 20px -3px rgba(46, 125, 91, 0.22), 0 3px 6px -2px rgba(46, 125, 91, 0.12)",
         "glow": "0 0 0 4px rgba(46, 125, 91, 0.15), 0 8px 20px -3px rgba(46, 125, 91, 0.30)",
+        // T17 elevation + focus ring (design-system/elevation.json) — additive keys.
+        "t17-sm": "0 1px 2px rgba(31, 41, 55, 0.06)",
+        "t17-md": "0 8px 24px rgba(31, 41, 55, 0.10)",
+        "t17-lg": "0 18px 48px rgba(31, 41, 55, 0.14)",
+        "t17-focus": "0 0 0 3px rgba(46, 125, 91, 0.28)",
       }
     },
   },

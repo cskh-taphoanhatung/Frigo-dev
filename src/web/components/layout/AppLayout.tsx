@@ -1,37 +1,37 @@
 import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { BottomNav } from './BottomNav';
+import { BottomNavigationBar, RailSidebar } from '../../design-system/navigation';
 import { OfflineBanner } from '../common/OfflineBanner';
 
-export const AppLayout: React.FC = () => {
-  const location = useLocation();
+/**
+ * AppShell V2 (layout/app-shell.md): sole owner of viewport composition.
+ * Mobile = edge-to-edge canvas + bottom nav; tablet = rail; desktop = sidebar.
+ * Navigation hides only in immersive surfaces (scan camera, cooking, auth,
+ * onboarding, fullscreen states) — never on planner/settings pages.
+ */
+const IMMERSIVE_PATTERNS = [
+  /^\/scan(\/.*)?$/,
+  /^\/cook(\/.*)?$/,
+  /^\/cooking(\/.*)?$/,
+  /^\/auth(\/.*)?$/,
+  /^\/onboarding(\/.*)?$/,
+];
 
-  // Paths where bottom nav should be hidden (fullscreen cooking mode, scan camera view, splash, week setup/shopping)
-  const hideBottomNavPaths = [
-    '/scan',
-    '/cooking',
-    '/cook',
-    '/splash',
-    '/auth',
-    '/onboarding',
-    '/week/setup',
-    '/week/generating',
-    '/planner',
-  ];
-  const shouldHideBottomNav =
-    hideBottomNavPaths.some((p) => location.pathname.startsWith(p)) ||
-    location.pathname.includes('/shopping') ||
-    location.pathname.includes('/meal/');
+export const AppLayout: React.FC = () => {
+  const { pathname } = useLocation();
+  const immersive = IMMERSIVE_PATTERNS.some((re) => re.test(pathname));
 
   return (
-    <div className="min-h-screen bg-takosan-cream-shade flex justify-center selection:bg-takosan-mint selection:text-takosan-green-deep antialiased">
-      {/* App Viewport Container — phone-first, widens gracefully on tablet/desktop */}
-      <div className="w-full max-w-md sm:max-w-lg md:max-w-2xl min-h-screen bg-takosan-cream flex flex-col shadow-xl border-x border-takosan-cream-line relative pb-20">
-        <OfflineBanner />
-        <main className="flex-1 overflow-x-hidden">
+    <div className="min-h-dvh bg-semantic-background text-semantic-text-primary antialiased selection:bg-takosan-mint">
+      {!immersive && <RailSidebar />}
+      {/* Content canvas: rail 80px on md, sidebar 256px on lg; AppShell owns
+          gutters so pages must not re-emulate a phone width. */}
+      <div className={immersive ? '' : 'md:pl-20 lg:pl-64'}>
+        {!immersive && <OfflineBanner />}
+        <main className={immersive ? '' : 'min-h-dvh pb-[calc(68px+env(safe-area-inset-bottom,0px))] md:pb-0'}>
           <Outlet />
         </main>
-        {!shouldHideBottomNav && <BottomNav />}
+        {!immersive && <BottomNavigationBar />}
       </div>
     </div>
   );

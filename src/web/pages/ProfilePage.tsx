@@ -23,14 +23,15 @@ export const ProfilePage: React.FC = () => {
 
   const initialLetter = (displayName || 'K').charAt(0).toUpperCase();
 
-  // Menu items matching screen 7.1
+  // T17 screen 19 — Profile Hub: navigation summaries to dedicated screens,
+  // not a mixed editable form. Rows are real links (accessibility contract).
   const MENU_ITEMS = [
-    { label: 'Thông tin gia đình', icon: Users, path: '/family' },
-    { label: 'Sở thích & hạn chế', icon: Heart, path: '/settings' },
-    { label: 'Cài đặt thực đơn tuần', icon: Sliders, path: '/week/setup' },
-    { label: 'Thông báo', icon: Bell, path: '/notifications' },
-    { label: 'Ngôn ngữ', icon: Globe, path: '/settings', meta: 'Tiếng Việt' },
-    { label: 'Nguyên liệu luôn có', icon: PackageCheck, path: '/fridge', meta: 'Gia vị, muối, đường, dầu ăn...' },
+    { label: 'Sở thích & hạn chế', icon: Heart, path: '/me/preferences', meta: 'Gu món, nguyên liệu tránh' },
+    { label: 'Hộ gia đình & chia sẻ', icon: Users, path: '/me/household' },
+    { label: 'Cài đặt lập thực đơn', icon: Sliders, path: '/settings/planning', meta: 'Ngân sách, khung bữa, ưu tiên' },
+    { label: 'Tùy chỉnh thông báo', icon: Bell, path: '/settings/notifications' },
+    { label: 'Cài đặt ứng dụng', icon: Globe, path: '/settings/app', meta: 'PWA, ngôn ngữ, bộ nhớ đệm' },
+    { label: 'Quyền riêng tư & dữ liệu', icon: PackageCheck, path: '/settings/privacy', meta: 'Dữ liệu, AI, quyền trình duyệt' },
   ];
 
   return (
@@ -78,14 +79,14 @@ export const ProfilePage: React.FC = () => {
           {MENU_ITEMS.map((item) => {
             const Icon = item.icon;
             return (
-              <button
+              <Link
                 key={item.label}
-                onClick={() => navigate(item.path)}
-                className="w-full text-left p-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-50/60 active:bg-slate-100/80 transition-colors"
+                to={item.path}
+                className="w-full text-left p-3.5 flex items-center justify-between hover:bg-slate-50/60 active:bg-slate-100/80 transition-colors"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
-                    <Icon className="w-5 h-5" />
+                    <Icon className="w-5 h-5" aria-hidden="true" />
                   </div>
                   <div className="min-w-0">
                     <span className="font-heading font-semibold text-sm text-slate-900 block truncate">
@@ -100,9 +101,9 @@ export const ProfilePage: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-1 text-slate-400 shrink-0 ml-2">
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight className="w-4 h-4" aria-hidden="true" />
                 </div>
-              </button>
+              </Link>
             );
           })}
         </div>

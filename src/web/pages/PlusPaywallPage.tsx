@@ -4,7 +4,7 @@ import { useAuthStore } from '../stores/useAuthStore';
 import { TopBar } from '../components/common/TopBar';
 import { Button } from '../components/common/Button';
 import { VietQRModal } from '../components/payment/VietQRModal';
-import { FRIGO_ASSETS } from '../lib/frigo-assets';
+import { TAKOSAN_BRAND } from '../lib/takosan-brand';
 import { Check, Sparkles, ArrowRight, LogIn, ShieldCheck } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -39,22 +39,22 @@ export const PlusPaywallPage: React.FC = () => {
     // grant); reflect the authoritative state rather than self-activating.
     void syncPlusFromServer();
     setIsQRModalOpen(false);
-    navigate('/profile');
+    navigate('/me');
   };
 
   if (isGuest) {
     return (
-      <div className="min-h-screen bg-[#F8FAF9] pb-12 max-w-md mx-auto">
+      <div className="min-h-screen bg-semantic-background pb-12 max-w-md mx-auto">
         <TopBar showBack title="Takosan Plus" />
         <main className="px-4 pt-8">
-          <section className="overflow-hidden rounded-3xl border border-emerald-900/10 bg-white shadow-card">
-            <div className="bg-gradient-to-br from-[#0F3D2E] via-[#144F3C] to-[#0A2A1F] px-6 py-7 text-white">
+          <section className="overflow-hidden rounded-feature border border-semantic-border bg-semantic-surface shadow-card">
+            <div className="bg-gradient-to-br from-semantic-action-primary-pressed to-semantic-action-primary-hover px-6 py-7 text-white">
               <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/12 ring-1 ring-white/15">
                 <ShieldCheck aria-hidden="true" className="h-6 w-6 text-amber-300" />
               </div>
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-amber-300">Tài khoản bắt buộc</p>
               <h1 className="mt-2 text-balance font-heading text-2xl font-bold leading-tight text-white">Đăng nhập trước khi chọn gói Plus</h1>
-              <p className="mt-3 text-sm leading-relaxed text-emerald-50/85">
+              <p className="mt-3 text-sm leading-relaxed text-white/85">
                 Gói Plus được gắn với tài khoản để quyền lợi không mất khi bạn đổi thiết bị. Dữ liệu phiên khách vẫn được giữ riêng khi bạn đăng nhập.
               </p>
             </div>
@@ -83,12 +83,12 @@ export const PlusPaywallPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] pb-12 max-w-md mx-auto">
+    <div className="min-h-screen bg-semantic-background pb-12 max-w-md mx-auto">
       <TopBar showBack title="Nâng cấp Takosan Plus" />
 
       <div className="px-4 pt-3 space-y-5">
         {/* Support Art Hero Card */}
-        <div className="bg-gradient-to-br from-[#0F3D2E] via-[#144F3C] to-[#0A2A1F] text-white rounded-2xl p-5 shadow-card flex items-center justify-between gap-3 overflow-hidden border border-emerald-800/40">
+        <div className="bg-gradient-to-br from-semantic-action-primary-pressed to-semantic-action-primary-hover text-white rounded-card p-5 shadow-card flex items-center justify-between gap-3 overflow-hidden border border-semantic-action-primary/40">
           <div className="space-y-1 max-w-[200px]">
             <div className="flex items-center gap-1.5 mb-1">
               <Sparkles className="w-4 h-4 text-amber-400" />
@@ -108,8 +108,9 @@ export const PlusPaywallPage: React.FC = () => {
 
           <div className="w-24 h-24 shrink-0 overflow-hidden flex items-center justify-center">
             <img
-              src={FRIGO_ASSETS.illustrations['frigo-plus']}
-              alt="Takosan Plus"
+              src={TAKOSAN_BRAND.mascot.celebrate}
+              alt=""
+              aria-hidden="true"
               className="w-full h-full object-contain"
             />
           </div>
@@ -121,13 +122,15 @@ export const PlusPaywallPage: React.FC = () => {
             const p = plans[key];
             const isSelected = selectedPlan === key;
             return (
-              <div
+              <button
                 key={key}
+                type="button"
+                aria-pressed={isSelected}
                 onClick={() => setSelectedPlan(key)}
                 className={clsx(
-                  'rounded-xl p-4 relative shadow-xs cursor-pointer transition-all active:scale-[0.98]',
+                  'text-left rounded-xl p-4 relative shadow-xs cursor-pointer transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:shadow-t17-focus',
                   isSelected
-                    ? 'bg-white border-emerald-600 ring-1 ring-emerald-600'
+                    ? 'bg-semantic-surface border-semantic-action-primary ring-1 ring-semantic-action-primary'
                     : 'bg-white border border-slate-200/80 hover:border-slate-300'
                 )}
               >
@@ -141,7 +144,7 @@ export const PlusPaywallPage: React.FC = () => {
                   {p.price.toLocaleString('vi-VN')}đ
                 </p>
                 <p className="text-[11px] text-slate-500 mt-0.5">{p.monthlyPriceText}</p>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -152,15 +155,15 @@ export const PlusPaywallPage: React.FC = () => {
           {[
             'Không giới hạn số lượng nguyên liệu trong tủ lạnh',
             'Không giới hạn lượt quét AI tủ lạnh & hóa đơn siêu thị OCR',
-            'Trọn bộ Frigo Week Planner lập thực đơn tuần tự động',
+            'Trọn bộ Takosan Planner lập thực đơn tuần tự động',
             'AI Voice Sous Chef trợ lý nấu ăn rảnh tay thông minh',
             'Đầy đủ 6 nền ẩm thực (Việt, Hàn, Nhật, Trung, Thái, Ý)',
             'Gợi ý công thức nâng cao bởi DeepSeek AI Chef',
             'Chia sẻ tủ lạnh gia đình không giới hạn thiết bị',
           ].map((feature) => (
             <div key={feature} className="flex items-center gap-2.5 text-xs text-slate-700 font-medium py-1">
-              <div className="w-5 h-5 rounded-full bg-emerald-50 border border-emerald-200/60 flex items-center justify-center shrink-0">
-                <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]" />
+              <div className="w-5 h-5 rounded-full bg-semantic-success-soft border border-semantic-action-primary/30 flex items-center justify-center shrink-0">
+                <Check className="w-3.5 h-3.5 text-semantic-action-primary stroke-[2.5]" />
               </div>
               <span>{feature}</span>
             </div>

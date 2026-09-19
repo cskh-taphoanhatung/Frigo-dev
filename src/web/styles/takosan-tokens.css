@@ -33,4 +33,66 @@
   --takosan-radius-xl: 32px;
 
   --takosan-font-ui: 'Nunito', system-ui, sans-serif;
+
+  /* ── T17 semantic layer (Takosan Redesign OS v2.0.0 design-tokens.json) ──
+     Single semantic source. New UI reads these names (or the matching
+     tailwind `semantic-*` utilities); brand hexes never appear in JSX. */
+  --semantic-background: #FFF8F3;
+  --semantic-background-subtle: #FCFBF8;
+  --semantic-surface: #FFFFFF;
+  --semantic-surface-raised: #FFFFFF;
+  --semantic-text-primary: #1F2937;
+  --semantic-text-secondary: #4A4741;
+  --semantic-text-muted: #7B776F;
+  --semantic-text-inverse: #FFFFFF;
+  --semantic-action-primary: #2E7D5B;
+  --semantic-action-primary-hover: #246648;
+  --semantic-action-primary-pressed: #1D553D;
+  --semantic-on-action-primary: #FFFFFF;
+  --semantic-accent: #FF7B6B;
+  --semantic-accent-soft: #FFF0ED;
+  --semantic-success: #2E7D5B;
+  --semantic-success-soft: #E7F5EC;
+  --semantic-warning: #B66A09;
+  --semantic-warning-soft: #FFF3D6;
+  --semantic-danger: #C93D3D;
+  --semantic-danger-soft: #FFF0F0;
+  --semantic-info: #2F6F9F;
+  --semantic-info-soft: #EAF4FB;
+  --semantic-border: #E7E3DA;
+  --semantic-border-strong: #C9C2B6;
+  --semantic-focus: #2E7D5B;
+  --semantic-overlay: rgba(18, 25, 23, 0.52);
+  --semantic-shadow-sm: 0 1px 2px rgba(31, 41, 55, 0.06);
+  --semantic-shadow-md: 0 8px 24px rgba(31, 41, 55, 0.10);
+  --semantic-shadow-lg: 0 18px 48px rgba(31, 41, 55, 0.14);
+  --semantic-shadow-focus: 0 0 0 3px rgba(46, 125, 91, 0.28);
+
+  /* Motion tokens (motion/motion-tokens.json) */
+  --motion-instant: 80ms;
+  --motion-fast: 140ms;
+  --motion-normal: 220ms;
+  --motion-slow: 320ms;
+  --motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+  --motion-easing-enter: cubic-bezier(0, 0, 0.2, 1);
+  --motion-easing-exit: cubic-bezier(0.4, 0, 1, 1);
+
+  /* Content widths (design-tokens.json layout) */
+  --content-compact: 45rem;
+  --content-default: 60rem;
+  --content-wide: 75rem;
+  --nav-mobile: 4.25rem;
+  --rail-tablet: 5rem;
+  --sidebar-desktop: 16rem;
+  --touch-target: 2.75rem;
+
+  /* z-index scale (design-system/z-index.json) */
+  --z-sticky: 20;
+  --z-navigation: 30;
+  --z-popover: 40;
+  --z-backdrop: 50;
+  --z-sheet: 60;
+  --z-dialog: 70;
+  --z-toast: 80;
+  --z-max: 100;
 }

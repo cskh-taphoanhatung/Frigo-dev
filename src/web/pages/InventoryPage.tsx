@@ -143,7 +143,7 @@ export const InventoryPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-takosan-cream pb-36 relative max-w-md sm:max-w-lg md:max-w-2xl mx-auto">
+    <div className="min-h-screen bg-takosan-cream pb-36 relative">
       <TopBar />
 
       <div className="px-4 pt-3 space-y-4 animate-fade-in">
@@ -258,7 +258,7 @@ export const InventoryPage: React.FC = () => {
       </div>
 
       {/* Sticky Bottom Floating CTA */}
-      <div className="fixed bottom-20 left-0 right-0 max-w-md sm:max-w-lg md:max-w-2xl mx-auto px-4 z-30 pointer-events-none">
+      <div className="fixed bottom-20 left-0 right-0 px-4 z-30 pointer-events-none">
         <button
           onClick={() => setIsAddModalOpen(true)}
           className="w-full py-4 px-4 rounded-2xl bg-takosan-green hover:bg-takosan-green-hover text-white font-heading font-bold text-[15px] shadow-float active:scale-98 transition-all pointer-events-auto flex items-center justify-center gap-2 tap-target"
