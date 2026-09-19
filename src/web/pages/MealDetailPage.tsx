@@ -39,7 +39,7 @@ export const MealDetailPage: React.FC = () => {
           ) : planId && planQuery.isPending ? (
             <InlineLoading label="Đang tải thực đơn…" />
           ) : (
-            <p role="status" className="py-12 text-center text-sm text-slate-600">Không tìm thấy thực đơn này.</p>
+            <p role="status" className="py-12 text-center text-sm text-semantic-text-secondary">Không tìm thấy thực đơn này.</p>
           )}
         </div>
       </div>
@@ -62,7 +62,7 @@ export const MealDetailPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-takosan-cream pb-24">
         <TopBar showBack title="Chi tiết món ăn" />
-        <div className="p-6 text-center text-xs text-slate-500 font-medium">
+        <div className="p-6 text-center text-xs text-semantic-text-muted font-medium">
           Không tìm thấy thông tin món ăn này.
           <button
             className="mt-4 px-4 py-2 rounded-xl bg-takosan-green text-white font-bold"
@@ -78,24 +78,24 @@ export const MealDetailPage: React.FC = () => {
   const recipe = targetSlot.recipe;
 
   return (
-    <div className="min-h-screen bg-takosan-cream pb-32 max-w-md mx-auto">
+    <div className="min-h-screen bg-takosan-cream pb-32">
       <TopBar
         showBack
         title={targetSlot.recipe.title}
         subtitle={`${targetDay.dayNameVi} • ${targetSlot.slotType === 'breakfast' ? 'Bữa sáng' : targetSlot.slotType === 'lunch' ? 'Bữa trưa' : 'Bữa tối'}`}
       />
 
-      <div className="px-4 pt-3 max-w-md mx-auto space-y-4">
+      <div className="px-4 pt-3 space-y-4">
         {workflowError && <InlineError message={workflowError} />}
         {/* Hero Recipe Photo & Quick Specs */}
-        <div className="relative w-full h-56 rounded-2xl overflow-hidden bg-slate-100 shadow-xs border border-slate-200/60">
+        <div className="relative w-full h-56 rounded-2xl overflow-hidden bg-semantic-border/60 shadow-xs border border-semantic-border/60">
           <img
             src={resolveRecipeImage(recipe).src}
             alt={recipe.title}
             className="w-full h-full object-cover"
             onError={recipeImageErrorHandler(resolveRecipeImage(recipe).fallbackSrc)}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/20 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-semantic-overlay/85 via-semantic-overlay/20 to-transparent" />
 
           <div className="absolute bottom-3.5 left-4 right-4 text-white">
             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
@@ -107,7 +107,7 @@ export const MealDetailPage: React.FC = () => {
                   {recipe.nutrition.calories} cal/phần
                 </span>
               )}
-              <span className="text-[10px] font-heading font-semibold px-2 py-0.5 rounded-full bg-amber-500 text-white shadow-xs">
+              <span className="text-[10px] font-heading font-semibold px-2 py-0.5 rounded-full bg-semantic-warning text-white shadow-xs">
                 {targetSlot.incrementalCostVnd === 0 ? '0đ có sẵn' : `~${Math.round(targetSlot.incrementalCostVnd / 1000)}k`}
               </span>
             </div>
@@ -116,7 +116,7 @@ export const MealDetailPage: React.FC = () => {
               {recipe.title}
             </h2>
 
-            <div className="flex items-center gap-4 text-xs mt-1 text-slate-200">
+            <div className="flex items-center gap-4 text-xs mt-1 text-white">
               <span className="flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5 text-takosan-mint" />
                 <span>{recipe.cookTimeMinutes} phút</span>
@@ -130,22 +130,22 @@ export const MealDetailPage: React.FC = () => {
         </div>
 
         {/* Smart Expiry Optimization Banner matching screen 5.2 */}
-        {targetSlot.rescuedExpiringIngredients.length > 0 && <div className="bg-amber-50 border border-amber-200/90 rounded-2xl p-3.5 flex items-center gap-3 text-xs text-amber-950 shadow-xs">
-          <div className="w-8 h-8 rounded-xl bg-amber-200/70 flex items-center justify-center shrink-0 text-amber-800">
+        {targetSlot.rescuedExpiringIngredients.length > 0 && <div className="bg-semantic-warning-soft border border-semantic-warning/30 rounded-2xl p-3.5 flex items-center gap-3 text-xs text-semantic-warning-strong shadow-xs">
+          <div className="w-8 h-8 rounded-xl bg-semantic-warning/20 flex items-center justify-center shrink-0 text-semantic-warning-strong">
             <Sparkles className="w-4 h-4" />
           </div>
           <div>
-            <p className="font-heading font-bold text-xs text-amber-900">
+            <p className="font-heading font-bold text-xs text-semantic-warning-strong">
               Tối ưu tủ lạnh
             </p>
-            <p className="text-[11px] text-amber-800/90 mt-0.5">
+            <p className="text-[11px] text-semantic-warning-strong/90 mt-0.5">
               Ưu tiên nguyên liệu sắp hết hạn: {targetSlot.rescuedExpiringIngredients.join(', ')}
             </p>
           </div>
         </div>}
 
         {/* Segmented 3 Tabs: Nguyên liệu | Cách nấu | Dinh dưỡng */}
-        <div className="flex bg-slate-200/70 p-1 rounded-xl">
+        <div className="flex bg-semantic-border/70 p-1 rounded-xl">
           {[
             { id: 'ingredients' as const, label: 'Nguyên liệu' },
             { id: 'steps' as const, label: 'Cách nấu' },
@@ -156,10 +156,10 @@ export const MealDetailPage: React.FC = () => {
               onClick={() => setActiveTab(tab.id)}
               aria-pressed={activeTab === tab.id}
               className={clsx(
-                'flex-1 py-2 rounded-lg text-xs font-heading font-bold transition-all tap-target',
+                'flex-1 py-2 rounded-lg text-xs font-heading font-bold transition-tap tap-target',
                 activeTab === tab.id
                   ? 'bg-white text-takosan-green shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                  : 'text-semantic-text-secondary hover:text-semantic-text-primary'
               )}
             >
               {tab.label}
@@ -169,9 +169,9 @@ export const MealDetailPage: React.FC = () => {
 
         {/* Tab 1: Nguyên liệu (Have vs Need) */}
         {activeTab === 'ingredients' && (
-          <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs space-y-3 animate-fade-in">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-              <h3 className="font-heading font-bold text-sm text-slate-900">
+          <div className="bg-white rounded-2xl p-4 border border-semantic-border shadow-xs space-y-3 animate-fade-in">
+            <div className="flex items-center justify-between border-b border-semantic-border/70 pb-2.5">
+              <h3 className="font-heading font-bold text-sm text-semantic-text-primary">
                 Nguyên liệu ({targetSlot.ingredients.length} món)
               </h3>
               <span className="text-xs font-bold text-takosan-green-deep bg-takosan-mint px-2.5 py-0.5 rounded-full border border-takosan-mint-deep/60">
@@ -187,10 +187,10 @@ export const MealDetailPage: React.FC = () => {
                 return (
                   <div
                     key={ing.ingredientId}
-                    className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 transition-colors border border-slate-100"
+                    className="flex items-center justify-between p-2.5 rounded-xl hover:bg-semantic-background-subtle transition-colors border border-semantic-border/70"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 p-1.5">
+                      <div className="w-10 h-10 rounded-xl bg-semantic-background-subtle border border-semantic-border/70 flex items-center justify-center shrink-0 p-1.5">
                         <img
                           src={imgSrc}
                           alt={ing.name}
@@ -198,11 +198,11 @@ export const MealDetailPage: React.FC = () => {
                         />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-heading font-bold text-xs text-slate-900 truncate">
+                        <p className="font-heading font-bold text-xs text-semantic-text-primary truncate">
                           {ing.name}
                         </p>
-                        <p className="text-[11px] text-slate-500 mt-0.5">
-                          Cần: <span className="font-semibold text-slate-800">{ing.requiredQuantity} {ing.unit}</span>
+                        <p className="text-[11px] text-semantic-text-muted mt-0.5">
+                          Cần: <span className="font-semibold text-semantic-text-primary">{ing.requiredQuantity} {ing.unit}</span>
                           {ing.availableQuantity > 0 && (
                             <span> • Có sẵn: {ing.availableQuantity} {ing.unit}</span>
                           )}
@@ -213,7 +213,7 @@ export const MealDetailPage: React.FC = () => {
                     <div className="text-right shrink-0 ml-2">
                       {isMissing ? (
                         <div className="text-xs">
-                          <span className="font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                          <span className="font-bold text-semantic-warning-strong bg-semantic-warning-soft px-2 py-0.5 rounded-md border border-semantic-warning/30">
                             Cần mua {ing.missingQuantity} {ing.unit}
                           </span>
                         </div>
@@ -232,8 +232,8 @@ export const MealDetailPage: React.FC = () => {
 
         {/* Tab 2: Cách nấu */}
         {activeTab === 'steps' && (
-          <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs space-y-3.5 animate-fade-in">
-            <h3 className="font-heading font-bold text-sm text-slate-900 mb-2">
+          <div className="bg-white rounded-2xl p-4 border border-semantic-border shadow-xs space-y-3.5 animate-fade-in">
+            <h3 className="font-heading font-bold text-sm text-semantic-text-primary mb-2">
               Các bước chế biến
             </h3>
             <div className="space-y-3">
@@ -242,15 +242,15 @@ export const MealDetailPage: React.FC = () => {
                   <div className="w-6 h-6 rounded-full bg-takosan-mint text-takosan-green-deep font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
                     {idx + 1}
                   </div>
-                  <div className="flex-1 text-xs text-slate-700 leading-relaxed">
-                    <p className="font-heading font-bold text-slate-900 mb-0.5">
+                  <div className="flex-1 text-xs text-semantic-text-secondary leading-relaxed">
+                    <p className="font-heading font-bold text-semantic-text-primary mb-0.5">
                       {step.title || `Bước ${idx + 1}`}
                     </p>
                     <p>{step.instruction}</p>
                   </div>
                 </div>
               )) || (
-                <p className="text-xs text-slate-500">Mở chế độ nấu để xem chi tiết từng bước.</p>
+                <p className="text-xs text-semantic-text-muted">Mở chế độ nấu để xem chi tiết từng bước.</p>
               )}
             </div>
           </div>
@@ -258,38 +258,38 @@ export const MealDetailPage: React.FC = () => {
 
         {/* Tab 3: Dinh dưỡng */}
         {activeTab === 'nutrition' && (
-          <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs space-y-3 animate-fade-in">
-            <h3 className="font-heading font-bold text-sm text-slate-900">
+          <div className="bg-white rounded-2xl p-4 border border-semantic-border shadow-xs space-y-3 animate-fade-in">
+            <h3 className="font-heading font-bold text-sm text-semantic-text-primary">
               Giá trị dinh dưỡng (mỗi phần ăn)
             </h3>
             <div className="grid grid-cols-4 gap-2 pt-1 text-center">
-              <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                <p className="text-[10px] text-slate-500 uppercase font-semibold">Calories</p>
-                <p className="font-heading font-bold text-base text-slate-900 mt-1">
+              <div className="bg-semantic-background-subtle p-2.5 rounded-xl border border-semantic-border/70">
+                <p className="text-[10px] text-semantic-text-muted uppercase font-semibold">Calories</p>
+                <p className="font-heading font-bold text-base text-semantic-text-primary mt-1">
                   {recipe.nutrition?.calories ?? '—'}
                 </p>
-                <p className="text-[10px] text-slate-400">kcal</p>
+                <p className="text-[10px] text-semantic-text-muted">kcal</p>
               </div>
-              <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                <p className="text-[10px] text-slate-500 uppercase font-semibold">Đạm</p>
-                <p className="font-heading font-bold text-base text-slate-900 mt-1">
+              <div className="bg-semantic-background-subtle p-2.5 rounded-xl border border-semantic-border/70">
+                <p className="text-[10px] text-semantic-text-muted uppercase font-semibold">Đạm</p>
+                <p className="font-heading font-bold text-base text-semantic-text-primary mt-1">
                   {recipe.nutrition?.proteinG ?? '—'}
                 </p>
-                <p className="text-[10px] text-slate-400">g</p>
+                <p className="text-[10px] text-semantic-text-muted">g</p>
               </div>
-              <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                <p className="text-[10px] text-slate-500 uppercase font-semibold">Béo</p>
-                <p className="font-heading font-bold text-base text-slate-900 mt-1">
+              <div className="bg-semantic-background-subtle p-2.5 rounded-xl border border-semantic-border/70">
+                <p className="text-[10px] text-semantic-text-muted uppercase font-semibold">Béo</p>
+                <p className="font-heading font-bold text-base text-semantic-text-primary mt-1">
                   {recipe.nutrition?.fatG ?? '—'}
                 </p>
-                <p className="text-[10px] text-slate-400">g</p>
+                <p className="text-[10px] text-semantic-text-muted">g</p>
               </div>
-              <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                <p className="text-[10px] text-slate-500 uppercase font-semibold">Carb</p>
-                <p className="font-heading font-bold text-base text-slate-900 mt-1">
+              <div className="bg-semantic-background-subtle p-2.5 rounded-xl border border-semantic-border/70">
+                <p className="text-[10px] text-semantic-text-muted uppercase font-semibold">Carb</p>
+                <p className="font-heading font-bold text-base text-semantic-text-primary mt-1">
                   {recipe.nutrition?.carbG ?? '—'}
                 </p>
-                <p className="text-[10px] text-slate-400">g</p>
+                <p className="text-[10px] text-semantic-text-muted">g</p>
               </div>
             </div>
           </div>
@@ -297,22 +297,24 @@ export const MealDetailPage: React.FC = () => {
       </div>
 
       {/* Sticky Bottom Dual Action Buttons matching Screen 5.2 */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto p-4 bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-30 flex gap-3 shadow-lg">
-        <button
-          onClick={() => openSwap(mealId!)}
-          className="flex-1 py-3.5 px-4 rounded-2xl bg-white border-2 border-takosan-green text-takosan-green-deep font-heading font-bold text-sm hover:bg-takosan-mint active:scale-98 transition-all flex items-center justify-center gap-1.5"
-        >
-          <ArrowRightLeft className="w-4 h-4 text-takosan-green" />
-          <span>Đổi món</span>
-        </button>
+      <div className="fixed bottom-[calc(68px+env(safe-area-inset-bottom,0px))] md:bottom-0 left-0 right-0 md:left-20 lg:left-64 p-4 bg-white/95 backdrop-blur-md border-t border-semantic-border z-30 shadow-lg">
+        <div className="mx-auto w-full max-w-[var(--content-wide)] flex gap-3">
+          <button
+            onClick={() => openSwap(mealId!)}
+            className="flex-1 py-3.5 px-4 rounded-2xl bg-white border-2 border-takosan-green text-takosan-green-deep font-heading font-bold text-sm hover:bg-takosan-mint active:scale-98 transition-tap flex items-center justify-center gap-1.5"
+          >
+            <ArrowRightLeft className="w-4 h-4 text-takosan-green" />
+            <span>Đổi món</span>
+          </button>
 
-        <button
-          onClick={() => navigate(`/cook/${recipe.slug}`)}
-          className="flex-1 py-3.5 px-4 rounded-2xl bg-takosan-green hover:bg-takosan-green-hover text-white font-heading font-bold text-sm shadow-md active:scale-98 transition-all flex items-center justify-center gap-2"
-        >
-          <ChefHat className="w-5 h-5" />
-          <span>Bắt đầu nấu</span>
-        </button>
+          <button
+            onClick={() => navigate(`/cook/${recipe.slug}`)}
+            className="flex-1 py-3.5 px-4 rounded-2xl bg-takosan-green hover:bg-takosan-green-hover text-white font-heading font-bold text-sm shadow-md active:scale-98 transition-tap flex items-center justify-center gap-2"
+          >
+            <ChefHat className="w-5 h-5" />
+            <span>Bắt đầu nấu</span>
+          </button>
+        </div>
       </div>
 
       <MealSwapSheet />

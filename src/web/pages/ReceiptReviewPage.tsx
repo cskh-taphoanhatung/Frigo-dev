@@ -261,12 +261,12 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
   };
 
   return (
-    <div className="min-h-screen bg-takosan-cream pb-[calc(12rem+env(safe-area-inset-bottom))] max-w-md mx-auto">
+    <div className="min-h-screen bg-takosan-cream pb-[calc(12rem+env(safe-area-inset-bottom))]">
       <TopBar showBack title="Chi tiết Hóa đơn" subtitle="Bóc tách tự động bởi AI Vision" />
 
       {/* Success Toast */}
       {successToast && (
-        <div className="fixed top-16 left-4 right-4 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-200 max-w-md mx-auto border border-white/10">
+        <div className="fixed top-16 left-4 right-4 z-50 bg-semantic-text-primary text-semantic-text-inverse px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 animate-fade-in max-w-md mx-auto border border-white/10">
           <CheckCircle2 className="w-5 h-5 text-takosan-mint shrink-0" />
           <p className="text-xs font-semibold leading-tight">{successToast}</p>
         </div>
@@ -275,12 +275,12 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
       <div className="px-4 pt-3 space-y-4">
         {isPending && <ScanProcessingState stage={liveReceipt.status === 'processing' ? 'analyzing' : 'queued'} kind="receipt" compact />}
         {isPending && !pollError && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          <div className="rounded-xl border border-semantic-warning/30 bg-semantic-warning-soft px-3 py-2 text-xs text-semantic-warning-strong">
             Hóa đơn đang được AI xử lý nền. Trang sẽ tự cập nhật khi hoàn tất...
           </div>
         )}
         {pollError && (
-          <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800 flex items-center justify-between gap-3">
+          <div role="alert" className="rounded-xl border border-semantic-danger/30 bg-semantic-danger-soft px-3 py-2 text-xs text-semantic-danger-strong flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{pollError}</span>
@@ -310,18 +310,18 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
           </p>
         )}
         {/* Receipt Header Card */}
-        <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-xs space-y-3">
+        <div className="bg-white rounded-xl p-4 border border-semantic-border shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-10 h-10 rounded-xl bg-takosan-mint border border-takosan-mint-deep flex items-center justify-center text-takosan-green-deep shrink-0">
                 <Store className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-heading font-bold text-sm text-slate-900">
+                <h3 className="font-heading font-bold text-sm text-semantic-text-primary">
                   {liveReceipt.merchantName || 'Không rõ cửa hàng'}
                 </h3>
-                <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                  <Calendar className="w-3 h-3 text-slate-400" />
+                <p className="text-xs text-semantic-text-muted flex items-center gap-1 mt-0.5">
+                  <Calendar className="w-3 h-3 text-semantic-text-muted" />
                   <span>{presentPurchaseDate(liveReceipt.purchaseDate)}</span>
                   {liveReceipt.invoiceNumber && <span>• {liveReceipt.invoiceNumber}</span>}
                 </p>
@@ -332,9 +332,9 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
             </span>
           </div>
 
-          <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-            <span className="text-xs text-slate-500">Tổng hóa đơn (OCR):</span>
-            <span data-testid="receipt-total" className="font-heading font-bold text-lg text-slate-900">
+          <div className="flex items-center justify-between pt-2 border-t border-semantic-border/70">
+            <span className="text-xs text-semantic-text-muted">Tổng hóa đơn (OCR):</span>
+            <span data-testid="receipt-total" className="font-heading font-bold text-lg text-semantic-text-primary">
               {presentPrice(liveReceipt.totalAmountVnd)}
             </span>
           </div>
@@ -342,10 +342,10 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
 
         {/* Extracted Items Count */}
         <div className="flex items-center justify-between px-1">
-          <h4 className="font-heading font-semibold text-sm text-slate-900">
+          <h4 className="font-heading font-semibold text-sm text-semantic-text-primary">
             Hàng hóa nhận diện ({items.length} món)
           </h4>
-          <span className="text-xs text-slate-500">Kiểm tra từng dòng</span>
+          <span className="text-xs text-semantic-text-muted">Kiểm tra từng dòng</span>
         </div>
 
         {/* Items List */}
@@ -362,11 +362,11 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
                 key={item.id}
                 data-testid="receipt-line"
                 className={clsx('bg-white rounded-xl p-3 border shadow-xs space-y-2',
-                  item.rejected ? 'border-rose-200 bg-rose-50/40 opacity-70' : 'border-slate-200/80')}
+                  item.rejected ? 'border-semantic-danger/30 bg-semantic-danger-soft/40 opacity-70' : 'border-semantic-border')}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex flex-1 items-center gap-3 min-w-0">
-                    <div className="w-12 h-12 rounded-lg bg-slate-50 border border-slate-100 p-1.5 shrink-0 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-lg bg-semantic-background-subtle border border-semantic-border/70 p-1.5 shrink-0 flex items-center justify-center">
                       <img
                         src={getIngredientImage(item.canonicalId || item.rawName)}
                         alt={item.rawName}
@@ -381,7 +381,7 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
                         onChange={(event) => updateItem(item.id, { rawName: event.target.value })}
                         disabled={disabled}
                         aria-invalid={!item.rejected && !item.rawName.trim()}
-                        className="w-full font-heading font-semibold text-sm text-slate-900 bg-transparent border-b border-transparent focus:border-takosan-green focus:outline-none disabled:text-slate-400"
+                        className="w-full min-h-11 font-heading font-semibold text-sm text-semantic-text-primary bg-transparent border-b border-transparent focus:border-takosan-green focus:outline-none disabled:text-semantic-text-muted"
                       />
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
                         <span className="text-xs font-semibold text-takosan-green" data-testid="receipt-price">
@@ -390,15 +390,15 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
                         <span
                           data-testid="receipt-confidence"
                           className={clsx('text-[10px] px-1.5 py-0.5 rounded font-semibold border',
-                            confidence.tone === 'unknown' ? 'bg-slate-100 text-slate-600 border-slate-200'
-                              : confidence.tone === 'low' ? 'bg-rose-50 text-rose-800 border-rose-200'
-                                : confidence.tone === 'medium' ? 'bg-amber-50 text-amber-900 border-amber-200'
+                            confidence.tone === 'unknown' ? 'bg-semantic-border/60 text-semantic-text-secondary border-semantic-border'
+                              : confidence.tone === 'low' ? 'bg-semantic-danger-soft text-semantic-danger-strong border-semantic-danger/30'
+                                : confidence.tone === 'medium' ? 'bg-semantic-warning-soft text-semantic-warning-strong border-semantic-warning/30'
                                   : 'bg-takosan-mint text-takosan-green-deep border-takosan-mint-deep/60')}
                         >
                           {confidence.label}
                         </span>
                       </div>
-                      {!item.canonicalId && <p className="text-[11px] text-amber-800 mt-1">Chưa nhận diện nguyên liệu chuẩn</p>}
+                      {!item.canonicalId && <p className="text-[11px] text-semantic-warning-strong mt-1">Chưa nhận diện nguyên liệu chuẩn</p>}
                     </div>
                   </div>
 
@@ -409,14 +409,14 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
                       disabled={!isReady || isSubmitting}
                       aria-label={item.rejected ? `Khôi phục ${item.rawName}` : `Bỏ qua ${item.rawName}`}
                       aria-pressed={Boolean(item.rejected)}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors tap-target"
+                      className="p-1.5 text-semantic-text-muted hover:text-semantic-danger hover:bg-semantic-danger-soft rounded-lg transition-colors tap-target"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-xs text-slate-600">
+                <div className="grid grid-cols-2 gap-2 text-xs text-semantic-text-secondary">
                   <label htmlFor={`receipt-quantity-${item.id}`}>
                     Số lượng
                     <input
@@ -428,14 +428,14 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
                       onChange={(event) => updateItem(item.id, {
                         estimatedQuantity: event.target.value === '' ? '' : Number(event.target.value),
                       })}
-                      className="w-full min-w-0 mt-1 rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-900"
+                      className="w-full min-w-0 mt-1 min-h-11 rounded-lg border border-semantic-border bg-semantic-background-subtle px-2 py-2.5 text-semantic-text-primary"
                     />
                   </label>
                   <label htmlFor={`receipt-unit-${item.id}`}>
                     Đơn vị
                     <select id={`receipt-unit-${item.id}`} value={item.unit} disabled={disabled}
                       onChange={(event) => updateItem(item.id, { unit: event.target.value as StandardUnit })}
-                      className="w-full min-w-0 mt-1 rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-900">
+                      className="w-full min-w-0 mt-1 min-h-11 rounded-lg border border-semantic-border bg-semantic-background-subtle px-2 py-2.5 text-semantic-text-primary">
                       {RECEIPT_UNITS.map((unit) => <option key={unit.value} value={unit.value}>{unit.label}</option>)}
                     </select>
                   </label>
@@ -445,7 +445,7 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
                     value={item.storage}
                     disabled={disabled}
                     onChange={(event) => updateItem(item.id, { storage: event.target.value as ReceiptItemState['storage'] })}
-                    className="w-full min-w-0 mt-1 rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-900"
+                    className="w-full min-w-0 mt-1 min-h-11 rounded-lg border border-semantic-border bg-semantic-background-subtle px-2 py-2.5 text-semantic-text-primary"
                   >
                     <option value="fridge">Tủ mát</option>
                     <option value="freezer">Tủ đông</option>
@@ -456,16 +456,16 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
                     <input id={`receipt-expiry-${item.id}`} type="date" value={item.expiryDate ?? ''}
                       disabled={disabled}
                       onChange={(event) => updateItem(item.id, { expiryDate: event.target.value || undefined, expiryEstimated: false })}
-                      className="w-full min-w-0 mt-1 rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-900" />
+                      className="w-full min-w-0 mt-1 min-h-11 rounded-lg border border-semantic-border bg-semantic-background-subtle px-2 py-2.5 text-semantic-text-primary" />
                   </label>
                 </div>
-                {!isConfirmed ? <div className="text-[11px] text-slate-500 space-y-1">
+                {!isConfirmed ? <div className="text-[11px] text-semantic-text-muted space-y-1">
                   <p data-testid="receipt-expiry-status">{item.expiryDate
                     ? item.expiryEstimated ? 'Hạn dùng ước tính' : 'Hạn dùng do bạn cung cấp'
                     : 'Chưa cung cấp hạn dùng. Hệ thống có thể gợi ý hạn dùng ước tính.'}</p>
                   {item.expiryDate && <button disabled={disabled} onClick={() => updateItem(item.id, { expiryDate: undefined, expiryEstimated: false })}
                     className="underline tap-target">Không rõ hạn dùng</button>}
-                </div> : <p className="text-[11px] text-slate-500" data-testid="receipt-expiry-status">
+                </div> : <p className="text-[11px] text-semantic-text-muted" data-testid="receipt-expiry-status">
                   {/* T13R-A P2-B: a confirmed line reports the accepted expiry the server recorded, never a re-derived guess. */}
                   {item.rejected ? 'Đã bỏ qua: không có hạn dùng.'
                     : item.expiryDate
@@ -474,8 +474,8 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
                         ? 'Đã xác nhận không rõ hạn dùng.'
                         : 'Hạn dùng đã lưu: xem chi tiết lô trong tủ lạnh.'}
                 </p>}
-                {item.unitPriceVnd != null && <p className="text-[11px] text-slate-500">Đơn giá OCR: {presentPrice(item.unitPriceVnd)}</p>}
-                <details className="text-xs text-slate-600 break-words">
+                {item.unitPriceVnd != null && <p className="text-[11px] text-semantic-text-muted">Đơn giá OCR: {presentPrice(item.unitPriceVnd)}</p>}
+                <details className="text-xs text-semantic-text-secondary break-words">
                   <summary className="cursor-pointer py-1 font-medium">Xem OCR gốc và giá trị xác nhận{corrected ? ' · Đã chỉnh sửa' : ''}</summary>
                   <p data-testid="receipt-raw-evidence" className="mt-1">
                     OCR gốc: {raw?.rawName ?? 'Chưa rõ tên'} · {raw?.estimatedQuantity ?? 'Chưa rõ số lượng'} · {raw?.unit ?? 'Chưa rõ đơn vị'}
@@ -486,10 +486,10 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
                 </details>
                 <div className="text-[11px]">
                   {!item.rejected && (!item.rawName.trim() || !validQuantity(item.estimatedQuantity) || !validExpiry(item.expiryDate)) && (
-                    <p role="alert" className="text-rose-700">Cần có tên, số lượng lớn hơn 0 (tối đa 10.000) và ngày hợp lệ.</p>
+                    <p role="alert" className="text-semantic-danger-strong">Cần có tên, số lượng lớn hơn 0 (tối đa 10.000) và ngày hợp lệ.</p>
                   )}
                   {item.rejected && (
-                    <span className="text-[10px] font-semibold text-rose-700">Đã bỏ qua khỏi tủ lạnh</span>
+                    <span className="text-[10px] font-semibold text-semantic-danger-strong">Đã bỏ qua khỏi tủ lạnh</span>
                   )}
                 </div>
               </div>
@@ -497,43 +497,45 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
           })}
 
           {items.length === 0 && !isPending && !pollError && (
-            <div className="text-center py-10 bg-white rounded-xl p-6 border border-slate-200/80">
-              <p className="text-xs text-slate-400">Không còn món nào trong hóa đơn</p>
+            <div className="text-center py-10 bg-white rounded-xl p-6 border border-semantic-border">
+              <p className="text-xs text-semantic-text-muted">Không còn món nào trong hóa đơn</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Floating Action Bottom */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-40 max-w-md mx-auto space-y-2 shadow-lg">
-        {submitError && <p role="alert" className="text-xs text-rose-800">{submitError}</p>}
-        {isConfirmed ? <Button fullWidth onClick={() => navigate('/fridge')}>Xem tủ lạnh</Button> : <>
-        <Button
-          fullWidth
-          size="lg"
-          disabled={!canSubmit}
-          onClick={() => void handleConfirm()}
-          className="flex items-center justify-center gap-2"
-        >
-          <ShoppingBag className="w-4 h-4" />
-          <span>{isSubmitting ? 'Đang lưu…' : acceptedItems.length === 0 && items.length > 0
-            ? `Lưu ${items.length} dòng bỏ qua` : `Nhập ${acceptedItems.length} món vào Tủ lạnh`}</span>
-        </Button>
-
-        {currentPlan && (
+      <div className="fixed bottom-[calc(68px+env(safe-area-inset-bottom,0px))] md:bottom-0 left-0 right-0 md:left-20 lg:left-64 p-4 md:pb-[calc(1rem+env(safe-area-inset-bottom))] bg-white/95 backdrop-blur-md border-t border-semantic-border z-40 shadow-lg">
+        <div className="mx-auto w-full max-w-[var(--content-wide)] space-y-2">
+          {submitError && <p role="alert" className="text-xs text-semantic-danger-strong">{submitError}</p>}
+          {isConfirmed ? <Button fullWidth onClick={() => navigate('/fridge')}>Xem tủ lạnh</Button> : <>
           <Button
             fullWidth
-            variant="outline"
-            size="md"
+            size="lg"
             disabled={!canSubmit}
-            onClick={() => void handleConfirm(true)}
-            className="flex items-center justify-center gap-2 text-slate-800"
+            onClick={() => void handleConfirm()}
+            className="flex items-center justify-center gap-2"
           >
-            <CalendarCheck className="w-4 h-4 text-takosan-green" />
-            <span>Lưu hóa đơn & mở danh sách tuần</span>
+            <ShoppingBag className="w-4 h-4" />
+            <span>{isSubmitting ? 'Đang lưu…' : acceptedItems.length === 0 && items.length > 0
+              ? `Lưu ${items.length} dòng bỏ qua` : `Nhập ${acceptedItems.length} món vào Tủ lạnh`}</span>
           </Button>
-        )}
-        </>}
+
+          {currentPlan && (
+            <Button
+              fullWidth
+              variant="outline"
+              size="md"
+              disabled={!canSubmit}
+              onClick={() => void handleConfirm(true)}
+              className="flex items-center justify-center gap-2 text-semantic-text-primary"
+            >
+              <CalendarCheck className="w-4 h-4 text-takosan-green" />
+              <span>Lưu hóa đơn & mở danh sách tuần</span>
+            </Button>
+          )}
+          </>}
+        </div>
       </div>
     </div>
   );

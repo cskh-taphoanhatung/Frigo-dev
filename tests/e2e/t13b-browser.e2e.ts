@@ -130,7 +130,10 @@ test('F UNKNOWN expiry is distinct; explicit date and storage edit become canoni
   const id = 'preview-stock-egg';
   await page.goto(`/ingredients/${id}`);
   await expect(page.getByTestId('lot-expiry')).toHaveText('Chưa rõ hạn dùng');
-  await expect(page.getByTestId('lot-expiry')).toHaveClass(/bg-slate-100/);
+  // UNKNOWN wears the neutral semantic tone (T17 token migration), never the
+  // fresh/mint or legacy emerald styling that would assert freshness.
+  await expect(page.getByTestId('lot-expiry')).toHaveClass(/bg-semantic-border\/60/);
+  await expect(page.getByTestId('lot-expiry')).not.toHaveClass(/bg-takosan-mint/);
   await expect(page.getByTestId('lot-expiry')).not.toHaveClass(/bg-emerald/);
   await page.getByRole('button', { name: 'Sửa thông tin nguyên liệu' }).click();
   await layout(page, page.locator('form input, form select, form button'));

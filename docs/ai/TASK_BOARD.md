@@ -1,5 +1,59 @@
 # Frigo / Takosan current task board — 2026-09-19
 
+## Current T17 — Takosan UI V2 redesign — `T17_PARTIAL` (2026-09-19)
+
+- [done] Baseline gates on live main `769d08597563f816ef9c1dd9523fdafb687de3e2`: lint, typecheck, vitest 178 files / 4046 tests, migration smoke (sqlite3 CLI installed per repo setup), build — all PASS; branch `feat/t17-takosan-ui-v2` created; `main` untouched.
+- [done] Audit recorded in `docs/ai/T17_UI_V2_AUDIT.md` (routes, migration map, Frigo leaks, phone wrappers, Week/Planner + settings + notification overlap, fake-flow survey).
+- [done] Semantic design system: `--semantic-*` tokens + tailwind `semantic-*` family, kit type/radius/shadow scales, `motion@13.4.0` with reduced-motion provider, shared primitives (Page/PageHeader/Switch/SettingsRow/StatusBadge/UnavailableState/…).
+- [done] AppShell V2: bottom nav / 80px rail / 256px sidebar from one navigation model, immersive-only hiding, real links + `aria-current`; legacy `BottomNav` retired with migrated equivalent test.
+- [done] Settings IA split (screens 19-26) on real server contracts; inbox/preferences separated; fabricated household invite/join/QR and privacy export/delete fakes replaced with honest unavailable states.
+- [done] Planner canonical (flag-gated) with param-preserving Week redirects; onboarding step routes; phone-width emulation removed from 20+ shell pages; fixed CTAs clear the nav/rail/sidebar; Landing/Auth h1 fixes.
+- [done] Brand cleanup: zero `emerald-*`, zero user-visible "Frigo Plus"; VietQRModal copy rebranded presentation-only.
+- [done] Gates after implementation: lint PASS, typecheck PASS, `pnpm test` 178/4046 PASS, `pnpm check:migrations` PASS, `pnpm build` PASS, T17 Playwright **33/33 PASS** at 390/768/1440.
+- [done] PayOS/payment zero application change certified: `git diff 769d085 -- src/worker` empty; payment path diff presentation-only.
+- [limit] `T17_COMPLETE` not claimed. Remaining: AuthPage (930 lines) decomposition, per-screen motion/semantic-token migration, visual matrix at 360/430/1024 + state classes + canonical screenshots, full a11y pass. Exact list in `docs/ai/T17_UI_V2_REPORT.md`.
+- [safety] No merge, deploy, D1/migration, PayOS, Inventory Truth, OCR/AI, recipe-authority, or planning-algorithm change. Production untouched.
+
+### T17 continuation 2 (same day)
+
+- [done] AuthPage decomposed into `features/auth/*` components with mode-presence transition; security semantics byte-compatible (Turnstile single-use tokens, GSI retry/width, DEC-012 deferred transfer, private-session capture); auth suites **11/11 PASS**.
+- [done] No-op animation utilities retired (zero `animate-in`/`zoom-in-95`/`slide-in-from-*` remain); overlay/toast/step entrances now use reduced-motion-safe utilities.
+- [done] T17 visual suite extended to all six certification widths; canonical screenshots of 17 surfaces captured at 390/768/1440; destructive-dialog focus and empty-inbox honesty asserted.
+- [done] Real 360px `/shopping` horizontal overflow found by the matrix and fixed (`min-w-0` on quick-add controls).
+- [done] Gates after continuation: lint PASS, typecheck PASS, vitest **178/4046 PASS**, migration smoke PASS, build PASS, T17 Playwright **42/42 PASS** at certified widths (full matrix green).
+- [limit] Still `T17_PARTIAL`: per-screen `transition-all`/motion-primitive migration, semantic-token migration of legacy-styled pages (Home/Inventory/Recipes/Week fallbacks/scan/cooking), partial state-class matrix, and human design review of screenshots.
+- [safety] Worker/PayOS diff zero; `main` untouched; production untouched.
+
+### T17 continuation 3 (same day)
+
+- [done] All 86 `transition-all` utilities replaced with the scoped `transition-tap` token (explicit property list; zero remain).
+- [done] Motion stories: cooking-step directional Slide, inventory AnimatePresence/layout keyed by server identity, scan crossfade verified reduced-motion-safe.
+- [done] State-class matrix: bottom sheet, honest offline banner (browser events), 200% text zoom survival added to the T17 suite.
+- [done] Real 200% zoom overflow defects found and fixed (nav min-content, Profile/Home truncation, RecipeCard/IngredientRow wrapping, inventory search `min-w-0`); probed clean at 390/360 desktop + mobile emulation.
+- [done] Gates: lint PASS, typecheck PASS, vitest 178/4046 PASS, migration smoke PASS, build PASS; T17 matrix green (two test-code defects fixed test-only and re-verified 12/12 at all six widths).
+- [limit] Still `T17_PARTIAL`: 856 `slate-*` sites on legacy pages (kit permits `takosan-*` brand aliases), human screenshot review pending, T13 Playwright suite never run in this environment.
+- [safety] No product-code change after the full-suite run; worker/PayOS diff zero; production untouched.
+
+### T17 continuation 4 — full-diff code review (same day)
+
+### T17 continuation 5 — release preparation (same day)
+
+- [done] P1: kebab-case Tailwind `semantic` keys — 25/28 semantic utilities were compiling to nothing; guard test added; built-CSS audit 28/28.
+- [done] Fresh canonical screenshots at 390/768/1440 inspected; T17 suite 51/51 at those widths; vitest 178/4047; lint/typecheck/build PASS.
+- [done] PR opened `feat/t17-takosan-ui-v2 → main` with verification evidence; CI hosted tracked.
+- [operator] Merge → main CI → staging auto-deploy → manual production dispatch (`DEPLOYMENT.md` §Production gate). Agent does not deploy (rule 19).
+
+- [done] 4b second pass: FoodPreferences no longer flips onboarding client-side; per-nav indicator `layoutId`; dev-OTP autofill is a `<button>`.
+- [done] First local T13 Playwright run: 54/60 → **60/60** (logout test target `/profile`→`/me`; presentation test's fake-onboarding shim replaced by the real flow — pre-existing failure confirmed on base).
+- [done] Full T17 matrix: 360 16/16; other widths 82 pass + 2 by-design skips; one test-only `networkidle` stall fixed and re-verified 12/12 at all six widths.
+
+- [done] Reviewed all 76 changed files against base `769d085` for routing, tenancy, honesty, a11y, motion and fixed-layer defects.
+- [done] Fixed P1: unscoped query keys on new settings pages (tenancy leak risk) → scoped `queryKeys` + invalidate-after-write; offline planning save falsely reporting success → pending-sync state; offline planning read hanging → unavailable state.
+- [done] Fixed P2: TopBar hub detection/legacy nav targets; `/scan/*` review workspaces wrongly immersive + ReceiptReview CTA/nav collision; auth label/OTP/reveal/autocomplete a11y; Switch `aria-describedby` + transform thumb; BottomCTA/StickyActions under the mobile nav.
+- [done] Fixed P3: fabricated household status badge; inventory row enter/exit motion. Test-only: screenshot spec `networkidle` stall.
+- [done] Gates: lint PASS, typecheck PASS, vitest 178/4046 PASS, migrations PASS, build PASS, focused UI/auth 65/65, T17 regressions re-verified 6/6. Worker diff 0.
+- [limit] Still `T17_PARTIAL`: 856 `slate-*` sites, human screenshot review, T13 Playwright local run.
+
 ## Current T16 follow-up — PWA cache and Google recovery deployed (2026-09-19)
 
 - [done] Confirmed live `/auth` and `/sw.js` were edge-cache hits and production still served fixed cache `takosan-pwa-v2`; repository path mismatch was `/sw.js` registration versus `/service-worker.js` header rule.

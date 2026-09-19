@@ -1,5 +1,85 @@
 # Frigo / Takosan current handoff — 2026-09-19
 
+## Current handoff — T17 continuation 6: contract gaps closed, `T17_PARTIAL` (2026-09-19)
+
+- **Branch/PR:** `feat/t17-takosan-ui-v2`, PR #44, repository id `1368281478`
+  (`tako-san1/Frigo-dev`). Implementation commits `dfdd0ab`, `227e36b`,
+  `8f25fbd`, `463bf29`; docs checkpoint follows (hash cannot be recorded in
+  itself — see `git log`).
+- **What changed:** `/auth/verify` real route + code-free tab context + honest
+  empty state; 27-screen registry certification; 991-site semantic-token
+  migration with an enforced residual allowlist (payment UI only); WCAG-AA
+  contrast/axe/h1/alt/44px/dialog/OTP certification with product fixes
+  (viewport zoom re-enabled, `text-muted` darkened, `BottomSheet` +
+  `useModalFocus`); reduced-motion certification on auth/onboarding/sheet/
+  dialog/cooking/planner/scan; canonical `scan-review` + state-matrix captures;
+  visual-review fixes (canvas width cap, aligned fixed bars, wrappers).
+- **Exact verification at final HEAD:** `docs/ai/T17_UI_V2_REPORT.md`
+  §Verification (lint, typecheck, full vitest, `check:migrations`, build,
+  T13 suite at 360/390/430, T17 suite at 360/390/430/768/1024/1440, residual
+  greps, `git diff 769d085 -- src/worker` = 0, payment boundary, `git diff
+  --check`, `git status --short`). Logs under `.hoplite/artifacts/t17-cert/`.
+- **Limitations:** the kit ZIP was not present in the sandbox — board
+  comparison and `SCREEN_REGISTRY` diff are outstanding (registry reconstructed
+  with per-row `source` tags in `tests/e2e/t17-ui/screen-registry.ts`); no
+  human screen-reader walkthrough; virtual keyboard approximated by a shrunk
+  viewport. `sqlite3` had to be installed in-session (repo setup script line).
+- **Next exact action:** with the ZIP in hand, compare
+  `.hoplite/artifacts/t17-cert/canonical/{390,768,1440}/*.png` against the
+  three Takosan boards and `screens/*.md`, diff `screen-registry.ts` vs
+  `SCREEN_REGISTRY`, run an NVDA/VoiceOver pass over the canonical surfaces;
+  fix anything found, then set `T17_COMPLETE`. Do not merge/deploy from this
+  branch without the operator path in `DEPLOYMENT.md`.
+- **Harness notes:** kill any leftover `security-preview.mjs` on :3000 before
+  Playwright; the T17 config clears its output dir per run, so the matrix
+  script copies captures to `.hoplite/artifacts/t17-cert/{canonical,states}`.
+
+## Previous handoff — T17 Takosan UI V2 partial redesign on feat/t17-takosan-ui-v2
+
+### Continuation 4 (same day) — full-diff review, latent defects fixed
+
+### Continuation 5 (same day) — release preparation
+
+- **P1 found from screenshots, not tests:** camelCase `semantic` colour keys in `tailwind.config.js` meant `bg-semantic-action-primary`, `text-semantic-text-*`, `*-soft`, `border-strong` etc. compiled to **no CSS**. Fixed (kebab keys); `takosan-brand.test.tsx` now guards every `semantic-*` utility in `src/web` against the config. Re-verified: vitest 178/4047, T17 390/768/1440 51/51, build PASS.
+- **Release path:** PR into `main` opened from this branch; CI hosted must be green; staging deploys automatically from `main`; production is a manual operator dispatch (`Deploy` workflow, `production` Environment, `confirm_production`, full SHA + `hardened_sha`). No new migrations in this branch. The agent does not deploy (rule 19).
+- **Still open before `T17_COMPLETE`:** slate-palette migration (856 sites), human design review of the captures (this continuation shows why), WCAG contrast on legacy pages.
+
+**4b addendum:** three more fixes (FoodPreferences onboarding-flag leak; per-nav `layoutId`; dev-OTP `<button>`). **T13 suite first local run: 60/60** after two test-only fixes — `/profile`→`/me` target, and the presentation test's `localStorage.frigo_onboarded` shim (broken on base by migration 0038, not by T17) replaced with the real onboarding flow. Do **not** seed the preview profile as onboarded: the T17 screenshot spec and screens 04-06 need the fresh preview user to land on onboarding. Full T17 matrix green after one more test-only `networkidle` fix (12/12 re-verify, 6 widths). Prefer `--reporter=line` and make sure no `security-preview.mjs` is left listening on :3000 before a Playwright run — a leaked server from a killed run caused spurious 1.0 m timeouts once.
+
+- **Scope:** every file in `git diff 769d085..HEAD` reviewed; 10 product defects + 1 test defect fixed. Table with severity/finding/fix in `docs/ai/T17_UI_V2_REPORT.md` §Continuation 4.
+- **Most important:** (P1) new settings pages had unscoped React Query keys — fixed with scoped `queryKeys.foodPreferences()`/`planningPreferences()` and invalidate-after-write; (P1) offline planning save showed success while only queued — now explicit pending-sync copy; (P1) offline planning read hung — now honest unavailable state.
+- **IA/layout:** TopBar detects `/me`, navigates to `/me` and `/settings/app` directly; immersive shell is camera-only so `/scan/:id/review` and `/scan/receipt-review` keep navigation; ReceiptReview wrapper removed and its CTA clears the nav; `BottomCTA`/`StickyActions` primitives clear the mobile nav.
+- **A11y/motion:** auth fields label-associated with ids, autocomplete, OTP group/digit names, reveal-button name/state, mode switcher `aria-pressed`; Switch gets `aria-describedby` and a transform-driven, reduced-motion-governed thumb; inventory rows fade on enter/exit.
+- **Verification:** lint PASS, typecheck PASS, full vitest **178/4046 PASS**, migration smoke PASS, build PASS, focused UI/auth **65/65**, T17 Playwright at 390 + 1440 (33 pass + screenshot timeout fixed test-only, then 6/6 re-verified incl. two new regression assertions). `git diff 769d085 -- src/worker` = 0 lines.
+- **Next exact actions:** unchanged — slate-palette semantic migration, human screenshot review before baselining, first local T13 Playwright run. Status `T17_PARTIAL`.
+
+### Continuation 3 (same day, same branch)
+
+- **Scoped transitions:** named `transition-tap` token added to tailwind (explicit `transform, background-color, border-color, color, box-shadow, opacity`; layout never transitions); all 86 `transition-all` sites across 32 files migrated; zero remain.
+- **Motion stories:** cooking steps slide directionally (+24px forward, reverse on Back; timers never depend on animation frames); inventory rows animate add/remove/layout via AnimatePresence + layout keyed by stable server identity (instant under reduced motion); scan camera→processing crossfade verified already reduced-motion-safe over preserved context.
+- **State matrix:** new suite tests — inventory bottom sheet (labelled/closable/in-viewport), honest offline banner (driven by browser offline/online events; Playwright `setOffline` only fails requests and is not this component's trigger), and 200% text-zoom survival on Home/Fridge/Recipes/Shopping/Profile.
+- **Real zoom bugs fixed:** the 200% gate exposed rem-sized nav icons forcing flex min-content overflow, Profile-hub/Home truncation gaps, unwrappable RecipeCard meta and IngredientRow action rows, and a missing `min-w-0` on the inventory search. Verified clean by probe at 390 and 360 (desktop and mobile emulation) and by the suite at all six widths (settled measurement).
+- **Gates:** lint PASS, typecheck PASS, full vitest **178/4046 PASS**, migration smoke PASS, build PASS (436.34 kB / 120.90 kB gzip). Full T17 matrix run passed except two test-code defects (case-sensitive offline regex; zoom measured pre-settle) — fixed test-only and re-verified **12/12** at all six widths; no product code changed after the full-suite run.
+- **Next exact actions:** (1) migrate the 856 remaining `slate-*` neutral-palette sites on legacy pages to semantic tokens (brand `takosan-*` aliases may stay per the kit); (2) human design-review of the canonical screenshots before baselining; (3) first local run of the T13 Playwright inventory suite. Status stays `T17_PARTIAL`.
+- **Safety:** worker/PayOS diff zero; `main` untouched; production untouched.
+
+### Continuation 2 (same day, same branch)
+
+- **Auth decomposed:** `AuthPage.tsx` is now a state machine composing `src/web/features/auth/*` (AuthShell, LoginMode, RegisterMode, OtpMode, ForgotPasswordMode, GoogleAuthSection, AuthField, auth-shared) with the kit's auth-state transition. Security semantics byte-compatible (Turnstile single-use token rotation, GSI retry/width/credential-only contract, DEC-012 deferred guest transfer with explicit continue-without-transfer, private-session capture, exact server error mapping). Auth suites **11/11 PASS**.
+- **Dead animation classes retired:** the plugin that defines `animate-in`/`zoom-in-95`/`slide-in-from-*` was never installed, so those classes did nothing; all 15 occurrences moved to the real reduced-motion-gated `animate-fade-in`/`animate-slide-up`. Zero remain (`rg` proves absence).
+- **Visual matrix complete:** T17 config certifies 360/390/430/768/1024/1440; 17 canonical screenshots captured per certified width under `.hoplite/artifacts/t17-playwright/results/t17-screenshots.e2e.ts-*`; destructive-dialog focus-trap/Escape/focus-return and empty-inbox honesty asserted. The 360 run exposed a real `/shopping` overflow (quick-add input refused to shrink) — fixed with `min-w-0` and re-probed at scrollWidth 360.
+- **Gates after continuation:** lint PASS, typecheck PASS, full vitest **178 files / 4046 tests PASS**, migration smoke PASS, build PASS (index 436.21 kB / 120.84 kB gzip), T17 Playwright **42/42 PASS** at certified widths, full 6-width matrix green.
+- **Next exact actions:** (1) migrate per-screen motion to the shared primitives (inventory list layout, scan crossfade, cooking-step direction, planner layout) and replace indiscriminate `transition-all`; (2) extend the state-class matrix (bottom sheet, long Vietnamese text, loading/offline) and human design-review the screenshots before baselining; (3) per-screen semantic-token migration for legacy-styled pages (Home, Inventory, Recipes, Week fallbacks, scan/cooking). Status stays `T17_PARTIAL` until those are evidenced.
+- **Safety:** worker diff zero again this continuation; PayOS/payment untouched; `main` untouched; no deploy.
+
+- **Branch/base:** `feat/t17-takosan-ui-v2` from live remote main `769d08597563f816ef9c1dd9523fdafb687de3e2`; `main` untouched, no merge/deploy. Status **`T17_PARTIAL`**; full evidence and exact gaps in `docs/ai/T17_UI_V2_REPORT.md`, audit in `docs/ai/T17_UI_V2_AUDIT.md`.
+- **Design contract:** attached `takosan-redesign-os-v2.0.0.zip` (kit read in full: rules, tokens, layout, motion, states, components, 27 screens, engineering, QA). Kit assets that a prior migration had missed (search/notification/expiry/settings/budget/nutrition/scan/shopping-list/leaf icons) were installed under `public/takosan/`.
+- **Implementation:** semantic token layer (CSS `--semantic-*` + tailwind `semantic-*`, type/radius/elevation scales); `motion@13.4.0` + `MotionConfig reducedMotion="user"` provider and motion primitives; shared primitives module; AppShell V2 (mobile bottom nav / tablet rail / desktop sidebar, immersive-only hiding, real links + `aria-current`; legacy `BottomNav` retired with migrated test); settings IA split with dedicated pages over real GET/PATCH `/preferences` and `/week/preferences`, `/settings/notifications`, `/settings/privacy`, `/settings/app`, honest household/privacy unavailable states replacing fabricated flows; inbox/preferences separated; planner canonical with param-preserving Week redirects (flag-gated, flag-off keeps Week rollout surface); onboarding step routes; phone-width emulation removed from 20+ pages; fixed CTAs clear nav/rail/sidebar; Landing/Auth h1; zero emerald/user-visible "Frigo Plus".
+- **Verification:** baseline on `769d085` and post-implementation both: `pnpm lint`, `pnpm typecheck`, `pnpm test` **178 files / 4046 tests**, `pnpm check:migrations`, `pnpm build` all PASS; new isolated suite `pnpm exec playwright test --config playwright.t17.config.ts` **33/33 PASS** at 390/768/1440 (sqlite3 CLI installed in-session as the repo setup script does; Playwright chromium downloaded in-session). Test changes are documented and justified (MotionProvider in the shell-ancestry assertion, MemoryRouter wrapping for the inbox link, navigation primitive in the brand test) — no coverage weakened.
+- **PayOS/payment:** zero application change — `git diff 769d085 -- src/worker` is empty; the only payment-path diff is 12/12 presentation-only lines in `VietQRModal.tsx`; billing service functions untouched.
+- **Known limits / next exact actions:** (1) decompose `AuthPage.tsx` (930 lines) into `features/auth/*` with mode-presence transitions keeping auth tests green; (2) migrate per-screen motion + semantic tokens on legacy-styled pages; (3) extend the T17 suite to 360/430/1024, the state-class matrix and canonical screenshots; (4) full a11y (contrast/zoom/SR) pass. Only then consider `T17_COMPLETE`.
+- **Safety:** no production/D1/R2/PayOS mutation, no canary change, Inventory Truth/OCR/AI/recipe authority/planning algorithms untouched; `.hoplite/settings.json` is platform-managed session metadata excluded from T17 commits.
+
 ## Current handoff — T16 PWA cache and Google recovery deployed
 
 - **Branch/base:** `codex/auth-pwa-cache-google-recovery` from canonical main `ff07773ce8e146923870698928a1b8b4c451f8e6`.

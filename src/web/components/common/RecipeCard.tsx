@@ -26,9 +26,9 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ matchResult, onClick, co
     return (
       <div
         onClick={onClick}
-        className="bg-white rounded-2xl overflow-hidden border border-slate-200/80 shadow-card hover:border-takosan-green/50 hover:shadow-elevated active:scale-[0.97] transition-all cursor-pointer flex flex-col w-48 shrink-0"
+        className="bg-white rounded-2xl overflow-hidden border border-semantic-border shadow-card hover:border-takosan-green/50 hover:shadow-elevated active:scale-[0.97] transition-tap cursor-pointer flex flex-col w-48 shrink-0"
       >
-        <div className="relative w-full h-32 overflow-hidden bg-slate-100">
+        <div className="relative w-full h-32 overflow-hidden bg-semantic-border/60">
           <img
             src={image.src}
             alt={recipe.title}
@@ -41,7 +41,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ matchResult, onClick, co
             className={`absolute top-2 left-2 px-2.5 py-1 rounded-full text-[11px] font-heading font-bold text-white shadow-sm ${
               matchPercentage >= 80
                 ? 'bg-takosan-green'
-                : 'bg-slate-900/80 backdrop-blur-sm'
+                : 'bg-semantic-overlay/80 backdrop-blur-sm'
             }`}
           >
             {cuisineFlags[recipe.cuisine] || '🌍'} {matchPercentage}%
@@ -54,10 +54,10 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ matchResult, onClick, co
         </div>
 
         <div className="p-3 flex-1 flex flex-col justify-between gap-2">
-          <h4 className="font-heading font-bold text-[13px] text-slate-900 line-clamp-2 leading-snug min-h-[2.2em]">
+          <h4 className="font-heading font-bold text-[13px] text-semantic-text-primary line-clamp-2 leading-snug min-h-[2.2em]">
             {recipe.title}
           </h4>
-          <div className="flex items-center justify-between text-[11px] text-slate-600">
+          <div className="flex items-center justify-between text-[11px] text-semantic-text-secondary">
             <span className="flex items-center gap-1 font-semibold">
               <Clock className="w-3.5 h-3.5 text-takosan-green" />
               {recipe.cookTimeMinutes}p
@@ -65,7 +65,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ matchResult, onClick, co
             {canCookWithoutBuying ? (
               <span className="text-takosan-green font-heading font-bold">Đủ 100%</span>
             ) : (
-              <span className="text-amber-800 font-bold">Thiếu {missingRequiredIngredients.length}</span>
+              <span className="text-semantic-warning-strong font-bold">Thiếu {missingRequiredIngredients.length}</span>
             )}
           </div>
         </div>
@@ -76,9 +76,9 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ matchResult, onClick, co
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-2xl p-3.5 flex gap-4 items-center border border-slate-200/80 shadow-card hover:border-takosan-green/50 hover:shadow-elevated active:scale-[0.99] transition-all cursor-pointer"
+      className="bg-white rounded-2xl p-3.5 flex gap-4 items-center border border-semantic-border shadow-card hover:border-takosan-green/50 hover:shadow-elevated active:scale-[0.99] transition-tap cursor-pointer"
     >
-      <div className="relative w-[104px] h-[104px] rounded-xl overflow-hidden shrink-0 bg-slate-100 shadow-xs">
+      <div className="relative w-[104px] h-[104px] rounded-xl overflow-hidden shrink-0 bg-semantic-border/60 shadow-xs">
         <img
           src={image.src}
           alt={recipe.title}
@@ -98,35 +98,35 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ matchResult, onClick, co
               <CheckCircle className="w-3.5 h-3.5 text-takosan-green" /> Đủ 100%
             </span>
           ) : (
-            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-900 border border-amber-200/80">
+            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-semantic-warning-soft text-semantic-warning-strong border border-semantic-warning/30">
               Thiếu {missingRequiredIngredients.length} món
             </span>
           )}
           <span className="inline-flex items-center gap-1 text-[11px] font-heading font-extrabold text-takosan-green">
-            <Flame className="w-3.5 h-3.5 text-orange-500" />
+            <Flame className="w-3.5 h-3.5 text-semantic-accent" />
             Khớp {matchPercentage}%
           </span>
         </div>
 
-        <h4 className="font-heading font-bold text-[15px] text-slate-900 leading-snug truncate">
+        <h4 className="font-heading font-bold text-[15px] text-semantic-text-primary leading-snug truncate">
           {recipe.title}
         </h4>
 
-        <p className="text-xs text-slate-500 line-clamp-1 mt-0.5 leading-relaxed">
+        <p className="text-xs text-semantic-text-muted line-clamp-1 mt-0.5 leading-relaxed">
           {recipe.description}
         </p>
 
-        <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-100 text-xs">
-          <span className="flex items-center gap-1 text-slate-600 font-semibold">
+        <div className="flex flex-wrap items-center justify-between gap-x-1.5 mt-2.5 pt-2 border-t border-semantic-border/70 text-xs">
+          <span className="flex items-center gap-1 text-semantic-text-secondary font-semibold">
             <Clock className="w-4 h-4 text-takosan-green" />
             <span>{recipe.cookTimeMinutes} phút</span>
           </span>
           {recipe.nutrition && (
-            <span className="text-[10px] font-bold text-amber-900 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/60">
+            <span className="text-[10px] font-bold text-semantic-warning-strong bg-semantic-warning-soft px-2 py-0.5 rounded-md border border-semantic-warning/30">
               {recipe.nutrition.calories} kcal
             </span>
           )}
-          <span className="flex items-center gap-1 text-[11px] font-medium text-slate-500">
+          <span className="flex items-center gap-1 text-[11px] font-medium text-semantic-text-muted">
             <Users className="w-3.5 h-3.5" />
             {recipe.servings} người
           </span>

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useId, useRef, useState } from 'react';
+import { useModalFocus } from '../../design-system/use-modal-focus';
 import { MealPlan, AggregatedShoppingItem } from '@frigo/domain';
 import { Button } from '../../components/common/Button';
 import { X, Copy, Check, Share2, Calendar, ShoppingBag, Send } from 'lucide-react';
@@ -17,6 +18,11 @@ export const WeekExportModal: React.FC<WeekExportModalProps> = ({
   shoppingItems = [],
 }) => {
   const [copiedType, setCopiedType] = useState<'menu' | 'shopping' | null>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const titleId = useId();
+  // Dialog contract: focus trap, Escape closes, focus returns to the invoker.
+  useModalFocus(isOpen, panelRef, onClose, closeRef);
 
   if (!isOpen) return null;
 
@@ -110,8 +116,15 @@ export const WeekExportModal: React.FC<WeekExportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm animate-in fade-in duration-200 text-slate-900">
-      <div className="bg-white w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl border border-slate-200/80 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-semantic-overlay/50 backdrop-blur-sm animate-fade-in text-semantic-text-primary" onClick={onClose} role="presentation">
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl border border-semantic-border flex flex-col max-h-[90vh] animate-fade-in"
+      >
         {/* Header */}
         <div className="p-4 bg-takosan-green text-white flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -119,11 +132,13 @@ export const WeekExportModal: React.FC<WeekExportModalProps> = ({
               <Share2 className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="font-heading font-bold text-sm leading-tight text-white">Chia sẻ Kế hoạch Tuần</h3>
-              <p className="text-[11px] text-slate-200">Gửi qua Zalo, Messenger hoặc Tin nhắn</p>
+              <h2 id={titleId} className="font-heading font-bold text-sm leading-tight text-white">Chia sẻ Kế hoạch Tuần</h2>
+              <p className="text-[11px] text-white">Gửi qua Zalo, Messenger hoặc Tin nhắn</p>
             </div>
           </div>
           <button
+            ref={closeRef}
+            type="button"
             onClick={onClose}
             className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center tap-target transition-colors"
             aria-label="Đóng"
@@ -133,11 +148,11 @@ export const WeekExportModal: React.FC<WeekExportModalProps> = ({
         </div>
 
         {/* Content Preview */}
-        <div className="p-4 overflow-y-auto space-y-3.5 bg-slate-50/50">
+        <div className="p-4 overflow-y-auto space-y-3.5 bg-semantic-background-subtle/50">
           {/* Card Preview */}
-          <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-xs space-y-2">
+          <div className="bg-white p-3.5 rounded-xl border border-semantic-border shadow-xs space-y-2">
             <div className="flex items-center justify-between">
-              <span className="font-heading font-semibold text-sm text-slate-900">Thực đơn tuần này</span>
+              <span className="font-heading font-semibold text-sm text-semantic-text-primary">Thực đơn tuần này</span>
               <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep/60">
                 {totalMeals} bữa
               </span>
@@ -145,20 +160,20 @@ export const WeekExportModal: React.FC<WeekExportModalProps> = ({
 
             <div className="grid grid-cols-2 gap-2 text-xs py-1">
               <div>
-                <span className="text-slate-500 block text-[11px]">Ngân sách:</span>
+                <span className="text-semantic-text-muted block text-[11px]">Ngân sách:</span>
                 <span className="font-semibold text-takosan-green">
                   {plan.budget.displayText}
                 </span>
               </div>
               <div>
-                <span className="text-slate-500 block text-[11px]">Tận dụng tủ lạnh:</span>
-                <span className="font-semibold text-slate-900">
+                <span className="text-semantic-text-muted block text-[11px]">Tận dụng tủ lạnh:</span>
+                <span className="font-semibold text-semantic-text-primary">
                   {plan.utilization.utilizationPercent}%
                 </span>
               </div>
             </div>
 
-            <p className="text-xs text-slate-600 line-clamp-3 pt-1 border-t border-slate-100 leading-relaxed">
+            <p className="text-xs text-semantic-text-secondary line-clamp-3 pt-1 border-t border-semantic-border/70 leading-relaxed">
               {plan.days.map((d) => `${d.dayNameVi}: ${d.slots[0]?.recipe?.title || 'Tự do'}`).join(' • ')}
             </p>
           </div>
@@ -167,15 +182,15 @@ export const WeekExportModal: React.FC<WeekExportModalProps> = ({
           <div className="space-y-2">
             <button
               onClick={handleCopyShopping}
-              className="w-full p-3 rounded-xl bg-white border border-slate-200/80 hover:border-takosan-green/50 flex items-center justify-between transition-all tap-target text-left shadow-xs active:scale-[0.99]"
+              className="w-full p-3 rounded-xl bg-white border border-semantic-border hover:border-takosan-green/50 flex items-center justify-between transition-tap tap-target text-left shadow-xs active:scale-[0.99]"
             >
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-lg bg-takosan-mint border border-takosan-mint-deep flex items-center justify-center text-takosan-green-deep">
                   <ShoppingBag className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="font-heading font-semibold text-xs text-slate-900">Sao chép Danh sách đi chợ</p>
-                  <p className="text-[11px] text-slate-500">Định dạng gạch đầu dòng tiện đi chợ</p>
+                  <p className="font-heading font-semibold text-xs text-semantic-text-primary">Sao chép Danh sách đi chợ</p>
+                  <p className="text-[11px] text-semantic-text-muted">Định dạng gạch đầu dòng tiện đi chợ</p>
                 </div>
               </div>
               {copiedType === 'shopping' ? (
@@ -183,21 +198,21 @@ export const WeekExportModal: React.FC<WeekExportModalProps> = ({
                   <Check className="w-3.5 h-3.5" /> Đã chép
                 </span>
               ) : (
-                <Copy className="w-4 h-4 text-slate-400" />
+                <Copy className="w-4 h-4 text-semantic-text-muted" />
               )}
             </button>
 
             <button
               onClick={handleCopyMenu}
-              className="w-full p-3 rounded-xl bg-white border border-slate-200/80 hover:border-takosan-green/50 flex items-center justify-between transition-all tap-target text-left shadow-xs active:scale-[0.99]"
+              className="w-full p-3 rounded-xl bg-white border border-semantic-border hover:border-takosan-green/50 flex items-center justify-between transition-tap tap-target text-left shadow-xs active:scale-[0.99]"
             >
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-lg bg-takosan-mint border border-takosan-mint-deep flex items-center justify-center text-takosan-green-deep">
                   <Calendar className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="font-heading font-semibold text-xs text-slate-900">Sao chép Thực đơn 7 ngày</p>
-                  <p className="text-[11px] text-slate-500">Gửi cho cả nhà cùng xem</p>
+                  <p className="font-heading font-semibold text-xs text-semantic-text-primary">Sao chép Thực đơn 7 ngày</p>
+                  <p className="text-[11px] text-semantic-text-muted">Gửi cho cả nhà cùng xem</p>
                 </div>
               </div>
               {copiedType === 'menu' ? (
@@ -205,14 +220,14 @@ export const WeekExportModal: React.FC<WeekExportModalProps> = ({
                   <Check className="w-3.5 h-3.5" /> Đã chép
                 </span>
               ) : (
-                <Copy className="w-4 h-4 text-slate-400" />
+                <Copy className="w-4 h-4 text-semantic-text-muted" />
               )}
             </button>
           </div>
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 bg-white border-t border-slate-100">
+        <div className="p-4 bg-white border-t border-semantic-border/70">
           <Button
             fullWidth
             size="lg"

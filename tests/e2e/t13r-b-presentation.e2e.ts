@@ -95,8 +95,14 @@ test('C Home shows an explicit estimate qualifier for an ESTIMATED expiry and no
   const spinach = inventory.items.find((item) => item.id === 'preview-stock-spinach');
   expect(spinach).toMatchObject({ expiryKind: 'ESTIMATED' });
   expect(['use_soon', 'expiring']).toContain(spinach!.freshness);
-  // Home is gated on onboarding; this is the only synthetic prerequisite.
-  await page.evaluate(() => localStorage.setItem('frigo_onboarded', 'true'));
+  // Home is gated on server-authoritative onboarding (migration 0038): a
+  // client-side `frigo_onboarded` shim is overwritten on hydrate, so complete
+  // the real onboarding flow instead of faking state.
+  await page.goto('/onboarding');
+  await page.getByRole('button', { name: 'Tiếp tục' }).click();
+  await page.getByRole('button', { name: 'Tiếp tục' }).click();
+  await page.getByRole('button', { name: /Bắt đầu với Takosan/ }).click();
+  await expect(page).toHaveURL(/\/onboarding|\/week\/setup|\/$/);
   await page.goto('/');
   const chip = page.getByTestId('home-use-soon-expiry').filter({ hasText: /Ước tính/ });
   await expect(chip.first()).toBeVisible();

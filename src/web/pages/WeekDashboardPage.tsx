@@ -55,7 +55,7 @@ export const WeekDashboardPage: React.FC = () => {
         <TopBar title="Thực đơn tuần" />
         <div className="py-20 text-center">
           <div className="animate-spin w-8 h-8 border-2 border-takosan-green border-t-transparent rounded-full mx-auto mb-3" />
-          <p className="text-xs text-slate-500 font-medium">Đang tải thực đơn...</p>
+          <p className="text-xs text-semantic-text-muted font-medium">Đang tải thực đơn...</p>
         </div>
       </div>
     );
@@ -91,7 +91,7 @@ export const WeekDashboardPage: React.FC = () => {
     <div className="min-h-screen bg-takosan-cream pb-28">
       <TopBar title="Thực đơn tuần" subtitle={formatDateRange(currentPlan.startDate, currentPlan.endDate)} />
 
-      <div className="px-4 pt-3 space-y-5 max-w-md mx-auto animate-fade-in">
+      <div className="px-4 pt-3 space-y-5 animate-fade-in">
         {workflowError && <InlineError message={workflowError} />}
         {/* Header Bar & Quick Actions */}
         <div className="flex items-center justify-between">
@@ -100,11 +100,11 @@ export const WeekDashboardPage: React.FC = () => {
               <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep/80 uppercase">
                 {currentPlan.status === 'READY' ? 'Sẵn sàng nấu' : 'Đang thực hiện'}
               </span>
-              <span className="text-[11px] font-medium text-slate-500">
+              <span className="text-[11px] font-medium text-semantic-text-muted">
                 {formatDateRange(currentPlan.startDate, currentPlan.endDate)}
               </span>
             </div>
-            <h2 className="font-heading font-bold text-xl text-slate-900 tracking-tight">
+            <h2 className="font-heading font-bold text-xl text-semantic-text-primary tracking-tight">
               Kế hoạch tuần này
             </h2>
           </div>
@@ -113,7 +113,7 @@ export const WeekDashboardPage: React.FC = () => {
             {/* Quick action: Đi chợ */}
             <button
               onClick={() => navigate(`/week/${currentPlan.id}/shopping`)}
-              className="px-3 py-2 rounded-xl bg-takosan-green text-white font-heading font-semibold text-xs shadow-xs hover:bg-[#164E3D] active:scale-95 transition-all tap-target flex items-center gap-1.5 cursor-pointer"
+              className="px-3 py-2 rounded-xl bg-takosan-green text-white font-heading font-semibold text-xs shadow-xs hover:bg-takosan-green-hover active:scale-95 transition-tap tap-target flex items-center gap-1.5 cursor-pointer"
               aria-label="Đi chợ theo thực đơn tuần"
             >
               <ShoppingBag className="w-3.5 h-3.5" />
@@ -123,7 +123,7 @@ export const WeekDashboardPage: React.FC = () => {
             {/* Quick action: Share */}
             <button
               onClick={() => setIsExportOpen(true)}
-              className="p-2 rounded-xl bg-white border border-slate-200/80 text-slate-700 hover:bg-slate-50 active:scale-95 transition-all tap-target flex items-center justify-center shadow-xs cursor-pointer"
+              className="p-2 rounded-xl bg-white border border-semantic-border text-semantic-text-secondary hover:bg-semantic-background-subtle active:scale-95 transition-tap tap-target flex items-center justify-center shadow-xs cursor-pointer"
               aria-label="Chia sẻ thực đơn"
               title="Chia sẻ thực đơn"
             >
@@ -133,7 +133,7 @@ export const WeekDashboardPage: React.FC = () => {
             {/* Quick action: Regenerate dropdown */}
             <button
               onClick={() => setIsRegeneratingOpen(!isRegeneratingOpen)}
-              className="p-2 rounded-xl bg-white border border-slate-200/80 text-slate-700 hover:bg-slate-50 active:scale-95 transition-all tap-target flex items-center justify-center shadow-xs cursor-pointer"
+              className="p-2 rounded-xl bg-white border border-semantic-border text-semantic-text-secondary hover:bg-semantic-background-subtle active:scale-95 transition-tap tap-target flex items-center justify-center shadow-xs cursor-pointer"
               aria-label="Tùy chọn tạo lại"
             >
               <RefreshCw className="w-4 h-4" />
@@ -143,8 +143,8 @@ export const WeekDashboardPage: React.FC = () => {
 
         {/* Regenerate Dropdown Options */}
         {isRegeneratingOpen && (
-          <div className="bg-white rounded-2xl p-2.5 border border-slate-200/80 shadow-card space-y-1 animate-slide-up">
-            <p className="text-[11px] font-semibold text-slate-500 px-2 pb-1 border-b border-slate-100">
+          <div className="bg-white rounded-2xl p-2.5 border border-semantic-border shadow-card space-y-1 animate-slide-up">
+            <p className="text-[11px] font-semibold text-semantic-text-muted px-2 pb-1 border-b border-semantic-border/70">
               Tạo lại thực đơn theo hướng:
             </p>
             {[
@@ -158,7 +158,7 @@ export const WeekDashboardPage: React.FC = () => {
               <button
                 key={opt.label}
                 onClick={() => handleQuickRegenerate(opt.priority)}
-                className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-slate-50 text-xs font-medium text-slate-800 transition-colors cursor-pointer"
+                className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-semantic-background-subtle text-xs font-medium text-semantic-text-primary transition-colors cursor-pointer"
               >
                 {opt.label}
               </button>
@@ -180,7 +180,7 @@ export const WeekDashboardPage: React.FC = () => {
         {/* Vertical Feed of Days */}
         <div className="space-y-4 pt-1">
           <div className="flex items-center justify-between">
-            <h3 className="font-heading font-bold text-base text-slate-900 flex items-center gap-1.5">
+            <h3 className="font-heading font-bold text-base text-semantic-text-primary flex items-center gap-1.5">
               <CalendarDays className="w-4 h-4 text-takosan-green" />
               <span>Lịch ăn 7 ngày</span>
             </h3>
@@ -204,16 +204,16 @@ export const WeekDashboardPage: React.FC = () => {
                   {/* Day Header */}
                   <div className="flex items-center justify-between px-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-heading font-bold text-sm text-slate-900">
+                      <span className="font-heading font-bold text-sm text-semantic-text-primary">
                         {day.dayNameVi}
                       </span>
-                      <span className="text-[11px] font-medium text-slate-500">
+                      <span className="text-[11px] font-medium text-semantic-text-muted">
                         {formattedDate}
                       </span>
                     </div>
 
                     {day.dayType === 'eat_out' && (
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-900 border border-amber-200/80">
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-semantic-warning-soft text-semantic-warning-strong border border-semantic-warning/30">
                         Ăn ngoài
                       </span>
                     )}

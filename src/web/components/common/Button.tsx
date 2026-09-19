@@ -19,14 +19,14 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   ...props
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center font-heading font-semibold tracking-tight transition-all duration-150 active:scale-[0.98] tap-target disabled:opacity-50 disabled:pointer-events-none rounded-xl cursor-pointer select-none';
+  const baseStyles = 'inline-flex items-center justify-center font-heading font-semibold tracking-tight transition-tap duration-150 active:scale-[0.98] tap-target disabled:opacity-50 disabled:pointer-events-none rounded-xl cursor-pointer select-none';
 
   const variants = {
     primary: 'bg-takosan-green text-white shadow-sm hover:bg-takosan-green-hover active:bg-takosan-green-deep',
     secondary: 'bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep hover:bg-takosan-mint-hover active:bg-takosan-mint-deep',
-    outline: 'border border-slate-200 text-slate-800 bg-white hover:bg-slate-50 hover:border-slate-300 active:bg-slate-100',
-    ghost: 'text-slate-700 hover:bg-slate-100 active:bg-slate-200/70',
-    danger: 'bg-rose-600 text-white shadow-sm hover:bg-rose-700 active:bg-rose-800',
+    outline: 'border border-semantic-border text-semantic-text-primary bg-white hover:bg-semantic-background-subtle hover:border-semantic-border-strong active:bg-semantic-border/60',
+    ghost: 'text-semantic-text-secondary hover:bg-semantic-border/60 active:bg-semantic-border/70',
+    danger: 'bg-semantic-danger text-white shadow-sm hover:bg-semantic-danger-strong active:bg-semantic-danger-strong',
   };
 
   const sizes = {

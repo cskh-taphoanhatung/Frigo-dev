@@ -102,12 +102,12 @@ export const HomePage: React.FC = () => {
   const firstName = displayName ? displayName.split(' ').pop() : null;
 
   return (
-    <div className="min-h-screen bg-takosan-cream pb-28 max-w-md sm:max-w-lg md:max-w-2xl mx-auto">
+    <div className="min-h-screen bg-takosan-cream pb-28">
       {/* HEADER: Avatar + Xin chào + Notification Bell */}
       <header className="sticky top-0 z-30 bg-takosan-cream/95 backdrop-blur-md px-4 py-3.5 border-b border-takosan-cream-line flex items-center justify-between shadow-xs">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           <button
-            onClick={() => navigate('/profile')}
+            onClick={() => navigate('/me')}
             aria-label="Trang cá nhân"
             className="w-11 h-11 rounded-full border-2 border-takosan-green ring-2 ring-takosan-mint bg-takosan-mint overflow-hidden cursor-pointer active:scale-95 transition-transform shrink-0"
           >
@@ -119,17 +119,17 @@ export const HomePage: React.FC = () => {
               className="w-full h-full object-cover"
             />
           </button>
-          <div>
-            <h1 className="font-heading font-bold text-lg text-takosan-navy leading-tight">
+          <div className="min-w-0">
+            <h1 className="font-heading font-bold text-lg text-takosan-navy leading-tight truncate">
               Xin chào{firstName ? `, ${firstName}` : ''}! 👋
             </h1>
-            <p className="text-xs text-slate-500 font-medium">Hôm nay ăn gì đây?</p>
+            <p className="text-xs text-semantic-text-muted font-medium truncate">Hôm nay ăn gì đây?</p>
           </div>
         </div>
 
         <button
           onClick={() => navigate('/notifications')}
-          className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/80 hover:bg-slate-100 active:scale-95 flex items-center justify-center text-slate-700 transition-all tap-target"
+          className="shrink-0 w-11 h-11 rounded-xl bg-semantic-background-subtle border border-semantic-border hover:bg-semantic-border/60 active:scale-95 flex items-center justify-center text-semantic-text-secondary transition-tap tap-target"
           aria-label="Thông báo"
         >
           <Bell className="w-5.5 h-5.5 stroke-[2]" />
@@ -156,7 +156,7 @@ export const HomePage: React.FC = () => {
                 <h3 className="font-heading font-extrabold text-xl text-white leading-snug">
                   {todayMeal.recipe.title}
                 </h3>
-                <div className="flex items-center gap-3 text-[11px] font-medium text-white/80">
+                <div className="flex items-center gap-3 text-[11px] font-medium text-white">
                   <span className="flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5" /> {todayMeal.recipe.cookTimeMinutes} phút
                   </span>
@@ -166,7 +166,7 @@ export const HomePage: React.FC = () => {
                 </div>
                 <button
                   onClick={() => navigate(`/cook/${todayMeal.recipe!.slug}`)}
-                  className="mt-1 px-5 py-2.5 rounded-xl bg-white hover:bg-takosan-cream text-takosan-green font-heading font-bold text-sm shadow-float active:scale-95 transition-all flex items-center gap-2 tap-target"
+                  className="mt-1 px-5 py-2.5 rounded-xl bg-white hover:bg-takosan-cream text-takosan-green font-heading font-bold text-sm shadow-float active:scale-95 transition-tap flex items-center gap-2 tap-target"
                 >
                   <Sparkles className="w-4 h-4" />
                   <span>Bắt đầu nấu</span>
@@ -200,14 +200,14 @@ export const HomePage: React.FC = () => {
               <h3 className="font-heading font-extrabold text-lg text-white leading-snug">
                 {weekPlan ? 'Không có bữa cần nấu tiếp hôm nay' : 'Chưa có thực đơn tuần này'}
               </h3>
-              <p className="text-xs text-white/80">
+              <p className="text-xs text-white">
                 {weekPlan
                   ? 'Xem lại các bữa đã lên lịch hoặc thêm món trong thực đơn tuần.'
                   : 'Lên thực đơn để Takosan gợi ý món từ nguyên liệu sẵn có.'}
               </p>
               <button
                 onClick={() => navigate(weekPlan ? `/week/${weekPlan.id}` : '/week/setup')}
-                className="mt-1 px-5 py-2.5 rounded-xl bg-white hover:bg-takosan-cream text-takosan-green font-heading font-bold text-sm shadow-float active:scale-95 transition-all inline-flex items-center gap-2 tap-target"
+                className="mt-1 px-5 py-2.5 rounded-xl bg-white hover:bg-takosan-cream text-takosan-green font-heading font-bold text-sm shadow-float active:scale-95 transition-tap inline-flex items-center gap-2 tap-target"
               >
                 <Sparkles className="w-4 h-4" />
                 <span>{weekPlan ? 'Xem thực đơn tuần' : 'Lên thực đơn tuần'}</span>
@@ -223,16 +223,16 @@ export const HomePage: React.FC = () => {
           const percent = total > 0 ? Math.round((planned / total) * 100) : 0;
           const budget = weekPlan.budget;
           return (
-            <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-card flex items-center justify-between gap-3 relative overflow-hidden">
+            <div className="bg-white rounded-2xl p-4 border border-semantic-border shadow-card flex items-center justify-between gap-3 relative overflow-hidden">
               <div className="space-y-1.5 min-w-0 flex-1">
-                <span className="text-[10px] font-heading font-bold uppercase tracking-wider text-slate-400 block">
+                <span className="text-[10px] font-heading font-bold uppercase tracking-wider text-semantic-text-muted block">
                   TUẦN NÀY
                 </span>
                 <h3 className="font-heading font-bold text-base text-takosan-navy">
                   {planned}/{total} bữa đã lên thực đơn
                 </h3>
                 <div
-                  className="w-full max-w-[180px] h-2 rounded-full bg-slate-100 overflow-hidden"
+                  className="w-full max-w-[180px] h-2 rounded-full bg-semantic-border/60 overflow-hidden"
                   role="progressbar"
                   aria-valuenow={percent}
                   aria-valuemin={0}
@@ -245,18 +245,18 @@ export const HomePage: React.FC = () => {
                   />
                 </div>
                 {budget && budget.targetVnd ? (
-                  <p className="text-xs text-slate-500 font-medium">
+                  <p className="text-xs text-semantic-text-muted font-medium">
                     {formatVndCompact(budget.estimatedMaxVnd)} /{' '}
                     {formatVndCompact(budget.targetVnd)} ngân sách
                   </p>
                 ) : budget?.displayText ? (
-                  <p className="text-xs text-slate-500 font-medium">{budget.displayText}</p>
+                  <p className="text-xs text-semantic-text-muted font-medium">{budget.displayText}</p>
                 ) : null}
               </div>
 
               <button
                 onClick={() => navigate(`/week/${weekPlan.id}`)}
-                className="shrink-0 px-4 py-2.5 rounded-xl bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep hover:bg-takosan-mint-hover text-xs font-heading font-bold active:scale-95 transition-all flex items-center gap-1.5 tap-target"
+                className="shrink-0 px-4 py-2.5 rounded-xl bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep hover:bg-takosan-mint-hover text-xs font-heading font-bold active:scale-95 transition-tap flex items-center gap-1.5 tap-target"
               >
                 <span>Xem thực đơn</span>
                 <ChevronRight className="w-4 h-4" />
@@ -268,7 +268,7 @@ export const HomePage: React.FC = () => {
         {/* SECTION 3: NÊN DÙNG SỚM — real expiring items from inventory */}
         <div className="space-y-2 pt-1">
           <div className="flex items-center justify-between">
-            <h4 className="font-heading font-bold text-xs text-slate-800 uppercase tracking-wider">
+            <h4 className="font-heading font-bold text-xs text-semantic-text-primary uppercase tracking-wider">
               NÊN DÙNG SỚM
             </h4>
             <button
@@ -289,8 +289,8 @@ export const HomePage: React.FC = () => {
           ) : inventoryQuery.isError ? (
             <InlineError error={inventoryQuery.error} onRetry={() => inventoryQuery.refetch()} />
           ) : useSoonItems.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-slate-200/80 p-4 text-center">
-              <p className="text-xs text-slate-600 font-medium">
+            <div className="bg-white rounded-2xl border border-semantic-border p-4 text-center">
+              <p className="text-xs text-semantic-text-secondary font-medium">
                 {inventory.length === 0
                   ? 'Tủ lạnh đang trống. Quét hoặc thêm nguyên liệu để bắt đầu nhé.'
                   : 'Tuyệt! Không có nguyên liệu nào sắp hết hạn.'}
@@ -298,7 +298,7 @@ export const HomePage: React.FC = () => {
               {inventory.length === 0 && (
                 <button
                   onClick={() => navigate('/scan')}
-                  className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep text-xs font-heading font-bold hover:bg-takosan-mint-hover active:scale-95 transition-all tap-target"
+                  className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep text-xs font-heading font-bold hover:bg-takosan-mint-hover active:scale-95 transition-tap tap-target"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   Quét tủ lạnh
@@ -322,7 +322,7 @@ export const HomePage: React.FC = () => {
                   <button
                     key={item.id}
                     onClick={() => navigate(`/ingredients/${item.id}`)}
-                    className="bg-white rounded-2xl p-3 border border-slate-200/80 shadow-card flex flex-col items-center justify-center min-w-[104px] shrink-0 cursor-pointer active:scale-95 transition-transform hover:border-amber-300 hover:shadow-elevated"
+                    className="bg-white rounded-2xl p-3 border border-semantic-border shadow-card flex flex-col items-center justify-center min-w-[104px] shrink-0 cursor-pointer active:scale-95 transition-transform hover:border-semantic-warning/50 hover:shadow-elevated"
                   >
                     <div className="w-14 h-14 overflow-hidden flex items-center justify-center mb-1.5">
                       <img
@@ -338,9 +338,14 @@ export const HomePage: React.FC = () => {
                       {item.name}
                     </p>
                     <span
-                      className={expiry.estimated
-                        ? 'text-[10px] font-bold text-sky-900 bg-sky-50 px-2.5 py-0.5 rounded-full border border-sky-200 mt-1.5'
-                        : 'text-[10px] font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200 mt-1.5'}
+                      className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border mt-1.5 ${
+                        // UNKNOWN is neutral (no evidence), ESTIMATED is info,
+                        // a KNOWN countdown is warning — never the same tone.
+                        expiry.tone === 'unknown'
+                          ? 'text-semantic-text-secondary bg-semantic-border/60 border-semantic-border-strong'
+                          : expiry.estimated
+                            ? 'text-semantic-info bg-semantic-info-soft border-semantic-info/30'
+                            : 'text-semantic-warning-strong bg-semantic-warning-soft border-semantic-warning/30'}`}
                       data-testid="home-use-soon-expiry"
                       data-expiry-kind={expiry.tone === 'unknown' ? 'UNKNOWN' : expiry.estimated ? 'ESTIMATED' : 'KNOWN'}
                     >
@@ -364,10 +369,10 @@ export const HomePage: React.FC = () => {
               onClick={() => setNoBuyOnly(!noBuyOnly)}
               aria-pressed={noBuyOnly}
               className={clsx(
-                'px-3 py-1.5 rounded-full text-xs font-heading font-semibold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer',
+                'min-h-11 px-3 py-1.5 rounded-full text-xs font-heading font-semibold transition-tap flex items-center gap-1.5 shadow-xs cursor-pointer',
                 noBuyOnly
                   ? 'bg-takosan-green text-white border border-takosan-green'
-                  : 'bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50'
+                  : 'bg-white text-semantic-text-secondary border border-semantic-border hover:bg-semantic-background-subtle'
               )}
             >
               <CheckCircle className={clsx('w-3.5 h-3.5', noBuyOnly ? 'text-takosan-mint' : 'text-takosan-green')} />
@@ -385,10 +390,10 @@ export const HomePage: React.FC = () => {
                   onClick={() => setSelectedCuisine(c.id)}
                   aria-pressed={active}
                   className={clsx(
-                    'px-3.5 py-1.5 rounded-full text-xs font-heading font-semibold whitespace-nowrap transition-all tap-target cursor-pointer',
+                    'px-3.5 py-1.5 rounded-full text-xs font-heading font-semibold whitespace-nowrap transition-tap tap-target cursor-pointer',
                     active
                       ? 'bg-takosan-green text-white shadow-xs'
-                      : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'
+                      : 'bg-white text-semantic-text-secondary border border-semantic-border hover:bg-semantic-background-subtle'
                   )}
                 >
                   {c.label}

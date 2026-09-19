@@ -15,7 +15,7 @@ import { TAKOSAN_BRAND } from '../../src/web/lib/takosan-brand';
 import { LandingPage } from '../../src/web/pages/LandingPage';
 import { Header } from '../../src/web/components/common/Header';
 import { TopBar } from '../../src/web/components/common/TopBar';
-import { BottomNav } from '../../src/web/components/layout/BottomNav';
+import { BottomNavigationBar } from '../../src/web/design-system/navigation';
 import { EmptyState } from '../../src/web/components/common/EmptyState';
 // @ts-expect-error Tailwind's JavaScript config intentionally has no declaration file.
 import tailwindConfig from '../../tailwind.config.js';
@@ -59,6 +59,38 @@ describe('Takosan brand contract', () => {
       expect(svg).toContain('takosan-canonical-symbol');
       expect(svg).not.toMatch(/<text/i);
     }
+  });
+
+  it('every semantic-* utility referenced in src/web resolves to a Tailwind color key', () => {
+    // Tailwind exposes nested color keys verbatim: a camelCase key would
+    // silently compile no CSS for the kebab-case utilities pages use.
+    const semantic = tailwindConfig.theme.extend.colors.semantic as Record<string, string>;
+    const keys = new Set(Object.keys(semantic));
+    const used = new Set<string>();
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const full = resolve(dir, entry.name);
+        if (entry.isDirectory()) walk(full);
+        else if (/\.(tsx?|css)$/.test(entry.name)) {
+          for (const m of readFileSync(full, 'utf8').matchAll(/[a-z]+-semantic-([a-zA-Z-]+?)(?:\/\d+)?(?=[\s"'`)}\]])/g)) used.add(m[1]);
+        }
+      }
+    };
+    walk(resolve(root, 'src/web'));
+    expect(used.size).toBeGreaterThan(10);
+    expect([...used].filter((k) => !keys.has(k))).toEqual([]);
+  });
+
+  it('raw palette classes, arbitrary colour values and legacy motion utilities are gone or explicitly allowlisted', async () => {
+    // scripts/t17/style-residuals.mjs is the residual authority; this keeps
+    // the allowlist enforced by the unit gate, not only by a manual script.
+    // @ts-expect-error plain ESM script without a declaration file (same pattern as tailwind.config.js above).
+    const { audit, ALLOWLIST } = await import('../../scripts/t17/style-residuals.mjs');
+    const findings: Array<{ file: string; line: number; token: string; allow: string | null }> = audit(root);
+    expect(findings.filter((f) => !f.allow)).toEqual([]);
+    // The only sanctioned residue is the protected payment UI.
+    expect(ALLOWLIST.map((a: { id: string }) => a.id)).toEqual(['payment-boundary']);
+    expect(new Set(findings.map((f) => f.file))).toEqual(new Set(['src/web/components/payment/VietQRModal.tsx']));
   });
 });
 
@@ -144,7 +176,7 @@ describe('Primary shell renders Takosan, not Frigo', () => {
     expect(html).not.toContain('/frigo/brand/');
   });
 
-  it('Header, TopBar and BottomNav use the Takosan logo and icon grammar', () => {
+  it('Header, TopBar and bottom navigation use the Takosan logo and icon grammar', () => {
     const header = render(<Header />);
     expect(header).toContain(`src="${TAKOSAN_BRAND.logos.horizontal}"`);
     expect(header).toContain('alt="Takosan"');
@@ -155,7 +187,7 @@ describe('Primary shell renders Takosan, not Frigo', () => {
     expect(top).toContain('alt="Takosan"');
     expect(top).not.toContain('/frigo/brand/');
 
-    const nav = render(<BottomNav />);
+    const nav = render(<BottomNavigationBar />);
     for (const name of ['home', 'fridge', 'scan', 'mealPlan', 'profile']) {
       expect(nav).toContain(`data-takosan-icon="${name}"`);
     }

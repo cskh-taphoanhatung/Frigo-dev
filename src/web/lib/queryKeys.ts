@@ -34,4 +34,6 @@ export const queryKeys = {
     ['mealPlanningAlternatives', ...scope(), planId] as const,
   notifications: () => ['notifications', ...scope()] as const,
   shoppingList: () => ['shoppingList', ...scope()] as const,
+  foodPreferences: () => ['foodPreferences', ...scope()] as const,
+  planningPreferences: () => ['planningPreferences', ...scope()] as const,
 };

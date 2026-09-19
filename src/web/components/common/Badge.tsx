@@ -15,12 +15,12 @@ export const Badge: React.FC<BadgeProps> = ({ status, children, variant, classNa
 
   const styles = {
     fresh: 'bg-takosan-mint text-takosan-green-deep border-takosan-mint-deep/80 font-semibold',
-    use_soon: 'bg-amber-50 text-amber-900 border-amber-200/80 font-semibold',
-    expiring: 'bg-rose-50 text-rose-800 border-rose-200/80 font-semibold',
-    out_of_stock: 'bg-slate-100 text-slate-600 border-slate-200 font-medium',
-    cuisine: 'bg-slate-50 text-slate-700 border-slate-200 font-medium',
+    use_soon: 'bg-semantic-warning-soft text-semantic-warning-strong border-semantic-warning/30 font-semibold',
+    expiring: 'bg-semantic-danger-soft text-semantic-danger-strong border-semantic-danger/30 font-semibold',
+    out_of_stock: 'bg-semantic-border/60 text-semantic-text-secondary border-semantic-border font-medium',
+    cuisine: 'bg-semantic-background-subtle text-semantic-text-secondary border-semantic-border font-medium',
     match: 'bg-takosan-green text-white font-semibold shadow-xs',
-    neutral: 'bg-slate-100 text-slate-700 border-slate-200 font-medium',
+    neutral: 'bg-semantic-border/60 text-semantic-text-secondary border-semantic-border font-medium',
   };
 
   const labels: Record<string, string> = {

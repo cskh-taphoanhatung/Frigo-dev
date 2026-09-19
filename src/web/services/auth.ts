@@ -23,6 +23,36 @@ export function isInventoryTransferDeferred(err: unknown): boolean {
 }
 
 export const authApi = {
+  // GET /preferences — real server preferences used by the dedicated
+  // /me/preferences editor (T17 screen 20).
+  getFoodPreferences: async () => {
+    const assertCurrent = guardPrivateSession();
+    const result = await fetchJson<{
+      preferences: {
+        householdSize?: number;
+        spicyLevel?: 'none' | 'mild' | 'medium' | 'hot';
+        favoriteCuisines?: string[];
+        dietaryRestrictions?: string[];
+        language?: string;
+      };
+    }>('/preferences');
+    assertCurrent();
+    return result.preferences;
+  },
+
+  // PATCH /preferences without completeOnboarding — updates the existing taste
+  // profile without touching onboarding completion state.
+  updateFoodPreferences: async (patch: {
+    householdSize?: number;
+    spicyLevel?: 'none' | 'mild' | 'medium' | 'hot';
+    favoriteCuisines?: string[];
+    dietaryRestrictions?: string[];
+  }) =>
+    fetchJson<{ success: boolean; preferences: Record<string, unknown> }>('/preferences', {
+      method: 'PATCH',
+      body: JSON.stringify(patch),
+    }),
+
   logout: async (): Promise<void> => {
     const response = await fetch(`${BASE_URL}/auth/logout`, {
       method: 'POST', credentials: 'include', signal: AbortSignal.timeout(10_000),

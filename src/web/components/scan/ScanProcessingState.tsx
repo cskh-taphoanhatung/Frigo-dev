@@ -52,7 +52,7 @@ export const ScanProcessingState: React.FC<ScanProcessingStateProps> = ({
       aria-live="polite"
       data-testid="scan-processing-state"
       className={clsx(
-        'rounded-2xl border border-takosan-mint-deep/60 bg-white/95 text-slate-900 shadow-lg',
+        'rounded-2xl border border-takosan-mint-deep/60 bg-white/95 text-semantic-text-primary shadow-lg',
         compact ? 'p-3' : 'p-4',
       )}
     >
@@ -63,7 +63,7 @@ export const ScanProcessingState: React.FC<ScanProcessingStateProps> = ({
         </div>
         <div className="min-w-0 flex-1">
           <p className="font-heading text-sm font-bold">Đang xử lý {noun}…</p>
-          <p className="mt-0.5 text-xs text-slate-600">Bạn có thể chờ ở màn hình này; kết quả chỉ hiện khi AI xử lý xong và đã được kiểm tra.</p>
+          <p className="mt-0.5 text-xs text-semantic-text-secondary">Bạn có thể chờ ở màn hình này; kết quả chỉ hiện khi AI xử lý xong và đã được kiểm tra.</p>
         </div>
         <Sparkles className="h-4 w-4 shrink-0 animate-pulse text-takosan-coral" />
       </div>
@@ -78,11 +78,11 @@ export const ScanProcessingState: React.FC<ScanProcessingStateProps> = ({
                 'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border',
                 complete && 'border-takosan-green bg-takosan-green text-white',
                 active && 'border-takosan-green bg-takosan-mint text-takosan-green-deep',
-                !complete && !active && 'border-slate-200 bg-slate-50 text-slate-400',
+                !complete && !active && 'border-semantic-border bg-semantic-background-subtle text-semantic-text-muted',
               )}>
                 {complete ? <Check className="h-3 w-3" /> : active ? <LoaderCircle className="h-3 w-3 animate-spin" /> : <span>{index + 1}</span>}
               </span>
-              <span className={clsx(active ? 'font-semibold text-slate-900' : complete ? 'text-slate-700' : 'text-slate-400')}>
+              <span className={clsx(active ? 'font-semibold text-semantic-text-primary' : complete ? 'text-semantic-text-secondary' : 'text-semantic-text-muted')}>
                 {item.label}
               </span>
             </div>
@@ -90,7 +90,7 @@ export const ScanProcessingState: React.FC<ScanProcessingStateProps> = ({
         })}
       </div>
 
-      <div className="mt-3 flex items-center gap-1.5 text-[11px] text-slate-500">
+      <div className="mt-3 flex items-center gap-1.5 text-[11px] text-semantic-text-muted">
         <Clock3 className="h-3.5 w-3.5" />
         <span>Đã chờ {elapsedSeconds < 1 ? 'dưới 1 giây' : `${elapsedSeconds} giây`}</span>
         <span aria-hidden="true">·</span>

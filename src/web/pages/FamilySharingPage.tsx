@@ -1,188 +1,74 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Users } from 'lucide-react';
 import { useAuthStore } from '../stores/useAuthStore';
-import { TopBar } from '../components/common/TopBar';
-import { Button } from '../components/common/Button';
-import { Users, QrCode, Copy, Check, Share2, ShieldCheck, UserCheck } from 'lucide-react';
+import { Page, PageHeader, Section, Surface, UnavailableState, StatusBadge } from '../design-system/primitives';
 
+/**
+ * T17 screen 21 — Household & Sharing over real capability only. The server
+ * has no invite/join/member-list contract today, so every unavailable action
+ * says so honestly; no fabricated members, invite codes, or fake joins
+ * (states/empty.md, non-negotiable rule 10).
+ */
 export const FamilySharingPage: React.FC = () => {
+  const navigate = useNavigate();
   const { displayName, householdId } = useAuthStore();
 
-  const [inviteCode] = useState('FRG-8926');
-  const [copied, setCopied] = useState(false);
-  const [joinCode, setJoinCode] = useState('');
-  const [joinSuccess, setJoinSuccess] = useState<string | null>(null);
-
-  const [members, setMembers] = useState([
-    { id: '1', name: displayName || 'Bạn', role: 'Chủ nhà (Owner)', avatar: '👨‍🍳', isMe: true },
-    { id: '2', name: 'Thành viên gia đình', role: 'Thành viên (Member)', avatar: '👩‍🍳', isMe: false },
-  ]);
-
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText(inviteCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: 'Tham gia Tủ lạnh Gia đình trên Takosan',
-        text: `Tham gia tủ lạnh thông minh cùng mình trên Takosan nhé! Nhập mã mời: ${inviteCode}`,
-        url: window.location.origin,
-      }).catch(() => {});
-    } else {
-      handleCopyCode();
-    }
-  };
-
-  const handleJoin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!joinCode.trim()) return;
-    setJoinSuccess(`Đã kết nối thành công với tủ lạnh mã [${joinCode.trim().toUpperCase()}]!`);
-    setMembers((prev) => [
-      ...prev,
-      { id: String(Date.now()), name: `Thành viên (${joinCode.trim().toUpperCase()})`, role: 'Thành viên (Member)', avatar: '🥗', isMe: false }
-    ]);
-    setJoinCode('');
-    setTimeout(() => setJoinSuccess(null), 4000);
-  };
-
-  // Dynamic QR Code for quick camera scan to join household
-  const joinUrl = `${window.location.origin}/family?code=${inviteCode}`;
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(joinUrl)}`;
-
   return (
-    <div className="min-h-screen bg-takosan-cream pb-16 text-slate-900 max-w-md mx-auto">
-      <TopBar showBack title="Tủ lạnh Gia đình" subtitle="Đồng bộ kho thực phẩm & đi chợ" />
+    <Page width="compact">
+      <PageHeader
+        title="Hộ gia đình & chia sẻ"
+        subtitle="Tủ lạnh này thuộc về hộ của bạn"
+        onBack={() => navigate('/me')}
+      />
 
-      <div className="px-4 pt-3 space-y-4">
-        {/* Success Alert */}
-        {joinSuccess && (
-          <div className="p-3.5 rounded-xl bg-takosan-mint border border-takosan-mint-deep/60 text-xs text-takosan-green-deep font-semibold flex items-center gap-2 animate-in fade-in duration-200 shadow-xs">
-            <UserCheck className="w-4 h-4 text-takosan-green shrink-0" />
-            <span>{joinSuccess}</span>
-          </div>
-        )}
-
-        {/* Household Overview Hero Card */}
-        <div className="bg-gradient-to-br from-takosan-green via-takosan-green-hover to-takosan-green-deep text-white rounded-2xl p-5 shadow-card space-y-3 border border-white/10">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center text-white">
-                <Users className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-heading font-bold text-base leading-tight text-white">Tủ lạnh nhà tôi</h3>
-                <p className="text-[11px] text-slate-200">Mã hộ: {householdId}</p>
-              </div>
-            </div>
-            <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-takosan-green-deep/60 text-takosan-mint border border-white/15">
-              {members.length} thành viên
-            </span>
-          </div>
-
-          <p className="text-xs text-slate-200 leading-relaxed">
-            Các thành viên cùng theo dõi đồ ăn trong tủ, chia sẻ danh sách đi chợ và nhận cảnh báo đồ sắp hết hạn.
-          </p>
-
-          {/* Quick Invite Code Box */}
-          <div className="bg-slate-900/50 rounded-xl p-3 flex items-center justify-between backdrop-blur-md border border-white/10">
-            <div>
-              <p className="text-[10px] text-slate-300 font-medium uppercase tracking-wider">Mã mời gia đình</p>
-              <p className="font-mono font-bold text-xl text-amber-300 tracking-widest">{inviteCode}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleCopyCode}
-                className="px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 active:scale-95 text-xs font-semibold flex items-center gap-1.5 transition-all tap-target"
-              >
-                {copied ? <Check className="w-3.5 h-3.5 text-takosan-mint" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copied ? 'Đã chép' : 'Chép mã'}</span>
-              </button>
-              <button
-                onClick={handleShare}
-                className="w-8 h-8 rounded-lg bg-takosan-green text-white flex items-center justify-center tap-target hover:bg-takosan-green-hover transition-all"
-                title="Chia sẻ"
-              >
-                <Share2 className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* QR Scan to Join */}
-        <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-xs flex items-center gap-4">
-          <div className="w-22 h-22 shrink-0 bg-slate-50 p-1.5 rounded-xl border border-slate-100 flex items-center justify-center">
-            <img src={qrCodeUrl} alt="Mã QR gia đình" className="w-full h-full object-contain rounded-lg" />
-          </div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-takosan-green">
-              <QrCode className="w-4 h-4" />
-              <span>Quét QR nhanh</span>
-            </div>
-            <h4 className="font-heading font-bold text-sm text-slate-900">Quét từ điện thoại người thân</h4>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Mở camera quét mã này để tham gia tủ lạnh ngay không cần nhập mã.
-            </p>
-          </div>
-        </div>
-
-        {/* Members List */}
-        <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-xs space-y-3">
-          <h4 className="font-heading font-bold text-sm text-slate-900">Thành viên trong nhà</h4>
-
-          <div className="space-y-2.5">
-            {members.map((m) => (
-              <div key={m.id} className="flex items-center justify-between py-1 border-b border-slate-100 last:border-0">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-takosan-mint border border-takosan-mint-deep flex items-center justify-center text-lg shadow-xs">
-                    {m.avatar}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-heading font-semibold text-sm text-slate-900">{m.name}</p>
-                      {m.isMe && (
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep/60 font-semibold">
-                          Bạn
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-slate-500">{m.role}</p>
-                  </div>
+      <div className="space-y-4 pb-8">
+        <Section title="Hộ gia đình hiện tại">
+          <Surface className="p-4 space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="w-10 h-10 rounded-card bg-semantic-success-soft text-semantic-action-primary flex items-center justify-center shrink-0" aria-hidden="true">
+                  <Users className="w-5 h-5" />
+                </span>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-semantic-text-primary truncate">Tủ lạnh nhà tôi</h3>
+                  <p className="text-xs text-semantic-text-muted truncate">Mã hộ: {householdId}</p>
                 </div>
-                <span className="text-xs text-takosan-green font-semibold">Đang kết nối</span>
               </div>
-            ))}
+              {/* Only the session-derived fact is asserted: this account
+                  belongs to the household. No server status is invented. */}
+              <StatusBadge tone="info">Hộ của bạn</StatusBadge>
+            </div>
+            <p className="text-sm text-semantic-text-secondary leading-relaxed">
+              Dữ liệu tủ lạnh, lịch sử quét và thực đơn được phân tách theo hộ. Tài khoản của bạn
+              ({displayName || 'bạn'}) là thành viên của hộ này.
+            </p>
+          </Surface>
+        </Section>
+
+        <Section title="Chia sẻ với người thân">
+          <div className="space-y-3">
+            <UnavailableState title="Mời thành viên — chưa hỗ trợ">
+              Chưa có API mời tham gia hộ trên máy chủ. Takosan sẽ không tạo mã mời hay QR cho
+              đến khi tính năng này thật sự được cấu hình; mọi mã bạn thấy ở nơi khác đều không
+              phải từ ứng dụng này.
+            </UnavailableState>
+            <UnavailableState title="Tham gia hộ khác — chưa hỗ trợ">
+              Hiện không thể nhập mã để tham gia hộ khác. Nhập mã sẽ không tạo kết nối thật, nên
+              Takosan không hiển thị luồng giả.
+            </UnavailableState>
+            <UnavailableState title="Danh sách thành viên — chưa hỗ trợ">
+              Máy chủ chưa trả về danh sách thành viên hộ. Khi có API, trang này sẽ hiển thị đúng
+              vai trò từng người, không thêm thành viên mẫu.
+            </UnavailableState>
           </div>
-        </div>
+        </Section>
 
-        {/* Join another Household */}
-        <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-xs space-y-3">
-          <h4 className="font-heading font-bold text-sm text-slate-900">Tham gia tủ lạnh khác</h4>
-          <p className="text-xs text-slate-500">
-            Nếu bạn được người thân gửi mã mời, hãy nhập vào đây:
-          </p>
-
-          <form onSubmit={handleJoin} className="flex gap-2 pt-1">
-            <input
-              type="text"
-              value={joinCode}
-              onChange={(e) => setJoinCode(e.target.value)}
-              placeholder="VD: FRG-8926"
-              className="flex-1 px-3.5 py-2 rounded-lg border border-slate-200/80 text-sm font-mono font-bold uppercase focus:outline-none focus:border-takosan-green bg-white"
-            />
-            <Button size="md" type="submit" disabled={!joinCode.trim()}>
-              Tham gia
-            </Button>
-          </form>
-        </div>
-
-        {/* Security Note */}
-        <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500 pt-1">
-          <ShieldCheck className="w-4 h-4 text-takosan-green" />
-          <span>Dữ liệu đồng bộ an toàn & phân quyền rõ ràng</span>
-        </div>
+        <p className="text-xs text-semantic-text-muted leading-relaxed">
+          Khi chia sẻ hộ được mở, người thân sẽ cùng theo dõi đồ ăn trong tủ, danh sách đi chợ và
+          cảnh báo đồ sắp hết hạn — với đúng quyền máy chủ cho phép.
+        </p>
       </div>
-    </div>
+    </Page>
   );
 };

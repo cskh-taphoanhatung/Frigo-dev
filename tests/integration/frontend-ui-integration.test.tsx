@@ -252,8 +252,9 @@ describe('notification honesty', () => {
   it('renders no fabricated alerts or global unread dot when the server list is empty', async () => {
     const ui = await loadUi();
     const { NotificationsPage } = await import('../../src/web/pages/NotificationsPage');
+    const { MemoryRouter } = await import('react-router-dom');
     ui.queryClient.setQueryData(ui.queryKeys.notifications(), []);
-    const html = ui.render(<NotificationsPage />);
+    const html = ui.render(<MemoryRouter><NotificationsPage /></MemoryRouter>);
     expect(html).toContain('Chưa có thông báo mới');
     const bell = html.match(/<button[^>]*aria-label="Thông báo"[^>]*>([\s\S]*?)<\/button>/)?.[1];
     expect(bell).toBeTruthy();
@@ -263,10 +264,11 @@ describe('notification honesty', () => {
   it('renders notification content only when returned by the real query contract', async () => {
     const ui = await loadUi();
     const { NotificationsPage } = await import('../../src/web/pages/NotificationsPage');
+    const { MemoryRouter } = await import('react-router-dom');
     ui.queryClient.setQueryData(ui.queryKeys.notifications(), [{
       id: 'notification-a', type: 'expiring_soon', title: 'REAL_NOTIFICATION', message: 'REAL_MESSAGE', createdAt: `${TODAY}T07:00:00`,
     }]);
-    const html = ui.render(<NotificationsPage />);
+    const html = ui.render(<MemoryRouter><NotificationsPage /></MemoryRouter>);
     expect(html).toContain('REAL_NOTIFICATION');
     expect(html).toContain('REAL_MESSAGE');
     expect(html).not.toContain('Chưa có thông báo mới');
@@ -275,8 +277,9 @@ describe('notification honesty', () => {
   it('surfaces notification errors rather than pretending the list is empty', async () => {
     const ui = await loadUi();
     const { NotificationsPage } = await import('../../src/web/pages/NotificationsPage');
+    const { MemoryRouter } = await import('react-router-dom');
     await ui.failQuery(ui.queryKeys.notifications(), new ui.ApiError('http', 'failure', 500));
-    const html = ui.render(<NotificationsPage />);
+    const html = ui.render(<MemoryRouter><NotificationsPage /></MemoryRouter>);
     expect(html).toContain('role="alert"');
     expect(html).toContain('Thử lại');
     expect(html).not.toContain('Chưa có thông báo mới');
@@ -328,8 +331,10 @@ describe('secure application-shell architecture', () => {
   }
 
   it('keeps SessionBoundary inside the shared QueryClient provider/router and outside Suspense/routes', () => {
-    expect(ancestors(element('SessionBoundary'))).toEqual(['QueryClientProvider', 'BrowserRouter', 'AppErrorBoundary']);
-    expect(ancestors(element('Routes'))).toEqual(['QueryClientProvider', 'BrowserRouter', 'AppErrorBoundary', 'SessionBoundary', 'Suspense']);
+    // T17 adds a presentation-only MotionProvider (reduced-motion contract);
+    // the security containment ordering itself is unchanged.
+    expect(ancestors(element('SessionBoundary'))).toEqual(['QueryClientProvider', 'BrowserRouter', 'MotionProvider', 'AppErrorBoundary']);
+    expect(ancestors(element('Routes'))).toEqual(['QueryClientProvider', 'BrowserRouter', 'MotionProvider', 'AppErrorBoundary', 'SessionBoundary', 'Suspense']);
     expect(element('QueryClientProvider').openingElement.attributes.getText(source)).toContain('client={queryClient}');
     expect(source.text).toMatch(/import\s*\{\s*queryClient\s*\}\s*from\s*['"]\.\/lib\/query-client['"]/);
     expect(element('Suspense').openingElement.attributes.getText(source)).toContain('RouteFallback');

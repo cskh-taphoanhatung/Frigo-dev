@@ -87,12 +87,12 @@ export const VietQRModal: React.FC<VietQRModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl border border-slate-200/80 flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm animate-fade-in">
+      <div className="bg-white w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl border border-slate-200/80 flex flex-col max-h-[92vh] animate-fade-in">
         {/* Header */}
-        <div className="p-4 bg-[#0F3D2E] text-white flex items-center justify-between">
+        <div className="p-4 bg-semantic-action-primary-pressed text-white flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white">
+            <div className="w-8 h-8 rounded-lg bg-semantic-action-primary flex items-center justify-center text-white">
               <QrCode className="w-4 h-4" />
             </div>
             <div>
@@ -112,8 +112,8 @@ export const VietQRModal: React.FC<VietQRModalProps> = ({
         {/* Content */}
         <div className="p-4 overflow-y-auto space-y-3.5 text-slate-900 bg-slate-50/50">
           {isPaid ? (
-            <div className="py-8 text-center space-y-3 animate-in zoom-in-95">
-              <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200/60 flex items-center justify-center mx-auto shadow-xs">
+            <div className="py-8 text-center space-y-3 animate-fade-in">
+              <div className="w-16 h-16 rounded-full bg-semantic-success-soft text-semantic-success border border-semantic-action-primary/30 flex items-center justify-center mx-auto shadow-xs">
                 <CheckCircle2 className="w-10 h-10" />
               </div>
               <div>
@@ -121,12 +121,12 @@ export const VietQRModal: React.FC<VietQRModalProps> = ({
                   Thanh toán thành công! 🎉
                 </h4>
                 <p className="text-xs text-slate-600 mt-1 max-w-xs mx-auto">
-                  Chào mừng bạn đến với <span className="font-semibold text-emerald-700">Frigo Plus</span>. Toàn bộ tính năng cao cấp đã được mở khóa!
+                  Chào mừng bạn đến với <span className="font-semibold text-semantic-action-primary">Takosan Plus</span>. Toàn bộ tính năng cao cấp đã được mở khóa!
                 </p>
               </div>
             </div>
           ) : pending ? (
-            <div className="py-8 text-center space-y-3 animate-in zoom-in-95">
+            <div className="py-8 text-center space-y-3 animate-fade-in">
               <div className="w-16 h-16 rounded-full bg-amber-50 text-amber-600 border border-amber-200/60 flex items-center justify-center mx-auto shadow-xs">
                 <Inbox className="w-9 h-9" />
               </div>
@@ -135,8 +135,8 @@ export const VietQRModal: React.FC<VietQRModalProps> = ({
                   Đang đối soát giao dịch
                 </h4>
                 <p className="text-xs text-slate-600 mt-1 max-w-xs mx-auto">
-                  Chúng tôi đã ghi nhận lệnh chuyển khoản của bạn. Frigo Plus sẽ
-                  <span className="font-semibold text-emerald-700"> tự động kích hoạt</span> ngay
+                  Chúng tôi đã ghi nhận lệnh chuyển khoản của bạn. Takosan Plus sẽ
+                  <span className="font-semibold text-semantic-action-primary"> tự động kích hoạt</span> ngay
                   khi thanh toán được xác minh. Vui lòng không lặp lại giao dịch.
                 </p>
               </div>
@@ -151,7 +151,7 @@ export const VietQRModal: React.FC<VietQRModalProps> = ({
                 <div className="flex items-center gap-1.5">
                   <Sparkles className="w-4 h-4 text-amber-500" />
                   <span className="font-heading font-semibold text-xs text-slate-900">
-                    {planType === 'annual' ? 'Gói 1 Năm Frigo Plus' : 'Gói 1 Tháng Frigo Plus'}
+                    {planType === 'annual' ? 'Gói 1 Năm Takosan Plus' : 'Gói 1 Tháng Takosan Plus'}
                   </span>
                 </div>
                 <div className="flex items-center gap-1 text-xs font-mono font-bold text-amber-700">
@@ -191,7 +191,7 @@ export const VietQRModal: React.FC<VietQRModalProps> = ({
                     <span className="font-mono font-bold text-slate-900">{bankInfo.accountNo}</span>
                     <button
                       onClick={() => copyToClipboard(bankInfo.accountNo, 'acc')}
-                      className="p-1 rounded bg-slate-50 border border-slate-200 hover:bg-slate-100 tap-target text-emerald-700"
+                      className="p-1 rounded bg-slate-50 border border-slate-200 hover:bg-slate-100 tap-target text-semantic-action-primary"
                       title="Sao chép"
                     >
                       {copiedField === 'acc' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
@@ -202,12 +202,12 @@ export const VietQRModal: React.FC<VietQRModalProps> = ({
                 <div className="flex items-center justify-between py-1 border-b border-slate-100">
                   <span className="text-slate-500">Số tiền:</span>
                   <div className="flex items-center gap-2">
-                    <span className="font-heading font-bold text-sm text-emerald-700">
+                    <span className="font-heading font-bold text-sm text-semantic-action-primary">
                       {amount.toLocaleString('vi-VN')}đ
                     </span>
                     <button
                       onClick={() => copyToClipboard(String(amount), 'amount')}
-                      className="p-1 rounded bg-slate-50 border border-slate-200 hover:bg-slate-100 tap-target text-emerald-700"
+                      className="p-1 rounded bg-slate-50 border border-slate-200 hover:bg-slate-100 tap-target text-semantic-action-primary"
                       title="Sao chép"
                     >
                       {copiedField === 'amount' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
@@ -223,7 +223,7 @@ export const VietQRModal: React.FC<VietQRModalProps> = ({
                     </span>
                     <button
                       onClick={() => copyToClipboard(bankInfo.description, 'desc')}
-                      className="p-1 rounded bg-slate-50 border border-slate-200 hover:bg-slate-100 tap-target text-emerald-700"
+                      className="p-1 rounded bg-slate-50 border border-slate-200 hover:bg-slate-100 tap-target text-semantic-action-primary"
                       title="Sao chép"
                     >
                       {copiedField === 'desc' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
@@ -234,7 +234,7 @@ export const VietQRModal: React.FC<VietQRModalProps> = ({
 
               {/* Security guarantee */}
               <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                <ShieldCheck className="w-4 h-4 text-semantic-action-primary" />
                 <span>Bảo mật chuẩn mã hóa ngân hàng Napas</span>
               </div>
             </>

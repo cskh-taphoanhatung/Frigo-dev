@@ -4,8 +4,9 @@ import { useScanStore } from '../stores/useScanStore';
 import { api } from '../services/api';
 import { TopBar } from '../components/common/TopBar';
 import { Button } from '../components/common/Button';
+import { BottomSheet } from '../design-system/primitives';
 import { getIngredientImage } from '../lib/ingredient-images';
-import { Plus, Trash2, CheckCircle2, AlertCircle, X } from 'lucide-react';
+import { Plus, Trash2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { StandardUnit } from '@frigo/domain';
 import { capturePrivateSession } from '../lib/private-session';
 import { invalidateInventoryDependents } from '../lib/query-invalidation';
@@ -14,11 +15,11 @@ import { ApiError } from '../services/http';
 import { ScanProcessingState } from '../components/scan/ScanProcessingState';
 
 const UNITS: StandardUnit[] = ['piece', 'g', 'kg', 'ml', 'l', 'pack', 'bunch', 'slice'];
-const fieldClass = 'mt-1 w-full min-w-0 h-11 px-3 rounded-lg border border-slate-200 text-sm text-slate-900 bg-white focus:border-takosan-green focus:outline-none';
+const fieldClass = 'mt-1 w-full min-w-0 h-11 px-3 rounded-lg border border-semantic-border text-sm text-semantic-text-primary bg-white focus:border-takosan-green focus:outline-none';
 const confidenceClass = {
-  unknown: 'text-slate-600 bg-slate-100',
-  low: 'text-amber-900 bg-amber-100',
-  medium: 'text-amber-800 bg-amber-50',
+  unknown: 'text-semantic-text-secondary bg-semantic-border/60',
+  low: 'text-semantic-warning-strong bg-semantic-warning-soft',
+  medium: 'text-semantic-warning-strong bg-semantic-warning-soft',
   high: 'text-takosan-green-deep bg-takosan-mint',
 };
 
@@ -207,8 +208,8 @@ const ScanReview: React.FC<{ effectiveScanId: string }> = ({ effectiveScanId }) 
 
       <div className="px-4 pt-3 space-y-4">
         {scanStatus === 'pending' && <ScanProcessingState stage="analyzing" kind="fridge" compact />}
-        {confirmError && <p role="alert" className="text-sm text-red-700">{confirmError}</p>}
-        {loadError && <p role="alert" className="text-sm text-red-700">
+        {confirmError && <p role="alert" className="text-sm text-semantic-danger-strong">{confirmError}</p>}
+        {loadError && <p role="alert" className="text-sm text-semantic-danger-strong">
           {loadError}
           {effectiveScanId && <button className="ml-2 underline tap-target" onClick={() => {
             setLoadError(null);
@@ -218,14 +219,14 @@ const ScanReview: React.FC<{ effectiveScanId: string }> = ({ effectiveScanId }) 
         </p>}
         {/* Banner Alert */}
         <div className={scanStatus === 'failed'
-          ? 'bg-rose-50 border border-rose-200 rounded-xl p-3.5 flex items-start gap-3'
+          ? 'bg-semantic-danger-soft border border-semantic-danger/30 rounded-xl p-3.5 flex items-start gap-3'
           : 'bg-takosan-mint/80 border border-takosan-mint-deep/70 rounded-xl p-3.5 flex items-start gap-3'}
           role={isConfirmed ? 'status' : undefined}>
           {scanStatus === 'failed'
-            ? <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+            ? <AlertCircle className="w-5 h-5 text-semantic-danger shrink-0 mt-0.5" />
             : <CheckCircle2 className="w-5 h-5 text-takosan-green shrink-0 mt-0.5" />}
           <div className="text-xs">
-            <p className="font-heading font-bold text-sm text-slate-900">
+            <p className="font-heading font-bold text-sm text-semantic-text-primary">
               {isConfirmed
                 ? `Đã xác nhận ${acceptedCount} nguyên liệu`
                 : items.length > 0
@@ -236,7 +237,7 @@ const ScanReview: React.FC<{ effectiveScanId: string }> = ({ effectiveScanId }) 
                     ? 'Chưa có nguyên liệu trong danh sách'
                     : 'Đang chờ AI hoàn tất bản quét'}
             </p>
-            <p className="text-slate-600 mt-0.5">
+            <p className="text-semantic-text-secondary mt-0.5">
               {isConfirmed
                 ? 'Thông tin bản quét đã được lưu. Bạn có thể xem hoặc chỉnh sửa lô từ trang tủ lạnh.'
                 : items.length > 0
@@ -250,7 +251,7 @@ const ScanReview: React.FC<{ effectiveScanId: string }> = ({ effectiveScanId }) 
           </div>
         </div>
         {pollError && (
-          <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 flex items-center justify-between gap-3">
+          <div role="alert" className="rounded-xl border border-semantic-warning/30 bg-semantic-warning-soft px-3 py-2 text-xs text-semantic-warning-strong flex items-center justify-between gap-3">
             <span>{pollError}</span>
             <div className="flex items-center gap-2 shrink-0">
               {scanStatus === 'pending' && (
@@ -268,7 +269,7 @@ const ScanReview: React.FC<{ effectiveScanId: string }> = ({ effectiveScanId }) 
         )}
 
         {/* Detected Items List */}
-        <p className="text-xs text-slate-600">
+        <p className="text-xs text-semantic-text-secondary">
           Bản quét tủ lạnh bổ sung số lượng vào nguyên liệu phù hợp đã có; không đổi nơi bảo quản hay hạn dùng của lô cũ.
         </p>
         <form id="scan-review" className="space-y-3" onSubmit={(event) => {
@@ -286,55 +287,55 @@ const ScanReview: React.FC<{ effectiveScanId: string }> = ({ effectiveScanId }) 
             );
             return (
               <article key={item.id} data-scan-item-id={item.id} aria-label={`Nguyên liệu ${index + 1}`}
-                className={`rounded-xl p-3 border shadow-xs ${item.rejected ? 'bg-rose-50 border-rose-200' : 'bg-white border-slate-200/80'}`}>
+                className={`rounded-xl p-3 border shadow-xs ${item.rejected ? 'bg-semantic-danger-soft border-semantic-danger/30' : 'bg-white border-semantic-border'}`}>
                 <div className="flex items-start gap-3">
                   <img src={getIngredientImage(item.canonicalId ?? undefined, item.rawName)} alt=""
                     className="w-10 h-10 object-contain shrink-0" />
                   <div className="min-w-0 flex-1">
-                    <h2 className="font-heading font-semibold text-sm text-slate-900 break-words">{item.rawName}</h2>
+                    <h2 className="font-heading font-semibold text-sm text-semantic-text-primary break-words">{item.rawName}</h2>
                     {persisted ? (
                       <span className={`inline-block text-xs px-1.5 py-0.5 rounded font-semibold ${confidenceClass[confidence.tone]}`}>
                         {confidence.label}
                       </span>
-                    ) : <span className="text-xs text-slate-600">Nhập thủ công</span>}
+                    ) : <span className="text-xs text-semantic-text-secondary">Nhập thủ công</span>}
                     {persisted && (
-                      <p className="text-xs text-slate-600 mt-1 break-words" data-raw-evidence>
+                      <p className="text-xs text-semantic-text-secondary mt-1 break-words" data-raw-evidence>
                         AI đọc: {raw
                           ? `${raw.rawName ?? 'Không rõ tên'} · ${raw.estimatedQuantity ?? 'Không rõ số lượng'} ${raw.unit ?? 'Không rõ đơn vị'}`
                           : 'Không có dữ liệu gốc'}
                       </p>
                     )}
-                    {corrected && <p className="text-xs text-amber-800 mt-1">Đã chỉnh sửa so với dữ liệu gốc</p>}
-                    {item.rejected && <p className="text-xs font-semibold text-rose-800 mt-1">Đã từ chối · Không thêm vào tủ lạnh</p>}
+                    {corrected && <p className="text-xs text-semantic-warning-strong mt-1">Đã chỉnh sửa so với dữ liệu gốc</p>}
+                    {item.rejected && <p className="text-xs font-semibold text-semantic-danger-strong mt-1">Đã từ chối · Không thêm vào tủ lạnh</p>}
                   </div>
                   <button type="button" disabled={!canEdit}
                     onClick={() => persisted ? updateItem(item.id, { rejected: !item.rejected }) : removeItem(item.id)}
                     aria-pressed={persisted ? Boolean(item.rejected) : undefined}
-                    className="p-2 rounded-lg text-rose-700 hover:bg-rose-100 tap-target shrink-0 text-xs font-semibold"
+                    className="p-2 rounded-lg text-semantic-danger-strong hover:bg-semantic-danger-soft tap-target shrink-0 text-xs font-semibold"
                     aria-label={persisted ? (item.rejected ? 'Khôi phục dòng này' : 'Từ chối dòng này') : 'Xóa dòng thủ công'}>
                     {persisted ? (item.rejected ? 'Khôi phục' : 'Từ chối') : <Trash2 className="w-4 h-4" />}
                   </button>
                 </div>
                 <fieldset disabled={!canEdit} className="mt-3 grid grid-cols-2 gap-3 min-w-0">
-                  <label className="col-span-2 text-xs font-semibold text-slate-700">
+                  <label className="col-span-2 text-xs font-semibold text-semantic-text-secondary">
                     Tên nguyên liệu
                     <input className={fieldClass} value={item.rawName} required pattern=".*\S.*"
                       onChange={(event) => updateItem(item.id, { rawName: event.target.value })} />
                   </label>
-                  <label className="text-xs font-semibold text-slate-700">
+                  <label className="text-xs font-semibold text-semantic-text-secondary">
                     Số lượng
                     <input className={fieldClass} type="number" min="0.001" max="10000" step="any" required
                       value={item.estimatedQuantity || ''}
                       onChange={(event) => updateItem(item.id, { estimatedQuantity: Number(event.target.value) })} />
                   </label>
-                  <label className="text-xs font-semibold text-slate-700">
+                  <label className="text-xs font-semibold text-semantic-text-secondary">
                     Đơn vị
                     <select className={fieldClass} value={item.unit}
                       onChange={(event) => updateItem(item.id, { unit: event.target.value as StandardUnit })}>
                       {UNITS.map((unit) => <option key={unit} value={unit}>{unit}</option>)}
                     </select>
                   </label>
-                  <label className="text-xs font-semibold text-slate-700">
+                  <label className="text-xs font-semibold text-semantic-text-secondary">
                     Bảo quản
                     <select className={fieldClass} value={item.storage}
                       onChange={(event) => updateItem(item.id, { storage: event.target.value as typeof item.storage })}>
@@ -343,7 +344,7 @@ const ScanReview: React.FC<{ effectiveScanId: string }> = ({ effectiveScanId }) 
                       <option value="pantry">Kệ bếp</option>
                     </select>
                   </label>
-                  <label className="text-xs font-semibold text-slate-700">
+                  <label className="text-xs font-semibold text-semantic-text-secondary">
                     Hạn dùng
                     <input className={`${fieldClass} px-1`} type="date" value={item.expiryDate ?? ''}
                       onChange={(event) => updateItem(item.id, {
@@ -351,7 +352,7 @@ const ScanReview: React.FC<{ effectiveScanId: string }> = ({ effectiveScanId }) 
                       })} />
                   </label>
                   <div className="col-span-2">
-                    <p className="text-xs text-slate-600" data-expiry-state>
+                    <p className="text-xs text-semantic-text-secondary" data-expiry-state>
                       {isConfirmed
                         // A confirmed line reports the review the server recorded
                         // (T13R-A P2-B): the accepted date, its estimate basis, or
@@ -363,10 +364,10 @@ const ScanReview: React.FC<{ effectiveScanId: string }> = ({ effectiveScanId }) 
                     </p>
                     <div className="flex flex-wrap gap-2 mt-2">
                       {[3, 7].map((days) => (
-                        <button key={days} type="button" className="text-xs px-2 py-1.5 rounded-lg border border-slate-200 tap-target"
+                        <button key={days} type="button" className="text-xs px-2 py-1.5 rounded-lg border border-semantic-border tap-target"
                           onClick={() => handleEstimateExpiry(item.id, days)}>Ước tính {days} ngày</button>
                       ))}
-                      <button type="button" className="text-xs px-2 py-1.5 rounded-lg border border-slate-200 tap-target"
+                      <button type="button" className="text-xs px-2 py-1.5 rounded-lg border border-semantic-border tap-target"
                         onClick={() => updateItem(item.id, { expiryDate: undefined, expiryEstimated: false })}>Không rõ hạn dùng</button>
                     </div>
                   </div>
@@ -383,103 +384,86 @@ const ScanReview: React.FC<{ effectiveScanId: string }> = ({ effectiveScanId }) 
           size="md"
           disabled={!canEdit}
           onClick={() => setIsManualAddOpen(true)}
-          className="flex items-center justify-center gap-1.5 text-xs text-slate-700"
+          className="flex items-center justify-center gap-1.5 text-xs"
         >
-          <Plus className="w-4 h-4 text-takosan-green" />
+          <Plus className="w-4 h-4 text-takosan-green" aria-hidden="true" />
           <span>Thêm nguyên liệu AI còn thiếu</span>
         </Button>}
       </div>
 
       {/* Fixed Confirm CTA Bar */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] bg-white/95 backdrop-blur-md border-t border-slate-200/80 max-w-md mx-auto z-40 shadow-lg">
-        {isConfirmed ? <Button fullWidth size="lg" onClick={() => navigate('/fridge')}>
-          Xem tủ lạnh
-        </Button> : <Button
-          fullWidth
-          size="lg"
-          type="submit"
-          form="scan-review"
-          isLoading={isConfirming}
-          disabled={items.length === 0 || !canEdit}
-          className="flex items-center justify-center gap-2"
-        >
-          <CheckCircle2 className="w-5 h-5" />
-          <span>Xác nhận nguyên liệu ({acceptedCount} món)</span>
-        </Button>}
+      <div className="fixed bottom-[calc(68px+env(safe-area-inset-bottom,0px))] md:bottom-0 left-0 right-0 md:left-20 lg:left-64 p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] bg-white/95 backdrop-blur-md border-t border-semantic-border z-40 shadow-lg">
+        <div className="mx-auto w-full max-w-[var(--content-wide)]">
+          {isConfirmed ? <Button fullWidth size="lg" onClick={() => navigate('/fridge')}>
+            Xem tủ lạnh
+          </Button> : <Button
+            fullWidth
+            size="lg"
+            type="submit"
+            form="scan-review"
+            isLoading={isConfirming}
+            disabled={items.length === 0 || !canEdit}
+            className="flex items-center justify-center gap-2"
+          >
+            <CheckCircle2 className="w-5 h-5" />
+            <span>Xác nhận nguyên liệu ({acceptedCount} món)</span>
+          </Button>}
+        </div>
       </div>
 
-      {/* Manual Add Sheet */}
-      {isManualAddOpen && canEdit && (
-        <div className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-sm flex items-end justify-center p-0 animate-in fade-in duration-200">
-          <div className="bg-white rounded-t-2xl w-full max-w-md p-5 shadow-2xl border-t border-slate-200/80 animate-in slide-in-from-bottom-5 duration-200">
-            {/* Grab bar */}
-            <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-4 shrink-0" />
+      {/* Manual add sheet (components/BOTTOM_SHEET.md): labelled modal with
+          focus trap, Escape and focus return. */}
+      <BottomSheet open={isManualAddOpen && canEdit} title="Thêm nguyên liệu thủ công" onClose={() => setIsManualAddOpen(false)}>
+        <form onSubmit={handleAddManualItem} className="space-y-3.5">
+          <div>
+            <label htmlFor="scan-add-name" className="block text-xs font-semibold text-semantic-text-secondary mb-1.5">Tên nguyên liệu</label>
+            <input
+              id="scan-add-name"
+              type="text"
+              required
+              value={addName}
+              onChange={(e) => setAddName(e.target.value)}
+              placeholder="Ví dụ: Nấm hương, Hành lá..."
+              className="w-full h-11 px-3 rounded-lg border border-semantic-border text-sm font-medium text-semantic-text-primary bg-white focus:border-takosan-green focus:outline-none transition-colors"
+            />
+          </div>
 
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-heading font-bold text-base text-slate-900">
-                Thêm nguyên liệu thủ công
-              </h3>
-              <button
-                onClick={() => setIsManualAddOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors tap-target flex items-center justify-center"
-                aria-label="Đóng"
-              >
-                <X className="w-5 h-5" />
-              </button>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="scan-add-quantity" className="block text-xs font-semibold text-semantic-text-secondary mb-1.5">Số lượng</label>
+              <input
+                id="scan-add-quantity"
+                type="number"
+                min="0.001"
+                max="10000"
+                step="any"
+                required
+                value={addQty}
+                onChange={(e) => setAddQty(Number(e.target.value))}
+                className="w-full h-11 px-3 rounded-lg border border-semantic-border text-sm font-medium text-semantic-text-primary bg-white focus:border-takosan-green focus:outline-none transition-colors"
+              />
             </div>
 
-            <form onSubmit={handleAddManualItem} className="space-y-3.5">
-              <div>
-                <label htmlFor="scan-add-name" className="block text-xs font-semibold text-slate-700 mb-1.5">Tên nguyên liệu</label>
-                <input
-                  id="scan-add-name"
-                  type="text"
-                  required
-                  value={addName}
-                  onChange={(e) => setAddName(e.target.value)}
-                  placeholder="Ví dụ: Nấm hương, Hành lá..."
-                  className="w-full h-11 px-3 rounded-lg border border-slate-200/80 text-sm font-medium text-slate-900 bg-white focus:border-takosan-green focus:outline-none transition-colors"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label htmlFor="scan-add-quantity" className="block text-xs font-semibold text-slate-700 mb-1.5">Số lượng</label>
-                  <input
-                    id="scan-add-quantity"
-                    type="number"
-                    min="0.001"
-                    max="10000"
-                    step="any"
-                    required
-                    value={addQty}
-                    onChange={(e) => setAddQty(Number(e.target.value))}
-                    className="w-full h-11 px-3 rounded-lg border border-slate-200/80 text-sm font-medium text-slate-900 bg-white focus:border-takosan-green focus:outline-none transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="scan-add-unit" className="block text-xs font-semibold text-slate-700 mb-1.5">Đơn vị</label>
-                  <select
-                    id="scan-add-unit"
-                    value={addUnit}
-                    onChange={(e) => setAddUnit(e.target.value as StandardUnit)}
-                    className="w-full h-11 px-2.5 rounded-lg border border-slate-200/80 text-xs font-semibold text-slate-800 bg-white focus:border-takosan-green focus:outline-none transition-colors"
-                  >
-                    {UNITS.map((unit) => <option key={unit} value={unit}>{unit}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <Button fullWidth size="md" type="submit">
-                  Thêm vào danh sách
-                </Button>
-              </div>
-            </form>
+            <div>
+              <label htmlFor="scan-add-unit" className="block text-xs font-semibold text-semantic-text-secondary mb-1.5">Đơn vị</label>
+              <select
+                id="scan-add-unit"
+                value={addUnit}
+                onChange={(e) => setAddUnit(e.target.value as StandardUnit)}
+                className="w-full h-11 px-2.5 rounded-lg border border-semantic-border text-xs font-semibold text-semantic-text-primary bg-white focus:border-takosan-green focus:outline-none transition-colors"
+              >
+                {UNITS.map((unit) => <option key={unit} value={unit}>{unit}</option>)}
+              </select>
+            </div>
           </div>
-        </div>
-      )}
+
+          <div className="pt-2">
+            <Button fullWidth size="md" type="submit">
+              Thêm vào danh sách
+            </Button>
+          </div>
+        </form>
+      </BottomSheet>
     </div>
   );
 };

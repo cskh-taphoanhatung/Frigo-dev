@@ -50,6 +50,12 @@
     scrollbar-width: none;
   }
 
+  /* Horizontal chip rails: children keep their intrinsic width and the rail
+     scrolls, instead of flex shrinking every chip into clipped text. */
+  .no-scrollbar > * {
+    flex-shrink: 0;
+  }
+
   .animate-fade-in {
     animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
@@ -57,6 +63,44 @@
   .animate-slide-up {
     animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
+
+  /* T17 skeleton pulse — opacity only, no spatial motion (states/loading.md). */
+  .t17-skeleton {
+    animation: t17SkeletonPulse 1.4s ease-in-out infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t17-skeleton {
+    animation: none;
+  }
+  /* Reduced motion is mandatory (motion/reduced-motion.md): the runtime
+     honors it via MotionConfig; CSS-driven motion stops here too. */
+  .animate-fade-in,
+  .animate-slide-up {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  /* Decorative Tailwind keyframes (pulse/bounce) stop as well; spinners
+     keep turning because they communicate progress, not decoration. */
+  .animate-pulse,
+  .animate-bounce,
+  .animate-bounce-slow,
+  .animate-ping {
+    animation: none;
+  }
+  /* Spatial transitions collapse to instant; colour/opacity feedback may stay
+     but never longer than the "instant" motion token. */
+  .transition-tap,
+  .transition-transform {
+    transition-duration: 1ms !important;
+  }
+}
+
+@keyframes t17SkeletonPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
 }
 
 @keyframes fadeIn {

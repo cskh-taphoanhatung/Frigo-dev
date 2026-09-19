@@ -1,22 +1,40 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { TAKOSAN_BRAND } from '../lib/takosan-brand';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../stores/useAuthStore';
 import { api } from '../services/api';
 import { isInventoryTransferDeferred } from '../services/auth';
 import { capturePrivateSession } from '../lib/private-session';
-import { Button } from '../components/common/Button';
-import { TurnstileWidget } from '../components/common/TurnstileWidget';
-import { ArrowLeft, Mail, Lock, User, Eye, EyeOff, ShieldCheck, CheckCircle2, AlertCircle, RefreshCw, KeyRound, Sparkles } from 'lucide-react';
+import { Slide } from '../design-system/motion';
+import { apiErrorMessage, type AuthMode } from '../features/auth/auth-shared';
+import { AuthShell } from '../features/auth/AuthShell';
+import { LoginMode } from '../features/auth/LoginMode';
+import { RegisterMode } from '../features/auth/RegisterMode';
+import { OtpMode } from '../features/auth/OtpMode';
+import { VerifyUnavailable } from '../features/auth/VerifyUnavailable';
+import { ForgotPasswordMode } from '../features/auth/ForgotPasswordMode';
+import {
+  clearVerifyContext,
+  readVerifyContext,
+  resendSecondsRemaining,
+  writeVerifyContext,
+} from '../features/auth/verify-context';
 
-type AuthMode = 'login' | 'register' | 'otp_verify' | 'forgot_password';
+export const AUTH_VERIFY_PATH = '/auth/verify';
+const EMPTY_OTP = ['', '', '', '', '', ''];
 
-function apiErrorMessage(error: any, fallback: string): string {
-  return typeof error?.payload?.error === 'string' ? error.payload.error : fallback;
-}
-
+/**
+ * Auth state machine (screen 02). Presentation lives in `features/auth/*`;
+ * security semantics (Turnstile, GSI, DEC-012 guest transfer, private-session
+ * capture) stay here, byte-compatible with the previous monolith.
+ *
+ * Screen 03 lives at `/auth/verify`: the OTP state is the route, not a hidden
+ * mode. A tab-scoped verification context (email, delivery, resend cooldown —
+ * never the code) lets refresh/back recover; without it the route says so.
+ */
 export const AuthPage: React.FC = () => {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const isVerifyRoute = pathname === AUTH_VERIFY_PATH;
   const [searchParams] = useSearchParams();
   const requestedMode = searchParams.get('mode');
   const requestedProvider = searchParams.get('provider');
@@ -26,14 +44,18 @@ export const AuthPage: React.FC = () => {
     : '/';
   const { setAuthSession } = useAuthStore();
 
-  const [mode, setMode] = useState<AuthMode>(() => requestedMode === 'register' ? 'register' : 'login');
+  // Non-route modes; `otp_verify` is derived from the route below.
+  const [baseMode, setBaseMode] = useState<Exclude<AuthMode, 'otp_verify'>>(() =>
+    requestedMode === 'register' ? 'register' : 'login');
+  const mode: AuthMode = isVerifyRoute ? 'otp_verify' : baseMode;
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Form Fields
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  // Direct load / refresh of /auth/verify restores the address being verified.
+  const [email, setEmail] = useState(() => (isVerifyRoute ? readVerifyContext()?.email ?? '' : ''));
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
@@ -41,13 +63,14 @@ export const AuthPage: React.FC = () => {
   const [newPassword, setNewPassword] = useState('');
 
   // OTP State
-  const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
+  const [otpDigits, setOtpDigits] = useState(EMPTY_OTP);
   const [otpPurpose, setOtpPurpose] = useState<'register' | 'forgot_password'>('register');
   const [devOtp, setDevOtp] = useState<string | null>(null);
   // Production responses intentionally omit devOtp; this flag tracks that a
   // reset code was requested so the user can still enter it and set a password.
   const [forgotOtpRequested, setForgotOtpRequested] = useState(false);
-  const [resendCountdown, setResendCountdown] = useState(0);
+  const [resendCountdown, setResendCountdown] = useState(() =>
+    isVerifyRoute ? resendSecondsRemaining(readVerifyContext()) : 0);
   // DEC-012: guest data transfer was refused by the server; the guest session
   // stays intact until the user explicitly continues without a transfer.
   const [transferDeferred, setTransferDeferred] = useState(false);
@@ -75,8 +98,22 @@ export const AuthPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (requestedMode === 'register') setMode('register');
+    if (requestedMode === 'register') setBaseMode('register');
   }, [requestedMode]);
+
+  // Arriving at /auth/verify (direct load, refresh, back/forward) restores the
+  // tab-scoped context. A verification whose email was never delivered must
+  // say so rather than claim a code is on its way.
+  useEffect(() => {
+    if (!isVerifyRoute) return;
+    const context = readVerifyContext();
+    if (!context) return;
+    setEmail((current) => current || context.email);
+    setResendCountdown((current) => (current > 0 ? current : resendSecondsRemaining(context)));
+    if (!context.delivered && resendSecondsRemaining(context) === 0) {
+      setErrorMessage((current) => current ?? 'Email OTP chưa gửi được. Hãy bấm gửi lại mã.');
+    }
+  }, [isVerifyRoute]);
 
   const otpInputsRef = useRef<(HTMLInputElement | null)[]>([]);
   const googleBtnRef = useRef<HTMLDivElement>(null);
@@ -189,6 +226,22 @@ export const AuthPage: React.FC = () => {
     }
   }, [resendCountdown]);
 
+  /** Enter screen 03 for `email` (registration purpose). `delivered` mirrors
+   *  the server's statement about the OTP email; it drives the cooldown and
+   *  is persisted so a refresh cannot upgrade "not sent" into "sent". */
+  const enterVerification = (delivered: boolean) => {
+    const cooldown = delivered ? 60 : 0;
+    writeVerifyContext({
+      email,
+      resendAvailableAt: cooldown ? Date.now() + cooldown * 1000 : 0,
+      delivered,
+    });
+    setOtpPurpose('register');
+    setTransferDeferred(false);
+    setResendCountdown(cooldown);
+    if (!isVerifyRoute) navigate(AUTH_VERIFY_PATH);
+  };
+
   // Handle Login
   const handleLogin = async (e: React.FormEvent) => {
     const isCurrent = capturePrivateSession();
@@ -215,15 +268,12 @@ export const AuthPage: React.FC = () => {
       }
     } catch (err: any) {
       if (err?.payload?.requireOtp === true) {
-        setOtpPurpose('register');
         if (typeof err.payload.devOtp === 'string') setDevOtp(err.payload.devOtp);
-        setTransferDeferred(false);
-        setMode('otp_verify');
-        if (err.payload.otpDelivered === true) {
-          setResendCountdown(60);
+        const delivered = err.payload.otpDelivered === true;
+        enterVerification(delivered);
+        if (delivered) {
           setSuccessMessage('Mã OTP mới đã được gửi đến email của bạn.');
         } else {
-          setResendCountdown(0);
           setErrorMessage('Tài khoản chưa xác thực và email OTP chưa gửi được. Hãy bấm gửi lại mã.');
         }
       } else {
@@ -255,18 +305,12 @@ export const AuthPage: React.FC = () => {
       const res = await api.register(name, email, password, turnstileToken);
       if (res.success) {
         if (res.devOtp) setDevOtp(res.devOtp);
-        setOtpPurpose('register');
-        setTransferDeferred(false);
-        setMode('otp_verify');
-        setResendCountdown(60);
+        enterVerification(true);
         setSuccessMessage(res.message);
       }
     } catch (err: any) {
       if (err?.code === 'OTP_DELIVERY_UNAVAILABLE') {
-        setOtpPurpose('register');
-        setTransferDeferred(false);
-        setMode('otp_verify');
-        setResendCountdown(0);
+        enterVerification(false);
         setSuccessMessage(null);
         setErrorMessage('Tài khoản đã được lưu nhưng email OTP chưa gửi được. Hãy bấm gửi lại mã.');
       } else {
@@ -342,6 +386,7 @@ export const AuthPage: React.FC = () => {
       if (res.success) {
         setTransferDeferred(false);
         if (otpPurpose === 'register') {
+          clearVerifyContext();
           if (res.user) {
             setAuthSession({
               id: res.user.id,
@@ -398,6 +443,9 @@ export const AuthPage: React.FC = () => {
         if (res.devOtp) setDevOtp(res.devOtp);
         setResendCountdown(60);
         setTransferDeferred(false);
+        if (otpPurpose === 'register') {
+          writeVerifyContext({ email, resendAvailableAt: Date.now() + 60_000, delivered: true });
+        }
         setSuccessMessage(res.message);
       }
     } catch (err: any) {
@@ -468,9 +516,9 @@ export const AuthPage: React.FC = () => {
         setPassword(newPassword);
         setDevOtp(null);
         setForgotOtpRequested(false);
-        setOtpDigits(['', '', '', '', '', '']);
+        setOtpDigits(EMPTY_OTP);
         setTimeout(() => {
-          setMode('login');
+          setBaseMode('login');
           setSuccessMessage(null);
         }, 1500);
       }
@@ -496,435 +544,155 @@ export const AuthPage: React.FC = () => {
     setGoogleRetry((value) => value + 1);
   };
 
+  const switchMode = (next: 'login' | 'register') => {
+    setBaseMode(next);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+  };
+
+  const backOutOfVerification = () => {
+    if (mode === 'otp_verify') {
+      // Abandoning verification: the tab-scoped context goes with it so the
+      // route cannot later imply a code is pending.
+      clearVerifyContext();
+      setBaseMode('login');
+      setErrorMessage(null);
+      setSuccessMessage(null);
+      setDevOtp(null);
+      setTransferDeferred(false);
+      setOtpDigits(EMPTY_OTP);
+      navigate('/auth', { replace: true });
+    } else if (mode === 'forgot_password') {
+      setBaseMode('login');
+      setErrorMessage(null);
+      setSuccessMessage(null);
+      setDevOtp(null);
+      setForgotOtpRequested(false);
+      setOtpDigits(EMPTY_OTP);
+    } else {
+      navigate('/landing');
+    }
+  };
+
+  const startForgotPassword = () => {
+    setBaseMode('forgot_password');
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    setDevOtp(null);
+    setForgotOtpRequested(false);
+    setOtpDigits(EMPTY_OTP);
+  };
+
+  const backToLogin = () => {
+    setBaseMode('login');
+    setErrorMessage(null);
+    setSuccessMessage(null);
+  };
+
+  // /auth/verify without any verification in progress on this device.
+  const verifyContextMissing = isVerifyRoute && email.length === 0;
+
   return (
-    <div className="min-h-screen bg-takosan-cream px-6 py-8 flex flex-col justify-between text-takosan-navy animate-fade-in max-w-md mx-auto">
-      <div>
-        {/* Top bar back button */}
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => {
-              if (mode === 'otp_verify' || mode === 'forgot_password') {
-                setMode('login');
-                setErrorMessage(null);
-                setSuccessMessage(null);
-                setDevOtp(null);
-                setForgotOtpRequested(false);
-                setTransferDeferred(false);
-                setOtpDigits(['', '', '', '', '', '']);
-              } else navigate('/landing');
-            }}
-            className="p-2 -ml-2 rounded-xl hover:bg-slate-100 active:scale-95 text-slate-700 tap-target flex items-center justify-center transition-colors"
-            aria-label="Quay lại"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-
-          <span className="text-xs font-semibold text-slate-400">Tài khoản Takosan</span>
-        </div>
-
-        {/* Brand Header */}
-        <div className="mt-6 text-center">
-          <img src={TAKOSAN_BRAND.logos.horizontal} alt="Takosan" className="h-11 mx-auto mb-3 object-contain" />
-          <h2 className="font-heading font-bold text-xl text-slate-900 tracking-tight">
-            {mode === 'login' && 'Đăng nhập vào Takosan'}
-            {mode === 'register' && 'Tạo tài khoản Takosan'}
-            {mode === 'otp_verify' && 'Xác thực mã OTP'}
-            {mode === 'forgot_password' && 'Quên mật khẩu'}
-          </h2>
-          <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto leading-relaxed">
-            {mode === 'login' && 'Đồng bộ tủ lạnh, thực đơn tuần và gợi ý món ăn mọi lúc mọi nơi'}
-            {mode === 'register' && 'Gia nhập Takosan để quản lý thực phẩm thông minh và giảm lãng phí'}
-            {mode === 'otp_verify' && `Nhập 6 số mã OTP đã gửi tới ${email}`}
-            {mode === 'forgot_password' && 'Nhập email để nhận mã OTP khôi phục mật khẩu'}
-          </p>
-        </div>
-
-        {/* Mode Switcher (Login / Register) */}
-        {(mode === 'login' || mode === 'register') && (
-          <div className="flex bg-slate-200/70 p-1 rounded-xl mt-6">
-            <button
-              onClick={() => {
-                setMode('login');
-                setErrorMessage(null);
-                setSuccessMessage(null);
-              }}
-              className={`flex-1 py-2 rounded-lg font-heading font-semibold text-xs transition-all tap-target ${
-                mode === 'login' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Đăng nhập
-            </button>
-            <button
-              onClick={() => {
-                setMode('register');
-                setErrorMessage(null);
-                setSuccessMessage(null);
-              }}
-              className={`flex-1 py-2 rounded-lg font-heading font-semibold text-xs transition-all tap-target ${
-                mode === 'register' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Đăng ký tài khoản
-            </button>
-          </div>
-        )}
-
-        {/* Alert Banners */}
-        {errorMessage && (
-          <div className="mt-4 p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs flex items-center gap-2 animate-in fade-in">
-            <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-            <span>{errorMessage}</span>
-          </div>
-        )}
-        {successMessage && (
-          <div className="mt-4 p-3 bg-takosan-mint border border-takosan-mint-deep text-takosan-green-deep rounded-xl text-xs flex items-center gap-2 animate-in fade-in">
-            <CheckCircle2 className="w-4 h-4 shrink-0 text-takosan-green" />
-            <span>{successMessage}</span>
-          </div>
-        )}
-
-        {/* Dev OTP Helper Badge */}
-        {devOtp && (mode === 'otp_verify' || mode === 'forgot_password') && (
-          <div
-            onClick={() => {
-              const digits = devOtp.split('');
-              setOtpDigits(digits);
-            }}
-            className="mt-3 p-3 bg-takosan-mint border border-takosan-mint-deep/80 rounded-xl text-xs flex items-center justify-between cursor-pointer hover:bg-takosan-mint-hover/70 transition-all shadow-xs"
-          >
-            <div className="flex items-center gap-2 text-takosan-green-deep">
-              <Sparkles className="w-4 h-4 text-takosan-green" />
-              <div>
-                <span className="font-medium">Mã OTP Thử nghiệm: </span>
-                <span className="font-heading font-bold text-sm tracking-widest text-takosan-green-deep">{devOtp}</span>
-              </div>
-            </div>
-            <span className="text-[10px] font-semibold text-takosan-green bg-white px-2 py-0.5 rounded-md border border-takosan-mint-deep">
-              Tự điền
-            </span>
-          </div>
-        )}
-
-        {/* ================= MODE 1: LOGIN ================= */}
+    <AuthShell
+      mode={mode}
+      email={email}
+      errorMessage={errorMessage}
+      successMessage={successMessage}
+      devOtp={devOtp}
+      onFillDevOtp={() => setOtpDigits(devOtp ? devOtp.split('') : otpDigits)}
+      onBack={backOutOfVerification}
+      onModeChange={switchMode}
+    >
+      {/* Auth-state transition (screen 02): fade + horizontal slide on mode
+          change; controlled values live above, so input is never cleared. */}
+      <Slide key={mode} direction={mode === 'register' || mode === 'forgot_password' ? 1 : -1}>
         {mode === 'login' && (
-          <div className="mt-5 space-y-4">
-            {/* Google Sign In Area */}
-            <div className="space-y-2">
-              <div ref={googleBtnRef} className="w-full flex justify-center min-h-[44px]" />
-              {googleStatus === 'loading' && (
-                <p role="status" className="text-center text-xs text-slate-500">Đang kết nối Google…</p>
-              )}
-              {googleStatus === 'unavailable' && (
-                <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-center text-xs text-amber-900">
-                  <p>{googleClientId ? 'Không tải được Google Sign-In. Hãy kiểm tra chặn nội dung hoặc thử lại.' : 'Google Sign-In chưa được cấu hình. Bạn vẫn có thể đăng nhập bằng email.'}</p>
-                  {googleClientId && (
-                    <button type="button" onClick={retryGoogle} className="mt-1 font-semibold underline tap-target">
-                      Tải lại Google Sign-In
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center my-2">
-              <div className="flex-1 border-t border-slate-200"></div>
-              <span className="px-3 text-[10px] text-slate-400 uppercase font-semibold tracking-wider">Hoặc qua Email</span>
-              <div className="flex-1 border-t border-slate-200"></div>
-            </div>
-
-            <form onSubmit={handleLogin} className="space-y-3">
-              {turnstileSiteKey && <TurnstileWidget key={turnstileGeneration} siteKey={turnstileSiteKey} onToken={handleTurnstileToken} />}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Email</label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="ban@example.com"
-                    className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 text-sm font-medium text-slate-900 shadow-xs"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-semibold text-slate-700">Mật khẩu</label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMode('forgot_password');
-                      setErrorMessage(null);
-                      setSuccessMessage(null);
-                      setDevOtp(null);
-                      setForgotOtpRequested(false);
-                      setOtpDigits(['', '', '', '', '', '']);
-                    }}
-                    className="text-xs font-semibold text-takosan-green hover:underline"
-                  >
-                    Quên mật khẩu?
-                  </button>
-                </div>
-                <div className="relative">
-                  <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full h-11 pl-10 pr-10 bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 text-sm font-medium text-slate-900 shadow-xs"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 p-1 tap-target"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <Button fullWidth size="lg" type="submit" isLoading={isLoading} className="mt-2">
-                Đăng nhập
-              </Button>
-            </form>
-          </div>
+          <LoginMode
+            googleButtonRef={googleBtnRef}
+            googleStatus={googleStatus}
+            googleClientId={googleClientId ?? null}
+            onRetryGoogle={retryGoogle}
+            turnstileSiteKey={turnstileSiteKey}
+            turnstileGeneration={turnstileGeneration}
+            onTurnstileToken={handleTurnstileToken}
+            email={email}
+            onEmailChange={setEmail}
+            password={password}
+            onPasswordChange={setPassword}
+            showPassword={showPassword}
+            onToggleShowPassword={() => setShowPassword(!showPassword)}
+            onSubmit={handleLogin}
+            isLoading={isLoading}
+            onForgotPassword={startForgotPassword}
+          />
         )}
-
-        {/* ================= MODE 2: REGISTER ================= */}
         {mode === 'register' && (
-          <div className="mt-5 space-y-4">
-            <form onSubmit={handleRegister} className="space-y-3">
-              {turnstileSiteKey && <TurnstileWidget key={turnstileGeneration} siteKey={turnstileSiteKey} onToken={handleTurnstileToken} />}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Họ và tên</label>
-                <div className="relative">
-                  <User className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
-                  <input
-                    type="text"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Nguyễn Văn A"
-                    className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 text-sm font-medium text-slate-900 shadow-xs"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Email</label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="ban@example.com"
-                    className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 text-sm font-medium text-slate-900 shadow-xs"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Mật khẩu (tối thiểu 6 ký tự)</label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full h-11 pl-10 pr-10 bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 text-sm font-medium text-slate-900 shadow-xs"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 p-1 tap-target"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <Button fullWidth size="lg" type="submit" isLoading={isLoading} className="mt-2">
-                Tạo tài khoản & Nhận mã OTP
-              </Button>
-            </form>
-          </div>
+          <RegisterMode
+            turnstileSiteKey={turnstileSiteKey}
+            turnstileGeneration={turnstileGeneration}
+            onTurnstileToken={handleTurnstileToken}
+            name={name}
+            onNameChange={setName}
+            email={email}
+            onEmailChange={setEmail}
+            password={password}
+            onPasswordChange={setPassword}
+            showPassword={showPassword}
+            onToggleShowPassword={() => setShowPassword(!showPassword)}
+            onSubmit={handleRegister}
+            isLoading={isLoading}
+          />
         )}
-
-        {/* ================= MODE 3: OTP VERIFICATION ================= */}
-        {mode === 'otp_verify' && (
-          <div className="mt-6 space-y-5">
-            {turnstileSiteKey && <TurnstileWidget key={turnstileGeneration} siteKey={turnstileSiteKey} onToken={handleTurnstileToken} />}
-            <form onSubmit={handleVerifyOtp} className="space-y-4">
-              {/* 6-box OTP input */}
-              <div className="flex justify-center gap-2" onPaste={handleOtpPaste}>
-                {otpDigits.map((digit, idx) => (
-                  <input
-                    key={idx}
-                    ref={(el) => (otpInputsRef.current[idx] = el)}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => handleOtpChange(idx, e.target.value)}
-                    onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                    className="w-11 h-13 text-center font-heading font-bold text-xl bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 transition-all text-slate-900 shadow-xs"
-                  />
-                ))}
-              </div>
-
-              {transferDeferred && otpPurpose === 'register' ? (
-                <div
-                  role="status"
-                  data-testid="transfer-deferred"
-                  className="p-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl text-xs space-y-3 animate-in fade-in"
-                >
-                  <div className="flex items-start gap-2">
-                    <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
-                    <p className="leading-relaxed">
-                      Hiện Takosan chưa thể chuyển dữ liệu trong tủ khách sang tài khoản mới một cách an toàn.
-                      Bạn vẫn có thể tiếp tục tạo tài khoản: dữ liệu của phiên khách được giữ riêng trên
-                      hộ khách, không bị xóa và không được chuyển sang tài khoản mới.
-                    </p>
-                  </div>
-                  <Button fullWidth size="lg" type="button" isLoading={isLoading} onClick={handleContinueWithoutTransfer}>
-                    Tiếp tục không chuyển dữ liệu khách
-                  </Button>
-                </div>
-              ) : (
-                <Button fullWidth size="lg" type="submit" isLoading={isLoading}>
-                  Xác thực & Hoàn tất
-                </Button>
-              )}
-
-              <div className="flex items-center justify-between text-xs pt-2">
-                <span className="text-slate-500">Chưa nhận được mã?</span>
-                <button
-                  type="button"
-                  disabled={resendCountdown > 0 || isLoading || Boolean(turnstileSiteKey && !turnstileToken)}
-                  onClick={handleResendOtp}
-                  className="font-semibold text-takosan-green disabled:opacity-40 hover:underline flex items-center gap-1 tap-target cursor-pointer"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  <span>{resendCountdown > 0
-                    ? `Gửi lại sau (${resendCountdown}s)`
-                    : turnstileSiteKey && !turnstileToken
-                      ? 'Đang xác minh…'
-                      : 'Gửi lại mã OTP'}</span>
-                </button>
-              </div>
-            </form>
-          </div>
+        {mode === 'otp_verify' && verifyContextMissing && (
+          <VerifyUnavailable
+            onRegister={() => navigate('/auth?mode=register', { replace: true })}
+            onLogin={() => navigate('/auth', { replace: true })}
+          />
         )}
-
-        {/* ================= MODE 4: FORGOT PASSWORD ================= */}
+        {mode === 'otp_verify' && !verifyContextMissing && (
+          <OtpMode
+            turnstileSiteKey={turnstileSiteKey}
+            turnstileGeneration={turnstileGeneration}
+            onTurnstileToken={handleTurnstileToken}
+            otpDigits={otpDigits}
+            otpInputsRef={otpInputsRef}
+            onOtpChange={handleOtpChange}
+            onOtpKeyDown={handleOtpKeyDown}
+            onOtpPaste={handleOtpPaste}
+            transferDeferred={transferDeferred}
+            otpPurpose={otpPurpose}
+            onContinueWithoutTransfer={() => void handleContinueWithoutTransfer()}
+            onSubmitVerify={handleVerifyOtp}
+            isLoading={isLoading}
+            resendCountdown={resendCountdown}
+            onResend={() => void handleResendOtp()}
+            turnstileToken={turnstileToken}
+          />
+        )}
         {mode === 'forgot_password' && (
-          <div className="mt-5 space-y-4">
-            {!forgotOtpRequested && (
-              <form onSubmit={handleRequestForgotOtp} className="space-y-3">
-                {turnstileSiteKey && <TurnstileWidget key={turnstileGeneration} siteKey={turnstileSiteKey} onToken={handleTurnstileToken} />}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Email đăng ký tài khoản</label>
-                  <div className="relative">
-                    <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
-                    <input
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="ban@example.com"
-                      className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 text-sm font-medium text-slate-900 shadow-xs"
-                    />
-                  </div>
-                </div>
-
-                <Button fullWidth size="lg" type="submit" isLoading={isLoading}>
-                  Gửi mã OTP khôi phục
-                </Button>
-              </form>
-            )}
-
-            {forgotOtpRequested && (
-              <form onSubmit={handleResetPassword} className="space-y-3 animate-in fade-in">
-                {/* 6-box OTP input */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-2 text-center">Mã xác thực OTP (6 số)</label>
-                  <div className="flex justify-center gap-2" onPaste={handleOtpPaste}>
-                    {otpDigits.map((digit, idx) => (
-                      <input
-                        key={idx}
-                        ref={(el) => (otpInputsRef.current[idx] = el)}
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={1}
-                        value={digit}
-                        onChange={(e) => handleOtpChange(idx, e.target.value)}
-                        onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                        className="w-11 h-13 text-center font-heading font-bold text-xl bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 transition-all text-slate-900 shadow-xs"
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Mật khẩu mới (tối thiểu 6 ký tự)</label>
-                  <div className="relative">
-                    <KeyRound className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      required
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Nhập mật khẩu mới"
-                      className="w-full h-11 pl-10 pr-10 bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 text-sm font-medium text-slate-900 shadow-xs"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 p-1 tap-target"
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                <Button fullWidth size="lg" type="submit" isLoading={isLoading} className="mt-2">
-                  Lưu mật khẩu mới & Đăng nhập
-                </Button>
-              </form>
-            )}
-
-            <div className="text-center pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setMode('login');
-                  setErrorMessage(null);
-                  setSuccessMessage(null);
-                }}
-                className="text-xs font-semibold text-slate-500 hover:text-slate-900 tap-target"
-              >
-                ← Quay lại màn hình đăng nhập
-              </button>
-            </div>
-          </div>
+          <ForgotPasswordMode
+            forgotOtpRequested={forgotOtpRequested}
+            turnstileSiteKey={turnstileSiteKey}
+            turnstileGeneration={turnstileGeneration}
+            onTurnstileToken={handleTurnstileToken}
+            email={email}
+            onEmailChange={setEmail}
+            onRequestOtp={handleRequestForgotOtp}
+            otpDigits={otpDigits}
+            otpInputsRef={otpInputsRef}
+            onOtpChange={handleOtpChange}
+            onOtpKeyDown={handleOtpKeyDown}
+            onOtpPaste={handleOtpPaste}
+            newPassword={newPassword}
+            onNewPasswordChange={setNewPassword}
+            showPassword={showPassword}
+            onToggleShowPassword={() => setShowPassword(!showPassword)}
+            onResetPassword={handleResetPassword}
+            isLoading={isLoading}
+            onBackToLogin={backToLogin}
+          />
         )}
-      </div>
-
-      {/* Footer Security Badge */}
-      <div className="text-center pt-8">
-        <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500">
-          <ShieldCheck className="w-4 h-4 text-takosan-green" />
-          <span>Bảo mật dữ liệu thực phẩm & Tôn trọng quyền riêng tư</span>
-        </div>
-      </div>
-    </div>
+      </Slide>
+    </AuthShell>
   );
 };

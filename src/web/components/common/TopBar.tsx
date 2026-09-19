@@ -15,7 +15,8 @@ export const TopBar: React.FC<TopBarProps> = ({ showBack = false, title, subtitl
   const navigate = useNavigate();
   const location = useLocation();
   const { avatarUrl, displayName } = useAuthStore();
-  const isProfilePage = location.pathname === '/profile';
+  // /me is the account hub (T17); /profile only redirects there.
+  const isProfilePage = location.pathname === '/me' || location.pathname === '/profile';
 
   return (
     <header className="sticky top-0 z-30 bg-takosan-cream/95 backdrop-blur-md px-4 py-3 border-b border-takosan-cream-line transition-colors shadow-xs">
@@ -24,22 +25,22 @@ export const TopBar: React.FC<TopBarProps> = ({ showBack = false, title, subtitl
           <div className="flex items-center gap-2.5">
             <button
               onClick={onBack || (() => navigate(-1))}
-              className="p-2 -ml-2 rounded-xl hover:bg-slate-100 active:scale-95 transition-transform tap-target flex items-center justify-center text-slate-800"
+              className="p-2 -ml-2 rounded-xl hover:bg-semantic-border/60 active:scale-95 transition-transform tap-target flex items-center justify-center text-semantic-text-primary"
               aria-label="Quay lại"
             >
               <ArrowLeft className="w-5 h-5 stroke-[2]" />
             </button>
             {title && (
               <div>
-                <h1 className="font-heading font-bold text-base text-slate-900 leading-tight">{title}</h1>
-                {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
+                <h1 className="font-heading font-bold text-base text-semantic-text-primary leading-tight">{title}</h1>
+                {subtitle && <p className="text-xs text-semantic-text-muted mt-0.5">{subtitle}</p>}
               </div>
             )}
           </div>
         ) : title ? (
           <div>
-            <h1 className="font-heading font-bold text-lg text-slate-900 leading-tight tracking-tight">{title}</h1>
-            {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
+            <h1 className="font-heading font-bold text-lg text-semantic-text-primary leading-tight tracking-tight">{title}</h1>
+            {subtitle && <p className="text-xs text-semantic-text-muted mt-0.5">{subtitle}</p>}
           </div>
         ) : (
           <div className="flex items-center gap-2 cursor-pointer active:opacity-80 transition-opacity" onClick={() => navigate('/')}>
@@ -50,7 +51,7 @@ export const TopBar: React.FC<TopBarProps> = ({ showBack = false, title, subtitl
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigate('/notifications')}
-            className="w-9 h-9 rounded-xl hover:bg-slate-100 active:scale-95 flex items-center justify-center relative text-slate-700 transition-colors border border-slate-200/60"
+            className="w-11 h-11 rounded-xl hover:bg-semantic-border/60 active:scale-95 flex items-center justify-center relative text-semantic-text-secondary transition-colors border border-semantic-border/60"
             aria-label="Thông báo"
           >
             <Bell className="w-5 h-5 stroke-[2]" />
@@ -58,16 +59,16 @@ export const TopBar: React.FC<TopBarProps> = ({ showBack = false, title, subtitl
 
           {isProfilePage ? (
             <button
-              onClick={() => navigate('/settings')}
-              className="w-9 h-9 rounded-xl hover:bg-slate-100 active:scale-95 flex items-center justify-center text-slate-700 transition-colors border border-slate-200/60"
+              onClick={() => navigate('/settings/app')}
+              className="w-11 h-11 rounded-xl hover:bg-semantic-border/60 active:scale-95 flex items-center justify-center text-semantic-text-secondary transition-colors border border-semantic-border/60"
               aria-label="Cài đặt"
             >
               <Settings className="w-5 h-5 stroke-[2]" />
             </button>
           ) : (
             <button
-              onClick={() => navigate('/profile')}
-              className="w-9 h-9 rounded-xl bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep hover:bg-takosan-mint-hover active:scale-95 transition-all flex items-center justify-center overflow-hidden"
+              onClick={() => navigate('/me')}
+              className="w-11 h-11 rounded-xl bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep hover:bg-takosan-mint-hover active:scale-95 transition-tap flex items-center justify-center overflow-hidden"
               aria-label="Tài khoản cá nhân"
             >
               {avatarUrl ? (

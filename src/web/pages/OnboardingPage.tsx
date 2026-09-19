@@ -30,10 +30,10 @@ const RESTRICTION_TAGS = [
   { id: 'other', label: 'Khác' },
 ];
 
-export const OnboardingPage: React.FC = () => {
+export const OnboardingPage: React.FC<{ initialStep?: 1 | 2 | 3 }> = ({ initialStep = 1 }) => {
   const navigate = useNavigate();
   const setOnboardingData = useAuthStore((state) => state.setOnboardingData);
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(initialStep);
   const [householdSize, setHouseholdSize] = useState(2);
   const [selectedCuisines, setSelectedCuisines] = useState<string[]>(['vietnamese']);
   const [restrictions, setRestrictions] = useState<string[]>([]);
@@ -74,8 +74,8 @@ export const OnboardingPage: React.FC = () => {
           <span className="rounded-full border border-takosan-mint-deep bg-white px-3 py-1 text-xs font-bold text-takosan-green">{step} / 3</span>
         </header>
 
-        <div className="mb-7 grid grid-cols-3 gap-2" aria-label={`Bước ${step} trên 3`}>
-          {[1, 2, 3].map((item) => <span key={item} className={clsx('h-1.5 rounded-full', item <= step ? 'bg-takosan-green' : 'bg-slate-200')} />)}
+        <div className="mb-7 grid grid-cols-3 gap-2" role="progressbar" aria-label={`Bước ${step} trên 3`} aria-valuemin={1} aria-valuemax={3} aria-valuenow={step} aria-valuetext={`Bước ${step} trên 3`}>
+          {[1, 2, 3].map((item) => <span key={item} className={clsx('h-1.5 rounded-full', item <= step ? 'bg-takosan-green' : 'bg-semantic-border')} />)}
         </div>
 
         {step === 1 && (
@@ -83,16 +83,16 @@ export const OnboardingPage: React.FC = () => {
             <div className="mb-7">
               <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-takosan-green">Khẩu phần & gu món</p>
               <h1 className="font-heading text-3xl font-extrabold leading-tight">Takosan nên nấu cho nhà mình thế nào?</h1>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">Chỉ ba bước ngắn để gợi ý món sát với gia đình bạn. Không cần đăng nhập thêm lần nào nữa.</p>
+              <p className="mt-2 text-sm leading-relaxed text-semantic-text-secondary">Chỉ ba bước ngắn để gợi ý món sát với gia đình bạn. Không cần đăng nhập thêm lần nào nữa.</p>
             </div>
 
             <div className="mb-7 rounded-3xl border border-takosan-cream-line bg-white p-5 shadow-sm">
-              <label className="mb-3 block text-xs font-bold uppercase tracking-wider text-slate-600">Số người thường ăn</label>
+              <label className="mb-3 block text-xs font-bold uppercase tracking-wider text-semantic-text-secondary">Số người thường ăn</label>
               <div className="flex gap-2">
                 {[1, 2, 3, 4, 5].map((number) => (
                   <button key={number} type="button" onClick={() => setHouseholdSize(number)} className={clsx(
-                    'flex flex-1 flex-col items-center gap-1 rounded-2xl border py-3 text-sm font-bold transition-all',
-                    householdSize === number ? 'border-takosan-green bg-takosan-green text-white shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-700',
+                    'flex flex-1 flex-col items-center gap-1 rounded-2xl border py-3 text-sm font-bold transition-tap',
+                    householdSize === number ? 'border-takosan-green bg-takosan-green text-white shadow-sm' : 'border-semantic-border bg-semantic-background-subtle text-semantic-text-secondary',
                   )}>
                     <Users className="h-4 w-4" />
                     {number === 5 ? '5+' : number}
@@ -102,13 +102,13 @@ export const OnboardingPage: React.FC = () => {
             </div>
 
             <div className="mb-8">
-              <label className="mb-3 block text-xs font-bold uppercase tracking-wider text-slate-600">Món nhà mình thích</label>
+              <label className="mb-3 block text-xs font-bold uppercase tracking-wider text-semantic-text-secondary">Món nhà mình thích</label>
               <div className="flex flex-wrap gap-2">
                 {CUISINE_TAGS.map((tag) => {
                   const selected = selectedCuisines.includes(tag.id);
                   return <button key={tag.id} type="button" onClick={() => toggle(tag.id, selectedCuisines, setSelectedCuisines)} className={clsx(
-                    'flex items-center gap-1.5 rounded-full border px-4 py-2.5 text-xs font-semibold transition-all',
-                    selected ? 'border-takosan-green bg-takosan-mint text-takosan-green-deep' : 'border-slate-200 bg-white text-slate-700',
+                    'flex min-h-11 items-center gap-1.5 rounded-full border px-4 py-2.5 text-xs font-semibold transition-tap',
+                    selected ? 'border-takosan-green bg-takosan-mint text-takosan-green-deep' : 'border-semantic-border bg-white text-semantic-text-secondary',
                   )}>{tag.label}{selected && <Check className="h-3.5 w-3.5" />}</button>;
                 })}
               </div>
@@ -124,15 +124,15 @@ export const OnboardingPage: React.FC = () => {
               <button type="button" onClick={() => setStep(1)} className="mb-5 text-sm font-semibold text-takosan-green">← Quay lại</button>
               <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-takosan-green">Ăn uống an tâm</p>
               <h1 className="font-heading text-3xl font-extrabold leading-tight">Có nguyên liệu nào bạn muốn tránh?</h1>
-              <p className="mt-2 text-sm text-slate-600">Có thể bỏ qua nếu không có. Bạn chỉnh lại bất cứ lúc nào trong hồ sơ.</p>
+              <p className="mt-2 text-sm text-semantic-text-secondary">Có thể bỏ qua nếu không có. Bạn chỉnh lại bất cứ lúc nào trong hồ sơ.</p>
             </div>
 
             <div className="flex flex-wrap gap-2.5">
               {RESTRICTION_TAGS.map((tag) => {
                 const selected = restrictions.includes(tag.id);
                 return <button key={tag.id} type="button" onClick={() => toggle(tag.id, restrictions, setRestrictions)} className={clsx(
-                  'rounded-2xl border px-4 py-3 text-sm font-semibold transition-all',
-                  selected ? 'border-rose-500 bg-rose-50 text-rose-800' : 'border-slate-200 bg-white text-slate-700',
+                  'rounded-2xl border px-4 py-3 text-sm font-semibold transition-tap',
+                  selected ? 'border-semantic-danger bg-semantic-danger-soft text-semantic-danger-strong' : 'border-semantic-border bg-white text-semantic-text-secondary',
                 )}>{selected ? '× ' : ''}{tag.label}</button>;
               })}
             </div>
@@ -158,22 +158,22 @@ export const OnboardingPage: React.FC = () => {
                 const Icon = goal.icon;
                 const selected = primaryGoal === goal.id;
                 return <button key={goal.id} type="button" onClick={() => setPrimaryGoal(goal.id)} className={clsx(
-                  'flex w-full items-center gap-4 rounded-3xl border bg-white p-4 text-left shadow-sm transition-all',
-                  selected ? 'border-takosan-green ring-2 ring-takosan-green/20' : 'border-slate-200',
+                  'flex w-full items-center gap-4 rounded-3xl border bg-white p-4 text-left shadow-sm transition-tap',
+                  selected ? 'border-takosan-green ring-2 ring-takosan-green/20' : 'border-semantic-border',
                 )}>
-                  <span className={clsx('flex h-12 w-12 items-center justify-center rounded-2xl', selected ? 'bg-takosan-mint text-takosan-green' : 'bg-slate-100 text-slate-500')}><Icon className="h-5 w-5" /></span>
-                  <span className="flex-1"><strong className="block font-heading text-base">{goal.title}</strong><span className="mt-1 block text-xs text-slate-500">{goal.description}</span></span>
+                  <span className={clsx('flex h-12 w-12 items-center justify-center rounded-2xl', selected ? 'bg-takosan-mint text-takosan-green' : 'bg-semantic-border/60 text-semantic-text-muted')}><Icon className="h-5 w-5" /></span>
+                  <span className="flex-1"><strong className="block font-heading text-base">{goal.title}</strong><span className="mt-1 block text-xs text-semantic-text-muted">{goal.description}</span></span>
                   {selected && <Check className="h-5 w-5 text-takosan-green" />}
                 </button>;
               })}
             </div>
 
             <div className="mt-auto pt-7">
-              {error && <p role="alert" className="mb-3 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
+              {error && <p role="alert" className="mb-3 rounded-xl border border-semantic-danger/30 bg-semantic-danger-soft p-3 text-sm text-semantic-danger-strong">{error}</p>}
               <Button fullWidth size="lg" onClick={finish} isLoading={isSaving} className="flex items-center justify-center gap-2 rounded-2xl">
                 Bắt đầu với Takosan <ArrowRight className="h-5 w-5" />
               </Button>
-              <p className="mt-3 text-center text-xs text-slate-500">Sở thích được lưu cho tài khoản này và có thể thay đổi sau.</p>
+              <p className="mt-3 text-center text-xs text-semantic-text-muted">Sở thích được lưu cho tài khoản này và có thể thay đổi sau.</p>
             </div>
           </section>
         )}
