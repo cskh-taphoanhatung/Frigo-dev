@@ -105,11 +105,29 @@ describe('PWA metadata', () => {
   it('service worker cache version moved off frigo-pwa-v1 and precaches Takosan assets', () => {
     const sw = readFileSync(resolve(root, 'public/sw.js'), 'utf8');
     expect(sw).not.toContain("'frigo-pwa-v1'");
-    expect(sw).toMatch(/CACHE_NAME = 'takosan-pwa-v\d+'/);
+    expect(sw).toContain("BUILD_ID = '__TAKOSAN_BUILD_ID__'");
+    expect(sw).toContain('CACHE_NAME = `takosan-pwa-${BUILD_ID}`');
     expect(sw).toContain('/takosan/app-icons/icon-192.png');
     expect(sw).toContain("url.pathname.startsWith('/takosan/')");
     const precached = [...sw.matchAll(/'(\/takosan\/[^']+)'/g)].map((m) => m[1]);
     expect(precached.filter((p) => !existsSync(publicFile(p)))).toEqual([]);
+  });
+
+  it('forces release-aware service worker updates and correct cache headers', () => {
+    const main = readFileSync(resolve(root, 'src/web/main.tsx'), 'utf8');
+    const sw = readFileSync(resolve(root, 'public/sw.js'), 'utf8');
+    const headers = readFileSync(resolve(root, 'public/_headers'), 'utf8');
+    const vite = readFileSync(resolve(root, 'vite.config.ts'), 'utf8');
+    expect(main).toContain("/sw.js?v=${encodeURIComponent(buildId)}");
+    expect(main).toContain("updateViaCache: 'none'");
+    expect(sw).toContain("key.startsWith('takosan-pwa-')");
+    expect(sw).toContain('void client.navigate(client.url).catch');
+    expect(sw).toContain('await self.clients.claim()');
+    expect(sw).not.toContain('Failed to precache some assets');
+    expect(vite).toContain("replaceAll('__TAKOSAN_BUILD_ID__', buildCommit)");
+    expect(headers).toContain('/sw.js\n  ! Cache-Control\n  Cache-Control: no-cache, no-store, must-revalidate');
+    expect(headers).toContain('/assets/*\n  ! Cache-Control\n  Cache-Control: public, max-age=31536000, immutable');
+    expect(headers).not.toContain('/service-worker.js');
   });
 });
 

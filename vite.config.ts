@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import { readFileSync, writeFileSync } from 'node:fs';
 
 const appVersion = process.env.npm_package_version || '0.1.0';
 const buildCommit = process.env.GIT_COMMIT || process.env.VITE_GIT_COMMIT || 'local';
@@ -9,9 +10,22 @@ const testExecArgv = Number(process.versions.node.split('.')[0]) >= 25
   ? ['--no-experimental-webstorage']
   : [];
 
+function injectServiceWorkerBuildId() {
+  return {
+    name: 'inject-service-worker-build-id',
+    closeBundle() {
+      const serviceWorkerPath = path.resolve(__dirname, 'dist/client/sw.js');
+      const source = readFileSync(serviceWorkerPath, 'utf8');
+      const output = source.replaceAll('__TAKOSAN_BUILD_ID__', buildCommit);
+      if (output === source) throw new Error('Service Worker build token was not found');
+      writeFileSync(serviceWorkerPath, output);
+    },
+  };
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), injectServiceWorkerBuildId()],
   define: {
     'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
     'import.meta.env.VITE_GIT_COMMIT': JSON.stringify(buildCommit),

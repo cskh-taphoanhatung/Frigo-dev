@@ -125,3 +125,40 @@ lint, typecheck, migration smoke, build and diff check PASS. Browser checks at
 auth access and safe return-to behavior. Production is still the prior CSP
 hotfix release with D1 38/0038 and recipe `shadow/0/false`; merge, deploy and a
 real inbox receipt are pending.
+
+## PWA cache and Google recovery follow-up — 2026-09-19
+
+Live production returned cache hits for both `/auth` and `/sw.js`, and the
+worker body still declared fixed cache `takosan-pwa-v2`. The app registered
+`/sw.js`, while the only worker-specific cache rule targeted
+`/service-worker.js`. A clean Chromium profile loaded GIS and opened the real
+Google account popup, so the remaining affected-browser failure was isolated to
+stale or locally blocked client state.
+
+The recovery candidate injects the immutable release SHA into the worker and
+cache name, registers the SHA-qualified URL with `updateViaCache: none`, checks
+on load/online/foreground, removes only prior Takosan release caches and
+navigates existing same-origin clients once after an update. HTML and `/sw.js`
+are no-store; hashed assets explicitly remove inherited no-store and stay
+immutable. The deploy workflow builds with the exact SHA and its post-convergence
+smoke verifies live cache headers and the SHA embedded in the worker. Google GIS
+now receives a valid numeric button width and its script retry exposes failure
+and recovery deterministically.
+
+Verification: focused **116/116**, full **178 files / 4046 tests**, lint,
+typecheck, migration smoke, build, shell syntax and diff check PASS. Local
+Wrangler proved the effective header policy. A two-release Chromium exercise
+showed one clean-install document request and exactly one document navigation
+on upgrade; the controller and sole Takosan cache then matched the new SHA.
+The refresh of an already-open legacy tab is necessarily best-effort because
+awaiting a same-client navigation during Service Worker activation deadlocks
+that navigation. Reopening, reloading, or navigating always performs a fresh
+worker check; after this recovery release, the new bundle also checks on load,
+online recovery, and foreground return. No deployment can force a browser that
+is closed, suspended, or prevented from running its Service Worker to reload.
+The separately executed non-gate `pnpm audit --audit-level high` reports 21
+existing lockfile advisories (6 high) under Wrangler/Miniflare, jsdom and
+build-time sharp; no dependency changed in this follow-up and remediation is
+deferred to a separately reviewed dependency upgrade.
+No migration, production data, payment, recipe-authority or Canary change is
+included. Protected production deployment must preserve `shadow/0/false`.

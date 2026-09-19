@@ -1,5 +1,18 @@
 # Frigo / Takosan current task board — 2026-09-19
 
+## Current T16 follow-up — PWA cache and Google recovery release candidate (2026-09-19)
+
+- [done] Confirmed live `/auth` and `/sw.js` were edge-cache hits and production still served fixed cache `takosan-pwa-v2`; repository path mismatch was `/sw.js` registration versus `/service-worker.js` header rule.
+- [done] Added release-SHA Service Worker cache/version injection, SHA-qualified registration with bypassed update cache, load/online/foreground checks, prior-release eviction, best-effort one-time navigation of stale open clients after claim, and fetch-lifetime-safe cache writes.
+- [done] Corrected effective cache policy: HTML and `/sw.js` no-store; hashed `/assets/*` explicitly unsets the global header and is one-year immutable; manifest retains its intended one-hour policy.
+- [done] Hardened Google GIS rendering with a numeric clamped width and an explicit retry-script failure/referrer path; added blocked-script -> successful-retry coverage.
+- [done] Extended protected deploy smoke to wait for exact-SHA readiness first, then verify `/auth`, `/sw.js`, hashed-asset cache headers and the exact SHA embedded in `sw.js`.
+- [done] Independent release review findings were remediated. Local Wrangler effective-header check passed; two-release Chromium check showed no extra clean-install document request and exactly one update navigation, new controller/cache only.
+- [limit] Closed, suspended, or browser-blocked legacy tabs cannot be forced by a deployment; reload/reopen/navigation is the reliable recovery boundary. Awaiting same-client navigation during activation was rejected because it deadlocks the document fetch.
+- [done] Gates PASS: focused **116 tests / 3 files**, full **178 files / 4046 tests**, lint, typecheck, migration smoke, production build, shell syntax and diff check.
+- [pending] Commit/push, exact-head CI, merge, exact-main CI/staging, protected production deploy preserving `shadow/0/false`, then live header/SW/Google verification.
+- [safety] No migration, D1/R2/customer-data mutation, PayOS/payment change, Canary activation, full D1 cutover, Inventory Truth change or Week change.
+
 ## Current T15C-D — production 1% Canary certification — safe stop (2026-09-19)
 
 - [done] Resolved repository ID `1368281478`, fetched exact main `347b536950cf54d25a2d6a880c3c2cb3d8c8f329`, verified clean tree and merged PR #38/#39, and created `codex/t15c-production-canary-1pct` from canonical main.

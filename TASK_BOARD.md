@@ -1,3 +1,12 @@
+## Current T16 — PWA cache and Google recovery release candidate (2026-09-19)
+
+- [done] Root cause: live `/auth` + `/sw.js` cache hits, wrong `_headers` worker path, fixed `takosan-pwa-v2` cache; clean Chromium proves real Google GIS works.
+- [done] Release-SHA worker/cache, best-effort stale-client navigation after claim, correct no-store/immutable headers, Google numeric width + retry recovery, and exact-SHA deploy smoke implemented.
+- [done] Independent review remediated; local Wrangler effective headers and two-release Chromium update PASS.
+- [done] Full gates: **178 files / 4046 tests**, lint, typecheck, migration smoke, build, shell syntax, diff check.
+- [limit] Reload/reopen/navigation is the reliable recovery boundary for legacy tabs that are closed, suspended, or blocked from running Service Worker code.
+- [next] Push -> exact-head CI -> merge -> exact-main CI/staging -> protected production deploy at `shadow/0/false` -> live cache/SW/Google verification.
+
 ## Current T15C-D — production 1% Canary certification — safe stop (2026-09-19)
 
 - [done] Canonical repo/main verified: `1368281478`, `frigo-6/Frigo-dev`, `347b536950cf54d25a2d6a880c3c2cb3d8c8f329`; PR #38/#39 merged.

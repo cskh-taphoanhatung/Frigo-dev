@@ -1,5 +1,16 @@
 # Frigo / Takosan current handoff — 2026-09-19
 
+## Current handoff — T16 PWA cache and Google recovery ready for release
+
+- **Branch/base:** `codex/auth-pwa-cache-google-recovery` from canonical main `ff07773ce8e146923870698928a1b8b4c451f8e6`.
+- **Root cause:** production `/auth` and `/sw.js` were Cloudflare cache hits; app registration used `/sw.js` while `_headers` configured `/service-worker.js`; worker cache name was fixed at `takosan-pwa-v2`. A clean browser loaded real Google GIS and opened the Google account popup, isolating the reported GIS failure to stale/blocked client state rather than the backend credential contract.
+- **Implementation:** release SHA is injected into `dist/client/sw.js`; registration uses `/sw.js?v=<sha>` plus `updateViaCache: none`; update checks run on load/online/foreground; activation removes only prior Takosan caches, claims clients, then best-effort navigates stale same-origin clients once; navigation refreshes cached `/index.html`; cache writes are awaited. Google button width is numeric/clamped and retry script errors are explicit.
+- **Headers/workflow:** effective `/auth` and `/sw.js` policy is no-store, hashed assets are immutable without inherited no-store, and deploy builds receive the exact SHA. Exact-SHA convergence now precedes smoke; smoke validates the shell/worker/asset headers plus embedded Worker SHA.
+- **Verification:** focused 116/116, full Vitest 178 files / 4046 tests, lint, typecheck, migration smoke, build, shell syntax and diff check PASS. Local Wrangler returned the intended effective headers. Two-release Chromium proved one clean-install document request, one update navigation, exact new controller and only the new release cache.
+- **Browser limit:** no release can force a closed, suspended or browser-blocked old tab to execute new code. Awaiting its navigation inside Service Worker activation deadlocks the document fetch, so refresh is best-effort after claim; reload/reopen/navigation is the reliable recovery path, and clients on this release gain load/online/foreground checks for future updates.
+- **Recorded non-gate failure:** `pnpm audit --audit-level high` reports the unchanged lockfile's 21 advisories / 6 high in Wrangler/Miniflare, jsdom and build-time sharp paths. No dependency changed here and these packages are not added to the browser runtime; handle in a separate reviewed dependency upgrade.
+- **Production boundary:** no production mutation yet; no migration/data/payment/canary change. Deploy only through protected `deploy.yml` with `recipe_catalog_mode=shadow` and percent `0`. After merge, require exact-head CI, exact-main CI/staging, production approval, then live `/auth`/`sw.js`/asset headers, embedded SHA, readiness and Google popup verification.
+
 ## Current handoff — T15C-D production 1% Canary blocked before mutation (2026-09-19)
 
 - **Canonical base:** repository `1368281478` / `frigo-6/Frigo-dev`; main and task base `347b536950cf54d25a2d6a880c3c2cb3d8c8f329`; branch `codex/t15c-production-canary-1pct`.

@@ -1,5 +1,48 @@
 # Frigo / Takosan current authority — 2026-09-19
 
+## Current T16 follow-up — PWA cache and Google recovery ready for release (2026-09-19)
+
+Production evidence showed `/auth` and `/sw.js` returning `CF-Cache-Status: HIT`,
+while the deployed Service Worker still used the fixed `takosan-pwa-v2` cache.
+The repository registered `/sw.js`, but `_headers` targeted the unused
+`/service-worker.js` path. This allowed old HTML and the old worker to survive
+releases and explains why affected devices kept the stale auth bundle. Google
+GIS itself loaded and opened the real account popup in a clean Chromium profile;
+the affected browser's unavailable state is therefore consistent with that
+stale client/content-blocking boundary, not a credential-less fallback.
+
+The release candidate now injects the exact release SHA into `sw.js`, registers
+the SHA-qualified worker with `updateViaCache: none`, checks for updates on load,
+online and foreground, deletes only previous Takosan release caches, and
+best-effort navigates already-open same-origin clients once when an older release
+cache is replaced. The navigation starts only after cache cleanup and
+`clients.claim()` because awaiting it inside activation can deadlock the new
+document fetch. Network navigation refreshes the offline shell and cache writes remain
+inside the fetch lifetime. `/auth` and `/sw.js` are `no-store`; hashed assets
+explicitly remove the inherited header and remain one-year immutable. Google
+GIS uses a numeric clamped button width and its retry script has explicit error
+and referrer handling.
+
+The protected deploy workflow builds with the immutable release SHA and, after
+exact-SHA readiness convergence, verifies live `/auth`, `/sw.js`, a hashed asset,
+and the SHA embedded in the worker. Local Wrangler reproduced the effective
+headers exactly. A two-release Chromium exercise proved one document request on
+clean install and exactly one best-effort document navigation on update, with the
+old cache removed and the new controller/cache bound to the new SHA. Focused
+tests passed **116/116**; full `pnpm test` passed **178 files / 4046 tests**;
+lint, typecheck, migration smoke, production build, shell syntax and diff check
+passed. The additional non-gate `pnpm audit --audit-level high` reported the
+existing lockfile's 21 advisories (6 high) in development/deployment tooling
+paths (`wrangler`/`miniflare` `undici`, `jsdom` `ws`, and direct build-time
+`sharp`); this change does not modify dependencies or ship those packages in the
+browser bundle, so remediation remains a separate dependency-upgrade task. No
+migration, D1 write, PayOS/payment change, recipe-authority change or
+production mutation is included. Production remains `shadow/0/false` pending
+merge and the protected production deployment. A deployment cannot force a
+closed, suspended, or browser-blocked legacy tab to execute; reload/reopen or
+navigation is the guaranteed recovery boundary, while this release adds future
+load/online/foreground update checks.
+
 ## Current T15C-D — 1% production Canary safe stop (2026-09-19)
 
 Canonical repository ID `1368281478` resolves to `frigo-6/Frigo-dev`; PR #38 and
