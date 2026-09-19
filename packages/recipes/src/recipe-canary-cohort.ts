@@ -29,7 +29,7 @@ export type RecipeTestCohortConfigCode =
   | 'TEST_COHORT_DIGEST_DUPLICATE'
   | 'TEST_COHORT_TOO_LARGE'
   | 'TEST_COHORT_INCLUDE_EXCLUDE_OVERLAP'
-  | 'TEST_COHORT_ENABLED_WITHOUT_MEMBERS'
+  | 'TEST_COHORT_PAIR_REQUIRED'
   | 'TEST_COHORT_MEMBERS_WITHOUT_ENABLE';
 
 export class RecipeTestCohortConfigError extends Error {
@@ -76,6 +76,9 @@ function parseDigestList(value: unknown, name: string): Set<string> {
  * Parses the cohort configuration; `null` when the feature is absent/disabled. Throws for every
  * malformed or contradictory shape so production validation and the request path fail closed.
  * Disabled is the default: no variable, `''`, or exactly `'false'`.
+ *
+ * An enabled cohort must name BOTH an include (test) household and an exclude (control)
+ * household: the mechanism exists to prove inside AND outside canary, never one alone.
  */
 export function parseRecipeTestCohort(env: RecipeTestCohortEnv): RecipeTestCohort | null {
   const enabledRaw = env.RECIPE_CATALOG_TEST_COHORT_ENABLED;
@@ -93,7 +96,7 @@ export function parseRecipeTestCohort(env: RecipeTestCohortEnv): RecipeTestCohor
     if (include.size > 0 || exclude.size > 0) throw new RecipeTestCohortConfigError('TEST_COHORT_MEMBERS_WITHOUT_ENABLE', 'RECIPE_CATALOG_TEST_INCLUDE/EXCLUDE are set but RECIPE_CATALOG_TEST_COHORT_ENABLED is not true');
     return null;
   }
-  if (include.size === 0 && exclude.size === 0) throw new RecipeTestCohortConfigError('TEST_COHORT_ENABLED_WITHOUT_MEMBERS', 'RECIPE_CATALOG_TEST_COHORT_ENABLED=true requires at least one include or exclude digest');
+  if (include.size === 0 || exclude.size === 0) throw new RecipeTestCohortConfigError('TEST_COHORT_PAIR_REQUIRED', 'RECIPE_CATALOG_TEST_COHORT_ENABLED=true requires at least one RECIPE_CATALOG_TEST_INCLUDE digest AND at least one RECIPE_CATALOG_TEST_EXCLUDE digest');
   return { include, exclude };
 }
 

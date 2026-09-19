@@ -121,14 +121,40 @@ describe('T15C-C — authorized test cohort over HTTP; request input has no infl
     expect(r.counters.authorizedInclude).toBe(0);
   });
 
-  it('cohort variables in static and shadow change nothing user-visible: static content, no D1 read, loud config diagnostic', async () => {
-    for (const mode of ['static', 'shadow']) {
-      const r = await get('/recipes', { RECIPE_CATALOG_MODE: mode, ...cohort }, tokens[OUTSIDE]);
-      expect(r.status, mode).toBe(200);
-      expect(r.json.recipes.map((x: any) => x.id)).toEqual(ALL_RECIPES.map((x) => x.id));
-      expect(r.counters.d1, mode).toBe(0);
-      expect(warnings.some((line) => line.includes('recipe_catalog_config_invalid') && line.includes('TEST_COHORT_OUTSIDE_CANARY')), mode).toBe(true);
+  it('P1 rollback over HTTP: canary → shadow/static with cohort secrets retained serves static 71 to include, exclude and ordinary households; no D1 read, no config diagnostic, no secret cleanup', async () => {
+    for (const rollback of [
+      { RECIPE_CATALOG_MODE: 'shadow', RECIPE_CATALOG_D1_CANARY_PERCENT: '0', RECIPE_CATALOG_CUTOVER_ENABLED: 'false' },
+      { RECIPE_CATALOG_MODE: 'static', RECIPE_CATALOG_D1_CANARY_PERCENT: '0', RECIPE_CATALOG_CUTOVER_ENABLED: 'false' },
+    ]) {
+      for (const hh of [OUTSIDE, INSIDE, ORDINARY_OUT]) {
+        const r = await get('/recipes', { ...rollback, ...cohort }, tokens[hh]);
+        expect(r.status, `${rollback.RECIPE_CATALOG_MODE} ${hh}`).toBe(200);
+        expect(r.json.recipes.map((x: any) => x.id)).toEqual(ALL_RECIPES.map((x) => x.id));
+        expect(servedStatic(r)).toBe(true);
+        expect(r.counters).toMatchObject({ authorizedInclude: 0, authorizedExclude: 0 });
+      }
     }
+    expect(warnings.filter((line) => line.includes('recipe_catalog_config_invalid'))).toEqual([]);
     expect(warnings.join('\n')).not.toContain(OUTSIDE);
+  });
+
+  it('d1 mode over HTTP: retained cohort secrets create no per-household carve-out', async () => {
+    const d1: Partial<Env> = { RECIPE_CATALOG_MODE: 'd1', RECIPE_CATALOG_CUTOVER_ENABLED: 'true', ...cohort };
+    for (const hh of [OUTSIDE, INSIDE, ORDINARY_OUT]) {
+      const r = await get('/recipes', d1, tokens[hh]);
+      expect(servedD1(r), hh).toBe(true);
+      expect(r.counters).toMatchObject({ authorizedInclude: 0, authorizedExclude: 0 });
+    }
+  });
+
+  it('P2 over HTTP: canary with include-only or exclude-only secrets is refused — everyone gets static and the config diagnostic fires', async () => {
+    for (const partial of [{ RECIPE_CATALOG_TEST_INCLUDE: cohort.RECIPE_CATALOG_TEST_INCLUDE }, { RECIPE_CATALOG_TEST_EXCLUDE: cohort.RECIPE_CATALOG_TEST_EXCLUDE }]) {
+      const r = await get('/recipes', { ...CANARY_1, RECIPE_CATALOG_TEST_COHORT_ENABLED: 'true', ...partial }, tokens[OUTSIDE]);
+      expect(r.status).toBe(200);
+      expect(servedStatic(r)).toBe(true);
+    }
+    expect(warnings.some((line) => line.includes('recipe_catalog_config_invalid') && line.includes('TEST_COHORT_INVALID'))).toBe(true);
+    expect(warnings.join('\n')).not.toContain(OUTSIDE);
+    expect(warnings.join('\n')).not.toContain(cohort.RECIPE_CATALOG_TEST_INCLUDE!);
   });
 });

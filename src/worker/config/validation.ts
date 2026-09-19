@@ -153,11 +153,10 @@ export function validateEnvironment(env: Env): ConfigValidationResult {
     }
   } catch (error) {
     const code = error instanceof RecipeAuthorityConfigError ? error.code : 'INVALID_MODE';
-    if (code === 'TEST_COHORT_INVALID' || code === 'TEST_COHORT_OUTSIDE_CANARY') {
+    if (code === 'TEST_COHORT_INVALID') {
       const detail = error instanceof RecipeAuthorityConfigError && error.detail ? ` (${error.detail})` : '';
-      fatalIssues.push(fatal('CONFIG_RECIPE_CATALOG_TEST_COHORT', code === 'TEST_COHORT_OUTSIDE_CANARY'
-        ? 'RECIPE_CATALOG_TEST_COHORT_ENABLED=true is only allowed with RECIPE_CATALOG_MODE=canary; disable the test cohort or fix the mode.'
-        : `Recipe-catalog test cohort configuration is malformed${detail}: INCLUDE/EXCLUDE must be disjoint, duplicate-free, lower-case SHA-256 hex digests (max 16 each), members require ENABLED=true and ENABLED=true requires members.`));
+      // Only reachable in canary mode: outside canary the cohort variables are inert by design.
+      fatalIssues.push(fatal('CONFIG_RECIPE_CATALOG_TEST_COHORT', `Recipe-catalog test cohort configuration is malformed${detail}: INCLUDE/EXCLUDE must be disjoint, duplicate-free, lower-case SHA-256 hex digests (max 16 each); ENABLED=true requires at least one INCLUDE and one EXCLUDE digest, and members require ENABLED=true.`));
     } else {
       fatalIssues.push(
         fatal('CONFIG_RECIPE_CATALOG_MODE', code === 'CUTOVER_NOT_ENABLED'

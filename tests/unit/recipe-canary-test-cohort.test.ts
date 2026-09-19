@@ -48,14 +48,21 @@ describe('T15C-C — test cohort digest + configuration contract', () => {
     }
   });
 
-  it('accepts disjoint lower-case hex digest lists (trimmed, comma-separated) when enabled', async () => {
+  it('accepts disjoint lower-case hex digest lists (trimmed, comma-separated) when enabled with BOTH an include and an exclude', async () => {
     const a = await recipeTestCohortDigest('a');
     const b = await recipeTestCohortDigest('b');
     const cohort = parseRecipeTestCohort({ RECIPE_CATALOG_TEST_COHORT_ENABLED: 'true', RECIPE_CATALOG_TEST_INCLUDE: ` ${a} , `, RECIPE_CATALOG_TEST_EXCLUDE: b })!;
     expect([...cohort.include]).toEqual([a]);
     expect([...cohort.exclude]).toEqual([b]);
-    expect(parseRecipeTestCohort({ RECIPE_CATALOG_TEST_COHORT_ENABLED: 'true', RECIPE_CATALOG_TEST_INCLUDE: a })!.exclude.size).toBe(0);
-    expect(parseRecipeTestCohort({ RECIPE_CATALOG_TEST_COHORT_ENABLED: 'true', RECIPE_CATALOG_TEST_EXCLUDE: b })!.include.size).toBe(0);
+  });
+
+  it('P2: an enabled cohort must name an INSIDE (include) and an OUTSIDE (exclude) household — include-only and exclude-only are refused', async () => {
+    const a = await recipeTestCohortDigest('a');
+    const b = await recipeTestCohortDigest('b');
+    expect(() => parseRecipeTestCohort({ RECIPE_CATALOG_TEST_COHORT_ENABLED: 'true', RECIPE_CATALOG_TEST_INCLUDE: a })).toThrow(expect.objectContaining({ code: 'TEST_COHORT_PAIR_REQUIRED' }));
+    expect(() => parseRecipeTestCohort({ RECIPE_CATALOG_TEST_COHORT_ENABLED: 'true', RECIPE_CATALOG_TEST_EXCLUDE: b })).toThrow(expect.objectContaining({ code: 'TEST_COHORT_PAIR_REQUIRED' }));
+    expect(() => parseRecipeTestCohort({ RECIPE_CATALOG_TEST_COHORT_ENABLED: 'true' })).toThrow(expect.objectContaining({ code: 'TEST_COHORT_PAIR_REQUIRED' }));
+    expect(parseRecipeTestCohort({ RECIPE_CATALOG_TEST_COHORT_ENABLED: 'true', RECIPE_CATALOG_TEST_INCLUDE: a, RECIPE_CATALOG_TEST_EXCLUDE: b })).not.toBeNull();
   });
 
   it.each([
@@ -69,9 +76,11 @@ describe('T15C-C — test cohort digest + configuration contract', () => {
     ['duplicate in exclude', { RECIPE_CATALOG_TEST_EXCLUDE: `${hex64('b')},${hex64('b')}` }, 'TEST_COHORT_DIGEST_DUPLICATE'],
     ['include/exclude overlap', { RECIPE_CATALOG_TEST_INCLUDE: hex64('c'), RECIPE_CATALOG_TEST_EXCLUDE: hex64('c') }, 'TEST_COHORT_INCLUDE_EXCLUDE_OVERLAP'],
     ['too many digests', { RECIPE_CATALOG_TEST_INCLUDE: Array.from({ length: MAX_RECIPE_TEST_COHORT_DIGESTS + 1 }, (_, i) => hex64(i.toString(16))).join(',') }, 'TEST_COHORT_TOO_LARGE'],
-    ['enabled without members', {}, 'TEST_COHORT_ENABLED_WITHOUT_MEMBERS'],
+    ['enabled without members', {}, 'TEST_COHORT_PAIR_REQUIRED'],
   ])('fails closed on malformed configuration: %s', (_label, over, code) => {
-    expect(() => parseRecipeTestCohort({ RECIPE_CATALOG_TEST_COHORT_ENABLED: 'true', ...over })).toThrow(expect.objectContaining({ code }));
+    // Every case carries a valid counterpart so the PAIR rule cannot mask the specific defect under test.
+    const counterpart = 'RECIPE_CATALOG_TEST_INCLUDE' in over ? { RECIPE_CATALOG_TEST_EXCLUDE: hex64('f') } : 'RECIPE_CATALOG_TEST_EXCLUDE' in over ? { RECIPE_CATALOG_TEST_INCLUDE: hex64('e') } : {};
+    expect(() => parseRecipeTestCohort({ RECIPE_CATALOG_TEST_COHORT_ENABLED: 'true', ...counterpart, ...over })).toThrow(expect.objectContaining({ code }));
   });
 
   it('fails closed when members are configured but the switch is off (half-applied rollout)', () => {
@@ -179,17 +188,62 @@ describe('T15C-C — authority router fences and diagnostics', () => {
     expect(r).toMatchObject({ canaryTenant: false, actualSource: 'static', canaryAssignmentReason: 'missing_tenant' });
   });
 
-  it('cohort vars have zero effect in static and shadow (they are a fatal config error there) and never expose D1', async () => {
-    for (const mode of ['static', 'shadow'] as const) {
-      const r = await resolveRecipeAuthority(env({ RECIPE_CATALOG_MODE: mode, ...cohortVars() }), { tenantKey: NATURALLY_OUTSIDE, now, log });
-      expect(r, mode).toMatchObject({ configuredMode: 'static', actualSource: 'static', canaryTenant: false, canaryAssignmentReason: null, fallbackReason: 'TEST_COHORT_OUTSIDE_CANARY' });
+  it('P1 rollback: canary → shadow with cohort secrets retained is a single config change — readiness valid, static + shadow compare, cohort not evaluated', async () => {
+    const scheduled: Promise<unknown>[] = [];
+    const rolledBack = env({ RECIPE_CATALOG_MODE: 'shadow', RECIPE_CATALOG_D1_CANARY_PERCENT: '0', RECIPE_CATALOG_CUTOVER_ENABLED: 'false', ...cohortVars() });
+    expect(resolveRecipeAuthorityConfig(rolledBack)).toEqual({ mode: 'shadow', canaryPercent: 0, cutoverEnabled: false, testCohort: null });
+    for (const tenant of [NATURALLY_OUTSIDE, NATURALLY_INSIDE, ORDINARY[0]]) {
+      const r = await resolveRecipeAuthority(rolledBack, { tenantKey: tenant, now, log, backgroundExecutor: (task) => scheduled.push(task) });
+      expect(r, tenant).toMatchObject({ configuredMode: 'shadow', selectedSource: 'static', actualSource: 'static', canaryTenant: false, canaryAssignmentReason: null, fallbackReason: null });
       expect(r.snapshot.source).toBe('static');
-      expect(diagnostics.some((d) => d.event === 'recipe_catalog_config_invalid' && d.reasonCode === 'TEST_COHORT_OUTSIDE_CANARY')).toBe(true);
     }
-    // d1 mode: same fence — the override has no meaning there.
-    expect(() => resolveRecipeAuthorityConfig({ RECIPE_CATALOG_MODE: 'd1', RECIPE_CATALOG_CUTOVER_ENABLED: 'true', ...cohortVars() })).toThrow(expect.objectContaining({ code: 'TEST_COHORT_OUTSIDE_CANARY' }));
-    // Exclude alone in d1 mode cannot carve anyone out either (not a per-user routing engine).
-    expect(() => resolveRecipeAuthorityConfig({ RECIPE_CATALOG_MODE: 'd1', RECIPE_CATALOG_CUTOVER_ENABLED: 'true', RECIPE_CATALOG_TEST_COHORT_ENABLED: 'true', RECIPE_CATALOG_TEST_EXCLUDE: excludeDigest })).toThrow(expect.objectContaining({ code: 'TEST_COHORT_OUTSIDE_CANARY' }));
+    expect(scheduled.length).toBeGreaterThan(0); // shadow compare still scheduled off-response
+    await Promise.all(scheduled);
+    expect(diagnostics.filter((d) => d.event === 'recipe_catalog_config_invalid')).toEqual([]);
+    expect(recipeAuthorityCounters()).toMatchObject({ d1: 0, authorizedInclude: 0, authorizedExclude: 0 });
+  });
+
+  it('P1 rollback: canary → static with cohort secrets retained — readiness valid, static authority, zero cohort influence', async () => {
+    const rolledBack = env({ RECIPE_CATALOG_MODE: 'static', ...cohortVars() });
+    expect(resolveRecipeAuthorityConfig(rolledBack).testCohort).toBeNull();
+    for (const tenant of [NATURALLY_OUTSIDE, NATURALLY_INSIDE]) {
+      const r = await resolveRecipeAuthority(rolledBack, { tenantKey: tenant, now, log });
+      expect(r, tenant).toMatchObject({ configuredMode: 'static', actualSource: 'static', canaryTenant: false, canaryAssignmentReason: null, fallbackReason: null });
+    }
+    // Even a MALFORMED cohort (raw id, overlap) is inert outside canary: rollback never depends on secret hygiene.
+    for (const bad of [{ RECIPE_CATALOG_TEST_COHORT_ENABLED: 'true', RECIPE_CATALOG_TEST_INCLUDE: NATURALLY_OUTSIDE }, { RECIPE_CATALOG_TEST_COHORT_ENABLED: 'yes' }, { RECIPE_CATALOG_TEST_INCLUDE: includeDigest }]) {
+      for (const mode of ['static', 'shadow'] as const) {
+        expect(resolveRecipeAuthorityConfig({ RECIPE_CATALOG_MODE: mode, ...bad }).testCohort, `${mode} ${JSON.stringify(Object.keys(bad))}`).toBeNull();
+        const r = await resolveRecipeAuthority(env({ RECIPE_CATALOG_MODE: mode, ...bad }), { tenantKey: NATURALLY_OUTSIDE, now, log });
+        expect(r.fallbackReason).toBeNull();
+        expect(r.actualSource).toBe('static');
+      }
+    }
+    expect(diagnostics.filter((d) => d.event === 'recipe_catalog_config_invalid')).toEqual([]);
+    expect(JSON.stringify(diagnostics)).not.toContain(NATURALLY_OUTSIDE);
+  });
+
+  it('d1 mode: retained cohort secrets are inert — no per-household carve-out, every tenant gets the verified D1 snapshot', async () => {
+    const d1 = env({ RECIPE_CATALOG_MODE: 'd1', RECIPE_CATALOG_CUTOVER_ENABLED: 'true', ...cohortVars() });
+    expect(resolveRecipeAuthorityConfig(d1)).toMatchObject({ mode: 'd1', testCohort: null });
+    for (const tenant of [NATURALLY_OUTSIDE, NATURALLY_INSIDE /* would be "excluded" in canary */, ORDINARY[0]]) {
+      const r = await resolveRecipeAuthority(d1, { tenantKey: tenant, now, log });
+      expect(r, tenant).toMatchObject({ configuredMode: 'd1', actualSource: 'd1', canaryTenant: false, canaryAssignmentReason: null, fallbackReason: null });
+    }
+    expect(recipeAuthorityCounters()).toMatchObject({ authorizedInclude: 0, authorizedExclude: 0 });
+    // Exclude-only secrets in d1 mode cannot carve anyone out either.
+    expect(resolveRecipeAuthorityConfig({ RECIPE_CATALOG_MODE: 'd1', RECIPE_CATALOG_CUTOVER_ENABLED: 'true', RECIPE_CATALOG_TEST_COHORT_ENABLED: 'true', RECIPE_CATALOG_TEST_EXCLUDE: excludeDigest }).testCohort).toBeNull();
+  });
+
+  it('canary + valid pair is active; canary + include-only or exclude-only is refused (TEST_COHORT_PAIR_REQUIRED) and serves static', async () => {
+    expect(resolveRecipeAuthorityConfig(canary1(cohortVars())).testCohort).not.toBeNull();
+    for (const partial of [{ RECIPE_CATALOG_TEST_INCLUDE: includeDigest }, { RECIPE_CATALOG_TEST_EXCLUDE: excludeDigest }]) {
+      const e = canary1({ RECIPE_CATALOG_TEST_COHORT_ENABLED: 'true', ...partial });
+      expect(() => resolveRecipeAuthorityConfig(e)).toThrow(expect.objectContaining({ code: 'TEST_COHORT_INVALID', detail: 'TEST_COHORT_PAIR_REQUIRED' }));
+      const r = await resolveRecipeAuthority(e, { tenantKey: NATURALLY_OUTSIDE, now, log });
+      expect(r).toMatchObject({ configuredMode: 'static', actualSource: 'static', fallbackReason: 'TEST_COHORT_INVALID' });
+    }
+    expect(recipeAuthorityCounters().d1).toBe(0);
   });
 
   it('cohort without the cutover fence is still refused (fence order: mode/cutover before cohort)', () => {
@@ -205,7 +259,7 @@ describe('T15C-C — authority router fences and diagnostics', () => {
     expect(recipeAuthorityCounters().d1).toBe(0);
   });
 
-  it('production readiness: disabled cohort is silent; active cohort is a counted warning without digests; malformed/outside-canary is fatal', async () => {
+  it('production readiness: disabled cohort is silent; active pair is a counted warning without digests; malformed/partial canary cohort is fatal; static/shadow/d1 ignore retained secrets', async () => {
     const production = {
       ENVIRONMENT: 'production', APP_URL: 'https://frigo.tungjpstore.net', AI_MOCK_MODE: 'false', SCAN_QUEUE_MODE: 'async', WEEK_SCHEMA_MODE: 'dual',
       DB: {} as Env['DB'], CACHE: {} as Env['CACHE'], AI: {}, QWEN_API_KEY: 'k', SCAN_QUEUE: {} as Env['SCAN_QUEUE'], IMAGES: {} as Env['IMAGES'],
@@ -221,8 +275,23 @@ describe('T15C-C — authority router fences and diagnostics', () => {
     expect(active.text).toContain('1 include / 1 exclude');
     expect(active.text).not.toContain(includeDigest);
     expect(active.text).not.toContain(excludeDigest);
-    expect(codes({ ...production, RECIPE_CATALOG_MODE: 'shadow', ...cohortVars() }).fatal).toContain('CONFIG_RECIPE_CATALOG_TEST_COHORT');
-    expect(codes({ ...production, RECIPE_CATALOG_MODE: 'canary', RECIPE_CATALOG_D1_CANARY_PERCENT: '1', RECIPE_CATALOG_CUTOVER_ENABLED: 'true', RECIPE_CATALOG_TEST_COHORT_ENABLED: 'true' }).fatal).toContain('CONFIG_RECIPE_CATALOG_TEST_COHORT');
+    // P1: rollback to shadow/static with the secrets still set is a clean readiness (no fatal, no cohort warning).
+    for (const mode of ['shadow', 'static']) {
+      const rolledBack = codes({ ...production, RECIPE_CATALOG_MODE: mode, RECIPE_CATALOG_D1_CANARY_PERCENT: '0', RECIPE_CATALOG_CUTOVER_ENABLED: 'false', ...cohortVars() });
+      expect(rolledBack.fatal, mode).toEqual([]);
+      expect(rolledBack.warn, mode).not.toContain('CONFIG_RECIPE_CATALOG_TEST_COHORT_ACTIVE');
+      expect(codes({ ...production, RECIPE_CATALOG_MODE: mode, RECIPE_CATALOG_TEST_COHORT_ENABLED: 'true', RECIPE_CATALOG_TEST_INCLUDE: 'garbage' }).fatal, `${mode} malformed`).toEqual([]);
+    }
+    // d1 with retained secrets: inert (only the pre-existing D1-authority warning).
+    const d1 = codes({ ...production, RECIPE_CATALOG_MODE: 'd1', RECIPE_CATALOG_CUTOVER_ENABLED: 'true', ...cohortVars() });
+    expect(d1.fatal).toEqual([]);
+    expect(d1.warn).not.toContain('CONFIG_RECIPE_CATALOG_TEST_COHORT_ACTIVE');
+    // P2: canary with include-only / exclude-only / none is fatal.
+    const canaryBase = { ...production, RECIPE_CATALOG_MODE: 'canary', RECIPE_CATALOG_D1_CANARY_PERCENT: '1', RECIPE_CATALOG_CUTOVER_ENABLED: 'true', RECIPE_CATALOG_TEST_COHORT_ENABLED: 'true' };
+    expect(codes(canaryBase).fatal).toContain('CONFIG_RECIPE_CATALOG_TEST_COHORT');
+    expect(codes({ ...canaryBase, RECIPE_CATALOG_TEST_INCLUDE: includeDigest }).fatal).toContain('CONFIG_RECIPE_CATALOG_TEST_COHORT');
+    expect(codes({ ...canaryBase, RECIPE_CATALOG_TEST_EXCLUDE: excludeDigest }).fatal).toContain('CONFIG_RECIPE_CATALOG_TEST_COHORT');
+    expect(codes({ ...canaryBase, RECIPE_CATALOG_TEST_INCLUDE: includeDigest }).text).toContain('TEST_COHORT_PAIR_REQUIRED');
     expect(codes({ ...production, RECIPE_CATALOG_MODE: 'canary', RECIPE_CATALOG_D1_CANARY_PERCENT: '1', RECIPE_CATALOG_CUTOVER_ENABLED: 'true', RECIPE_CATALOG_TEST_COHORT_ENABLED: 'true', RECIPE_CATALOG_TEST_INCLUDE: includeDigest, RECIPE_CATALOG_TEST_EXCLUDE: includeDigest }).fatal).toContain('CONFIG_RECIPE_CATALOG_TEST_COHORT');
     expect(codes({ ...production, RECIPE_CATALOG_MODE: 'canary', RECIPE_CATALOG_D1_CANARY_PERCENT: '1', RECIPE_CATALOG_CUTOVER_ENABLED: 'true', RECIPE_CATALOG_TEST_INCLUDE: includeDigest }).fatal).toContain('CONFIG_RECIPE_CATALOG_TEST_COHORT');
   });

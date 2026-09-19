@@ -35,8 +35,10 @@ import { scheduleRecipeCatalogShadow } from './recipe-catalog-shadow';
  *
  * T15C-C: in `canary` mode only, an operator-owned test cohort (`RECIPE_CATALOG_TEST_COHORT_ENABLED`
  * + digest sets, Worker secrets only) may force a known test household in or a known control
- * household out of the canary. It never applies in static/shadow/d1, never to an unauthenticated
- * request, and is never influenced by request input.
+ * household out of the canary. Outside `canary` the cohort variables are INERT: not parsed, not
+ * validated, no readiness effect — so emergency rollback is the single change
+ * `RECIPE_CATALOG_MODE=static|shadow` even while the secrets still exist. It never applies to an
+ * unauthenticated request and is never influenced by request input.
  *
  * One snapshot per request/operation: routes call `resolveRecipeAuthority(c.env, tenantKey)` once
  * and pass the snapshot down. The D1 snapshot is cached per isolate for a bounded TTL with
@@ -49,7 +51,7 @@ export type RecipeAuthorityMode = (typeof RECIPE_CATALOG_MODES)[number];
 export const USER_VISIBLE_D1_MODES: readonly RecipeAuthorityMode[] = ['canary', 'd1'];
 
 export class RecipeAuthorityConfigError extends Error {
-  constructor(readonly code: 'INVALID_MODE' | 'INVALID_CANARY_PERCENT' | 'CUTOVER_NOT_ENABLED' | 'TEST_COHORT_INVALID' | 'TEST_COHORT_OUTSIDE_CANARY', message: string, readonly detail?: string) {
+  constructor(readonly code: 'INVALID_MODE' | 'INVALID_CANARY_PERCENT' | 'CUTOVER_NOT_ENABLED' | 'TEST_COHORT_INVALID', message: string, readonly detail?: string) {
     super(message); this.name = 'RecipeAuthorityConfigError';
   }
 }
@@ -69,7 +71,7 @@ export interface RecipeAuthorityConfig {
   mode: RecipeAuthorityMode;
   canaryPercent: number;
   cutoverEnabled: boolean;
-  /** Parsed operator test cohort; `null` unless explicitly enabled (and then only legal in canary mode). */
+  /** Parsed operator test cohort; `null` unless mode is `canary` AND the cohort is explicitly enabled. Inert elsewhere. */
   testCohort: RecipeTestCohort | null;
 }
 
@@ -88,16 +90,16 @@ export function resolveRecipeAuthorityConfig(env: RecipeAuthorityConfigEnv): Rec
   if (USER_VISIBLE_D1_MODES.includes(mode) && !cutoverEnabled) {
     throw new RecipeAuthorityConfigError('CUTOVER_NOT_ENABLED', `RECIPE_CATALOG_MODE=${mode} requires RECIPE_CATALOG_CUTOVER_ENABLED=true`);
   }
-  let testCohort: RecipeTestCohort | null;
-  try {
-    testCohort = parseRecipeTestCohort(env);
-  } catch (error) {
-    const detail = error instanceof RecipeTestCohortConfigError ? error.code : 'TEST_COHORT_DIGEST_INVALID';
-    throw new RecipeAuthorityConfigError('TEST_COHORT_INVALID', `Recipe catalog test cohort configuration is invalid (${detail})`, detail);
-  }
-  // The override is a canary-certification tool only; enabling it in any other mode is a misconfiguration.
-  if (testCohort && mode !== 'canary') {
-    throw new RecipeAuthorityConfigError('TEST_COHORT_OUTSIDE_CANARY', `RECIPE_CATALOG_TEST_COHORT_ENABLED=true requires RECIPE_CATALOG_MODE=canary (got ${mode})`);
+  // Cohort secrets are only meaningful — and only validated — in canary mode. In static/shadow/d1 they
+  // are ignored entirely so stale secrets can never block an emergency rollback or carve out tenants.
+  let testCohort: RecipeTestCohort | null = null;
+  if (mode === 'canary') {
+    try {
+      testCohort = parseRecipeTestCohort(env);
+    } catch (error) {
+      const detail = error instanceof RecipeTestCohortConfigError ? error.code : 'TEST_COHORT_DIGEST_INVALID';
+      throw new RecipeAuthorityConfigError('TEST_COHORT_INVALID', `Recipe catalog test cohort configuration is invalid (${detail})`, detail);
+    }
   }
   return { mode, canaryPercent, cutoverEnabled, testCohort };
 }
