@@ -1,5 +1,14 @@
 # Frigo / Takosan current handoff — 2026-09-19
 
+## Current handoff — T15C-D production 1% Canary blocked before mutation (2026-09-19)
+
+- **Canonical base:** repository `1368281478` / `frigo-6/Frigo-dev`; main and task base `347b536950cf54d25a2d6a880c3c2cb3d8c8f329`; branch `codex/t15c-production-canary-1pct`.
+- **Merged prerequisites:** PR #38 -> `8163f05ed1af361f9c0658361df745227e6eae20`; PR #39 -> `347b536950cf54d25a2d6a880c3c2cb3d8c8f329`. Exact-main CI `35409762462` and staging Deploy `35409964105` succeeded; production job was skipped and staging stayed `static/0/false`.
+- **Fresh gates:** frozen install, seed/import, typecheck, lint, migration smoke through 0038, build, diff check, and full Vitest **178 files / 4044 tests** passed.
+- **Production read-only evidence:** Deploy `35404106102`, Worker `6c336889-680d-4cc3-b03b-1007849aa738`, SHA `b41aa468...`, `shadow/0/false`; readiness config-valid with DB/queue/email OK and only `CONFIG_PLUS_GRANT_SECRET_MISSING`; 5/5 recipe reads served the same 71 IDs, legacy details returned 200, sampled D1-only details returned 404.
+- **Safe stop:** no authorized operator-owned INCLUDE and EXCLUDE household pair was supplied; customer/user IDs were not searched. Local Wrangler is unauthenticated, so no fresh direct D1/tail audit or secret provisioning was possible. No production mutation occurred. Classification `T15C_D_BLOCKED_AUTHORIZED_TEST_HOUSEHOLDS_UNAVAILABLE`.
+- **Next exact action:** privately supply the two operator-owned household IDs, authenticate the intended Cloudflare operator session, repeat direct D1 certification, provision the three hashed cohort Worker secrets without printing IDs/digests, prove Shadow remains inert, deploy exactly 1% through protected `deploy.yml`, certify EXCLUDE then INCLUDE plus E2E/telemetry, and rollback to `shadow/0/false` with secrets retained. Receipt: `recipe-catalog/T15C_D_PRODUCTION_1PCT_CANARY_CERTIFICATION.md`.
+
 ## Current handoff — T15C-C authorized test cohort mechanism ready, dormant (2026-09-19)
 
 - **Base/branch:** canonical main `b41aa4682481447795350fc1a9eeb1e80887bd0e`; branch `hoplite/aigeai-eca96ae8--t15c-cohort` (PR in body). Implementation `c5d2d63aa06ad51727aaeac6bd6cf01349598e29`.

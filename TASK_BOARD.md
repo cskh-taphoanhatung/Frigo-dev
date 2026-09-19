@@ -1,3 +1,13 @@
+## Current T15C-D — production 1% Canary certification — safe stop (2026-09-19)
+
+- [done] Canonical repo/main verified: `1368281478`, `frigo-6/Frigo-dev`, `347b536950cf54d25a2d6a880c3c2cb3d8c8f329`; PR #38/#39 merged.
+- [done] Exact-main CI `35409762462` and staging Deploy `35409964105` passed; staging `static/0/false`, production skipped.
+- [done] Full local baseline passed: seed/import, typecheck, lint, migration smoke through 0038, build, **178 files / 4044 tests**, diff check.
+- [done] Production read-only public audit remains `shadow/0/false`, Worker `6c336889-680d-4cc3-b03b-1007849aa738`, 71 deterministic recipes, D1-only samples hidden.
+- [blocked] No authorized operator-owned INCLUDE/EXCLUDE household pair was supplied; local Wrangler is unauthenticated. No customer enumeration and no production mutation.
+- [status] `T15C_D_BLOCKED_AUTHORIZED_TEST_HOUSEHOLDS_UNAVAILABLE`; receipt `docs/ai/recipe-catalog/T15C_D_PRODUCTION_1PCT_CANARY_CERTIFICATION.md`.
+- [next] Privately provide both operator-owned household IDs and authenticated Cloudflare operator access; re-run direct D1 certification, provision only hashed cohort secrets, certify 1%, then rollback to `shadow/0/false`. Stop before 2%, 5%, full D1, media, or T14G.
+
 ## Current T15C-C — authorized canary test cohort mechanism (dormant) — 2026-09-19
 
 - [done] `packages/recipes/src/recipe-canary-cohort.ts` + `src/worker/services/recipe-authority.ts`: server-side override for operator-owned test households — `RECIPE_CATALOG_TEST_COHORT_ENABLED` / `RECIPE_CATALOG_TEST_INCLUDE` / `RECIPE_CATALOG_TEST_EXCLUDE` (Worker secrets; SHA-256 digests of `recipe-catalog-test-cohort:<householdId>`, never raw IDs). Precedence exclude > include > deterministic FNV bucket; disabled by default; canary+cutover only; zero effect in static/shadow/d1 or without a tenant; every malformed/half-applied shape fails closed in canary mode (`CONFIG_RECIPE_CATALOG_TEST_COHORT` fatal; static + loud diagnostic at request time). **R1 remediation:** cohort variables are inert in static/shadow/d1 (rollback = single mode change, no secret cleanup — P1 resolved) and an active cohort requires BOTH an include and an exclude household (`TEST_COHORT_PAIR_REQUIRED` — P2 resolved). Request input cannot reach it. `fnv1a32`/`recipeCanaryBucket`/thresholds unchanged.

@@ -1,5 +1,18 @@
 # Frigo Project Status
 
+## T15C-D — production 1% Canary blocked before mutation (2026-09-19)
+
+Canonical main `347b536950cf54d25a2d6a880c3c2cb3d8c8f329` is locally certified
+(178 files / 4044 tests) and its exact-main CI/staging deployment are green.
+Production remains `b41aa468...`, Worker `6c336889-680d-4cc3-b03b-1007849aa738`,
+`shadow/0/false`, serving 71 static recipes with healthy database/queue/email.
+Canary was not dispatched because the mandatory operator-owned INCLUDE and
+EXCLUDE household pair was not supplied; no customer accounts were inspected,
+and no secret/config/deploy/D1/R2 mutation occurred. Status
+`T15C_D_BLOCKED_AUTHORIZED_TEST_HOUSEHOLDS_UNAVAILABLE` · `FULL_D1_NOT_ENABLED`
+· `MEDIA_POPULATION_DEFERRED` · `T14G_NOT_STARTED`. Receipt:
+`docs/ai/recipe-catalog/T15C_D_PRODUCTION_1PCT_CANARY_CERTIFICATION.md`.
+
 ## T15C-C — authorized canary test cohort mechanism ready; production still shadow (2026-09-19)
 
 Dormant, secret-configured include+exclude override (digests, not IDs; inert outside canary; both cohorts mandatory) unblocks the operator-cohort requirement for the 1% production canary without changing customer routing. `T15C_AUTHORIZED_TEST_COHORT_READY` · production `shadow / 0 / false` · `FULL_D1_NOT_ENABLED` · `MEDIA_POPULATION_DEFERRED` · `T14G_NOT_STARTED`. Receipt: `docs/ai/recipe-catalog/T15C_AUTHORIZED_TEST_COHORT.md`.
