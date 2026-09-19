@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/useAuthStore';
 import { TopBar } from '../components/common/TopBar';
 import { Card } from '../components/common/Card';
@@ -18,7 +18,7 @@ import {
 
 export const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const { displayName, email, isPlus, avatarUrl } = useAuthStore();
+  const { displayName, email, isGuest, isPlus, avatarUrl } = useAuthStore();
   const [confirmLogout, setConfirmLogout] = useState(false);
 
   const initialLetter = (displayName || 'K').charAt(0).toUpperCase();
@@ -64,13 +64,13 @@ export const ProfilePage: React.FC = () => {
             </div>
           </div>
 
-          <button
-            onClick={() => navigate('/plus')}
-            className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 font-heading font-bold text-xs shadow-xs hover:brightness-105 active:scale-95 transition-all flex items-center gap-1"
+          <Link
+            to={isGuest ? '/auth?mode=login&returnTo=%2Fplus' : '/plus'}
+            className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 font-heading font-bold text-xs shadow-xs hover:brightness-105 active:scale-95 transition-[filter,transform,box-shadow] flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2"
           >
-            <Sparkles className="w-3.5 h-3.5 fill-current" />
-            <span>{isPlus ? 'VIP Plus' : 'Nâng cấp'}</span>
-          </button>
+            <Sparkles aria-hidden="true" className="w-3.5 h-3.5 fill-current" />
+            <span>{isGuest ? 'Đăng nhập để nâng cấp' : isPlus ? 'VIP Plus' : 'Nâng cấp'}</span>
+          </Link>
         </Card>
 
         {/* 7.1 Menu Items List */}

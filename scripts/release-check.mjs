@@ -6,6 +6,53 @@ import { pathToFileURL } from 'node:url';
 // The operator-approved final hardening SHA must descend from this reviewed floor.
 export const REVIEWED_HARDENING_BASE = 'af661af467ba8620ba6b2919ee958195d179380c';
 const SHA = /^[a-f0-9]{40}$/;
+const RELEASE_RECIPE_CATALOG_MODES = ['static', 'shadow', 'canary'];
+const RELEASE_CANARY_PERCENT_OPTIONS = [0, 1, 2, 5];
+
+export function validateRecipeCatalogMode(value) {
+  if (!RELEASE_RECIPE_CATALOG_MODES.includes(value)) {
+    throw new Error('Release recipe catalog mode must be static, shadow, or canary');
+  }
+  return value;
+}
+
+function normalizeReleaseCanaryPercent(value) {
+  if (typeof value === 'number') {
+    if (!Number.isInteger(value)) throw new Error('Release recipe catalog canary percent must be a canonical integer');
+    value = String(value);
+  }
+  if (typeof value !== 'string' || !/^(0|[1-9]|[1-9][0-9])$/.test(value)) {
+    throw new Error('Release recipe catalog canary percent must be a canonical integer');
+  }
+  const percent = Number(value);
+  if (percent > 100) throw new Error('Release recipe catalog canary percent must be between 0 and 100');
+  return percent;
+}
+
+/** Runtime supports broader values; this function is the narrower reviewed deploy authorization. */
+export function validateRecipeCatalogRollout({ mode, canaryPercent }) {
+  validateRecipeCatalogMode(mode);
+  const percent = normalizeReleaseCanaryPercent(canaryPercent);
+  if ((mode === 'static' || mode === 'shadow') && percent !== 0) {
+    throw new Error(`${mode} release requires canary percent 0`);
+  }
+  if (mode === 'canary' && (percent === 0 || !RELEASE_CANARY_PERCENT_OPTIONS.includes(percent))) {
+    throw new Error('Canary release percent must be one of 1, 2, or 5');
+  }
+  return Object.freeze({ mode, canaryPercent: percent, cutoverEnabled: mode === 'canary' });
+}
+
+export function validateRecipeCatalogManifestPolicy(manifest) {
+  if (typeof manifest !== 'object' || manifest === null) throw new Error('Release manifest is invalid');
+  const rollout = validateRecipeCatalogRollout({
+    mode: manifest.recipeCatalogMode,
+    canaryPercent: manifest.recipeCatalogCanaryPercent,
+  });
+  if (manifest.recipeCatalogCutoverEnabled !== rollout.cutoverEnabled) {
+    throw new Error('Release manifest cutover policy does not match its mode');
+  }
+  return rollout;
+}
 
 function git(cwd, ...args) {
   return execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
@@ -128,12 +175,19 @@ async function main() {
   if (command === 'gate') {
     const environment = process.env.RELEASE_ENVIRONMENT;
     if (!['production', 'staging'].includes(environment)) throw new Error('Invalid release environment');
+    const rollout = validateRecipeCatalogRollout({
+      mode: process.env.RECIPE_CATALOG_MODE,
+      canaryPercent: process.env.RECIPE_CATALOG_D1_CANARY_PERCENT,
+    });
     const hardenedSha = process.env.HARDENED_SHA ||
       (environment === 'staging' && process.env.GITHUB_EVENT_NAME === 'workflow_run' ? REVIEWED_HARDENING_BASE : undefined);
     const source = validateReleaseSource({ ref: process.env.RELEASE_REF, hardenedSha });
     const repository = process.env.GITHUB_REPOSITORY;
     const manifest = {
       ...source, repository, environment,
+      recipeCatalogMode: rollout.mode,
+      recipeCatalogCanaryPercent: rollout.canaryPercent,
+      recipeCatalogCutoverEnabled: rollout.cutoverEnabled,
       ci: await hostedCi(source.sha, repository),
       schema: migrationManifest(process.cwd(), source.sha),
       workflowRunId: process.env.GITHUB_RUN_ID,
@@ -141,12 +195,14 @@ async function main() {
       createdAt: new Date().toISOString(),
     };
     writeManifest(file, manifest);
-    if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `deploy_sha=${source.sha}\n`);
+    if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT,
+      `deploy_sha=${source.sha}\nrecipe_catalog_mode=${rollout.mode}\nrecipe_catalog_d1_canary_percent=${rollout.canaryPercent}\nrecipe_catalog_cutover_enabled=${rollout.cutoverEnabled}\n`);
     if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY,
       `## Approved release candidate\n\n- SHA: \`${source.sha}\`\n- Main: \`${source.mainSha}\`\n- Hardened ancestor: \`${source.hardenedSha}\`\n- Schema: \`${manifest.schema.version}\` (${manifest.schema.sha256})\n- Exact-head CI: ${manifest.ci.url}\n\nCandidate validation is not proof of deployment; see the deployment receipt artifact.\n`);
   } else {
     const manifest = JSON.parse(readFileSync(file, 'utf8'));
     if (command === 'recheck') {
+      validateRecipeCatalogManifestPolicy(manifest);
       if (git(process.cwd(), 'rev-parse', 'HEAD') !== manifest.sha) throw new Error('Checkout differs from approved release SHA');
       const source = validateReleaseSource({ ref: manifest.sha, hardenedSha: manifest.hardenedSha });
       if (migrationManifest(process.cwd(), source.sha).sha256 !== manifest.schema.sha256) throw new Error('Migration manifest changed');

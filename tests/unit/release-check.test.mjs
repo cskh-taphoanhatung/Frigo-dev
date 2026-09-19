@@ -5,7 +5,8 @@ import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   RELEASE_PROPAGATION_PENDING,
-  migrationManifest, requireSuccessfulCi, validateReleaseSource,
+  migrationManifest, requireSuccessfulCi, validateRecipeCatalogManifestPolicy, validateRecipeCatalogMode,
+  validateRecipeCatalogRollout, validateReleaseSource,
   verifyDeployedRelease, verifyMigrationLedger,
 } from '../../scripts/release-check.mjs';
 
@@ -17,6 +18,45 @@ const successful = {
   repository: { full_name: repository }, head_repository: { full_name: repository },
   html_url: 'https://github.com/release-fixture/Frigo/actions/runs/2',
 };
+
+describe('recipe catalog rollout mode validation', () => {
+  it.each(['static', 'shadow', 'canary'])('accepts the reviewed %s mode', (mode) => {
+    expect(validateRecipeCatalogMode(mode)).toBe(mode);
+  });
+
+  it.each([undefined, '', 'd1', 'full', 'full_d1', 'SHADOW'])('rejects unreviewed mode %s', (mode) => {
+    expect(() => validateRecipeCatalogMode(mode)).toThrow('must be static, shadow, or canary');
+  });
+
+  it.each([
+    ['static', '0', false], ['shadow', '0', false],
+    ['canary', '1', true], ['canary', '2', true], ['canary', '5', true],
+  ])('%s/%s derives the reviewed immutable policy', (mode, canaryPercent, cutoverEnabled) => {
+    expect(validateRecipeCatalogRollout({ mode, canaryPercent })).toEqual({ mode, canaryPercent: Number(canaryPercent), cutoverEnabled });
+  });
+
+  it.each([
+    ['static', '1'], ['shadow', '1'], ['canary', '0'], ['canary', '10'], ['canary', '100'],
+    ['d1', '1'], ['full', '1'], ['canary', '05'], ['canary', '1.0'], ['canary', '-1'], ['canary', '1e0'],
+  ])('rejects unsafe rollout combination %s/%s', (mode, canaryPercent) => {
+    expect(() => validateRecipeCatalogRollout({ mode, canaryPercent })).toThrow();
+  });
+
+  it('revalidates every rollout field from the immutable release manifest', () => {
+    expect(validateRecipeCatalogManifestPolicy({
+      recipeCatalogMode: 'canary', recipeCatalogCanaryPercent: 2, recipeCatalogCutoverEnabled: true,
+    })).toEqual({ mode: 'canary', canaryPercent: 2, cutoverEnabled: true });
+    expect(() => validateRecipeCatalogManifestPolicy({
+      recipeCatalogMode: 'canary', recipeCatalogCanaryPercent: 2, recipeCatalogCutoverEnabled: false,
+    })).toThrow('cutover policy');
+    expect(() => validateRecipeCatalogManifestPolicy({
+      recipeCatalogMode: 'd1', recipeCatalogCanaryPercent: 1, recipeCatalogCutoverEnabled: true,
+    })).toThrow();
+    expect(() => validateRecipeCatalogManifestPolicy({
+      recipeCatalogMode: 'canary', recipeCatalogCanaryPercent: 100, recipeCatalogCutoverEnabled: true,
+    })).toThrow();
+  });
+});
 
 describe('release source of truth (local Git only)', () => {
   let cwd, baselineSha, hardenedSha, releaseSha, outsideSha;
@@ -243,6 +283,20 @@ describe('release workflow guardrails', () => {
     expect(deploy).toContain('environment: production');
     expect(deploy).toContain('ref: ${{ needs.release.outputs.deploy_sha }}');
     expect(deploy).toContain('GIT_COMMIT:${{ needs.release.outputs.deploy_sha }}');
+    expect(deploy).toContain('options: [static, shadow, canary]');
+    expect(deploy).toContain("options: ['0', '1', '2', '5']");
+    expect(deploy).toContain('recipe_catalog_d1_canary_percent: ${{ steps.gate.outputs.recipe_catalog_d1_canary_percent }}');
+    expect(deploy).toContain('recipe_catalog_cutover_enabled: ${{ steps.gate.outputs.recipe_catalog_cutover_enabled }}');
+    expect(deploy).toContain("RECIPE_CATALOG_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.recipe_catalog_mode || 'static' }}");
+    expect(deploy).toContain("RECIPE_CATALOG_D1_CANARY_PERCENT: ${{ github.event_name == 'workflow_dispatch' && inputs.recipe_catalog_d1_canary_percent || '0' }}");
+    expect(deploy.match(/RECIPE_CATALOG_MODE:\$\{\{ needs\.release\.outputs\.recipe_catalog_mode \}\}/g)).toHaveLength(2);
+    expect(deploy.match(/RECIPE_CATALOG_D1_CANARY_PERCENT:\$\{\{ needs\.release\.outputs\.recipe_catalog_d1_canary_percent \}\}/g)).toHaveLength(2);
+    expect(deploy.match(/RECIPE_CATALOG_CUTOVER_ENABLED:\$\{\{ needs\.release\.outputs\.recipe_catalog_cutover_enabled \}\}/g)).toHaveLength(2);
+    expect(deploy).not.toContain('options: [static, shadow, d1');
+    expect(deploy).not.toContain('options: [static, shadow, canary, d1');
+    expect(deploy).not.toContain("options: ['0', '1', '2', '5', '10'");
+    const dispatchInputs = deploy.slice(deploy.indexOf('workflow_dispatch:'), deploy.indexOf('\npermissions:'));
+    expect(dispatchInputs).not.toContain('recipe_catalog_cutover_enabled:');
     expect(deploy).toContain('cancel-in-progress: false');
     const production = deploy.slice(deploy.indexOf('\n  production:'));
     expect(production.indexOf('release-check.mjs recheck')).toBeLessThan(production.indexOf('d1-schema-gate.sh remote'));
@@ -250,6 +304,15 @@ describe('release workflow guardrails', () => {
     expect(production.indexOf('command: deploy')).toBeLessThan(production.indexOf('wait-for-deployed-release.mjs'));
     expect(production).not.toContain('migrations apply');
     expect(production).not.toContain('frigo.tungjpstore.net');
+  });
+  it('T15C-C: the operator test cohort never travels through the workflow, Wrangler config, release manifest, or example env', () => {
+    // Cohort digests are Worker secrets only; the deploy control plane must not know about them.
+    const forbidden = /RECIPE_CATALOG_TEST_(COHORT_ENABLED|INCLUDE|EXCLUDE)|recipe_catalog_test_/;
+    expect(deploy).not.toMatch(forbidden);
+    expect(migrate).not.toMatch(forbidden);
+    for (const file of ['../../wrangler.jsonc', '../../wrangler.staging.jsonc', '../../.dev.vars.example', '../../scripts/release-check.mjs']) {
+      expect(readFileSync(new URL(file, import.meta.url), 'utf8'), file).not.toMatch(forbidden);
+    }
   });
   it('both staging and production prove the exact deployed SHA through bounded convergence, never a single-shot curl', () => {
     const staging = deploy.slice(deploy.indexOf('\n  staging:'), deploy.indexOf('\n  production:'));
@@ -261,7 +324,8 @@ describe('release workflow guardrails', () => {
       expect(job).toContain('node scripts/wait-for-deployed-release.mjs release-manifest.json');
       expect(job).not.toMatch(/curl[^\n]*health\/ready[^\n]*> readiness\.json/);
       expect(job).not.toContain('release-check.mjs deployed');
-      expect(job.indexOf('post-deploy-smoke.sh')).toBeLessThan(job.indexOf('wait-for-deployed-release.mjs'));
+      expect(job.indexOf('wait-for-deployed-release.mjs')).toBeLessThan(job.indexOf('post-deploy-smoke.sh'));
+      expect(job).toContain('post-deploy-smoke.sh "$APP_SMOKE_URL" "${{ needs.release.outputs.deploy_sha }}"');
       // Forensic receipt survives a failed convergence.
       expect(job.slice(job.indexOf('wait-for-deployed-release.mjs'))).toMatch(/if: always\(\)[\s\S]*upload-artifact/);
     }

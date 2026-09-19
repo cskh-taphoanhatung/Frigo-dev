@@ -147,15 +147,25 @@ export function validateEnvironment(env: Env): ConfigValidationResult {
     if (USER_VISIBLE_D1_MODES.includes(authority.mode)) {
       warnings.push(warning('CONFIG_RECIPE_CATALOG_D1_AUTHORITY', 'RECIPE_CATALOG_MODE enables user-visible D1 recipe content authority (canary or d1); the cutover fence is satisfied. Rollback is RECIPE_CATALOG_MODE=static.'));
     }
+    if (authority.testCohort) {
+      // Counts only: the digests themselves must never appear in readiness output.
+      warnings.push(warning('CONFIG_RECIPE_CATALOG_TEST_COHORT_ACTIVE', `Operator recipe-catalog test cohort is active (${authority.testCohort.include.size} include / ${authority.testCohort.exclude.size} exclude digests); canary-certification only. Disable with RECIPE_CATALOG_TEST_COHORT_ENABLED=false.`));
+    }
   } catch (error) {
     const code = error instanceof RecipeAuthorityConfigError ? error.code : 'INVALID_MODE';
-    fatalIssues.push(
-      fatal('CONFIG_RECIPE_CATALOG_MODE', code === 'CUTOVER_NOT_ENABLED'
-        ? 'RECIPE_CATALOG_MODE=canary|d1 requires RECIPE_CATALOG_CUTOVER_ENABLED=true in production; without the fence the D1 recipe authority stays disabled.'
-        : code === 'INVALID_CANARY_PERCENT'
-          ? 'RECIPE_CATALOG_D1_CANARY_PERCENT must be an integer 0..100.'
-          : 'RECIPE_CATALOG_MODE must be one of static, shadow, canary, d1 (static is the production default).')
-    );
+    if (code === 'TEST_COHORT_INVALID') {
+      const detail = error instanceof RecipeAuthorityConfigError && error.detail ? ` (${error.detail})` : '';
+      // Only reachable in canary mode: outside canary the cohort variables are inert by design.
+      fatalIssues.push(fatal('CONFIG_RECIPE_CATALOG_TEST_COHORT', `Recipe-catalog test cohort configuration is malformed${detail}: INCLUDE/EXCLUDE must be disjoint, duplicate-free, lower-case SHA-256 hex digests (max 16 each); ENABLED=true requires at least one INCLUDE and one EXCLUDE digest, and members require ENABLED=true.`));
+    } else {
+      fatalIssues.push(
+        fatal('CONFIG_RECIPE_CATALOG_MODE', code === 'CUTOVER_NOT_ENABLED'
+          ? 'RECIPE_CATALOG_MODE=canary|d1 requires RECIPE_CATALOG_CUTOVER_ENABLED=true in production; without the fence the D1 recipe authority stays disabled.'
+          : code === 'INVALID_CANARY_PERCENT'
+            ? 'RECIPE_CATALOG_D1_CANARY_PERCENT must be an integer 0..100.'
+            : 'RECIPE_CATALOG_MODE must be one of static, shadow, canary, d1 (static is the production default).')
+      );
+    }
   }
 
   if (env.SCAN_QUEUE_MODE && env.SCAN_QUEUE_MODE !== 'async') {

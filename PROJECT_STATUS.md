@@ -1,5 +1,44 @@
 # Frigo Project Status
 
+## T16 — PWA cache and Google recovery deployed to production (2026-09-19)
+
+The stale auth client was traced to a real Service Worker/header mismatch:
+production served cached `/auth` and `/sw.js`, `_headers` targeted the wrong
+worker path, and the cache stayed fixed at `takosan-pwa-v2`. The candidate uses
+release-SHA worker/cache identity, best-effort stale-client navigation after
+claim, no-store
+HTML/worker policy, immutable hashed assets, numeric Google GIS button sizing,
+and protected deploy smoke for effective headers plus embedded SHA. Independent
+review findings are closed. Full local result: **178 files / 4046 tests**, lint,
+typecheck, migrations and build PASS; local Wrangler headers and a two-release
+Chromium update pass. PR #42 merged as main `6a016f185cae9c51ab5a1fc873a8a05a10a57edd`;
+CI/staging passed and production Deploy `35415843682` published Worker
+`2f228dc9-d97b-4eb1-8cff-9a0f2df3b51c` while preserving recipe
+`shadow/0/false`. Live headers, embedded SHA, readiness and a clean Google popup
+all passed. Reload/reopen/navigation remains the
+reliable recovery boundary for closed, suspended, or browser-blocked old tabs.
+
+## T15C-D — production 1% Canary blocked before mutation (2026-09-19)
+
+Canonical main `347b536950cf54d25a2d6a880c3c2cb3d8c8f329` is locally certified
+(178 files / 4044 tests) and its exact-main CI/staging deployment are green.
+Production remains `b41aa468...`, Worker `6c336889-680d-4cc3-b03b-1007849aa738`,
+`shadow/0/false`, serving 71 static recipes with healthy database/queue/email.
+Canary was not dispatched because the mandatory operator-owned INCLUDE and
+EXCLUDE household pair was not supplied; no customer accounts were inspected,
+and no secret/config/deploy/D1/R2 mutation occurred. Status
+`T15C_D_BLOCKED_AUTHORIZED_TEST_HOUSEHOLDS_UNAVAILABLE` · `FULL_D1_NOT_ENABLED`
+· `MEDIA_POPULATION_DEFERRED` · `T14G_NOT_STARTED`. Receipt:
+`docs/ai/recipe-catalog/T15C_D_PRODUCTION_1PCT_CANARY_CERTIFICATION.md`.
+Receipt PR #40 merged as `763d7e904798dc513c60d4da5f876598570c12fb` after exact-head CI; exact-main CI `35411093064` and staging Deploy `35411300235` passed, while production remained skipped and unchanged.
+
+## T15C-C — authorized canary test cohort mechanism ready; production still shadow (2026-09-19)
+
+Dormant, secret-configured include+exclude override (digests, not IDs; inert outside canary; both cohorts mandatory) unblocks the operator-cohort requirement for the 1% production canary without changing customer routing. `T15C_AUTHORIZED_TEST_COHORT_READY` · production `shadow / 0 / false` · `FULL_D1_NOT_ENABLED` · `MEDIA_POPULATION_DEFERRED` · `T14G_NOT_STARTED`. Receipt: `docs/ai/recipe-catalog/T15C_AUTHORIZED_TEST_COHORT.md`.
+## T15C — production Canary safe stop; production authority remains shadow (2026-09-18)
+
+Canonical main `b41aa4682481447795350fc1a9eeb1e80887bd0e` fully certified locally; production Worker on that exact SHA with `shadow / 0 / false` (Deploy 35404106102), 71 static recipes served, D1 500 (historical, tip 0037, `rel-bd00a4f53fcaeee4`). Canary not started: no authorized inside/outside 1% test cohort or Cloudflare credential available. Status `T15C_CANARY_BLOCKED_AUTHORIZED_COHORT_UNAVAILABLE` · `T15B_SHADOW_COMPLETE` · `FULL_D1_NOT_ENABLED` · `MEDIA_POPULATION_DEFERRED` · `T14G_NOT_STARTED`. Receipt: `docs/ai/recipe-catalog/T15C_PRODUCTION_CANARY_SAFE_STOP.md`.
+
 ## T14E — Bulk Recipe Import Factory: MERGED to main `f7a55408…`, main certified, rollout deferred (2026-09-17)
 
 PR #23 (remediated head `ba1a45d4…`, original reviewed head `7b4edcc8…` kept in ancestry) merged by normal merge commit

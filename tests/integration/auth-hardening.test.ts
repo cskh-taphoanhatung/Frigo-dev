@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { authMiddleware } from '../../src/worker/middleware/auth';
 import { authRoutes } from '../../src/worker/routes/auth';
 import { inventoryRoutes } from '../../src/worker/routes/inventory';
+import { preferencesRoutes } from '../../src/worker/routes/preferences';
 import { sendEmail } from '../../src/worker/services/email';
 import type { AuthContext, Env } from '../../src/worker/types';
 import { signJwt } from '../../src/worker/utils/jwt';
@@ -26,6 +27,7 @@ const authApp = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
 authApp.use('*', authMiddleware);
 authApp.route('/', authRoutes);
 authApp.route('/', inventoryRoutes);
+authApp.route('/', preferencesRoutes);
 authApp.all('/private', (c) => c.json({ auth: c.get('auth') }));
 
 interface RequestOptions {
@@ -529,6 +531,49 @@ describe('expected-owner fencing across cookie changes', () => {
 });
 
 describe('D1-authoritative OTP verification', () => {
+  it('fails registration honestly and invalidates the challenge when no provider accepts the OTP', async () => {
+    vi.mocked(sendEmail).mockResolvedValueOnce({ sent: false, provider: 'workers-email', error: 'sender_not_verified' } as any);
+    const result = await request('/auth/register', {
+      body: { name: 'Auth Test', email: EMAIL, password: PASSWORD },
+    });
+    expect(result.status).toBe(503);
+    expect(result.json).toMatchObject({
+      success: false,
+      code: 'OTP_DELIVERY_UNAVAILABLE',
+      accountCreated: true,
+      email: EMAIL,
+    });
+    expect(result.json.message).not.toContain('đã gửi');
+    expect(result.json).not.toHaveProperty('devOtp');
+    expect(result.response.headers.get('Set-Cookie')).toBeNull();
+    expect(otp().used).toBe(1);
+    expect(db.query('SELECT is_verified FROM auth_accounts WHERE email = ?', EMAIL)[0].is_verified).toBe(0);
+  });
+
+  it('fails resend honestly and leaves the newly generated challenge unusable', async () => {
+    await register();
+    vi.mocked(sendEmail).mockResolvedValueOnce({ sent: false, provider: 'workers-email', error: 'provider_unavailable' } as any);
+    const result = await request('/auth/resend-otp', { body: { email: EMAIL, purpose: 'register' } });
+    expect(result.status).toBe(503);
+    expect(result.json).toMatchObject({ success: false, code: 'OTP_DELIVERY_UNAVAILABLE' });
+    expect(result.json.message).not.toContain('Đã gửi');
+    expect(otp().used).toBe(1);
+  });
+
+  it('keeps resend available when the optional KV cooldown store is unavailable', async () => {
+    await register();
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    env.CACHE = {
+      get: vi.fn(async () => { throw new Error('KV unavailable'); }),
+      put: vi.fn(),
+      delete: vi.fn(),
+    } as unknown as Env['CACHE'];
+    const result = await request('/auth/resend-otp', { body: { email: EMAIL, purpose: 'register' } });
+    expect(result.status).toBe(200);
+    expect(result.json.success).toBe(true);
+    expect(log).toHaveBeenCalledWith(JSON.stringify({ event: 'otp_resend_cooldown_unavailable' }));
+  });
+
   it('stores contextual v2 HMAC only and consumes a correct registration OTP exactly once', async () => {
     const { code } = await register();
     expect(otp().code_digest).toBe(await createOtpDigest(EMAIL, 'register', code, OTP_SECRET));
@@ -545,6 +590,35 @@ describe('D1-authoritative OTP verification', () => {
     expect(second.status).toBe(400);
     expect(second.response.headers.get('Set-Cookie')).toBeNull();
     expect(sessionCount()).toBe(1);
+  });
+
+  it('persists onboarding completion and returns it from the authoritative profile', async () => {
+    const { cookie } = await signup();
+    const before = await request('/me', { method: 'GET', cookie, origin: null });
+    expect(before.json.user.onboardingCompleted).toBe(false);
+    const saved = await request('/preferences', {
+      method: 'PATCH',
+      cookie,
+      body: {
+        householdSize: 3,
+        spicyLevel: 'mild',
+        favoriteCuisines: ['vietnamese', 'japanese'],
+        dietaryRestrictions: ['peanuts'],
+        completeOnboarding: true,
+      },
+    });
+    expect(saved.status).toBe(200);
+    expect(saved.json.onboardingCompleted).toBe(true);
+    const after = await request('/me', { method: 'GET', cookie, origin: null });
+    expect(after.json.user).toMatchObject({
+      onboardingCompleted: true,
+      preferences: {
+        householdSize: 3,
+        spicyLevel: 'mild',
+        favoriteCuisines: ['vietnamese', 'japanese'],
+        dietaryRestrictions: ['peanuts'],
+      },
+    });
   });
 
   it('allows one concurrent registration consume even when both requests read the unused challenge', async () => {

@@ -38,7 +38,7 @@ export const SQL = {
   GET_NOTIFICATIONS: `SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 20`,
   
   // User Preferences & Profiles
-  GET_USER_PROFILE: `SELECT u.id, u.email, u.is_guest, p.display_name, p.avatar_url, h.id as household_id, h.name as household_name FROM users u LEFT JOIN profiles p ON u.id = p.user_id LEFT JOIN household_members hm ON u.id = hm.user_id AND hm.household_id = ? LEFT JOIN households h ON hm.household_id = h.id WHERE u.id = ?`,
+  GET_USER_PROFILE: `SELECT u.id, u.email, u.is_guest, p.display_name, p.avatar_url, p.onboarding_completed_at, h.id as household_id, h.name as household_name FROM users u LEFT JOIN profiles p ON u.id = p.user_id LEFT JOIN household_members hm ON u.id = hm.user_id AND hm.household_id = ? LEFT JOIN households h ON hm.household_id = h.id WHERE u.id = ?`,
   GET_USER_PREFERENCES: `SELECT * FROM user_preferences WHERE user_id = ?`,
   UPDATE_USER_PREFERENCES: `UPDATE user_preferences SET household_size = ?, spicy_level = ?, favorite_cuisines = ?, dietary_restrictions = ?, updated_at = datetime('now') WHERE user_id = ?`,
   

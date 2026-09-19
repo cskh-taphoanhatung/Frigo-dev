@@ -95,7 +95,8 @@ describe('production 0023 to T13 migration bridge', () => {
     expect(files[32]).toBe('0033_scan_evidence_completeness.sql');
     expect(files[33]).toBe('0034_global_recipe_catalog_parity.sql');
     expect(files[34]).toBe('0035_recipe_media_layer.sql');
-    expect(files.slice(35)).toEqual(MIGRATION_LEDGER.catalogGrowth);
+    expect(files.slice(35, 37)).toEqual(MIGRATION_LEDGER.catalogGrowth);
+    expect(files.slice(37)).toEqual(MIGRATION_LEDGER.postCatalog);
     expect(files.at(-1)).toBe(MIGRATION_LEDGER.tip);
   });
 });

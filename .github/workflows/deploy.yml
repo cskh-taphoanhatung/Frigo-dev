@@ -25,6 +25,16 @@ on:
         description: Confirm this is an intentional production deployment
         type: boolean
         default: false
+      recipe_catalog_mode:
+        description: Recipe catalog authority mode (bounded canary only; full D1 is intentionally unavailable)
+        type: choice
+        options: [static, shadow, canary]
+        default: static
+      recipe_catalog_d1_canary_percent:
+        description: Bounded D1 canary percentage (0 for static/shadow; 1/2/5 for canary)
+        type: choice
+        options: ['0', '1', '2', '5']
+        default: '0'
 
 permissions:
   contents: read
@@ -49,6 +59,9 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       deploy_sha: ${{ steps.gate.outputs.deploy_sha }}
+      recipe_catalog_mode: ${{ steps.gate.outputs.recipe_catalog_mode }}
+      recipe_catalog_d1_canary_percent: ${{ steps.gate.outputs.recipe_catalog_d1_canary_percent }}
+      recipe_catalog_cutover_enabled: ${{ steps.gate.outputs.recipe_catalog_cutover_enabled }}
     steps:
       - name: Checkout trusted main release policy and full ancestry
         uses: actions/checkout@v4
@@ -68,6 +81,8 @@ jobs:
           RELEASE_REF: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || inputs.ref }}
           HARDENED_SHA: ${{ inputs.hardened_sha }}
           RELEASE_ENVIRONMENT: ${{ github.event_name == 'workflow_run' && 'staging' || inputs.environment }}
+          RECIPE_CATALOG_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.recipe_catalog_mode || 'static' }}
+          RECIPE_CATALOG_D1_CANARY_PERCENT: ${{ github.event_name == 'workflow_dispatch' && inputs.recipe_catalog_d1_canary_percent || '0' }}
         run: node scripts/release-check.mjs gate
 
       - name: Save immutable candidate manifest
@@ -114,6 +129,8 @@ jobs:
 
       - name: Build
         if: env.STAGING_UNCONFIGURED != 'true'
+        env:
+          GIT_COMMIT: ${{ needs.release.outputs.deploy_sha }}
         run: pnpm build
 
       - name: Recheck exact-head CI after environment approval
@@ -128,19 +145,19 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --config wrangler.staging.jsonc --var GIT_COMMIT:${{ needs.release.outputs.deploy_sha }}
+          command: deploy --config wrangler.staging.jsonc --var GIT_COMMIT:${{ needs.release.outputs.deploy_sha }} --var RECIPE_CATALOG_MODE:${{ needs.release.outputs.recipe_catalog_mode }} --var RECIPE_CATALOG_D1_CANARY_PERCENT:${{ needs.release.outputs.recipe_catalog_d1_canary_percent }} --var RECIPE_CATALOG_CUTOVER_ENABLED:${{ needs.release.outputs.recipe_catalog_cutover_enabled }}
 
       # Exact-SHA proof polls readiness within a bounded deadline: the edge may briefly serve the
       # previous Worker version after upload. Only that propagation case is retried; nothing redeploys.
-      - name: Staging post-deploy smoke and SHA receipt
+      - name: Staging exact SHA receipt and post-deploy smoke
         if: env.STAGING_UNCONFIGURED != 'true' && vars.STAGING_URL != ''
         env:
           APP_SMOKE_URL: ${{ vars.STAGING_URL }}
         run: |
-          bash scripts/post-deploy-smoke.sh "$APP_SMOKE_URL"
           node scripts/wait-for-deployed-release.mjs release-manifest.json
+          bash scripts/post-deploy-smoke.sh "$APP_SMOKE_URL" "${{ needs.release.outputs.deploy_sha }}"
 
-      - name: Save staging receipt (deployed field exists only after SHA smoke passes)
+      - name: Save staging receipt after exact-SHA proof
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -189,6 +206,8 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Local gates
+        env:
+          GIT_COMMIT: ${{ needs.release.outputs.deploy_sha }}
         run: |
           pnpm lint
           pnpm typecheck
@@ -216,14 +235,14 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --var GIT_COMMIT:${{ needs.release.outputs.deploy_sha }}
+          command: deploy --var GIT_COMMIT:${{ needs.release.outputs.deploy_sha }} --var RECIPE_CATALOG_MODE:${{ needs.release.outputs.recipe_catalog_mode }} --var RECIPE_CATALOG_D1_CANARY_PERCENT:${{ needs.release.outputs.recipe_catalog_d1_canary_percent }} --var RECIPE_CATALOG_CUTOVER_ENABLED:${{ needs.release.outputs.recipe_catalog_cutover_enabled }}
 
-      - name: Production post-deploy smoke and exact SHA receipt
+      - name: Production exact SHA receipt and post-deploy smoke
         env:
           APP_SMOKE_URL: ${{ vars.PRODUCTION_URL }}
         run: |
-          bash scripts/post-deploy-smoke.sh "$APP_SMOKE_URL"
           node scripts/wait-for-deployed-release.mjs release-manifest.json
+          bash scripts/post-deploy-smoke.sh "$APP_SMOKE_URL" "${{ needs.release.outputs.deploy_sha }}"
 
       - name: Save production receipt even on failure (inspect deployed field)
         if: always()

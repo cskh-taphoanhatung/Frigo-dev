@@ -1,4 +1,119 @@
-# Frigo / Takosan current task board — 2026-09-17
+# Frigo / Takosan current task board — 2026-09-19
+
+## Current T16 follow-up — PWA cache and Google recovery deployed (2026-09-19)
+
+- [done] Confirmed live `/auth` and `/sw.js` were edge-cache hits and production still served fixed cache `takosan-pwa-v2`; repository path mismatch was `/sw.js` registration versus `/service-worker.js` header rule.
+- [done] Added release-SHA Service Worker cache/version injection, SHA-qualified registration with bypassed update cache, load/online/foreground checks, prior-release eviction, best-effort one-time navigation of stale open clients after claim, and fetch-lifetime-safe cache writes.
+- [done] Corrected effective cache policy: HTML and `/sw.js` no-store; hashed `/assets/*` explicitly unsets the global header and is one-year immutable; manifest retains its intended one-hour policy.
+- [done] Hardened Google GIS rendering with a numeric clamped width and an explicit retry-script failure/referrer path; added blocked-script -> successful-retry coverage.
+- [done] Extended protected deploy smoke to wait for exact-SHA readiness first, then verify `/auth`, `/sw.js`, hashed-asset cache headers and the exact SHA embedded in `sw.js`.
+- [done] Independent release review findings were remediated. Local Wrangler effective-header check passed; two-release Chromium check showed no extra clean-install document request and exactly one update navigation, new controller/cache only.
+- [limit] Closed, suspended, or browser-blocked legacy tabs cannot be forced by a deployment; reload/reopen/navigation is the reliable recovery boundary. Awaiting same-client navigation during activation was rejected because it deadlocks the document fetch.
+- [done] Gates PASS: focused **116 tests / 3 files**, full **178 files / 4046 tests**, lint, typecheck, migration smoke, production build, shell syntax and diff check.
+- [done] PR #42 head `54dd81b...` passed CI `35415335137`, merged as main `6a016f1...`; exact-main CI `35415536459` and staging Deploy `35415763483` passed.
+- [done] Protected production Deploy `35415843682` passed on Worker `2f228dc9-d97b-4eb1-8cff-9a0f2df3b51c`, D1 38/0038, recipe `shadow/0/false`.
+- [done] Live verification: exact readiness SHA, `/auth` and `/sw.js` no-store, exact SHA embedded in the worker, hashed asset immutable, clean Google popup, exact-SHA controller and sole matching cache.
+- [pending] Manual real-inbox OTP receipt only; do not record or expose the OTP value.
+- [safety] No migration, D1/R2/customer-data mutation, PayOS/payment change, Canary activation, full D1 cutover, Inventory Truth change or Week change.
+
+## Current T15C-D — production 1% Canary certification — safe stop (2026-09-19)
+
+- [done] Resolved repository ID `1368281478`, fetched exact main `347b536950cf54d25a2d6a880c3c2cb3d8c8f329`, verified clean tree and merged PR #38/#39, and created `codex/t15c-production-canary-1pct` from canonical main.
+- [done] Verified exact-main CI `35409762462` and automatic staging Deploy `35409964105`: SUCCESS, staging `static/0/false`, production SKIPPED.
+- [done] Fresh baseline PASS: frozen install, recipe seed/import, typecheck, lint, migrations through 0038, build, full Vitest **178 files / 4044 tests**, diff check.
+- [done] Public production audit: Worker `6c336889-680d-4cc3-b03b-1007849aa738` / SHA `b41aa468...`; readiness config-valid, DB/queue/email OK; recipe authority receipt `shadow/0/false`; 5/5 lists = 71 and D1-only samples remain 404.
+- [blocked] Mandatory operator-owned INCLUDE + EXCLUDE household pair was not supplied. Local Wrangler is unauthenticated, so the fresh direct D1/tail certification and cohort secret provisioning are unavailable. No customer IDs were inspected and no production mutation occurred.
+- [status] `T15C_D_BLOCKED_AUTHORIZED_TEST_HOUSEHOLDS_UNAVAILABLE`; final production remains `shadow/0/false`. Receipt: `docs/ai/recipe-catalog/T15C_D_PRODUCTION_1PCT_CANARY_CERTIFICATION.md`.
+- [done] Receipt commit `16958c6...` passed CI `35410893001`; PR #40 merged as `763d7e9...`; exact-main CI `35411093064` and automatic staging Deploy `35411300235` passed with `static/0/false` and production skipped.
+- [next] Supply both authorized household IDs privately and authenticate the Cloudflare operator session; then repeat D1 certification, provision hashed secrets, prove retained-secret Shadow, run only 1% protected Canary, certify both cohorts/E2E, and rollback to Shadow. No 2%, 5%, full D1, media, or T14G.
+
+## Current T15C-C — authorized canary test cohort mechanism (dormant) — 2026-09-19
+
+- [done] `packages/recipes/src/recipe-canary-cohort.ts` + `src/worker/services/recipe-authority.ts`: server-side override for operator-owned test households — `RECIPE_CATALOG_TEST_COHORT_ENABLED` / `RECIPE_CATALOG_TEST_INCLUDE` / `RECIPE_CATALOG_TEST_EXCLUDE` (Worker secrets; SHA-256 digests of `recipe-catalog-test-cohort:<householdId>`, never raw IDs). Precedence exclude > include > deterministic FNV bucket; disabled by default; canary+cutover only; zero effect in static/shadow/d1 or without a tenant; every malformed/half-applied shape fails closed in canary mode (`CONFIG_RECIPE_CATALOG_TEST_COHORT` fatal; static + loud diagnostic at request time). **R1 remediation:** cohort variables are inert in static/shadow/d1 (rollback = single mode change, no secret cleanup — P1 resolved) and an active cohort requires BOTH an include and an exclude household (`TEST_COHORT_PAIR_REQUIRED` — P2 resolved). Request input cannot reach it. `fnv1a32`/`recipeCanaryBucket`/thresholds unchanged.
+- [done] Tests: 25 unit + 4 HTTP (request-control attempts, guest, static/shadow) + workflow/wrangler/manifest guardrail; no migration, no workflow change.
+- [status] `T15C_AUTHORIZED_TEST_COHORT_READY` — NOT `T15C_CANARY_COMPLETE`. Production still `shadow / 0 / false`; no deploy/config/D1/R2 change. Receipt: `docs/ai/recipe-catalog/T15C_AUTHORIZED_TEST_COHORT.md`. Previous safe stops (T15C-B, `T15C_PRODUCTION_CANARY_SAFE_STOP.md`) remain valid history.
+- [next] Operator supplies the two authorized households → digests as production secrets → T15C-B 1% canary through the protected workflow (separate authorization).
+## Current T15C — production Canary safe stop (authorized cohort unavailable) — 2026-09-18
+
+- [done] Fresh audit on canonical main `b41aa4682481447795350fc1a9eeb1e80887bd0e` (resolved by repository ID 1368281478): seed/import/typecheck/lint/check:migrations(0038)/build PASS; full `pnpm test` 176 files / 4008 tests PASS.
+- [done] Read-only public production audit: readiness commit == main `b41aa468…`, database ok, 5/5 catalog reads = 71 deterministic, legacy IDs 200, D1-only IDs 404. Latest production Deploy receipt 35404106102 = `shadow / 0 / false` on that exact SHA (helper convergence 2 attempts).
+- [stop] No operator-owned inside-1%/outside-1% production test cohort and no Cloudflare credentials in this environment; no customer IDs inspected; no dispatch/approval/D1/R2/config change. Classification `T15C_CANARY_BLOCKED_AUTHORIZED_COHORT_UNAVAILABLE`. Receipt: `docs/ai/recipe-catalog/T15C_PRODUCTION_CANARY_SAFE_STOP.md`.
+- [next] Operator provides both authorized cohorts + read-only CF credentials + Environment reviewer; resume at exactly 1% via the protected `deploy.yml`; no widening beyond the 1→2→5 ladder, no `d1`, no media/R2, no T14G.
+
+## Current T16 follow-up — OTP sender and guest account gate release candidate — 2026-09-19
+
+- [done] Reproduced the production email-provider failure through the real Cloudflare Email Service binding: sender `no-reply@frigo.tungjpstore.net` is unauthorized because the subdomain is not onboarded separately.
+- [done] Proved the onboarded apex sender path: `no-reply@tungjpstore.net` was accepted by the same binding and returned a provider `messageId`; real OTP inbox receipt remains pending.
+- [done] Changed the transactional sender to the onboarded apex and sanitized the known provider error as `sender_not_verified`; no recipient, OTP, subject, or provider exception text is retained in logs.
+- [done] Hardened resend: optional KV cooldown failure no longer blocks recovery, failed delivery clears the cooldown best-effort, unexpected failures return `503 OTP_RESEND_UNAVAILABLE`, and the frontend requires a fresh Turnstile token for each resend.
+- [done] Added guest account gates: guest `/plus` hides prices and payment UI, presents an explicit login CTA, and preserves `/plus` through a safe local `returnTo`; the guest profile upgrade CTA points to the same auth flow.
+- [done] Preserved authenticated Plus behavior and left PayOS, billing, checkout, payment webhooks and settlement untouched.
+- [done] Added regression coverage for the apex sender, provider-error sanitization, KV outage, Turnstile token renewal, guest Plus gate, guest profile CTA, and authenticated Plus visibility.
+- [done] Application/test checkpoint committed as `31006994849ee9f6d78ae6114f82d77d41efc784`.
+- [done] Local gates: focused **86 tests / 4 files**, full `pnpm test` **176 files / 4008 tests**, lint, typecheck, migration smoke, build and diff check PASS.
+- [done] Browser checks at 390x844 and 1440x1000: guest pricing/payment absent, auth CTA correct, auth accessible to guests, `returnTo=%2Fplus` retained, authenticated prices unchanged.
+- [pending] Commit/push, exact-head hosted CI, merge, exact-main CI, and protected production deploy with recipe authority fixed at `shadow/0/false`.
+- [pending] After deploy, perform one normal-browser OTP request/resend and confirm actual email receipt without exposing the code. Provider acceptance alone is not delivery certification.
+- [safety] No migration, D1 write, recipe authority/canary change, Inventory Truth change, Week change, or production infrastructure redesign.
+
+## Current T16 — production + CSP hotfix deployed; OTP receipt pending — 2026-09-19
+
+- [done] Replaced the landing/auth/onboarding loop with one funnel: guest or account on landing; returning accounts enter the app; new accounts complete three preference-only steps once.
+- [done] Added migration `0038_auth_onboarding_completion.sql`; `/me` and auth responses expose server-authoritative onboarding state; preferences and completion persist in one D1 batch.
+- [done] Migrated OTP delivery to structured Cloudflare Email Service with Resend fallback, sanitized errors, honest 503 responses, and production invalidation of undelivered OTPs.
+- [done] Unified Google client ID through `/config` and backend audience validation; retained signed-credential-only production auth and added a real GIS reload state.
+- [done] Added/updated auth, email, migration, and UI tests. Full gates pass: lint, typecheck, migration smoke, build, **174 files / 4002 tests**, seed/import checks, local schema gate through 0038, diff check.
+- [done with limits] Browser-sized pass at 390x844 and 1440x900 verified landing, three onboarding steps, offline guest completion, registration query entry, and no horizontal overflow. Local GIS reached Google but loopback origin is not authorized; Vite proxy mutation CSRF cannot represent the deployed same-origin path, while direct Worker and integration checks pass.
+- [known audit debt] UX audit remains repo-wide FAIL: repository 19 issues / 686 warnings / 47 passed; `src/web/pages` 6 unrelated existing issues / 303 warnings / 15 passed. No T16 landing/auth/onboarding blocker was reported by the audit.
+- [done] PR #34 merged as main `d6c981b1a67001b807f03166109f661bc753728c`; PR CI `35385363064` and exact-main CI `35385844667` succeeded.
+- [done] Production D1 run `35386276549` applied 0038 only; ledger 38/tip 0038, bookmark `000000d3-00000000-000050ea-709daab542439d8e8fab731b65dab714`, FK/quick-check/drift/media/catalog gates passed.
+- [done] Production Deploy `35386532369` succeeded on Worker `c0161a22-1987-42dd-99c4-0a5874d4fadb`, exact main SHA, with recipe authority preserved at `shadow/0/false`; rollback Worker is `c6fa2ce8-f35b-4485-ad38-09dbc19738d1`.
+- [done] Production browser smoke at mobile/desktop passed landing, Google provider launch, guest session, reload-safe onboarding, preference persistence, cookie security, and responsive width.
+- [done] CSP hotfix `79dfca6483d90fcf33380acfe33f880c1e6ff7a5` permits only the observed Google Fonts/GSI and Cloudflare Insights origins; no wildcard or script `unsafe-inline`. Full local gates remain 174 files / 4002 tests plus focused CSP 3/3.
+- [done] PR #35 head `c14a3755d95ddae316d5e6636ef85f9784ac4a54` passed CI `35388666150`, merged as `0cb5d2c08fa24479ecce6b4c4e5f73b31a920ff5`, and exact-main CI `35388963509` passed.
+- [done] Production hotfix Deploy `35389274233` succeeded on Worker `e8164168-9566-475b-b0fa-7508368bf3e7`; exact SHA and `shadow/0/false` verified, D1 stayed at 38/0038, and previous Worker `c0161a22-1987-42dd-99c4-0a5874d4fadb` remains the rollback reference.
+- [done with limit] Independent mobile/desktop verification found no CSP console violations, loaded Google fonts/GSI, one Google frame, no overflow, and 71 Shadow/static recipes. Cloudflare Insights was policy-allowed but unreachable from the verification network.
+- [limit] Real OTP receipt is not certified: automated headed/headless Chrome displayed Turnstile but did not yield a token, no forgot-password request was sent, and the existing account prevents using that address as a new-registration proof.
+- [next] In a normal user browser, complete Turnstile on Forgot password for the existing account, submit once, and confirm message receipt without sharing or logging the OTP. No code/deploy action is otherwise pending.
+
+## Current T15C-B — merged control plane; safe stop before production Canary — 2026-09-18
+
+- [done] Merged PR #32 with expected head `a7b3d23f2ad8b48203328116d0e35425390d2127` as `a6e81cd89b9e4c6b923cfc39947b01faf44ff5f3`; PR head ancestor and tree delta 0 files.
+- [done] Exact-head PR CI `35344089103` SUCCESS; unresolved review threads `0`; exact-main CI `35347246583` / job `105606601599` SUCCESS.
+- [done] Automatic Deploy `35347579284`: release/staging SUCCESS, production SKIPPED; staging Worker `12623f3b-ac64-4255-9fbf-c429b6225e1d`, exact merge SHA, `static/0/false`.
+- [done] Read-only production recheck: Shadow/static Worker `c6fa2ce8-f35b-4485-ad38-09dbc19738d1`, SHA `88e8b54d…`, five 71-count checks, legacy 200, reviewed D1-only 404; D1 500 READY.
+- [stop] No authorized operator-owned inside/outside 1% cohorts were available; no customer households were inspected and no Canary dispatch/approval was attempted. Classification `T15C_B_AUTHORIZED_TEST_COHORT_UNAVAILABLE`.
+- [next] Operator must provide both authorized cohorts. Resume only with exactly 1%; do not widen, enable full D1, populate media/R2, start T14G, or touch Inventory Truth/T09/T11/PayOS/auth. Receipt: `docs/ai/recipe-catalog/T15C_B_AUTHORIZED_COHORT_SAFE_STOP.md`.
+
+## Current T15C-A — bounded canary control plane — 2026-09-18
+
+- [done] Re-verified repository `1368281478` / `frigo-6/Frigo-dev`, main `88e8b54d…`, PR #31 exact head and docs-only tree; exact-head CI `35338372250` SUCCESS.
+- [done] Merged PR #31 with expected-head guard as `6f589d0201499a3729d343e42ccb6d19fdff217a`; post-merge CI `35340599941` SUCCESS.
+- [done] Automatic Deploy `35340976739`: release/staging SUCCESS, production SKIPPED; automatic staging policy remained STATIC.
+- [done] Closed PR #29 without merge with supersession comment.
+- [done] Audited existing runtime canary: deterministic household FNV-1a assignment, readiness-gated D1, static fallback, 30s TTL / 5m stale grace; runtime left unchanged.
+- [done] Branch `codex/t15c-canary-control-plane` from certified main; implemented bounded `static|shadow|canary` release policy, 0/1/2/5 choices, derived cutover, immutable manifest fields, and validated Wrangler propagation.
+- [done] Focused 121/121; full 173 files / 3995 tests; seed/import/lint/typecheck/check:migrations/build/diff-check PASS. No migration or production action.
+- [done] Opened Canary wiring PR #32; implementation/receipt head `44c1e80b…` and later docs checkpoint `642b4f8b…` each passed exact-head CI. The authoritative final head/CI receipt is posted on the PR after the last docs commit because a commit cannot contain its own hash.
+- [in review] PR #32 remains OPEN; require the PR receipt to show final exact-head CI SUCCESS and zero unresolved review threads, then stop for independent review. Do not merge or activate canary.
+
+## Current T15B-SHADOW — production Shadow certified; stop before canary — 2026-09-18
+
+- [done] PR #30 merged as `88e8b54de121125866b2ff813e56e33277decf1c`; PR head `ad3e1d1656418aaf495b130443d6514926b8bdca` is an ancestor and tree delta is 0 files. Exact-main CI `35336548833` SUCCESS.
+- [done] Automatic staging Deploy `35336830786` SUCCESS: staging Worker `580acb76-a006-4c0a-b991-618ebde07e88`, STATIC authority, exact SHA, 71 recipes; production skipped.
+- [done] Production Shadow Deploy `35337110268` SUCCESS: release `105574386006`, production `105574426707`, required Environment approval, Worker `c6fa2ce8-f35b-4485-ad38-09dbc19738d1`, exact-SHA convergence 1 attempt / 574 ms.
+- [done] Live Shadow certification: 5/5 catalog reads served 71, legacy IDs 200, five D1-only IDs 404; tail diagnostics show Shadow/static, D1 500 hydrated, release `rel-bd00a4f53fcaeee4`, readiness `ready`, zero drift/order/hydration errors, zero Shadow errors.
+- [done] Durable receipt added at `docs/ai/recipe-catalog/T15B_SHADOW_CERTIFICATION.md`; rollback Worker `ab8ff038-2aaa-468b-a9de-8c5d94f14052` retained and static config rollback documented.
+- [stop] Do not enable canary/full D1/cutover, write media/R2, start T14G, alter Inventory Truth/T09/T11, or merge stale PR #29. Classification `T15B_SHADOW_COMPLETE`.
+
+## Previous T15B-PRE checkpoint — STATIC certified; SHADOW wiring PR ready — superseded 2026-09-18
+
+- [done] Re-verified canonical repository `1368281478` / `frigo-6/Frigo-dev`, main `0fe2cf071693208f6c642d8cbd994f5a79b5a2cf`, and PR #29 remained unmerged.
+- [done] Re-read immutable migration receipt run `35329772751`: D1 tip 0037, 500 catalog, release `rel-bd00a4f53fcaeee4`, schema gate PASS, FK `[]`, quick check `ok`, media 500 pending/0 ready.
+- [done] Static production Deploy `35333517052`: required reviewer approval, production SUCCESS, Worker `ab8ff038-2aaa-468b-a9de-8c5d94f14052`, exact SHA convergence PASS, live user-facing count 71 across five repeated checks.
+- [done] Rollback evidence retained: previous Worker `56979cb5-e1a8-4241-8a4c-2432d41cc439`; rollback contract is `RECIPE_CATALOG_MODE=static`.
+- [ready for review] No approved existing Shadow config path was present. PR #30 adds minimal `static|shadow` workflow/config plumbing and tests; implementation head `97aff50d…` exact CI `35335079345` SUCCESS. Require independent review and final docs-head CI. Do not merge or activate in this task.
+- [not started] Shadow activation/certification, canary, full D1, media/R2, T14G. T09/T11 and Inventory Truth unchanged.
 
 ## Current T14F — T14F_DEVELOPMENT_COMPLETE (T14F-A/B/C certified; production untouched)
 

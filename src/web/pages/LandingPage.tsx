@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/useAuthStore';
 import { Button } from '../components/common/Button';
 import { TAKOSAN_BRAND } from '../lib/takosan-brand';
-import { TakosanIcon } from '../components/common/TakosanIcon';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, LogIn } from 'lucide-react';
 
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -72,35 +71,19 @@ export const LandingPage: React.FC = () => {
         <Button
           fullWidth
           size="lg"
-          onClick={() => startGuest('/scan')}
-          isLoading={isStarting}
-          className="flex items-center justify-center gap-2 text-base rounded-2xl"
-        >
-          <TakosanIcon name="camera" className="w-5 h-5" strokeWidth={2} />
-          <span>Chụp thử tủ lạnh ngay</span>
-        </Button>
-
-        <Button
-          fullWidth
-          size="md"
-          variant="secondary"
           onClick={() => startGuest('/onboarding')}
-          disabled={isStarting}
-          className="flex items-center justify-center gap-2 rounded-2xl"
+          isLoading={isStarting}
+          className="flex items-center justify-center gap-2 rounded-2xl text-base"
         >
-          <TakosanIcon name="chef" className="w-5 h-5" strokeWidth={2} />
-          <span>Bắt đầu trải nghiệm (Khách)</span>
+          <span>Dùng thử Takosan ngay</span>
           <ArrowRight className="w-4 h-4 ml-1" />
         </Button>
 
-        <div className="text-center pt-2">
-          <button
-            onClick={() => navigate('/auth')}
-            className="text-xs text-slate-600 hover:text-takosan-green underline underline-offset-4 transition-colors"
-          >
-            Đã có tài khoản? Đăng nhập tại đây
-          </button>
-        </div>
+        <Button fullWidth size="md" variant="secondary" onClick={() => navigate('/auth')} disabled={isStarting} className="flex items-center justify-center gap-2 rounded-2xl">
+          <LogIn className="h-4 w-4" />
+          <span>Đăng nhập hoặc tạo tài khoản</span>
+        </Button>
+        <p className="pt-1 text-center text-[11px] leading-relaxed text-slate-500">Dùng thử không cần tài khoản. Đăng nhập khi bạn muốn đồng bộ giữa các thiết bị.</p>
       </div>
     </div>
   );

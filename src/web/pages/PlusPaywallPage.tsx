@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/useAuthStore';
 import { TopBar } from '../components/common/TopBar';
 import { Button } from '../components/common/Button';
 import { VietQRModal } from '../components/payment/VietQRModal';
 import { FRIGO_ASSETS } from '../lib/frigo-assets';
-import { Check, Sparkles, ArrowRight } from 'lucide-react';
+import { Check, Sparkles, ArrowRight, LogIn, ShieldCheck } from 'lucide-react';
 import { clsx } from 'clsx';
 
 export const PlusPaywallPage: React.FC = () => {
   const navigate = useNavigate();
   const syncPlusFromServer = useAuthStore((s) => s.syncPlusFromServer);
+  const isGuest = useAuthStore((s) => s.isGuest);
   const isPlus = useAuthStore((s) => s.isPlus);
 
   const [selectedPlan, setSelectedPlan] = useState<'annual' | 'monthly'>('annual');
@@ -41,9 +42,49 @@ export const PlusPaywallPage: React.FC = () => {
     navigate('/profile');
   };
 
+  if (isGuest) {
+    return (
+      <div className="min-h-screen bg-[#F8FAF9] pb-12 max-w-md mx-auto">
+        <TopBar showBack title="Takosan Plus" />
+        <main className="px-4 pt-8">
+          <section className="overflow-hidden rounded-3xl border border-emerald-900/10 bg-white shadow-card">
+            <div className="bg-gradient-to-br from-[#0F3D2E] via-[#144F3C] to-[#0A2A1F] px-6 py-7 text-white">
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/12 ring-1 ring-white/15">
+                <ShieldCheck aria-hidden="true" className="h-6 w-6 text-amber-300" />
+              </div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-amber-300">Tài khoản bắt buộc</p>
+              <h1 className="mt-2 text-balance font-heading text-2xl font-bold leading-tight text-white">Đăng nhập trước khi chọn gói Plus</h1>
+              <p className="mt-3 text-sm leading-relaxed text-emerald-50/85">
+                Gói Plus được gắn với tài khoản để quyền lợi không mất khi bạn đổi thiết bị. Dữ liệu phiên khách vẫn được giữ riêng khi bạn đăng nhập.
+              </p>
+            </div>
+            <div className="space-y-3 p-5">
+              <Link
+                to="/auth?mode=login&returnTo=%2Fplus"
+                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-takosan-green px-4 py-3 font-heading text-sm font-bold text-white shadow-xs transition hover:bg-takosan-green-deep active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-takosan-green focus-visible:ring-offset-2"
+              >
+                <LogIn aria-hidden="true" className="h-4 w-4" />
+                Đăng nhập để tiếp tục
+              </Link>
+              <Link
+                to="/"
+                className="flex min-h-11 w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
+              >
+                Quay lại bảng điều khiển
+              </Link>
+              <p className="text-center text-xs leading-relaxed text-slate-500">
+                Chưa có tài khoản? Bạn có thể đăng ký từ màn hình đăng nhập.
+              </p>
+            </div>
+          </section>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F8FAF9] pb-12 max-w-md mx-auto">
-      <TopBar showBack title="Nâng cấp Frigo Plus" />
+      <TopBar showBack title="Nâng cấp Takosan Plus" />
 
       <div className="px-4 pt-3 space-y-5">
         {/* Support Art Hero Card */}
@@ -52,7 +93,7 @@ export const PlusPaywallPage: React.FC = () => {
             <div className="flex items-center gap-1.5 mb-1">
               <Sparkles className="w-4 h-4 text-amber-400" />
               <span className="text-[10px] font-semibold text-amber-300 uppercase tracking-wider">
-                Frigo Plus
+                Takosan Plus
               </span>
             </div>
             <h2 className="font-heading font-bold text-xl leading-tight text-white">
@@ -68,7 +109,7 @@ export const PlusPaywallPage: React.FC = () => {
           <div className="w-24 h-24 shrink-0 overflow-hidden flex items-center justify-center">
             <img
               src={FRIGO_ASSETS.illustrations['frigo-plus']}
-              alt="Frigo Plus"
+              alt="Takosan Plus"
               className="w-full h-full object-contain"
             />
           </div>

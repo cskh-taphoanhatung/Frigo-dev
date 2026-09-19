@@ -3,7 +3,9 @@ import { signJwt, verifyJwt } from '../../src/worker/utils/jwt';
 import { isOtpProtectionAvailable, shouldConsumeOtpOnVerify } from '../../src/worker/utils/otp';
 import { hashPassword, generateSalt, verifyPassword } from '../../src/worker/utils/password';
 import { RegisterSchema, LoginSchema, VerifyOtpSchema, InventoryCreateSchema } from '../../src/worker/validation/schemas';
-import { verifyGoogleToken, GOOGLE_OAUTH_CLIENT_ID } from '../../src/worker/utils/oauth';
+import { verifyGoogleToken } from '../../src/worker/utils/oauth';
+
+const GOOGLE_OAUTH_CLIENT_ID = 'test-client.apps.googleusercontent.com';
 
 describe('Zero-Trust Security & Cryptography Unit Tests', () => {
   const TEST_SECRET = 'unit-test-super-secure-jwt-secret-key-2026';
@@ -235,7 +237,7 @@ describe('Zero-Trust Security & Cryptography Unit Tests', () => {
         )
       );
 
-      const result = await verifyGoogleToken(makeIdToken({ aud: GOOGLE_OAUTH_CLIENT_ID }));
+      const result = await verifyGoogleToken(makeIdToken({ aud: GOOGLE_OAUTH_CLIENT_ID }), GOOGLE_OAUTH_CLIENT_ID);
       expect(result.valid).toBe(true);
       expect(result.user?.email).toBe('user@example.com');
     });
@@ -257,7 +259,7 @@ describe('Zero-Trust Security & Cryptography Unit Tests', () => {
         )
       );
 
-      const result = await verifyGoogleToken(makeIdToken({ aud: '999999-other-app-client-id' }));
+      const result = await verifyGoogleToken(makeIdToken({ aud: '999999-other-app-client-id' }), GOOGLE_OAUTH_CLIENT_ID);
       expect(result.valid).toBe(false);
       expect(result.error).toMatch(/different application/);
     });
@@ -277,7 +279,7 @@ describe('Zero-Trust Security & Cryptography Unit Tests', () => {
         )
       );
 
-      const result = await verifyGoogleToken(makeIdToken({}));
+      const result = await verifyGoogleToken(makeIdToken({}), GOOGLE_OAUTH_CLIENT_ID);
       expect(result.valid).toBe(false);
       expect(result.error).toMatch(/different application/);
     });

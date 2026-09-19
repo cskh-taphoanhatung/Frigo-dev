@@ -15,12 +15,12 @@ export function apiCsp(): string {
 export function spaCsp(): string {
   return [
     "default-src 'self'",
-    // Google OAuth (GSI) and Turnstile challenge scripts
-    "script-src 'self' https://accounts.google.com https://challenges.cloudflare.com",
-    "style-src 'self' 'unsafe-inline'",
+    // Google OAuth (GSI), Turnstile, and Cloudflare Web Analytics scripts.
+    "script-src 'self' https://accounts.google.com https://challenges.cloudflare.com https://static.cloudflareinsights.com",
+    "style-src 'self' 'unsafe-inline' https://accounts.google.com https://fonts.googleapis.com",
     "img-src 'self' data: blob: https://lh3.googleusercontent.com",
-    "font-src 'self' data:",
-    "connect-src 'self' https://api.resend.com https://challenges.cloudflare.com https://oauth2.googleapis.com",
+    "font-src 'self' data: https://fonts.gstatic.com",
+    "connect-src 'self' https://api.resend.com https://challenges.cloudflare.com https://oauth2.googleapis.com https://cloudflareinsights.com",
     "frame-src https://accounts.google.com https://challenges.cloudflare.com",
     "object-src 'none'",
     "base-uri 'self'",
