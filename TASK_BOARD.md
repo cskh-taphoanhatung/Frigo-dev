@@ -1,3 +1,10 @@
+## Current T15C-C — authorized canary test cohort mechanism (dormant) — 2026-09-19
+
+- [done] `packages/recipes/src/recipe-canary-cohort.ts` + `src/worker/services/recipe-authority.ts`: server-side override for operator-owned test households — `RECIPE_CATALOG_TEST_COHORT_ENABLED` / `RECIPE_CATALOG_TEST_INCLUDE` / `RECIPE_CATALOG_TEST_EXCLUDE` (Worker secrets; SHA-256 digests of `recipe-catalog-test-cohort:<householdId>`, never raw IDs). Precedence exclude > include > deterministic FNV bucket; disabled by default; canary+cutover only; zero effect in static/shadow/d1 or without a tenant; every malformed/half-applied shape fails closed (`CONFIG_RECIPE_CATALOG_TEST_COHORT` fatal; static + loud diagnostic at request time). Request input cannot reach it. `fnv1a32`/`recipeCanaryBucket`/thresholds unchanged.
+- [done] Tests: 25 unit + 4 HTTP (request-control attempts, guest, static/shadow) + workflow/wrangler/manifest guardrail; no migration, no workflow change.
+- [status] `T15C_AUTHORIZED_TEST_COHORT_READY` — NOT `T15C_CANARY_COMPLETE`. Production still `shadow / 0 / false`; no deploy/config/D1/R2 change. Receipt: `docs/ai/recipe-catalog/T15C_AUTHORIZED_TEST_COHORT.md`. Previous safe stops (T15C-B, `T15C_PRODUCTION_CANARY_SAFE_STOP.md`) remain valid history.
+- [next] Operator supplies the two authorized households → digests as production secrets → T15C-B 1% canary through the protected workflow (separate authorization).
+
 ## Current T15B-SHADOW — production Shadow certified; stop before canary — 2026-09-18
 
 - [done] PR #30 merged as `88e8b54de121125866b2ff813e56e33277decf1c`; exact-main CI `35336548833` and automatic staging Deploy `35336830786` succeeded. Staging stayed STATIC71 on Worker `580acb76-a006-4c0a-b991-618ebde07e88`.

@@ -1,5 +1,11 @@
 # Frigo / Takosan current handoff — 2026-09-19
 
+## Current handoff — T15C-C authorized test cohort mechanism ready, dormant (2026-09-19)
+
+- **Base/branch:** canonical main `b41aa4682481447795350fc1a9eeb1e80887bd0e`; branch `hoplite/aigeai-eca96ae8--t15c-cohort` (PR in body). Implementation `c5d2d63aa06ad51727aaeac6bd6cf01349598e29`.
+- **What:** secret-configured include/exclude digest sets let operator-owned test households prove INSIDE/OUTSIDE 1% canary without touching the customer algorithm or adding any request-controlled switch. Default disabled; only legal in `canary` mode with cutover; fail-closed validation; no IDs/digests in logs, readiness, API, manifest, workflow, or wrangler config. Details/setup/rollback: `recipe-catalog/T15C_AUTHORIZED_TEST_COHORT.md`.
+- **Production:** unchanged — `shadow / 0 / false`, Worker == main. Classification `T15C_AUTHORIZED_TEST_COHORT_READY`; canary activation remains a separate authorized T15C-B step.
+
 ## Current handoff — T16 OTP resend and guest account gates ready for release
 
 - **Branch/base:** `codex/auth-otp-guest-account-gates` from canonical main `14f06ff7f3ede72e676e2cb42b9949cca074a070`; this checkpoint contains the application, tests and documentation candidate, while production is unchanged.

@@ -1,5 +1,9 @@
 # Frigo Project Status
 
+## T15C-C — authorized canary test cohort mechanism ready; production still shadow (2026-09-19)
+
+Dormant, secret-configured include/exclude override (digests, not IDs) unblocks the operator-cohort requirement for the 1% production canary without changing customer routing. `T15C_AUTHORIZED_TEST_COHORT_READY` · production `shadow / 0 / false` · `FULL_D1_NOT_ENABLED` · `MEDIA_POPULATION_DEFERRED` · `T14G_NOT_STARTED`. Receipt: `docs/ai/recipe-catalog/T15C_AUTHORIZED_TEST_COHORT.md`.
+
 ## T14E — Bulk Recipe Import Factory: MERGED to main `f7a55408…`, main certified, rollout deferred (2026-09-17)
 
 PR #23 (remediated head `ba1a45d4…`, original reviewed head `7b4edcc8…` kept in ancestry) merged by normal merge commit

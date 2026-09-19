@@ -1,5 +1,9 @@
 # Frigo / Takosan current authority — 2026-09-19
 
+## Current T15C-C — authorized canary test cohort mechanism READY (dormant; production still shadow) — 2026-09-19
+
+`RECIPE_CATALOG_TEST_COHORT_ENABLED` + `RECIPE_CATALOG_TEST_INCLUDE`/`EXCLUDE` (Worker secrets holding SHA-256 digests of `recipe-catalog-test-cohort:<householdId>`) give operator-owned test households a deterministic server-side include/exclude override for the D1 canary; precedence exclude > include > `isRecipeCanaryTenant`. Evaluated only when mode=`canary`, cutover=`true`, the switch is exactly `true`, and an authenticated tenant exists; otherwise absent. Malformed, duplicate, overlapping, oversized, half-applied, or outside-canary configuration is fatal in production readiness (`CONFIG_RECIPE_CATALOG_TEST_COHORT`) and serves static loudly at request time. Diagnostics gain only a bounded `assignmentReason`. Normal FNV bucketing is byte-for-byte unchanged. No migration; `deploy.yml`/wrangler/release manifest untouched and guard-tested to stay that way. Classification `T15C_AUTHORIZED_TEST_COHORT_READY`; production remains `shadow / 0 / false`. Receipt: `recipe-catalog/T15C_AUTHORIZED_TEST_COHORT.md`.
+
 ## Current T16 follow-up — OTP sender fix and guest account gates ready for release (2026-09-19)
 
 A production-bound Email Service diagnostic isolated the OTP failure to the
