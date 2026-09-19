@@ -129,6 +129,8 @@ jobs:
 
       - name: Build
         if: env.STAGING_UNCONFIGURED != 'true'
+        env:
+          GIT_COMMIT: ${{ needs.release.outputs.deploy_sha }}
         run: pnpm build
 
       - name: Recheck exact-head CI after environment approval
@@ -147,15 +149,15 @@ jobs:
 
       # Exact-SHA proof polls readiness within a bounded deadline: the edge may briefly serve the
       # previous Worker version after upload. Only that propagation case is retried; nothing redeploys.
-      - name: Staging post-deploy smoke and SHA receipt
+      - name: Staging exact SHA receipt and post-deploy smoke
         if: env.STAGING_UNCONFIGURED != 'true' && vars.STAGING_URL != ''
         env:
           APP_SMOKE_URL: ${{ vars.STAGING_URL }}
         run: |
-          bash scripts/post-deploy-smoke.sh "$APP_SMOKE_URL"
           node scripts/wait-for-deployed-release.mjs release-manifest.json
+          bash scripts/post-deploy-smoke.sh "$APP_SMOKE_URL" "${{ needs.release.outputs.deploy_sha }}"
 
-      - name: Save staging receipt (deployed field exists only after SHA smoke passes)
+      - name: Save staging receipt after exact-SHA proof
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -204,6 +206,8 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Local gates
+        env:
+          GIT_COMMIT: ${{ needs.release.outputs.deploy_sha }}
         run: |
           pnpm lint
           pnpm typecheck
@@ -233,12 +237,12 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy --var GIT_COMMIT:${{ needs.release.outputs.deploy_sha }} --var RECIPE_CATALOG_MODE:${{ needs.release.outputs.recipe_catalog_mode }} --var RECIPE_CATALOG_D1_CANARY_PERCENT:${{ needs.release.outputs.recipe_catalog_d1_canary_percent }} --var RECIPE_CATALOG_CUTOVER_ENABLED:${{ needs.release.outputs.recipe_catalog_cutover_enabled }}
 
-      - name: Production post-deploy smoke and exact SHA receipt
+      - name: Production exact SHA receipt and post-deploy smoke
         env:
           APP_SMOKE_URL: ${{ vars.PRODUCTION_URL }}
         run: |
-          bash scripts/post-deploy-smoke.sh "$APP_SMOKE_URL"
           node scripts/wait-for-deployed-release.mjs release-manifest.json
+          bash scripts/post-deploy-smoke.sh "$APP_SMOKE_URL" "${{ needs.release.outputs.deploy_sha }}"
 
       - name: Save production receipt even on failure (inspect deployed field)
         if: always()

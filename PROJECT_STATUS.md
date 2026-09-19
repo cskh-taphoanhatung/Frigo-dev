@@ -1,5 +1,20 @@
 # Frigo Project Status
 
+## T16 — PWA cache and Google recovery ready for production (2026-09-19)
+
+The stale auth client was traced to a real Service Worker/header mismatch:
+production served cached `/auth` and `/sw.js`, `_headers` targeted the wrong
+worker path, and the cache stayed fixed at `takosan-pwa-v2`. The candidate uses
+release-SHA worker/cache identity, best-effort stale-client navigation after
+claim, no-store
+HTML/worker policy, immutable hashed assets, numeric Google GIS button sizing,
+and protected deploy smoke for effective headers plus embedded SHA. Independent
+review findings are closed. Full local result: **178 files / 4046 tests**, lint,
+typecheck, migrations and build PASS; local Wrangler headers and a two-release
+Chromium update pass. Production is unchanged pending protected deployment and
+must remain recipe `shadow/0/false`. Reload/reopen/navigation remains the
+reliable recovery boundary for closed, suspended, or browser-blocked old tabs.
+
 ## T15C-D — production 1% Canary blocked before mutation (2026-09-19)
 
 Canonical main `347b536950cf54d25a2d6a880c3c2cb3d8c8f329` is locally certified

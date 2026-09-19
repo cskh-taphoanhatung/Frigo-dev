@@ -17,8 +17,22 @@ initSync(() => api.retryPendingWrites());
 // Register Service Worker for PWA
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch((err) => {
-      console.warn('SW registration failed:', err);
-    });
+    const buildId = import.meta.env.VITE_GIT_COMMIT || import.meta.env.VITE_BUILD_TIMESTAMP || 'local';
+    const serviceWorkerUrl = `/sw.js?v=${encodeURIComponent(buildId)}`;
+
+    navigator.serviceWorker.register(serviceWorkerUrl, { updateViaCache: 'none' })
+      .then((registration) => {
+        const update = () => registration.update().catch((err) => {
+          console.warn('SW update check failed:', err);
+        });
+        void update();
+        window.addEventListener('online', update);
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') void update();
+        });
+      })
+      .catch((err) => {
+        console.warn('SW registration failed:', err);
+      });
   });
 }

@@ -153,10 +153,12 @@ export const AuthPage: React.FC = () => {
 
         if (googleBtnRef.current && active) {
           googleBtnRef.current.replaceChildren();
+          const measuredWidth = Math.floor(googleBtnRef.current.getBoundingClientRect().width);
+          const buttonWidth = Math.min(400, Math.max(200, measuredWidth || 320));
           googleId.renderButton(googleBtnRef.current, {
             theme: 'outline',
             size: 'large',
-            width: '100%',
+            width: buttonWidth,
             text: 'continue_with',
             shape: 'pill',
             locale: 'vi',
@@ -487,6 +489,8 @@ export const AuthPage: React.FC = () => {
     script.src = 'https://accounts.google.com/gsi/client';
     script.async = true;
     script.defer = true;
+    script.referrerPolicy = 'strict-origin-when-cross-origin';
+    script.onerror = () => setGoogleStatus('unavailable');
     document.head.appendChild(script);
     setGoogleStatus('loading');
     setGoogleRetry((value) => value + 1);

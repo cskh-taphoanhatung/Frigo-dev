@@ -324,7 +324,8 @@ describe('release workflow guardrails', () => {
       expect(job).toContain('node scripts/wait-for-deployed-release.mjs release-manifest.json');
       expect(job).not.toMatch(/curl[^\n]*health\/ready[^\n]*> readiness\.json/);
       expect(job).not.toContain('release-check.mjs deployed');
-      expect(job.indexOf('post-deploy-smoke.sh')).toBeLessThan(job.indexOf('wait-for-deployed-release.mjs'));
+      expect(job.indexOf('wait-for-deployed-release.mjs')).toBeLessThan(job.indexOf('post-deploy-smoke.sh'));
+      expect(job).toContain('post-deploy-smoke.sh "$APP_SMOKE_URL" "${{ needs.release.outputs.deploy_sha }}"');
       // Forensic receipt survives a failed convergence.
       expect(job.slice(job.indexOf('wait-for-deployed-release.mjs'))).toMatch(/if: always\(\)[\s\S]*upload-artifact/);
     }

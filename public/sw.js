@@ -1,5 +1,6 @@
-// Bumped for the Takosan brand refresh so stale Frigo brand assets are evicted on activate.
-const CACHE_NAME = 'takosan-pwa-v2';
+// Vite replaces this token with the immutable release SHA during production builds.
+const BUILD_ID = '__TAKOSAN_BUILD_ID__';
+const CACHE_NAME = `takosan-pwa-${BUILD_ID}`;
 
 const STATIC_PRECACHE = [
   '/',
@@ -15,24 +16,38 @@ const STATIC_PRECACHE = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_PRECACHE).catch((err) => {
-        console.warn('Failed to precache some assets:', err);
-      });
-    })
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(STATIC_PRECACHE))
+      .then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+    caches.keys().then(async (keys) => {
+      const previousReleaseCaches = keys.filter(
+        (key) => key.startsWith('takosan-pwa-') && key !== CACHE_NAME
       );
+
+      await Promise.all(previousReleaseCaches.map((key) => caches.delete(key)));
+      await self.clients.claim();
+
+      if (previousReleaseCaches.length > 0) {
+        const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+        const sameOriginWindows = windows.filter(
+          (client) => new URL(client.url).origin === self.location.origin
+        );
+
+        // Navigation cannot be awaited from activate: the new document fetch may wait
+        // for activation to finish. Start it only after cache cleanup and client claim.
+        sameOriginWindows.forEach((client) => {
+          void client.navigate(client.url).catch((err) => {
+            console.warn('Failed to refresh an existing client:', err);
+          });
+        });
+      }
     })
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
@@ -56,7 +71,10 @@ self.addEventListener('fetch', (event) => {
         return fetch(request).then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             const copy = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+            return caches.open(CACHE_NAME)
+              .then((cache) => cache.put(request, copy))
+              .catch((err) => console.warn('Failed to cache static asset:', err))
+              .then(() => networkResponse);
           }
           return networkResponse;
         });
@@ -68,7 +86,18 @@ self.addEventListener('fetch', (event) => {
   // Navigation requests: Network first, fallback to cached index.html
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() => caches.match('/index.html'))
+      fetch(request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const copy = response.clone();
+            return caches.open(CACHE_NAME)
+              .then((cache) => cache.put('/index.html', copy))
+              .catch((err) => console.warn('Failed to refresh app shell:', err))
+              .then(() => response);
+          }
+          return response;
+        })
+        .catch(() => caches.match('/index.html'))
     );
     return;
   }
