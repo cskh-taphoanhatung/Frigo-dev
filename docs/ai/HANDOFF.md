@@ -5,6 +5,11 @@
 - **Base/branch:** canonical main `b41aa4682481447795350fc1a9eeb1e80887bd0e`; branch `hoplite/aigeai-eca96ae8--t15c-cohort` (PR in body). Implementation `c5d2d63aa06ad51727aaeac6bd6cf01349598e29`.
 - **What:** secret-configured include/exclude digest sets let operator-owned test households prove INSIDE/OUTSIDE 1% canary without touching the customer algorithm or adding any request-controlled switch. Default disabled; only legal in `canary` mode with cutover; fail-closed validation; no IDs/digests in logs, readiness, API, manifest, workflow, or wrangler config. Details/setup/rollback: `recipe-catalog/T15C_AUTHORIZED_TEST_COHORT.md`.
 - **Production:** unchanged — `shadow / 0 / false`, Worker == main. Classification `T15C_AUTHORIZED_TEST_COHORT_READY`; canary activation remains a separate authorized T15C-B step.
+## Current handoff — T15C production Canary safe stop (2026-09-18, after T16 merges)
+
+- **Base:** canonical main `b41aa4682481447795350fc1a9eeb1e80887bd0e` (unchanged during the session); docs-only branch `hoplite/aigeai-eca96ae8--t15c-canary`.
+- **Production (read-only, public endpoints):** Worker commit == main, authority `shadow / 0 / false` per Deploy 35404106102 receipt, 71 served deterministically, D1-only IDs 404. D1 aggregates not re-queried (no credential here) — historical from T15C-B: 500 / tip 0037 / `rel-bd00a4f53fcaeee4` / media 500 pending, 0 ready.
+- **Blocker:** authorized inside/outside 1% cohorts and Cloudflare credentials unavailable → `T15C_CANARY_BLOCKED_AUTHORIZED_COHORT_UNAVAILABLE`. No production mutation of any kind. Receipt + resume steps: `recipe-catalog/T15C_PRODUCTION_CANARY_SAFE_STOP.md`.
 
 ## Current handoff — T16 OTP resend and guest account gates ready for release
 
