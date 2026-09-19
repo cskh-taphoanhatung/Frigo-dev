@@ -1,5 +1,19 @@
 # Frigo / Takosan current task board — 2026-09-19
 
+## Current T17 — Takosan UI V2 redesign — `T17_PARTIAL` (2026-09-19)
+
+- [done] Baseline gates on live main `769d08597563f816ef9c1dd9523fdafb687de3e2`: lint, typecheck, vitest 178 files / 4046 tests, migration smoke (sqlite3 CLI installed per repo setup), build — all PASS; branch `feat/t17-takosan-ui-v2` created; `main` untouched.
+- [done] Audit recorded in `docs/ai/T17_UI_V2_AUDIT.md` (routes, migration map, Frigo leaks, phone wrappers, Week/Planner + settings + notification overlap, fake-flow survey).
+- [done] Semantic design system: `--semantic-*` tokens + tailwind `semantic-*` family, kit type/radius/shadow scales, `motion@13.4.0` with reduced-motion provider, shared primitives (Page/PageHeader/Switch/SettingsRow/StatusBadge/UnavailableState/…).
+- [done] AppShell V2: bottom nav / 80px rail / 256px sidebar from one navigation model, immersive-only hiding, real links + `aria-current`; legacy `BottomNav` retired with migrated equivalent test.
+- [done] Settings IA split (screens 19-26) on real server contracts; inbox/preferences separated; fabricated household invite/join/QR and privacy export/delete fakes replaced with honest unavailable states.
+- [done] Planner canonical (flag-gated) with param-preserving Week redirects; onboarding step routes; phone-width emulation removed from 20+ shell pages; fixed CTAs clear the nav/rail/sidebar; Landing/Auth h1 fixes.
+- [done] Brand cleanup: zero `emerald-*`, zero user-visible "Frigo Plus"; VietQRModal copy rebranded presentation-only.
+- [done] Gates after implementation: lint PASS, typecheck PASS, `pnpm test` 178/4046 PASS, `pnpm check:migrations` PASS, `pnpm build` PASS, T17 Playwright **33/33 PASS** at 390/768/1440.
+- [done] PayOS/payment zero application change certified: `git diff 769d085 -- src/worker` empty; payment path diff presentation-only.
+- [limit] `T17_COMPLETE` not claimed. Remaining: AuthPage (930 lines) decomposition, per-screen motion/semantic-token migration, visual matrix at 360/430/1024 + state classes + canonical screenshots, full a11y pass. Exact list in `docs/ai/T17_UI_V2_REPORT.md`.
+- [safety] No merge, deploy, D1/migration, PayOS, Inventory Truth, OCR/AI, recipe-authority, or planning-algorithm change. Production untouched.
+
 ## Current T16 follow-up — PWA cache and Google recovery deployed (2026-09-19)
 
 - [done] Confirmed live `/auth` and `/sw.js` were edge-cache hits and production still served fixed cache `takosan-pwa-v2`; repository path mismatch was `/sw.js` registration versus `/service-worker.js` header rule.

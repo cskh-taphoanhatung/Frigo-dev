@@ -1,5 +1,40 @@
 # Frigo / Takosan current authority — 2026-09-19
 
+## Current T17 — Takosan UI V2 partial redesign delivered on feat/t17-takosan-ui-v2 (2026-09-19)
+
+Status `T17_PARTIAL` per the Takosan Redesign OS v2.0.0 kit. Branch
+`feat/t17-takosan-ui-v2` from live main `769d08597563f816ef9c1dd9523fdafb687de3e2`
+implements: the full semantic token layer (CSS `--semantic-*` + tailwind
+`semantic-*`), the kit type/radius/elevation scales, `motion@13.4.0` with a
+`MotionConfig reducedMotion="user"` provider and token-driven motion
+primitives, a shared primitives module, a responsive AppShell V2 (mobile bottom
+nav / tablet rail / desktop sidebar, immersive-only nav hiding, real-link
+navigation with `aria-current`), the settings/account IA split with four new
+dedicated pages over real server contracts (`/me/preferences`,
+`/me/household`, `/settings/planning`, `/settings/notifications`,
+`/settings/privacy`, `/settings/app`) plus redirects, planner canonicalization
+with param-preserving Week redirects while the feature flag stays the rollout
+authority, onboarding step routes, removal of the fabricated household
+invite/join/member/QR flows in favor of honest unavailable states, removal of
+phone-width emulation across 20+ shell pages, and brand cleanup to zero
+user-visible Frigo/emerald presentation. PayOS/payment grants received zero
+application change: `git diff 769d085 -- src/worker` is empty and the only
+payment-file diff is 12/12 presentation-only lines in VietQRModal.
+
+Verification executed after implementation: `pnpm lint` PASS, `pnpm typecheck`
+PASS, `pnpm test` **178 files / 4046 tests PASS**, `pnpm check:migrations` PASS
+(sqlite3 CLI installed into the session environment, as the repo setup script
+does), `pnpm build` PASS, and the new isolated T17 Playwright suite
+(`playwright.t17.config.ts`, `tests/e2e/t17-ui/`) **33/33 PASS** at
+mobile-390 / tablet-768 / desktop-1440. Baseline gates on main `769d085` passed
+identically before edits. Remaining gaps for `T17_COMPLETE` are recorded in
+`docs/ai/T17_UI_V2_REPORT.md`: AuthPage decomposition into feature components,
+per-screen motion/semantic-token migration for legacy-styled pages, and the
+full visual matrix (360/430/1024 widths, state classes, canonical
+screenshots). `main` untouched; no merge, deploy, D1, PayOS, or production
+mutation; worktree clean apart from platform-managed `.hoplite/settings.json`
+(excluded from T17 commits).
+
 ## Current T16 follow-up — PWA cache and Google recovery deployed (2026-09-19)
 
 Production evidence showed `/auth` and `/sw.js` returning `CF-Cache-Status: HIT`,
