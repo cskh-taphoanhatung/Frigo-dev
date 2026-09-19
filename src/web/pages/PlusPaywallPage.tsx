@@ -44,9 +44,9 @@ export const PlusPaywallPage: React.FC = () => {
 
   if (isGuest) {
     return (
-      <div className="min-h-screen bg-semantic-background pb-12 max-w-md mx-auto">
+      <div className="min-h-screen bg-semantic-background pb-12">
         <TopBar showBack title="Takosan Plus" />
-        <main className="px-4 pt-8">
+        <main className="mx-auto w-full max-w-[var(--content-compact)] px-4 pt-8 md:px-6">
           <section className="overflow-hidden rounded-feature border border-semantic-border bg-semantic-surface shadow-card">
             <div className="bg-gradient-to-br from-semantic-action-primary-pressed to-semantic-action-primary-hover px-6 py-7 text-white">
               <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/12 ring-1 ring-white/15">
@@ -83,10 +83,10 @@ export const PlusPaywallPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-semantic-background pb-12 max-w-md mx-auto">
+    <div className="min-h-screen bg-semantic-background pb-12">
       <TopBar showBack title="Nâng cấp Takosan Plus" />
 
-      <div className="px-4 pt-3 space-y-5">
+      <div className="mx-auto w-full max-w-[var(--content-compact)] px-4 pt-3 space-y-5 md:px-6">
         {/* Support Art Hero Card */}
         <div className="bg-gradient-to-br from-semantic-action-primary-pressed to-semantic-action-primary-hover text-white rounded-card p-5 shadow-card flex items-center justify-between gap-3 overflow-hidden border border-semantic-action-primary/40">
           <div className="space-y-1 max-w-[200px]">

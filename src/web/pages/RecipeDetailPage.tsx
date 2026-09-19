@@ -329,17 +329,19 @@ export const RecipeDetailPage: React.FC = () => {
 
       {/* Sticky Bottom Start Cooking Button */}
       <div className="fixed bottom-[calc(68px+env(safe-area-inset-bottom,0px))] md:bottom-0 left-0 right-0 md:left-20 lg:left-64 p-3.5 pb-[calc(0.875rem+env(safe-area-inset-bottom,0px))] bg-white/95 backdrop-blur-md border-t border-semantic-border z-40 shadow-lg">
-        <Button
-          fullWidth
-          size="lg"
-          onClick={handleStartCook}
-          disabled={inventoryQuery.isPending || inventoryQuery.isError}
-          className="bg-takosan-green hover:bg-takosan-green-hover text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md flex items-center justify-center gap-2"
-        >
-          <ChefHat className="w-5 h-5" />
-          <span>Bắt đầu nấu ({recipe.cookTimeMinutes} phút)</span>
-          <ArrowRight className="w-4 h-4 ml-1" />
-        </Button>
+        <div className="mx-auto w-full max-w-[var(--content-wide)]">
+          <Button
+            fullWidth
+            size="lg"
+            onClick={handleStartCook}
+            disabled={inventoryQuery.isPending || inventoryQuery.isError}
+            className="bg-takosan-green hover:bg-takosan-green-hover text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md flex items-center justify-center gap-2"
+          >
+            <ChefHat className="w-5 h-5" />
+            <span>Bắt đầu nấu ({recipe.cookTimeMinutes} phút)</span>
+            <ArrowRight className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
       </div>
     </div>
   );

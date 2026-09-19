@@ -463,15 +463,17 @@ export const WeekSetupPage: React.FC = () => {
 
       {/* Fixed Next / Complete CTA */}
       <div className="fixed bottom-[calc(68px+env(safe-area-inset-bottom,0px))] md:bottom-0 left-0 right-0 md:left-20 lg:left-64 p-4 md:pb-[calc(1rem+env(safe-area-inset-bottom,0px))] bg-white/95 backdrop-blur-md border-t border-semantic-border z-40 shadow-lg">
-        <Button
-          fullWidth
-          size="lg"
-          onClick={handleNext}
-          className="flex items-center justify-center gap-2"
-        >
-          <span>{currentStep === 5 ? 'Tạo thực đơn tuần ngay' : 'Tiếp tục'}</span>
-          <ChevronRight className="w-4 h-4" />
-        </Button>
+        <div className="mx-auto w-full max-w-[var(--content-wide)]">
+          <Button
+            fullWidth
+            size="lg"
+            onClick={handleNext}
+            className="flex items-center justify-center gap-2"
+          >
+            <span>{currentStep === 5 ? 'Tạo thực đơn tuần ngay' : 'Tiếp tục'}</span>
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
     </div>
   );

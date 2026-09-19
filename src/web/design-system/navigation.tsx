@@ -132,7 +132,7 @@ export const RailSidebar: React.FC = () => {
         aria-label="Điều hướng chính"
         className="hidden md:flex lg:hidden fixed left-0 top-0 bottom-0 w-20 flex-col items-center gap-2 py-4 bg-semantic-surface border-r border-semantic-border z-30"
       >
-        <Link to="/" className="mb-2" aria-label="Takosan — Trang chủ">
+        <Link to="/" className="mb-2 tap-target flex items-center justify-center rounded-card focus-visible:outline-none focus-visible:shadow-t17-focus" aria-label="Takosan — Trang chủ">
           <img src={TAKOSAN_BRAND.symbol} alt="" width={32} height={32} className="w-8 h-8" />
         </Link>
         {NAV_ITEMS.map((item) => {
@@ -169,7 +169,7 @@ export const RailSidebar: React.FC = () => {
         aria-label="Điều hướng chính"
         className="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 flex-col px-4 py-5 bg-semantic-surface border-r border-semantic-border z-30"
       >
-        <Link to="/" className="flex items-center gap-2.5 mb-6 px-2" aria-label="Takosan — Trang chủ">
+        <Link to="/" className="flex min-h-11 items-center gap-2.5 mb-6 px-2 rounded-card focus-visible:outline-none focus-visible:shadow-t17-focus" aria-label="Takosan — Trang chủ">
           <img src={TAKOSAN_BRAND.logos.horizontal} alt="Takosan" className="h-9 w-auto" />
         </Link>
         <ul className="flex flex-col gap-1">

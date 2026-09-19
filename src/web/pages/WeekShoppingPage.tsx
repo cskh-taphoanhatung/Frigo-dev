@@ -337,28 +337,30 @@ export const WeekShoppingPage: React.FC = () => {
 
       {/* Sticky Bottom Actions */}
       <div className="fixed bottom-[calc(68px+env(safe-area-inset-bottom,0px))] md:bottom-0 left-0 right-0 md:left-20 lg:left-64 p-4 bg-white/95 backdrop-blur-md border-t border-semantic-border z-40 shadow-lg">
-        {shoppingMode === 'list' ? (
-          <Button
-            fullWidth
-            size="lg"
-            onClick={() => setShoppingMode('active')}
-            className="bg-takosan-green hover:bg-takosan-green-hover text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md"
-          >
-            Bắt đầu đi chợ
-          </Button>
-        ) : (
-          <Button
-            fullWidth
-            size="lg"
-            onClick={handleFinishShopping}
-            isLoading={isSubmitting}
-            disabled={checkedCount === 0}
-            className="bg-takosan-green hover:bg-takosan-green-hover text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md flex items-center justify-center gap-2"
-          >
-            <span>Hoàn tất đi chợ</span>
-            <ArrowRight className="w-5 h-5" />
-          </Button>
-        )}
+        <div className="mx-auto w-full max-w-[var(--content-wide)]">
+          {shoppingMode === 'list' ? (
+            <Button
+              fullWidth
+              size="lg"
+              onClick={() => setShoppingMode('active')}
+              className="bg-takosan-green hover:bg-takosan-green-hover text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md"
+            >
+              Bắt đầu đi chợ
+            </Button>
+          ) : (
+            <Button
+              fullWidth
+              size="lg"
+              onClick={handleFinishShopping}
+              isLoading={isSubmitting}
+              disabled={checkedCount === 0}
+              className="bg-takosan-green hover:bg-takosan-green-hover text-white font-heading font-bold text-base py-3.5 rounded-2xl shadow-md flex items-center justify-center gap-2"
+            >
+              <span>Hoàn tất đi chợ</span>
+              <ArrowRight className="w-5 h-5" />
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

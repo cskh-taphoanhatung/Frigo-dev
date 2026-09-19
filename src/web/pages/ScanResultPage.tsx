@@ -393,20 +393,22 @@ const ScanReview: React.FC<{ effectiveScanId: string }> = ({ effectiveScanId }) 
 
       {/* Fixed Confirm CTA Bar */}
       <div className="fixed bottom-[calc(68px+env(safe-area-inset-bottom,0px))] md:bottom-0 left-0 right-0 md:left-20 lg:left-64 p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] bg-white/95 backdrop-blur-md border-t border-semantic-border z-40 shadow-lg">
-        {isConfirmed ? <Button fullWidth size="lg" onClick={() => navigate('/fridge')}>
-          Xem tủ lạnh
-        </Button> : <Button
-          fullWidth
-          size="lg"
-          type="submit"
-          form="scan-review"
-          isLoading={isConfirming}
-          disabled={items.length === 0 || !canEdit}
-          className="flex items-center justify-center gap-2"
-        >
-          <CheckCircle2 className="w-5 h-5" />
-          <span>Xác nhận nguyên liệu ({acceptedCount} món)</span>
-        </Button>}
+        <div className="mx-auto w-full max-w-[var(--content-wide)]">
+          {isConfirmed ? <Button fullWidth size="lg" onClick={() => navigate('/fridge')}>
+            Xem tủ lạnh
+          </Button> : <Button
+            fullWidth
+            size="lg"
+            type="submit"
+            form="scan-review"
+            isLoading={isConfirming}
+            disabled={items.length === 0 || !canEdit}
+            className="flex items-center justify-center gap-2"
+          >
+            <CheckCircle2 className="w-5 h-5" />
+            <span>Xác nhận nguyên liệu ({acceptedCount} món)</span>
+          </Button>}
+        </div>
       </div>
 
       {/* Manual add sheet (components/BOTTOM_SHEET.md): labelled modal with

@@ -505,35 +505,37 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
       </div>
 
       {/* Floating Action Bottom */}
-      <div className="fixed bottom-[calc(68px+env(safe-area-inset-bottom,0px))] md:bottom-0 left-0 right-0 md:left-20 lg:left-64 p-4 md:pb-[calc(1rem+env(safe-area-inset-bottom))] bg-white/95 backdrop-blur-md border-t border-semantic-border z-40 space-y-2 shadow-lg">
-        {submitError && <p role="alert" className="text-xs text-semantic-danger-strong">{submitError}</p>}
-        {isConfirmed ? <Button fullWidth onClick={() => navigate('/fridge')}>Xem tủ lạnh</Button> : <>
-        <Button
-          fullWidth
-          size="lg"
-          disabled={!canSubmit}
-          onClick={() => void handleConfirm()}
-          className="flex items-center justify-center gap-2"
-        >
-          <ShoppingBag className="w-4 h-4" />
-          <span>{isSubmitting ? 'Đang lưu…' : acceptedItems.length === 0 && items.length > 0
-            ? `Lưu ${items.length} dòng bỏ qua` : `Nhập ${acceptedItems.length} món vào Tủ lạnh`}</span>
-        </Button>
-
-        {currentPlan && (
+      <div className="fixed bottom-[calc(68px+env(safe-area-inset-bottom,0px))] md:bottom-0 left-0 right-0 md:left-20 lg:left-64 p-4 md:pb-[calc(1rem+env(safe-area-inset-bottom))] bg-white/95 backdrop-blur-md border-t border-semantic-border z-40 shadow-lg">
+        <div className="mx-auto w-full max-w-[var(--content-wide)] space-y-2">
+          {submitError && <p role="alert" className="text-xs text-semantic-danger-strong">{submitError}</p>}
+          {isConfirmed ? <Button fullWidth onClick={() => navigate('/fridge')}>Xem tủ lạnh</Button> : <>
           <Button
             fullWidth
-            variant="outline"
-            size="md"
+            size="lg"
             disabled={!canSubmit}
-            onClick={() => void handleConfirm(true)}
-            className="flex items-center justify-center gap-2 text-semantic-text-primary"
+            onClick={() => void handleConfirm()}
+            className="flex items-center justify-center gap-2"
           >
-            <CalendarCheck className="w-4 h-4 text-takosan-green" />
-            <span>Lưu hóa đơn & mở danh sách tuần</span>
+            <ShoppingBag className="w-4 h-4" />
+            <span>{isSubmitting ? 'Đang lưu…' : acceptedItems.length === 0 && items.length > 0
+              ? `Lưu ${items.length} dòng bỏ qua` : `Nhập ${acceptedItems.length} món vào Tủ lạnh`}</span>
           </Button>
-        )}
-        </>}
+
+          {currentPlan && (
+            <Button
+              fullWidth
+              variant="outline"
+              size="md"
+              disabled={!canSubmit}
+              onClick={() => void handleConfirm(true)}
+              className="flex items-center justify-center gap-2 text-semantic-text-primary"
+            >
+              <CalendarCheck className="w-4 h-4 text-takosan-green" />
+              <span>Lưu hóa đơn & mở danh sách tuần</span>
+            </Button>
+          )}
+          </>}
+        </div>
       </div>
     </div>
   );

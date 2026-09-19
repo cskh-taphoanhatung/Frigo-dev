@@ -214,7 +214,7 @@ export const CookingModePage: React.FC = () => {
   // 1. Completion view (Deduction confirmation)
   if (isCompletedView) {
     return (
-      <div className="min-h-screen bg-takosan-cream p-4 flex flex-col justify-between pb-10 max-w-md mx-auto">
+      <div className="min-h-screen bg-takosan-cream p-4 flex flex-col justify-between pb-10 mx-auto w-full max-w-[var(--content-compact)]">
         <div className="space-y-4">
           {completionError && <p role="alert" className="text-sm text-semantic-danger-strong">{completionError}</p>}
           <div className="text-center pt-4">
@@ -308,7 +308,7 @@ export const CookingModePage: React.FC = () => {
 
   // 2. Active step cooking mode
   return (
-    <div className="min-h-screen bg-takosan-cream flex flex-col justify-between p-5 max-w-md mx-auto">
+    <div className="min-h-screen bg-takosan-cream flex flex-col justify-between p-5 mx-auto w-full max-w-[var(--content-compact)]">
       <div>
         <div className="flex items-center justify-between mb-3">
           <button
@@ -320,7 +320,7 @@ export const CookingModePage: React.FC = () => {
           </button>
 
           <div className="text-center">
-            <h1 className="font-heading font-bold text-base text-semantic-text-primary truncate max-w-[180px]">
+            <h1 className="font-heading font-bold text-base text-semantic-text-primary truncate max-w-[180px] sm:max-w-xs md:max-w-md">
               {activeRecipe.title}
             </h1>
             <p className="text-xs text-semantic-text-muted font-medium">

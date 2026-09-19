@@ -34,7 +34,7 @@ export const AuthShell: React.FC<AuthShellProps> = ({
   onModeChange,
   children,
 }) => (
-  <div className="min-h-screen bg-takosan-cream px-6 py-8 flex flex-col justify-between text-takosan-navy animate-fade-in max-w-md mx-auto">
+  <div className="min-h-screen bg-takosan-cream px-6 py-8 flex flex-col justify-between text-takosan-navy animate-fade-in mx-auto w-full max-w-md md:max-w-[28rem]">
     <div>
       <div className="flex items-center justify-between">
         <button
@@ -54,7 +54,9 @@ export const AuthShell: React.FC<AuthShellProps> = ({
         <p className="text-xs text-semantic-text-muted mt-1 max-w-xs mx-auto leading-relaxed">
           {mode === 'login' && 'Đồng bộ tủ lạnh, thực đơn tuần và gợi ý món ăn mọi lúc mọi nơi'}
           {mode === 'register' && 'Gia nhập Takosan để quản lý thực phẩm thông minh và giảm lãng phí'}
-          {mode === 'otp_verify' && `Nhập 6 số mã OTP đã gửi tới ${email}`}
+          {mode === 'otp_verify' && (email
+            ? `Nhập 6 số mã OTP đã gửi tới ${email}`
+            : 'Xác thực tài khoản bằng mã OTP gửi qua email')}
           {mode === 'forgot_password' && 'Nhập email để nhận mã OTP khôi phục mật khẩu'}
         </p>
       </div>

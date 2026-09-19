@@ -297,22 +297,24 @@ export const MealDetailPage: React.FC = () => {
       </div>
 
       {/* Sticky Bottom Dual Action Buttons matching Screen 5.2 */}
-      <div className="fixed bottom-[calc(68px+env(safe-area-inset-bottom,0px))] md:bottom-0 left-0 right-0 md:left-20 lg:left-64 p-4 bg-white/95 backdrop-blur-md border-t border-semantic-border z-30 flex gap-3 shadow-lg">
-        <button
-          onClick={() => openSwap(mealId!)}
-          className="flex-1 py-3.5 px-4 rounded-2xl bg-white border-2 border-takosan-green text-takosan-green-deep font-heading font-bold text-sm hover:bg-takosan-mint active:scale-98 transition-tap flex items-center justify-center gap-1.5"
-        >
-          <ArrowRightLeft className="w-4 h-4 text-takosan-green" />
-          <span>Đổi món</span>
-        </button>
+      <div className="fixed bottom-[calc(68px+env(safe-area-inset-bottom,0px))] md:bottom-0 left-0 right-0 md:left-20 lg:left-64 p-4 bg-white/95 backdrop-blur-md border-t border-semantic-border z-30 shadow-lg">
+        <div className="mx-auto w-full max-w-[var(--content-wide)] flex gap-3">
+          <button
+            onClick={() => openSwap(mealId!)}
+            className="flex-1 py-3.5 px-4 rounded-2xl bg-white border-2 border-takosan-green text-takosan-green-deep font-heading font-bold text-sm hover:bg-takosan-mint active:scale-98 transition-tap flex items-center justify-center gap-1.5"
+          >
+            <ArrowRightLeft className="w-4 h-4 text-takosan-green" />
+            <span>Đổi món</span>
+          </button>
 
-        <button
-          onClick={() => navigate(`/cook/${recipe.slug}`)}
-          className="flex-1 py-3.5 px-4 rounded-2xl bg-takosan-green hover:bg-takosan-green-hover text-white font-heading font-bold text-sm shadow-md active:scale-98 transition-tap flex items-center justify-center gap-2"
-        >
-          <ChefHat className="w-5 h-5" />
-          <span>Bắt đầu nấu</span>
-        </button>
+          <button
+            onClick={() => navigate(`/cook/${recipe.slug}`)}
+            className="flex-1 py-3.5 px-4 rounded-2xl bg-takosan-green hover:bg-takosan-green-hover text-white font-heading font-bold text-sm shadow-md active:scale-98 transition-tap flex items-center justify-center gap-2"
+          >
+            <ChefHat className="w-5 h-5" />
+            <span>Bắt đầu nấu</span>
+          </button>
+        </div>
       </div>
 
       <MealSwapSheet />
