@@ -96,10 +96,11 @@ describe('recipe catalog authority routing (T14D)', () => {
   });
 
   it('resolves the full authority config: canary percent 0..100 integers only; canary/d1 need the cutover fence', () => {
-    expect(resolveRecipeAuthorityConfig({})).toEqual({ mode: 'static', canaryPercent: 0, cutoverEnabled: false });
+    // T15C-C: the operator test cohort is disabled by default (null), not an empty set.
+    expect(resolveRecipeAuthorityConfig({})).toEqual({ mode: 'static', canaryPercent: 0, cutoverEnabled: false, testCohort: null });
     expect(resolveRecipeAuthorityConfig({ RECIPE_CATALOG_MODE: 'shadow' })).toMatchObject({ mode: 'shadow' });
     expect(resolveRecipeAuthorityConfig({ RECIPE_CATALOG_MODE: 'canary', RECIPE_CATALOG_D1_CANARY_PERCENT: '5', RECIPE_CATALOG_CUTOVER_ENABLED: 'true' }))
-      .toEqual({ mode: 'canary', canaryPercent: 5, cutoverEnabled: true });
+      .toEqual({ mode: 'canary', canaryPercent: 5, cutoverEnabled: true, testCohort: null });
     expect(resolveRecipeAuthorityConfig({ RECIPE_CATALOG_MODE: 'd1', RECIPE_CATALOG_CUTOVER_ENABLED: 'true' })).toMatchObject({ mode: 'd1', canaryPercent: 0 });
     for (const percent of ['0', '1', '50', '99', '100']) expect(resolveRecipeAuthorityConfig({ RECIPE_CATALOG_D1_CANARY_PERCENT: percent }).canaryPercent).toBe(Number(percent));
     for (const bad of ['-1', '101', '5.5', '1e1', '05', 'ten', ' 5 %', 'NaN']) {

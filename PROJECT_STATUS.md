@@ -1,5 +1,8 @@
 # Frigo Project Status
 
+## T15C-C — authorized canary test cohort mechanism ready; production still shadow (2026-09-19)
+
+Dormant, secret-configured include+exclude override (digests, not IDs; inert outside canary; both cohorts mandatory) unblocks the operator-cohort requirement for the 1% production canary without changing customer routing. `T15C_AUTHORIZED_TEST_COHORT_READY` · production `shadow / 0 / false` · `FULL_D1_NOT_ENABLED` · `MEDIA_POPULATION_DEFERRED` · `T14G_NOT_STARTED`. Receipt: `docs/ai/recipe-catalog/T15C_AUTHORIZED_TEST_COHORT.md`.
 ## T15C — production Canary safe stop; production authority remains shadow (2026-09-18)
 
 Canonical main `b41aa4682481447795350fc1a9eeb1e80887bd0e` fully certified locally; production Worker on that exact SHA with `shadow / 0 / false` (Deploy 35404106102), 71 static recipes served, D1 500 (historical, tip 0037, `rel-bd00a4f53fcaeee4`). Canary not started: no authorized inside/outside 1% test cohort or Cloudflare credential available. Status `T15C_CANARY_BLOCKED_AUTHORIZED_COHORT_UNAVAILABLE` · `T15B_SHADOW_COMPLETE` · `FULL_D1_NOT_ENABLED` · `MEDIA_POPULATION_DEFERRED` · `T14G_NOT_STARTED`. Receipt: `docs/ai/recipe-catalog/T15C_PRODUCTION_CANARY_SAFE_STOP.md`.

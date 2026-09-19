@@ -2,12 +2,18 @@ import type { D1DatabaseBinding } from '@frigo/db';
 import { readRecipeContent } from '../../../packages/db/src/recipe-content';
 import {
   D1RecipeAuthority,
-  isRecipeCanaryTenant,
   parseRecipeCanaryPercent,
   StaticRecipeAuthority,
   type RecipeAuthorityReadiness,
   type RecipeAuthoritySnapshot,
 } from '../../../packages/recipes/src/recipe-authority';
+import {
+  parseRecipeTestCohort,
+  RecipeTestCohortConfigError,
+  resolveRecipeCanaryAssignment,
+  type RecipeCanaryAssignmentReason,
+  type RecipeTestCohort,
+} from '../../../packages/recipes/src/recipe-canary-cohort';
 import type { Env } from '../types';
 import { scheduleRecipeCatalogShadow } from './recipe-catalog-shadow';
 
@@ -27,6 +33,13 @@ import { scheduleRecipeCatalogShadow } from './recipe-catalog-shadow';
  * `canary` and `d1` additionally require `RECIPE_CATALOG_CUTOVER_ENABLED=true` (fence against a
  * typo flipping authority). Rollback is `RECIPE_CATALOG_MODE=static`: read routing only, no data change.
  *
+ * T15C-C: in `canary` mode only, an operator-owned test cohort (`RECIPE_CATALOG_TEST_COHORT_ENABLED`
+ * + digest sets, Worker secrets only) may force a known test household in or a known control
+ * household out of the canary. Outside `canary` the cohort variables are INERT: not parsed, not
+ * validated, no readiness effect — so emergency rollback is the single change
+ * `RECIPE_CATALOG_MODE=static|shadow` even while the secrets still exist. It never applies to an
+ * unauthenticated request and is never influenced by request input.
+ *
  * One snapshot per request/operation: routes call `resolveRecipeAuthority(c.env, tenantKey)` once
  * and pass the snapshot down. The D1 snapshot is cached per isolate for a bounded TTL with
  * singleflight refresh; a stale verified snapshot may be served for a bounded grace window when a
@@ -38,7 +51,7 @@ export type RecipeAuthorityMode = (typeof RECIPE_CATALOG_MODES)[number];
 export const USER_VISIBLE_D1_MODES: readonly RecipeAuthorityMode[] = ['canary', 'd1'];
 
 export class RecipeAuthorityConfigError extends Error {
-  constructor(readonly code: 'INVALID_MODE' | 'INVALID_CANARY_PERCENT' | 'CUTOVER_NOT_ENABLED', message: string) {
+  constructor(readonly code: 'INVALID_MODE' | 'INVALID_CANARY_PERCENT' | 'CUTOVER_NOT_ENABLED' | 'TEST_COHORT_INVALID', message: string, readonly detail?: string) {
     super(message); this.name = 'RecipeAuthorityConfigError';
   }
 }
@@ -58,15 +71,18 @@ export interface RecipeAuthorityConfig {
   mode: RecipeAuthorityMode;
   canaryPercent: number;
   cutoverEnabled: boolean;
+  /** Parsed operator test cohort; `null` unless mode is `canary` AND the cohort is explicitly enabled. Inert elsewhere. */
+  testCohort: RecipeTestCohort | null;
 }
 
-export type RecipeAuthorityEnv = Pick<Env, 'DB' | 'RECIPE_CATALOG_MODE' | 'RECIPE_CATALOG_D1_CANARY_PERCENT' | 'RECIPE_CATALOG_CUTOVER_ENABLED' | 'RECIPE_CATALOG_SHADOW_INTERVAL_MS'>;
+export type RecipeAuthorityConfigEnv = Pick<Env, 'RECIPE_CATALOG_MODE' | 'RECIPE_CATALOG_D1_CANARY_PERCENT' | 'RECIPE_CATALOG_CUTOVER_ENABLED' | 'RECIPE_CATALOG_TEST_COHORT_ENABLED' | 'RECIPE_CATALOG_TEST_INCLUDE' | 'RECIPE_CATALOG_TEST_EXCLUDE'>;
+export type RecipeAuthorityEnv = Pick<Env, 'DB' | 'RECIPE_CATALOG_SHADOW_INTERVAL_MS'> & RecipeAuthorityConfigEnv;
 
 /**
  * Validates the whole authority configuration; throws a typed error for any invalid or
  * dangerous combination. Used by production config validation AND at request time (fail closed).
  */
-export function resolveRecipeAuthorityConfig(env: Pick<RecipeAuthorityEnv, 'RECIPE_CATALOG_MODE' | 'RECIPE_CATALOG_D1_CANARY_PERCENT' | 'RECIPE_CATALOG_CUTOVER_ENABLED'>): RecipeAuthorityConfig {
+export function resolveRecipeAuthorityConfig(env: RecipeAuthorityConfigEnv): RecipeAuthorityConfig {
   const mode = parseRecipeAuthorityMode(env.RECIPE_CATALOG_MODE);
   const canaryPercent = parseRecipeCanaryPercent(env.RECIPE_CATALOG_D1_CANARY_PERCENT);
   if (canaryPercent === null) throw new RecipeAuthorityConfigError('INVALID_CANARY_PERCENT', 'RECIPE_CATALOG_D1_CANARY_PERCENT must be an integer 0..100');
@@ -74,7 +90,18 @@ export function resolveRecipeAuthorityConfig(env: Pick<RecipeAuthorityEnv, 'RECI
   if (USER_VISIBLE_D1_MODES.includes(mode) && !cutoverEnabled) {
     throw new RecipeAuthorityConfigError('CUTOVER_NOT_ENABLED', `RECIPE_CATALOG_MODE=${mode} requires RECIPE_CATALOG_CUTOVER_ENABLED=true`);
   }
-  return { mode, canaryPercent, cutoverEnabled };
+  // Cohort secrets are only meaningful — and only validated — in canary mode. In static/shadow/d1 they
+  // are ignored entirely so stale secrets can never block an emergency rollback or carve out tenants.
+  let testCohort: RecipeTestCohort | null = null;
+  if (mode === 'canary') {
+    try {
+      testCohort = parseRecipeTestCohort(env);
+    } catch (error) {
+      const detail = error instanceof RecipeTestCohortConfigError ? error.code : 'TEST_COHORT_DIGEST_INVALID';
+      throw new RecipeAuthorityConfigError('TEST_COHORT_INVALID', `Recipe catalog test cohort configuration is invalid (${detail})`, detail);
+    }
+  }
+  return { mode, canaryPercent, cutoverEnabled, testCohort };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -139,7 +166,7 @@ export type RecipeAuthorityEvent =
   | 'recipe_catalog_d1_fallback'
   | 'recipe_catalog_config_invalid';
 
-/** Structured, PII-free diagnostic: no recipes, no raw tenant IDs (canary reports the bucket decision only). */
+/** Structured, PII-free diagnostic: no recipes, no raw tenant IDs or digests (canary reports the decision + bounded reason only). */
 export interface RecipeAuthorityDiagnostic {
   level: 'info' | 'warn' | 'error';
   event: RecipeAuthorityEvent;
@@ -147,6 +174,8 @@ export interface RecipeAuthorityDiagnostic {
   selectedSource: 'static' | 'd1';
   actualSource: 'static' | 'd1';
   canary?: boolean;
+  /** How canary membership was decided (canary mode only). Bounded enum; never an identifier. */
+  assignmentReason?: RecipeCanaryAssignmentReason;
   reasonCode?: string;
   fingerprintMatch?: boolean;
   staleAgeMs?: number;
@@ -161,11 +190,13 @@ export interface RecipeAuthorityResolution {
   /** Where content actually came from. `static` with `selectedSource='d1'` means a fallback happened. */
   actualSource: 'static' | 'd1';
   canaryTenant: boolean;
+  /** Canary-mode assignment reason; `null` in every other mode. */
+  canaryAssignmentReason: RecipeCanaryAssignmentReason | null;
   fallbackReason: string | null;
   diagnostics: RecipeAuthorityDiagnostic[];
 }
 
-const counters = { static: 0, d1: 0, canaryFallback: 0, d1Fallback: 0, staleServed: 0, notReady: 0 };
+const counters = { static: 0, d1: 0, canaryFallback: 0, d1Fallback: 0, staleServed: 0, notReady: 0, authorizedInclude: 0, authorizedExclude: 0 };
 /** Bounded per-isolate counters for health/diagnostics; no external monitoring platform. */
 export function recipeAuthorityCounters(): Readonly<typeof counters> { return { ...counters }; }
 export function resetRecipeAuthorityCountersForTests(): void { for (const key of Object.keys(counters) as Array<keyof typeof counters>) counters[key] = 0; }
@@ -203,12 +234,13 @@ export async function resolveRecipeAuthority(env: RecipeAuthorityEnv, options: R
     counters.static += 1;
     const reasonCode = error instanceof RecipeAuthorityConfigError ? error.code : 'INVALID_MODE';
     emit({ level: 'error', event: 'recipe_catalog_config_invalid', configuredMode: 'invalid', selectedSource: 'static', actualSource: 'static', reasonCode });
-    return { snapshot: staticSnapshot, configuredMode: 'static', selectedSource: 'static', actualSource: 'static', canaryTenant: false, fallbackReason: reasonCode, diagnostics };
+    return { snapshot: staticSnapshot, configuredMode: 'static', selectedSource: 'static', actualSource: 'static', canaryTenant: false, canaryAssignmentReason: null, fallbackReason: reasonCode, diagnostics };
   }
 
+  let canaryAssignmentReason: RecipeCanaryAssignmentReason | null = null;
   const serveStatic = (selectedSource: 'static' | 'd1', canaryTenant: boolean, fallbackReason: string | null): RecipeAuthorityResolution => {
     counters.static += 1;
-    return { snapshot: staticSnapshot, configuredMode: config.mode, selectedSource, actualSource: 'static', canaryTenant, fallbackReason, diagnostics };
+    return { snapshot: staticSnapshot, configuredMode: config.mode, selectedSource, actualSource: 'static', canaryTenant, canaryAssignmentReason, fallbackReason, diagnostics };
   };
 
   if (config.mode === 'static') return serveStatic('static', false, null);
@@ -217,17 +249,27 @@ export async function resolveRecipeAuthority(env: RecipeAuthorityEnv, options: R
     return serveStatic('static', false, null);
   }
 
-  const canaryTenant = config.mode === 'canary' && !!options.tenantKey && isRecipeCanaryTenant(options.tenantKey, config.canaryPercent);
-  if (config.mode === 'canary' && !canaryTenant) return serveStatic('static', false, null);
+  let canaryTenant = false;
+  if (config.mode === 'canary') {
+    // Fences already hold here: mode=canary, cutover=true (config), cohort parsed from env only.
+    // The test cohort is consulted solely for the authenticated tenant key; request input never reaches it.
+    const assignment = await resolveRecipeCanaryAssignment({ tenantKey: options.tenantKey, percent: config.canaryPercent, cohort: config.testCohort });
+    canaryTenant = assignment.canary;
+    canaryAssignmentReason = assignment.reason;
+    if (assignment.reason === 'authorized_include') counters.authorizedInclude += 1;
+    if (assignment.reason === 'authorized_exclude') counters.authorizedExclude += 1;
+    if (!canaryTenant) return serveStatic('static', false, null);
+  }
+  const reasonField = canaryAssignmentReason ? { assignmentReason: canaryAssignmentReason } : {};
 
   const outcome = await loadVerifiedD1(env.DB, now);
   if (outcome.kind === 'unavailable') {
     counters.notReady += 1;
     const reasonCode = outcome.readiness.code;
-    emit({ level: 'warn', event: 'recipe_catalog_d1_not_ready', configuredMode: config.mode, selectedSource: 'd1', actualSource: 'static', canary: canaryTenant, reasonCode, fingerprintMatch: false });
+    emit({ level: 'warn', event: 'recipe_catalog_d1_not_ready', configuredMode: config.mode, selectedSource: 'd1', actualSource: 'static', canary: canaryTenant, ...reasonField, reasonCode, fingerprintMatch: false });
     if (config.mode === 'canary') {
       counters.canaryFallback += 1;
-      emit({ level: 'warn', event: 'recipe_catalog_canary_fallback', configuredMode: config.mode, selectedSource: 'd1', actualSource: 'static', canary: true, reasonCode });
+      emit({ level: 'warn', event: 'recipe_catalog_canary_fallback', configuredMode: config.mode, selectedSource: 'd1', actualSource: 'static', canary: true, ...reasonField, reasonCode });
     } else {
       counters.d1Fallback += 1;
       emit({ level: 'error', event: 'recipe_catalog_d1_fallback', configuredMode: config.mode, selectedSource: 'd1', actualSource: 'static', reasonCode });
@@ -236,11 +278,11 @@ export async function resolveRecipeAuthority(env: RecipeAuthorityEnv, options: R
   }
   if (outcome.kind === 'stale') {
     counters.staleServed += 1;
-    emit({ level: 'warn', event: 'recipe_catalog_d1_stale_served', configuredMode: config.mode, selectedSource: 'd1', actualSource: 'd1', canary: canaryTenant, reasonCode: outcome.readiness.code, staleAgeMs: outcome.ageMs, fingerprintMatch: true });
+    emit({ level: 'warn', event: 'recipe_catalog_d1_stale_served', configuredMode: config.mode, selectedSource: 'd1', actualSource: 'd1', canary: canaryTenant, ...reasonField, reasonCode: outcome.readiness.code, staleAgeMs: outcome.ageMs, fingerprintMatch: true });
   }
   counters.d1 += 1;
-  emit({ level: 'info', event: 'recipe_catalog_authority_selected', configuredMode: config.mode, selectedSource: 'd1', actualSource: 'd1', canary: canaryTenant, fingerprintMatch: true, recipeCount: outcome.snapshot.size });
-  return { snapshot: outcome.snapshot, configuredMode: config.mode, selectedSource: 'd1', actualSource: 'd1', canaryTenant, fallbackReason: null, diagnostics };
+  emit({ level: 'info', event: 'recipe_catalog_authority_selected', configuredMode: config.mode, selectedSource: 'd1', actualSource: 'd1', canary: canaryTenant, ...reasonField, fingerprintMatch: true, recipeCount: outcome.snapshot.size });
+  return { snapshot: outcome.snapshot, configuredMode: config.mode, selectedSource: 'd1', actualSource: 'd1', canaryTenant, canaryAssignmentReason, fallbackReason: null, diagnostics };
 }
 
 /** Convenience for Hono handlers: extracts `waitUntil` when an ExecutionContext exists (not in unit harnesses). */

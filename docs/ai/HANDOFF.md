@@ -1,5 +1,10 @@
 # Frigo / Takosan current handoff — 2026-09-19
 
+## Current handoff — T15C-C authorized test cohort mechanism ready, dormant (2026-09-19)
+
+- **Base/branch:** canonical main `b41aa4682481447795350fc1a9eeb1e80887bd0e`; branch `hoplite/aigeai-eca96ae8--t15c-cohort` (PR in body). Implementation `c5d2d63aa06ad51727aaeac6bd6cf01349598e29`.
+- **What:** secret-configured include/exclude digest sets let operator-owned test households prove INSIDE/OUTSIDE 1% canary without touching the customer algorithm or adding any request-controlled switch. Default disabled; parsed/validated only in `canary` mode with cutover — inert in static/shadow/d1 so rollback is a single mode change with no secret cleanup (review P1 resolved); an active cohort requires both an include and an exclude household (`TEST_COHORT_PAIR_REQUIRED`, review P2 resolved); fail-closed validation; no IDs/digests in logs, readiness, API, manifest, workflow, or wrangler config. Details/setup/rollback: `recipe-catalog/T15C_AUTHORIZED_TEST_COHORT.md`.
+- **Production:** unchanged — `shadow / 0 / false`, Worker == main. Classification `T15C_AUTHORIZED_TEST_COHORT_READY`; canary activation remains a separate authorized T15C-B step.
 ## Current handoff — T15C production Canary safe stop (2026-09-18, after T16 merges)
 
 - **Base:** canonical main `b41aa4682481447795350fc1a9eeb1e80887bd0e` (unchanged during the session); docs-only branch `hoplite/aigeai-eca96ae8--t15c-canary`.
