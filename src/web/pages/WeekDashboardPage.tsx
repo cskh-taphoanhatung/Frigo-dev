@@ -91,7 +91,7 @@ export const WeekDashboardPage: React.FC = () => {
     <div className="min-h-screen bg-takosan-cream pb-28">
       <TopBar title="Thực đơn tuần" subtitle={formatDateRange(currentPlan.startDate, currentPlan.endDate)} />
 
-      <div className="px-4 pt-3 space-y-5 max-w-md mx-auto animate-fade-in">
+      <div className="px-4 pt-3 space-y-5 animate-fade-in">
         {workflowError && <InlineError message={workflowError} />}
         {/* Header Bar & Quick Actions */}
         <div className="flex items-center justify-between">

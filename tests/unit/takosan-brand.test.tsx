@@ -15,7 +15,7 @@ import { TAKOSAN_BRAND } from '../../src/web/lib/takosan-brand';
 import { LandingPage } from '../../src/web/pages/LandingPage';
 import { Header } from '../../src/web/components/common/Header';
 import { TopBar } from '../../src/web/components/common/TopBar';
-import { BottomNav } from '../../src/web/components/layout/BottomNav';
+import { BottomNavigationBar } from '../../src/web/design-system/navigation';
 import { EmptyState } from '../../src/web/components/common/EmptyState';
 // @ts-expect-error Tailwind's JavaScript config intentionally has no declaration file.
 import tailwindConfig from '../../tailwind.config.js';
@@ -144,7 +144,7 @@ describe('Primary shell renders Takosan, not Frigo', () => {
     expect(html).not.toContain('/frigo/brand/');
   });
 
-  it('Header, TopBar and BottomNav use the Takosan logo and icon grammar', () => {
+  it('Header, TopBar and bottom navigation use the Takosan logo and icon grammar', () => {
     const header = render(<Header />);
     expect(header).toContain(`src="${TAKOSAN_BRAND.logos.horizontal}"`);
     expect(header).toContain('alt="Takosan"');
@@ -155,7 +155,7 @@ describe('Primary shell renders Takosan, not Frigo', () => {
     expect(top).toContain('alt="Takosan"');
     expect(top).not.toContain('/frigo/brand/');
 
-    const nav = render(<BottomNav />);
+    const nav = render(<BottomNavigationBar />);
     for (const name of ['home', 'fridge', 'scan', 'mealPlan', 'profile']) {
       expect(nav).toContain(`data-takosan-icon="${name}"`);
     }

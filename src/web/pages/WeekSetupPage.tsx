@@ -104,7 +104,7 @@ export const WeekSetupPage: React.FC = () => {
         subtitle={`Bước ${currentStep} / 5`}
       />
 
-      <div className="px-4 pt-4 max-w-md mx-auto space-y-5">
+      <div className="px-4 pt-4 space-y-5">
         {/* Step Progress Bar */}
         <div className="w-full bg-slate-200/80 h-1.5 rounded-full overflow-hidden">
           <div
@@ -462,7 +462,7 @@ export const WeekSetupPage: React.FC = () => {
       </div>
 
       {/* Fixed Next / Complete CTA */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] bg-white/95 backdrop-blur-md border-t border-slate-200/80 max-w-md mx-auto z-40 shadow-lg">
+      <div className="fixed bottom-[calc(68px+env(safe-area-inset-bottom,0px))] md:bottom-0 left-0 right-0 md:left-20 lg:left-64 p-4 md:pb-[calc(1rem+env(safe-area-inset-bottom,0px))] bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-40 shadow-lg">
         <Button
           fullWidth
           size="lg"

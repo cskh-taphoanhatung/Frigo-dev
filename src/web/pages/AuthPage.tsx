@@ -525,12 +525,13 @@ export const AuthPage: React.FC = () => {
         {/* Brand Header */}
         <div className="mt-6 text-center">
           <img src={TAKOSAN_BRAND.logos.horizontal} alt="Takosan" className="h-11 mx-auto mb-3 object-contain" />
-          <h2 className="font-heading font-bold text-xl text-slate-900 tracking-tight">
+          {/* Single page heading (accessibility checklist: sequential levels). */}
+          <h1 className="font-heading font-bold text-xl text-slate-900 tracking-tight">
             {mode === 'login' && 'Đăng nhập vào Takosan'}
             {mode === 'register' && 'Tạo tài khoản Takosan'}
             {mode === 'otp_verify' && 'Xác thực mã OTP'}
             {mode === 'forgot_password' && 'Quên mật khẩu'}
-          </h2>
+          </h1>
           <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto leading-relaxed">
             {mode === 'login' && 'Đồng bộ tủ lạnh, thực đơn tuần và gợi ý món ăn mọi lúc mọi nơi'}
             {mode === 'register' && 'Gia nhập Takosan để quản lý thực phẩm thông minh và giảm lãng phí'}

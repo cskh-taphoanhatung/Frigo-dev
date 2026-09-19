@@ -27,7 +27,7 @@ export const LandingPage: React.FC = () => {
   return (
     <div
       data-testid="landing-page"
-      className="min-h-screen bg-takosan-cream flex flex-col justify-between px-6 py-10 relative overflow-hidden max-w-md mx-auto"
+      className="min-h-screen bg-takosan-cream flex flex-col justify-between px-6 py-10 relative overflow-hidden"
     >
       {/* Brand Header */}
       <div className="relative z-10 text-center pt-4">
@@ -39,7 +39,8 @@ export const LandingPage: React.FC = () => {
             data-testid="landing-logo"
           />
         </div>
-        <p className="font-heading font-extrabold text-xl text-takosan-navy mb-1">{TAKOSAN_BRAND.tagline}</p>
+        {/* Single page heading (accessibility checklist). */}
+        <h1 className="font-heading font-extrabold text-xl text-takosan-navy mb-1">{TAKOSAN_BRAND.tagline}</h1>
         <p className="text-xs text-slate-600 max-w-xs mx-auto leading-relaxed">
           Trợ lý bếp thân thiện: quản lý thực phẩm, giảm lãng phí và gợi ý món ngon chuẩn xác cùng AI.
         </p>

@@ -35,7 +35,7 @@ export const CookingCompletePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-takosan-cream pb-12 max-w-md mx-auto">
+    <div className="min-h-screen bg-takosan-cream pb-12">
       <TopBar title="Hoàn tất món ăn" />
 
       <div className="px-4 pt-4 space-y-5">

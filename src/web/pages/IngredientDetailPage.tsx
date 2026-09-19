@@ -113,7 +113,7 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
 
   if (lotQuery.isPending && !legacyItem) {
     return (
-      <div className="min-h-screen bg-takosan-cream max-w-md mx-auto">
+      <div className="min-h-screen bg-takosan-cream">
         <TopBar showBack title="Chi tiết nguyên liệu" />
         <div className="p-6"><InlineLoading label="Đang tải nguyên liệu…" /></div>
       </div>
@@ -122,7 +122,7 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
 
   if (!item) {
     return (
-      <div className="min-h-screen bg-takosan-cream max-w-md mx-auto">
+      <div className="min-h-screen bg-takosan-cream">
         <TopBar showBack title="Chi tiết nguyên liệu" />
         <div className="p-6 text-center">
           {legacyQuery.isError ? (
@@ -191,7 +191,7 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
   };
 
   return (
-    <div className="min-h-screen bg-takosan-cream pb-12 max-w-md mx-auto">
+    <div className="min-h-screen bg-takosan-cream pb-12">
       <TopBar showBack title={item.name} subtitle="Thông tin nguyên liệu" />
 
       <div className="px-4 pt-4 space-y-4">

@@ -30,10 +30,10 @@ const RESTRICTION_TAGS = [
   { id: 'other', label: 'Khác' },
 ];
 
-export const OnboardingPage: React.FC = () => {
+export const OnboardingPage: React.FC<{ initialStep?: 1 | 2 | 3 }> = ({ initialStep = 1 }) => {
   const navigate = useNavigate();
   const setOnboardingData = useAuthStore((state) => state.setOnboardingData);
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(initialStep);
   const [householdSize, setHouseholdSize] = useState(2);
   const [selectedCuisines, setSelectedCuisines] = useState<string[]>(['vietnamese']);
   const [restrictions, setRestrictions] = useState<string[]>([]);

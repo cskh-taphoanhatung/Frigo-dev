@@ -1,5 +1,5 @@
 import React, { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/query-client';
 import { SessionBoundary } from './components/common/SessionBoundary';
@@ -123,6 +123,23 @@ class AppErrorBoundary extends React.Component<{ children: React.ReactNode }, { 
   }
 }
 
+// Week → Planner compatibility redirects preserve route params. `Navigate`
+// does not interpolate params, so each redirect reads them explicitly.
+const WeekHomeRedirect: React.FC = () => <Navigate to="/planner" replace />;
+const WeekSetupRedirect: React.FC = () => <Navigate to="/planner/new" replace />;
+const WeekPlanRedirect: React.FC = () => {
+  const { planId } = useParams();
+  return <Navigate to={`/planner/${planId ?? ''}`} replace />;
+};
+const WeekMealRedirect: React.FC = () => {
+  const { planId, mealId } = useParams();
+  return <Navigate to={`/planner/${planId ?? ''}/meal/${mealId ?? ''}`} replace />;
+};
+const WeekShoppingRedirect: React.FC = () => {
+  const { planId } = useParams();
+  return <Navigate to={`/planner/${planId ?? ''}/shopping`} replace />;
+};
+
 export const App: React.FC = () => {
   const { isGuest, isOnboarded, userId, householdId } = useAuthStore();
 
@@ -143,6 +160,16 @@ export const App: React.FC = () => {
                   : <AuthPage />} />
                 <Route path="/onboarding" element={userId && householdId
                   ? isOnboarded ? <Navigate to="/" replace /> : <OnboardingPage />
+                  : <Navigate to="/landing" replace />} />
+                {/* Kit step routes (screens 04-06); same server-authoritative flow. */}
+                <Route path="/onboarding/household" element={userId && householdId
+                  ? isOnboarded ? <Navigate to="/" replace /> : <OnboardingPage initialStep={1} />
+                  : <Navigate to="/landing" replace />} />
+                <Route path="/onboarding/preferences" element={userId && householdId
+                  ? isOnboarded ? <Navigate to="/" replace /> : <OnboardingPage initialStep={2} />
+                  : <Navigate to="/landing" replace />} />
+                <Route path="/onboarding/goals" element={userId && householdId
+                  ? isOnboarded ? <Navigate to="/" replace /> : <OnboardingPage initialStep={3} />
                   : <Navigate to="/landing" replace />} />
 
                 {/* Core App Shell */}
@@ -181,12 +208,12 @@ export const App: React.FC = () => {
                   {/* Planner is canonical when enabled; Week stays the visible
                       compatibility surface while the flag is off. Params are
                       preserved in both redirect directions. */}
-                  <Route path="/week" element={isMealPlannerEnabled() ? <Navigate to="/planner" replace /> : <WeekDashboardPage />} />
-                  <Route path="/week/setup" element={isMealPlannerEnabled() ? <Navigate to="/planner/new" replace /> : <WeekSetupPage />} />
+                  <Route path="/week" element={isMealPlannerEnabled() ? <WeekHomeRedirect /> : <WeekDashboardPage />} />
+                  <Route path="/week/setup" element={isMealPlannerEnabled() ? <WeekSetupRedirect /> : <WeekSetupPage />} />
                   <Route path="/week/generating" element={isMealPlannerEnabled() ? <Navigate to="/planner" replace /> : <WeekGeneratingPage />} />
-                  <Route path="/week/:planId" element={isMealPlannerEnabled() ? <Navigate to="/planner/:planId" replace /> : <WeekDashboardPage />} />
-                  <Route path="/week/:planId/meal/:mealId" element={isMealPlannerEnabled() ? <Navigate to="/planner/:planId/meal/:mealId" replace /> : <MealDetailPage />} />
-                  <Route path="/week/:planId/shopping" element={isMealPlannerEnabled() ? <Navigate to="/planner/:planId/shopping" replace /> : <WeekShoppingPage />} />
+                  <Route path="/week/:planId" element={isMealPlannerEnabled() ? <WeekPlanRedirect /> : <WeekDashboardPage />} />
+                  <Route path="/week/:planId/meal/:mealId" element={isMealPlannerEnabled() ? <WeekMealRedirect /> : <MealDetailPage />} />
+                  <Route path="/week/:planId/shopping" element={isMealPlannerEnabled() ? <WeekShoppingRedirect /> : <WeekShoppingPage />} />
                   <Route path="/week/:planId/settings" element={isMealPlannerEnabled() ? <Navigate to="/settings/planning" replace /> : <WeekSettingsPage />} />
                   <Route path="/planner" element={isMealPlannerEnabled() ? <PlannerPage /> : <Navigate to="/week" replace />} />
                   <Route path="/planner/new" element={isMealPlannerEnabled() ? <PlannerPage /> : <Navigate to="/week" replace />} />

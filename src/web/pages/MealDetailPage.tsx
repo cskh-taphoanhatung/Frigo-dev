@@ -78,14 +78,14 @@ export const MealDetailPage: React.FC = () => {
   const recipe = targetSlot.recipe;
 
   return (
-    <div className="min-h-screen bg-takosan-cream pb-32 max-w-md mx-auto">
+    <div className="min-h-screen bg-takosan-cream pb-32">
       <TopBar
         showBack
         title={targetSlot.recipe.title}
         subtitle={`${targetDay.dayNameVi} • ${targetSlot.slotType === 'breakfast' ? 'Bữa sáng' : targetSlot.slotType === 'lunch' ? 'Bữa trưa' : 'Bữa tối'}`}
       />
 
-      <div className="px-4 pt-3 max-w-md mx-auto space-y-4">
+      <div className="px-4 pt-3 space-y-4">
         {workflowError && <InlineError message={workflowError} />}
         {/* Hero Recipe Photo & Quick Specs */}
         <div className="relative w-full h-56 rounded-2xl overflow-hidden bg-slate-100 shadow-xs border border-slate-200/60">
@@ -297,7 +297,7 @@ export const MealDetailPage: React.FC = () => {
       </div>
 
       {/* Sticky Bottom Dual Action Buttons matching Screen 5.2 */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto p-4 bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-30 flex gap-3 shadow-lg">
+      <div className="fixed bottom-[calc(68px+env(safe-area-inset-bottom,0px))] md:bottom-0 left-0 right-0 md:left-20 lg:left-64 p-4 bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-30 flex gap-3 shadow-lg">
         <button
           onClick={() => openSwap(mealId!)}
           className="flex-1 py-3.5 px-4 rounded-2xl bg-white border-2 border-takosan-green text-takosan-green-deep font-heading font-bold text-sm hover:bg-takosan-mint active:scale-98 transition-all flex items-center justify-center gap-1.5"

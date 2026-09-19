@@ -25,10 +25,10 @@ export const WeekSettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-takosan-cream pb-24 max-w-md mx-auto">
+    <div className="min-h-screen bg-takosan-cream pb-24">
       <TopBar showBack title="Cài đặt thực đơn tuần" />
 
-      <div className="px-4 pt-4 max-w-md mx-auto space-y-5">
+      <div className="px-4 pt-4 space-y-5">
         {/* Budget Setting */}
         <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-xs space-y-3">
           <h3 className="font-heading font-bold text-sm text-slate-900">

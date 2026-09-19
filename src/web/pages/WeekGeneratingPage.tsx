@@ -41,7 +41,7 @@ export const WeekGeneratingPage: React.FC = () => {
   }, [generatePlan, navigate, setupDraft]);
 
   return (
-    <div className="min-h-screen bg-takosan-cream text-takosan-navy flex flex-col justify-center gap-8 p-6 max-w-md mx-auto">
+    <div className="min-h-screen bg-takosan-cream text-takosan-navy flex flex-col justify-center gap-8 p-6 mx-auto max-w-[45rem]">
       <div className="text-center">
         <img src={TAKOSAN_BRAND.mascot.calendar} alt="Takosan lên lịch" className="w-28 h-28 mx-auto mb-4" />
         <h2 className="font-heading font-bold text-2xl text-slate-900">

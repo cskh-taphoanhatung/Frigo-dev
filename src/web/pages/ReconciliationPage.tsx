@@ -98,7 +98,7 @@ export const ReconciliationPage: React.FC = () => {
   const observations = observationsQuery.data ?? [];
 
   return (
-    <div className="min-h-screen bg-takosan-cream pb-28 max-w-md mx-auto">
+    <div className="min-h-screen bg-takosan-cream pb-28">
       <TopBar showBack title="Đối chiếu tủ lạnh" subtitle="Bằng chứng từ hóa đơn & ảnh quét" />
 
       <div className="px-4 pt-3 space-y-3">

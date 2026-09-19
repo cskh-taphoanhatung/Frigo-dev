@@ -60,7 +60,7 @@ export const RecipeDetailPage: React.FC = () => {
 
   if (recipeKey && recipeQuery.isPending) {
     return (
-      <div className="min-h-screen bg-takosan-cream max-w-md mx-auto">
+      <div className="min-h-screen bg-takosan-cream">
         <TopBar showBack title="Chi tiết món ăn" />
         <div className="p-4 space-y-4" role="status" aria-live="polite">
           <SkeletonCard className="h-56 rounded-2xl" />
@@ -75,7 +75,7 @@ export const RecipeDetailPage: React.FC = () => {
 
   if (recipeQuery.isError && !notFound) {
     return (
-      <div className="min-h-screen bg-takosan-cream max-w-md mx-auto">
+      <div className="min-h-screen bg-takosan-cream">
         <TopBar showBack title="Chi tiết món ăn" />
         <div className="p-4">
           <InlineError error={recipeQuery.error} onRetry={() => recipeQuery.refetch()} />
@@ -86,7 +86,7 @@ export const RecipeDetailPage: React.FC = () => {
 
   if (notFound || !recipe) {
     return (
-      <div className="min-h-screen bg-takosan-cream max-w-md mx-auto">
+      <div className="min-h-screen bg-takosan-cream">
         <TopBar showBack title="Chi tiết món ăn" />
         <div className="p-8 text-center space-y-3">
           <SearchX className="w-10 h-10 text-slate-300 mx-auto" aria-hidden="true" />
@@ -110,7 +110,7 @@ export const RecipeDetailPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-takosan-cream pb-32 max-w-md mx-auto">
+    <div className="min-h-screen bg-takosan-cream pb-32">
       <TopBar showBack title={recipe.title} />
       {inventoryQuery.isError && <InlineError error={inventoryQuery.error} onRetry={() => inventoryQuery.refetch()} />}
 
@@ -328,7 +328,7 @@ export const RecipeDetailPage: React.FC = () => {
       </div>
 
       {/* Sticky Bottom Start Cooking Button */}
-      <div className="fixed bottom-0 left-0 right-0 p-3.5 pb-[calc(0.875rem+env(safe-area-inset-bottom,0px))] bg-white/95 backdrop-blur-md border-t border-slate-200/80 max-w-md mx-auto z-40 shadow-lg">
+      <div className="fixed bottom-[calc(68px+env(safe-area-inset-bottom,0px))] md:bottom-0 left-0 right-0 md:left-20 lg:left-64 p-3.5 pb-[calc(0.875rem+env(safe-area-inset-bottom,0px))] bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-40 shadow-lg">
         <Button
           fullWidth
           size="lg"

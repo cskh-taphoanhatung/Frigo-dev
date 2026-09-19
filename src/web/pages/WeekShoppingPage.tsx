@@ -106,7 +106,7 @@ export const WeekShoppingPage: React.FC = () => {
   // 6.3 HOÀN TẤT ĐI CHỢ
   if (shoppingMode === 'complete' && completedShopping) {
     return (
-      <div className="min-h-screen bg-takosan-cream flex flex-col justify-between p-6 max-w-md mx-auto animate-fade-in">
+      <div className="min-h-screen bg-takosan-cream flex flex-col justify-between p-6 animate-fade-in">
         <div className="text-center pt-8 space-y-2">
           <h2 className="font-heading font-extrabold text-2xl text-slate-900 tracking-tight">
             Tuyệt vời! 🎉
@@ -182,7 +182,7 @@ export const WeekShoppingPage: React.FC = () => {
 
   // 6.1 (LIST) & 6.2 (ACTIVE SHOPPING MODE)
   return (
-    <div className="min-h-screen bg-takosan-cream pb-32 max-w-md mx-auto">
+    <div className="min-h-screen bg-takosan-cream pb-32">
       <TopBar
         showBack
         title={shoppingMode === 'active' ? 'Đang đi chợ' : 'Danh sách đi chợ'}
@@ -336,7 +336,7 @@ export const WeekShoppingPage: React.FC = () => {
       </div>
 
       {/* Sticky Bottom Actions */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-md border-t border-slate-200/80 max-w-md mx-auto z-40 shadow-lg">
+      <div className="fixed bottom-[calc(68px+env(safe-area-inset-bottom,0px))] md:bottom-0 left-0 right-0 md:left-20 lg:left-64 p-4 bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-40 shadow-lg">
         {shoppingMode === 'list' ? (
           <Button
             fullWidth

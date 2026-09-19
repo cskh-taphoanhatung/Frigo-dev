@@ -35,7 +35,7 @@ export const ProfilePage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-takosan-cream pb-24 max-w-md mx-auto">
+    <div className="min-h-screen bg-takosan-cream pb-24">
       <TopBar title="Hồ sơ" />
 
       <div className="px-4 pt-4 space-y-4">
