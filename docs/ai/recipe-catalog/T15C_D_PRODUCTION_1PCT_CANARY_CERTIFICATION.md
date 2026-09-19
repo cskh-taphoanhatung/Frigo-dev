@@ -16,16 +16,24 @@ not provisioned and production Canary was not dispatched.
 repository_id=1368281478
 repository_full_name=frigo-6/Frigo-dev
 starting_main=347b536950cf54d25a2d6a880c3c2cb3d8c8f329
-ending_main=347b536950cf54d25a2d6a880c3c2cb3d8c8f329
+ending_main=763d7e904798dc513c60d4da5f876598570c12fb
 task_branch=codex/t15c-production-canary-1pct
-PR=NOT_OPEN_AT_AUDIT_TIME
-merge_sha=NOT_APPLICABLE
+PR=#40 (MERGED)
+merge_sha=763d7e904798dc513c60d4da5f876598570c12fb
 ```
 
 Repository ID was resolved through the GitHub API. PR #38 is merged as
 `8163f05ed1af361f9c0658361df745227e6eae20`; PR #39 is merged as the current
 main `347b536950cf54d25a2d6a880c3c2cb3d8c8f329`. The task branch was created
 from that exact clean canonical main.
+
+The safe-stop receipt commit `16958c605c1d4659591f2c02faecf593d81a7a6a`
+passed exact-head CI run `35410893001` and merged normally through PR #40 as
+`763d7e904798dc513c60d4da5f876598570c12fb`. Exact-main CI run `35411093064`
+passed. Automatic Deploy run `35411300235` deployed only staging on the exact
+merge SHA with `static / 0 / false` (one convergence attempt / 602 ms) and
+skipped production. A final public readiness recheck still reported production
+at `b41aa468...`, proving the documentation merge caused no production change.
 
 ## Automatic staging deploy
 
@@ -159,4 +167,3 @@ D1_user_visible=NO
 5. Roll back through the same protected workflow to `shadow / 0 / false` while
    retaining the cohort secrets, and stop. Do not advance to 2%, 5%, `d1`,
    T14G, or media population.
-

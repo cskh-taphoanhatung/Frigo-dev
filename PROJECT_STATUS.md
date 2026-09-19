@@ -12,6 +12,7 @@ and no secret/config/deploy/D1/R2 mutation occurred. Status
 `T15C_D_BLOCKED_AUTHORIZED_TEST_HOUSEHOLDS_UNAVAILABLE` · `FULL_D1_NOT_ENABLED`
 · `MEDIA_POPULATION_DEFERRED` · `T14G_NOT_STARTED`. Receipt:
 `docs/ai/recipe-catalog/T15C_D_PRODUCTION_1PCT_CANARY_CERTIFICATION.md`.
+Receipt PR #40 merged as `763d7e904798dc513c60d4da5f876598570c12fb` after exact-head CI; exact-main CI `35411093064` and staging Deploy `35411300235` passed, while production remained skipped and unchanged.
 
 ## T15C-C — authorized canary test cohort mechanism ready; production still shadow (2026-09-19)
 

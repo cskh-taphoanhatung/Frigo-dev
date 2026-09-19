@@ -20,6 +20,7 @@ R2, media, or authority mutation occurred. Classification:
 `T15C_D_BLOCKED_AUTHORIZED_TEST_HOUSEHOLDS_UNAVAILABLE`. Production stays
 `shadow / 0 / false`. Receipt:
 `recipe-catalog/T15C_D_PRODUCTION_1PCT_CANARY_CERTIFICATION.md`.
+Receipt PR #40 passed exact-head CI `35410893001`, merged as `763d7e904798dc513c60d4da5f876598570c12fb`, then passed exact-main CI `35411093064` and automatic staging Deploy `35411300235` on `static/0/false`; production was skipped and remained unchanged.
 
 ## Current T15C-C — authorized canary test cohort mechanism READY (dormant; production still shadow) — 2026-09-19
 
