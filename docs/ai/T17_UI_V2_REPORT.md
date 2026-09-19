@@ -249,6 +249,46 @@ remaining `slate-*` legacy palette (still the largest open gap), screen-reader
 walkthroughs of legacy pages, and the 17 canonical screenshots still await
 human design review before baselining. Status remains `T17_PARTIAL`.
 
+## Continuation 5 — release preparation (same date)
+
+Preparing the pull request surfaced a **P1 visual defect** while inspecting
+the freshly captured desktop screenshot: the sidebar "Quét nguyên liệu" CTA
+rendered as an empty white pill. Root cause: the Tailwind `semantic` color
+keys were declared camelCase (`actionPrimary`), which Tailwind exposes
+verbatim as `bg-semantic-actionPrimary`, while every page uses the kit's
+kebab-case utilities (`bg-semantic-action-primary`). Only the single-word keys
+(`background`, `surface`, `border`) compiled; **25 of 28** semantic utilities
+referenced in `src/web` produced no CSS — so most of the new semantic layer
+(text colours, action colours, soft fills, strong borders) was silently
+falling through to the browser default on every new screen.
+
+Fix: kebab-case keys in `tailwind.config.js`; a new unit guard
+(`takosan-brand.test.tsx › every semantic-* utility referenced in src/web
+resolves to a Tailwind color key`) fails against the old config and passes
+now. Built-CSS audit after rebuild: **28/28** used utilities present.
+
+This is exactly the class of defect the outstanding "human design review of
+screenshots" gap was meant to catch; it was found by inspecting the captures
+rather than by any automated gate, which is why that review remains listed as
+required before `T17_COMPLETE`.
+
+Verification after the token fix: `pnpm lint` PASS, `pnpm typecheck` PASS,
+full `pnpm test` **178 files / 4047 tests PASS** (one new guard), `pnpm build`
+PASS, T17 Playwright at 390/768/1440 **51 passed / 0 failed** with fresh
+canonical captures inspected (sidebar CTA, active-nav highlight, selected
+chips and semantic text now render). Worker diff remains 0.
+
+### Release path (what this branch can and cannot do)
+
+Per `AGENT_RULES.md` rule 19 and `DEPLOYMENT.md`, the agent does not deploy.
+The branch is delivered as a pull request into `main`; hosted CI must pass on
+the PR and again on the `main` push; staging deploys automatically from `main`
+(`wrangler.staging.jsonc` is present); production is a manual
+`workflow_dispatch` by an operator under the `production` Environment with
+`confirm_production: true`, a full SHA contained in `main`, and the approved
+`hardened_sha`. There are **no new migrations** in this branch, so the
+separate D1 migration workflow is not required for this release.
+
 ## Verification (exact, post-implementation)
 
 - `pnpm lint` — pass (no output).

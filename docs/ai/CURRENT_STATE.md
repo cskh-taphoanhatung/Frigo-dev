@@ -2,6 +2,15 @@
 
 ## Current T17 — continuation 4: full-diff review with 10 latent defects fixed (2026-09-19)
 
+**Continuation 5 — release prep (same day).** Inspecting fresh screenshots
+for the PR exposed a **P1**: Tailwind `semantic` colour keys were camelCase so
+25 of 28 kebab-case `semantic-*` utilities used across the new UI compiled to
+no CSS (empty sidebar CTA, missing text/action colours). Fixed in
+`tailwind.config.js`; new unit guard fails on the old config. Gates after fix:
+lint PASS, typecheck PASS, vitest **178/4047**, build PASS, T17 Playwright
+390/768/1440 **51/51**. PR opened into `main` (see HANDOFF for number/CI).
+Deployment remains operator-driven per `DEPLOYMENT.md`; no new migrations.
+
 **Continuation 4b (same day) — second pass + first local T13 run.** Three more
 defects fixed: `FoodPreferencesPage` no longer flips onboarding completion
 client-side (uses `setOnboardingFromServer(auth.isOnboarded, draft)`); nav

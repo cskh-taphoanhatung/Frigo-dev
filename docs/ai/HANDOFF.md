@@ -4,6 +4,12 @@
 
 ### Continuation 4 (same day) — full-diff review, latent defects fixed
 
+### Continuation 5 (same day) — release preparation
+
+- **P1 found from screenshots, not tests:** camelCase `semantic` colour keys in `tailwind.config.js` meant `bg-semantic-action-primary`, `text-semantic-text-*`, `*-soft`, `border-strong` etc. compiled to **no CSS**. Fixed (kebab keys); `takosan-brand.test.tsx` now guards every `semantic-*` utility in `src/web` against the config. Re-verified: vitest 178/4047, T17 390/768/1440 51/51, build PASS.
+- **Release path:** PR into `main` opened from this branch; CI hosted must be green; staging deploys automatically from `main`; production is a manual operator dispatch (`Deploy` workflow, `production` Environment, `confirm_production`, full SHA + `hardened_sha`). No new migrations in this branch. The agent does not deploy (rule 19).
+- **Still open before `T17_COMPLETE`:** slate-palette migration (856 sites), human design review of the captures (this continuation shows why), WCAG contrast on legacy pages.
+
 **4b addendum:** three more fixes (FoodPreferences onboarding-flag leak; per-nav `layoutId`; dev-OTP `<button>`). **T13 suite first local run: 60/60** after two test-only fixes — `/profile`→`/me` target, and the presentation test's `localStorage.frigo_onboarded` shim (broken on base by migration 0038, not by T17) replaced with the real onboarding flow. Do **not** seed the preview profile as onboarded: the T17 screenshot spec and screens 04-06 need the fresh preview user to land on onboarding. Full T17 matrix green after one more test-only `networkidle` fix (12/12 re-verify, 6 widths). Prefer `--reporter=line` and make sure no `security-preview.mjs` is left listening on :3000 before a Playwright run — a leaked server from a killed run caused spurious 1.0 m timeouts once.
 
 - **Scope:** every file in `git diff 769d085..HEAD` reviewed; 10 product defects + 1 test defect fixed. Table with severity/finding/fix in `docs/ai/T17_UI_V2_REPORT.md` §Continuation 4.

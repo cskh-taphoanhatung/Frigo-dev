@@ -60,6 +60,26 @@ describe('Takosan brand contract', () => {
       expect(svg).not.toMatch(/<text/i);
     }
   });
+
+  it('every semantic-* utility referenced in src/web resolves to a Tailwind color key', () => {
+    // Tailwind exposes nested color keys verbatim: a camelCase key would
+    // silently compile no CSS for the kebab-case utilities pages use.
+    const semantic = tailwindConfig.theme.extend.colors.semantic as Record<string, string>;
+    const keys = new Set(Object.keys(semantic));
+    const used = new Set<string>();
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const full = resolve(dir, entry.name);
+        if (entry.isDirectory()) walk(full);
+        else if (/\.(tsx?|css)$/.test(entry.name)) {
+          for (const m of readFileSync(full, 'utf8').matchAll(/[a-z]+-semantic-([a-zA-Z-]+?)(?:\/\d+)?(?=[\s"'`)}\]])/g)) used.add(m[1]);
+        }
+      }
+    };
+    walk(resolve(root, 'src/web'));
+    expect(used.size).toBeGreaterThan(10);
+    expect([...used].filter((k) => !keys.has(k))).toEqual([]);
+  });
 });
 
 describe('PWA metadata', () => {

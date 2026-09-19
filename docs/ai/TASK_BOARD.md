@@ -36,6 +36,13 @@
 
 ### T17 continuation 4 — full-diff code review (same day)
 
+### T17 continuation 5 — release preparation (same day)
+
+- [done] P1: kebab-case Tailwind `semantic` keys — 25/28 semantic utilities were compiling to nothing; guard test added; built-CSS audit 28/28.
+- [done] Fresh canonical screenshots at 390/768/1440 inspected; T17 suite 51/51 at those widths; vitest 178/4047; lint/typecheck/build PASS.
+- [done] PR opened `feat/t17-takosan-ui-v2 → main` with verification evidence; CI hosted tracked.
+- [operator] Merge → main CI → staging auto-deploy → manual production dispatch (`DEPLOYMENT.md` §Production gate). Agent does not deploy (rule 19).
+
 - [done] 4b second pass: FoodPreferences no longer flips onboarding client-side; per-nav indicator `layoutId`; dev-OTP autofill is a `<button>`.
 - [done] First local T13 Playwright run: 54/60 → **60/60** (logout test target `/profile`→`/me`; presentation test's fake-onboarding shim replaced by the real flow — pre-existing failure confirmed on base).
 - [done] Full T17 matrix: 360 16/16; other widths 82 pass + 2 by-design skips; one test-only `networkidle` stall fixed and re-verified 12/12 at all six widths.
