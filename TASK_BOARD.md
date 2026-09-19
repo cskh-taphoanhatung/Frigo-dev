@@ -1,11 +1,14 @@
-## Current T16 — PWA cache and Google recovery release candidate (2026-09-19)
+## Current T16 — PWA cache and Google recovery deployed (2026-09-19)
 
 - [done] Root cause: live `/auth` + `/sw.js` cache hits, wrong `_headers` worker path, fixed `takosan-pwa-v2` cache; clean Chromium proves real Google GIS works.
 - [done] Release-SHA worker/cache, best-effort stale-client navigation after claim, correct no-store/immutable headers, Google numeric width + retry recovery, and exact-SHA deploy smoke implemented.
 - [done] Independent review remediated; local Wrangler effective headers and two-release Chromium update PASS.
 - [done] Full gates: **178 files / 4046 tests**, lint, typecheck, migration smoke, build, shell syntax, diff check.
 - [limit] Reload/reopen/navigation is the reliable recovery boundary for legacy tabs that are closed, suspended, or blocked from running Service Worker code.
-- [next] Push -> exact-head CI -> merge -> exact-main CI/staging -> protected production deploy at `shadow/0/false` -> live cache/SW/Google verification.
+- [done] PR #42 / exact-head CI `35415335137`; merge main `6a016f1...`; exact-main CI `35415536459`; staging `35415763483`.
+- [done] Production Deploy `35415843682`, Worker `2f228dc9-d97b-4eb1-8cff-9a0f2df3b51c`, D1 38/0038, recipe `shadow/0/false`.
+- [done] Live exact-SHA readiness, no-store shell/worker, immutable assets, Google popup and exact-SHA Service Worker/cache verified.
+- [next] Capture one manual real-inbox OTP receipt without exposing the code.
 
 ## Current T15C-D — production 1% Canary certification — safe stop (2026-09-19)
 

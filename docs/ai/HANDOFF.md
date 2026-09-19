@@ -1,6 +1,6 @@
 # Frigo / Takosan current handoff — 2026-09-19
 
-## Current handoff — T16 PWA cache and Google recovery ready for release
+## Current handoff — T16 PWA cache and Google recovery deployed
 
 - **Branch/base:** `codex/auth-pwa-cache-google-recovery` from canonical main `ff07773ce8e146923870698928a1b8b4c451f8e6`.
 - **Root cause:** production `/auth` and `/sw.js` were Cloudflare cache hits; app registration used `/sw.js` while `_headers` configured `/service-worker.js`; worker cache name was fixed at `takosan-pwa-v2`. A clean browser loaded real Google GIS and opened the Google account popup, isolating the reported GIS failure to stale/blocked client state rather than the backend credential contract.
@@ -9,7 +9,9 @@
 - **Verification:** focused 116/116, full Vitest 178 files / 4046 tests, lint, typecheck, migration smoke, build, shell syntax and diff check PASS. Local Wrangler returned the intended effective headers. Two-release Chromium proved one clean-install document request, one update navigation, exact new controller and only the new release cache.
 - **Browser limit:** no release can force a closed, suspended or browser-blocked old tab to execute new code. Awaiting its navigation inside Service Worker activation deadlocks the document fetch, so refresh is best-effort after claim; reload/reopen/navigation is the reliable recovery path, and clients on this release gain load/online/foreground checks for future updates.
 - **Recorded non-gate failure:** `pnpm audit --audit-level high` reports the unchanged lockfile's 21 advisories / 6 high in Wrangler/Miniflare, jsdom and build-time sharp paths. No dependency changed here and these packages are not added to the browser runtime; handle in a separate reviewed dependency upgrade.
-- **Production boundary:** no production mutation yet; no migration/data/payment/canary change. Deploy only through protected `deploy.yml` with `recipe_catalog_mode=shadow` and percent `0`. After merge, require exact-head CI, exact-main CI/staging, production approval, then live `/auth`/`sw.js`/asset headers, embedded SHA, readiness and Google popup verification.
+- **Merge/deploy receipt:** PR #42 head `54dd81b3ba260843ed39d625c8e0b7c2f4cef831` passed CI `35415335137`, merged as main `6a016f185cae9c51ab5a1fc873a8a05a10a57edd`, then passed exact-main CI `35415536459` and staging Deploy `35415763483`. Protected production Deploy `35415843682` succeeded on Worker `2f228dc9-d97b-4eb1-8cff-9a0f2df3b51c`, D1 ledger 38 / tip 0038, recipe `shadow/0/false`.
+- **Production verification:** readiness identifies the exact main SHA; DB/queue are OK and only `CONFIG_PLUS_GRANT_SECRET_MISSING` remains. `/auth` is current + no-store (Cloudflare Assets reports HIT), `/sw.js` is MISS + no-store and embeds the exact SHA, hashed assets are immutable. Clean Chromium opened the real Google account chooser and showed the exact-SHA controller plus sole matching Takosan cache.
+- **Safety:** no migration, D1/R2/customer-data write, payment/PayOS change, Canary activation, full-D1 cutover, Inventory Truth change or Week change. Real inbox OTP receipt remains a separate manual evidence item.
 
 ## Current handoff — T15C-D production 1% Canary blocked before mutation (2026-09-19)
 
