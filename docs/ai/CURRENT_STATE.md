@@ -1,5 +1,26 @@
 # Frigo / Takosan current authority — 2026-09-19
 
+## Current T15C-D — 1% production Canary safe stop (2026-09-19)
+
+Canonical repository ID `1368281478` resolves to `frigo-6/Frigo-dev`; PR #38 and
+PR #39 are merged and canonical main is `347b536950cf54d25a2d6a880c3c2cb3d8c8f329`.
+Exact-main CI `35409762462` and automatic staging Deploy `35409964105` passed;
+staging used `static/0/false` and production was skipped. Fresh local baseline
+passed seed/import, typecheck, lint, migration smoke through 0038, build, and
+full Vitest **178 files / 4044 tests**. Public production remains Worker
+`6c336889-680d-4cc3-b03b-1007849aa738` at `b41aa468...`, `shadow/0/false`,
+database/queue/email healthy, and 71 deterministic user-facing recipes; only
+the existing `CONFIG_PLUS_GRANT_SECRET_MISSING` warning remains.
+
+No authorized operator-owned INCLUDE/EXCLUDE household pair was supplied and no
+customer account was inspected or enumerated. Local Wrangler is unauthenticated,
+so the fresh direct D1 drift/FK/quick-check/tail audit and Worker secret
+provisioning were also unavailable. No secret, config, deploy, D1, migration,
+R2, media, or authority mutation occurred. Classification:
+`T15C_D_BLOCKED_AUTHORIZED_TEST_HOUSEHOLDS_UNAVAILABLE`. Production stays
+`shadow / 0 / false`. Receipt:
+`recipe-catalog/T15C_D_PRODUCTION_1PCT_CANARY_CERTIFICATION.md`.
+
 ## Current T15C-C — authorized canary test cohort mechanism READY (dormant; production still shadow) — 2026-09-19
 
 `RECIPE_CATALOG_TEST_COHORT_ENABLED` + `RECIPE_CATALOG_TEST_INCLUDE`/`EXCLUDE` (Worker secrets holding SHA-256 digests of `recipe-catalog-test-cohort:<householdId>`) give operator-owned test households a deterministic server-side include/exclude override for the D1 canary; precedence exclude > include > `isRecipeCanaryTenant`. Parsed and evaluated only when mode=`canary` (plus cutover, switch exactly `true`, authenticated tenant); in static/shadow/d1 the variables are inert, so emergency rollback is the single change canary→shadow/static with no secret cleanup (review P1). An active cohort must name ≥1 include AND ≥1 exclude household (`TEST_COHORT_PAIR_REQUIRED`, review P2). Malformed, duplicate, overlapping, oversized, half-applied, or one-sided canary configuration is fatal in production readiness (`CONFIG_RECIPE_CATALOG_TEST_COHORT`) and serves static loudly at request time. Diagnostics gain only a bounded `assignmentReason`. Normal FNV bucketing is byte-for-byte unchanged. No migration; `deploy.yml`/wrangler/release manifest untouched and guard-tested to stay that way. Classification `T15C_AUTHORIZED_TEST_COHORT_READY`; production remains `shadow / 0 / false`. Receipt: `recipe-catalog/T15C_AUTHORIZED_TEST_COHORT.md`.
