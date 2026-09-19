@@ -1,6 +1,30 @@
 # Frigo / Takosan current authority — 2026-09-19
 
-## Current T17 — Takosan UI V2 partial redesign, continuation 2 delivered (2026-09-19)
+## Current T17 — continuation 3 delivered (2026-09-19)
+
+Third checkpoint on `feat/t17-takosan-ui-v2`: all 86 indiscriminate
+`transition-all` utilities were replaced by a scoped `transition-tap` token
+(enumerated properties; layout never transitions); the remaining per-screen
+motion stories landed (cooking steps transition directionally via Slide,
+inventory list animates add/remove keyed by stable server identity with
+AnimatePresence/layout, scan crossfade verified reduced-motion-safe); the
+state-class matrix gained bottom-sheet, honest offline-banner and 200% text
+zoom tests. The zoom gate exposed real defects — rem-sized nav icons forced
+flex min-content overflow, the Profile hub card and Home header refused to
+truncate, RecipeCard/IngredientRow rows could not wrap, and the inventory
+search input lacked `min-w-0` — all fixed and verified clean by probe at 390
+and 360 (desktop and mobile emulation) and by the suite at all six widths.
+Two test-code defects (case-sensitive offline regex; zoom measured before
+layout settle) were fixed test-only and re-verified **12/12** at all widths.
+Gates: lint PASS, typecheck PASS, full vitest **178 files / 4046 tests PASS**,
+migration smoke PASS, build PASS; the full T17 matrix run passed everything
+except those two test defects, which the targeted re-run proves green.
+Remaining honest gaps for `T17_COMPLETE`: 856 `slate-*` neutral-palette sites
+still on legacy pages (brand `takosan-*` aliases are kit-permitted), human
+design review of the canonical screenshots, and a first local run of the T13
+Playwright inventory suite. Worker/PayOS diff remains zero; `main` untouched.
+
+## Previous T17 — continuation 2 (2026-09-19)
 
 Status `T17_PARTIAL` per the Takosan Redesign OS v2.0.0 kit. Branch
 `feat/t17-takosan-ui-v2` from live main `769d08597563f816ef9c1dd9523fdafb687de3e2`

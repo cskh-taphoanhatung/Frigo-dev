@@ -19,7 +19,7 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   ...props
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center font-heading font-semibold tracking-tight transition-all duration-150 active:scale-[0.98] tap-target disabled:opacity-50 disabled:pointer-events-none rounded-xl cursor-pointer select-none';
+  const baseStyles = 'inline-flex items-center justify-center font-heading font-semibold tracking-tight transition-tap duration-150 active:scale-[0.98] tap-target disabled:opacity-50 disabled:pointer-events-none rounded-xl cursor-pointer select-none';
 
   const variants = {
     primary: 'bg-takosan-green text-white shadow-sm hover:bg-takosan-green-hover active:bg-takosan-green-deep',

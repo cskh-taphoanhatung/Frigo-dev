@@ -26,7 +26,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ matchResult, onClick, co
     return (
       <div
         onClick={onClick}
-        className="bg-white rounded-2xl overflow-hidden border border-slate-200/80 shadow-card hover:border-takosan-green/50 hover:shadow-elevated active:scale-[0.97] transition-all cursor-pointer flex flex-col w-48 shrink-0"
+        className="bg-white rounded-2xl overflow-hidden border border-slate-200/80 shadow-card hover:border-takosan-green/50 hover:shadow-elevated active:scale-[0.97] transition-tap cursor-pointer flex flex-col w-48 shrink-0"
       >
         <div className="relative w-full h-32 overflow-hidden bg-slate-100">
           <img
@@ -76,7 +76,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ matchResult, onClick, co
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-2xl p-3.5 flex gap-4 items-center border border-slate-200/80 shadow-card hover:border-takosan-green/50 hover:shadow-elevated active:scale-[0.99] transition-all cursor-pointer"
+      className="bg-white rounded-2xl p-3.5 flex gap-4 items-center border border-slate-200/80 shadow-card hover:border-takosan-green/50 hover:shadow-elevated active:scale-[0.99] transition-tap cursor-pointer"
     >
       <div className="relative w-[104px] h-[104px] rounded-xl overflow-hidden shrink-0 bg-slate-100 shadow-xs">
         <img
@@ -116,7 +116,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ matchResult, onClick, co
           {recipe.description}
         </p>
 
-        <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-100 text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-x-1.5 mt-2.5 pt-2 border-t border-slate-100 text-xs">
           <span className="flex items-center gap-1 text-slate-600 font-semibold">
             <Clock className="w-4 h-4 text-takosan-green" />
             <span>{recipe.cookTimeMinutes} phút</span>

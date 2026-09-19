@@ -49,7 +49,7 @@ export const IngredientRow: React.FC<IngredientRowProps> = ({
       onClick={onClick}
       data-testid="inventory-row"
       data-item-id={id}
-      className="bg-white rounded-2xl p-3.5 flex items-center justify-between border border-slate-200/80 shadow-card hover:border-takosan-green/40 hover:shadow-elevated active:scale-[0.99] transition-all cursor-pointer"
+      className="bg-white rounded-2xl p-3.5 flex flex-wrap items-center justify-between gap-y-1 border border-slate-200/80 shadow-card hover:border-takosan-green/40 hover:shadow-elevated active:scale-[0.99] transition-tap cursor-pointer"
     >
       <div className="flex items-center gap-3.5 min-w-0">
         <div className="w-14 h-14 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 p-2 overflow-hidden">
@@ -83,7 +83,9 @@ export const IngredientRow: React.FC<IngredientRowProps> = ({
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5 shrink-0 ml-2" onClick={(e) => e.stopPropagation()}>
+      {/* Wraps under the identity block at 200% text zoom instead of
+          forcing document-level horizontal overflow. */}
+      <div className="flex flex-wrap items-center justify-end gap-1.5 ml-auto" onClick={(e) => e.stopPropagation()}>
         {onUpdateQuantity && (
           <QuantityStepper
             quantity={quantity}

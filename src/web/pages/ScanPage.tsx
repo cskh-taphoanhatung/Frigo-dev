@@ -137,7 +137,7 @@ export const ScanPage: React.FC = () => {
             reset();
             navigate('/');
           }}
-          className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white flex items-center justify-center tap-target transition-all"
+          className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white flex items-center justify-center tap-target transition-tap"
           aria-label="Quay lại"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -153,7 +153,7 @@ export const ScanPage: React.FC = () => {
                 setScanType(tab.id);
               }}
               className={clsx(
-                'px-3.5 py-1.5 rounded-lg text-xs font-heading font-semibold transition-all relative tap-target',
+                'px-3.5 py-1.5 rounded-lg text-xs font-heading font-semibold transition-tap relative tap-target',
                 activeTab === tab.id
                   ? 'bg-takosan-green text-white shadow-xs'
                   : 'text-slate-300 hover:text-white'

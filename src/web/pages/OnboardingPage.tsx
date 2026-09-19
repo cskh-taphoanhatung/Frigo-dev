@@ -91,7 +91,7 @@ export const OnboardingPage: React.FC<{ initialStep?: 1 | 2 | 3 }> = ({ initialS
               <div className="flex gap-2">
                 {[1, 2, 3, 4, 5].map((number) => (
                   <button key={number} type="button" onClick={() => setHouseholdSize(number)} className={clsx(
-                    'flex flex-1 flex-col items-center gap-1 rounded-2xl border py-3 text-sm font-bold transition-all',
+                    'flex flex-1 flex-col items-center gap-1 rounded-2xl border py-3 text-sm font-bold transition-tap',
                     householdSize === number ? 'border-takosan-green bg-takosan-green text-white shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-700',
                   )}>
                     <Users className="h-4 w-4" />
@@ -107,7 +107,7 @@ export const OnboardingPage: React.FC<{ initialStep?: 1 | 2 | 3 }> = ({ initialS
                 {CUISINE_TAGS.map((tag) => {
                   const selected = selectedCuisines.includes(tag.id);
                   return <button key={tag.id} type="button" onClick={() => toggle(tag.id, selectedCuisines, setSelectedCuisines)} className={clsx(
-                    'flex items-center gap-1.5 rounded-full border px-4 py-2.5 text-xs font-semibold transition-all',
+                    'flex items-center gap-1.5 rounded-full border px-4 py-2.5 text-xs font-semibold transition-tap',
                     selected ? 'border-takosan-green bg-takosan-mint text-takosan-green-deep' : 'border-slate-200 bg-white text-slate-700',
                   )}>{tag.label}{selected && <Check className="h-3.5 w-3.5" />}</button>;
                 })}
@@ -131,7 +131,7 @@ export const OnboardingPage: React.FC<{ initialStep?: 1 | 2 | 3 }> = ({ initialS
               {RESTRICTION_TAGS.map((tag) => {
                 const selected = restrictions.includes(tag.id);
                 return <button key={tag.id} type="button" onClick={() => toggle(tag.id, restrictions, setRestrictions)} className={clsx(
-                  'rounded-2xl border px-4 py-3 text-sm font-semibold transition-all',
+                  'rounded-2xl border px-4 py-3 text-sm font-semibold transition-tap',
                   selected ? 'border-rose-500 bg-rose-50 text-rose-800' : 'border-slate-200 bg-white text-slate-700',
                 )}>{selected ? '× ' : ''}{tag.label}</button>;
               })}
@@ -158,7 +158,7 @@ export const OnboardingPage: React.FC<{ initialStep?: 1 | 2 | 3 }> = ({ initialS
                 const Icon = goal.icon;
                 const selected = primaryGoal === goal.id;
                 return <button key={goal.id} type="button" onClick={() => setPrimaryGoal(goal.id)} className={clsx(
-                  'flex w-full items-center gap-4 rounded-3xl border bg-white p-4 text-left shadow-sm transition-all',
+                  'flex w-full items-center gap-4 rounded-3xl border bg-white p-4 text-left shadow-sm transition-tap',
                   selected ? 'border-takosan-green ring-2 ring-takosan-green/20' : 'border-slate-200',
                 )}>
                   <span className={clsx('flex h-12 w-12 items-center justify-center rounded-2xl', selected ? 'bg-takosan-mint text-takosan-green' : 'bg-slate-100 text-slate-500')}><Icon className="h-5 w-5" /></span>

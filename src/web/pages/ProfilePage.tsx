@@ -40,8 +40,8 @@ export const ProfilePage: React.FC = () => {
 
       <div className="px-4 pt-4 space-y-4">
         {/* Profile Card matching 7.1 */}
-        <Card className="p-4 flex items-center justify-between border-slate-200/80 shadow-xs bg-white">
-          <div className="flex items-center gap-3.5">
+        <Card className="p-4 flex items-center justify-between gap-3 border-slate-200/80 shadow-xs bg-white">
+          <div className="flex items-center gap-3.5 min-w-0">
             {avatarUrl ? (
               <img
                 src={avatarUrl}
@@ -53,13 +53,13 @@ export const ProfilePage: React.FC = () => {
                 {initialLetter}
               </div>
             )}
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h3 className="font-heading font-bold text-base text-slate-900 leading-tight">
+                <h3 className="font-heading font-bold text-base text-slate-900 leading-tight truncate">
                   {displayName || 'Khách'}
                 </h3>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-500 mt-0.5 truncate">
                 {email || 'Chưa liên kết email'}
               </p>
             </div>
@@ -67,7 +67,7 @@ export const ProfilePage: React.FC = () => {
 
           <Link
             to={isGuest ? '/auth?mode=login&returnTo=%2Fplus' : '/plus'}
-            className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 font-heading font-bold text-xs shadow-xs hover:brightness-105 active:scale-95 transition-[filter,transform,box-shadow] flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2"
+            className="shrink-0 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 font-heading font-bold text-xs shadow-xs hover:brightness-105 active:scale-95 transition-[filter,transform,box-shadow] flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2"
           >
             <Sparkles aria-hidden="true" className="w-3.5 h-3.5 fill-current" />
             <span>{isGuest ? 'Đăng nhập để nâng cấp' : isPlus ? 'VIP Plus' : 'Nâng cấp'}</span>
@@ -112,7 +112,7 @@ export const ProfilePage: React.FC = () => {
         <div className="pt-2">
           <button
             onClick={() => setConfirmLogout(true)}
-            className="w-full py-3 px-4 rounded-xl border border-rose-200 bg-rose-50/60 hover:bg-rose-100/70 text-rose-700 font-medium text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+            className="w-full py-3 px-4 rounded-xl border border-rose-200 bg-rose-50/60 hover:bg-rose-100/70 text-rose-700 font-medium text-sm flex items-center justify-center gap-2 transition-tap active:scale-[0.98]"
           >
             <LogOut className="w-4 h-4 stroke-[2]" />
             <span>Đăng xuất khỏi tài khoản</span>

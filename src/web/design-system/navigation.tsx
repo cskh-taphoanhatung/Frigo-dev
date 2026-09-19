@@ -43,7 +43,9 @@ const NavLinkContent: React.FC<{ item: NavItem; active: boolean; withLabel: bool
   <>
     <span
       className={clsx(
-        'relative flex w-11 h-11 items-center justify-center rounded-card transition-colors',
+        // max-w-full keeps the icon box shrinkable at 200% text zoom
+        // (layout/mobile.md: no horizontal scroll at 200%).
+        'relative flex w-11 h-11 max-w-full items-center justify-center rounded-card transition-colors',
         active ? 'bg-semantic-success-soft text-semantic-action-primary' : 'text-semantic-text-muted'
       )}
     >
@@ -80,7 +82,7 @@ export const BottomNavigationBar: React.FC = () => {
         {NAV_ITEMS.slice(0, 2).map((item) => (
           <NavItemButton key={item.path} item={item} />
         ))}
-        <li className="flex-1 flex items-start justify-center">
+        <li className="flex-1 min-w-0 flex items-start justify-center">
           <Link
             to={SCAN_PATH}
             aria-label="Quét AI"
@@ -103,11 +105,11 @@ export const BottomNavigationBar: React.FC = () => {
 const NavItemButton: React.FC<{ item: NavItem }> = ({ item }) => {
   const active = useActive(item);
   return (
-    <li className="flex-1">
+    <li className="flex-1 min-w-0">
       <Link
         to={item.path}
         aria-current={active ? 'page' : undefined}
-        className="flex flex-col items-center justify-center gap-1 h-[68px] py-1.5 rounded-card focus-visible:outline-none focus-visible:shadow-t17-focus"
+          className="flex flex-col items-center justify-center gap-1 h-[68px] w-full py-1.5 rounded-card focus-visible:outline-none focus-visible:shadow-t17-focus"
       >
         <NavLinkContent item={item} active={active} withLabel />
       </Link>

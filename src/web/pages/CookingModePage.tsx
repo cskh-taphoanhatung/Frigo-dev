@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useCookingStore } from '../stores/useCookingStore';
+import { Slide } from '../design-system/motion';
 import { api } from '../services/api';
 import { Button } from '../components/common/Button';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
@@ -43,6 +44,8 @@ export const CookingModePage: React.FC = () => {
   const [heardText, setHeardText] = useState<string | null>(null);
   const [confirmExit, setConfirmExit] = useState(false);
   const [completionError, setCompletionError] = useState<string | null>(null);
+  // Step direction for the cooking-step transition (motion/page-transitions.md).
+  const [stepDirection, setStepDirection] = useState<1 | -1>(1);
 
   const recipeMatches = activeRecipe?.slug === recipeKey || activeRecipe?.id === recipeKey;
   const recipeQuery = useQuery({
@@ -147,11 +150,13 @@ export const CookingModePage: React.FC = () => {
 
   const handleNext = () => {
     audioEffects.playStepClickSound();
+    setStepDirection(1);
     nextStep();
   };
 
   const handlePrev = () => {
     audioEffects.playStepClickSound();
+    setStepDirection(-1);
     prevStep();
   };
 
@@ -328,7 +333,7 @@ export const CookingModePage: React.FC = () => {
             <button
               onClick={toggleListening}
               className={clsx(
-                'w-10 h-10 rounded-xl flex items-center justify-center tap-target transition-all active:scale-95 border',
+                'w-10 h-10 rounded-xl flex items-center justify-center tap-target transition-tap active:scale-95 border',
                 isListening
                   ? 'bg-rose-500 border-rose-500 text-white shadow-xs animate-pulse'
                   : 'bg-takosan-mint border-takosan-mint-deep/60 text-takosan-green-deep hover:bg-takosan-mint-hover'
@@ -342,7 +347,7 @@ export const CookingModePage: React.FC = () => {
             <button
               onClick={toggleSpeak}
               className={clsx(
-                'w-10 h-10 rounded-xl flex items-center justify-center tap-target transition-all active:scale-95 border',
+                'w-10 h-10 rounded-xl flex items-center justify-center tap-target transition-tap active:scale-95 border',
                 isSpeaking
                   ? 'bg-takosan-green border-takosan-green text-white shadow-xs'
                   : 'bg-takosan-mint border-takosan-mint-deep/60 text-takosan-green-deep hover:bg-takosan-mint-hover'
@@ -369,7 +374,7 @@ export const CookingModePage: React.FC = () => {
         {/* Progress Bar */}
         <div className="w-full h-1.5 bg-slate-200/80 rounded-full overflow-hidden">
           <div
-            className="h-full bg-takosan-green transition-all duration-300 rounded-full"
+            className="h-full bg-takosan-green transition-tap duration-300 rounded-full"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
@@ -377,6 +382,9 @@ export const CookingModePage: React.FC = () => {
 
       {/* Main Instruction Card */}
       <div className="my-6 flex-1 flex flex-col justify-center">
+        {/* Directional step transition: +24px forward, reverse on Back;
+            timer logic never depends on animation frames. */}
+        <Slide key={currentStepIndex} direction={stepDirection} distance={24}>
         <div className="bg-white rounded-2xl p-6 shadow-card border border-slate-200/80 text-center space-y-4">
           <span className="w-10 h-10 rounded-xl bg-takosan-mint border border-takosan-mint-deep/60 flex items-center justify-center font-heading font-bold text-base text-takosan-green-deep mx-auto shadow-xs">
             {currentStep.stepNumber}
@@ -398,7 +406,7 @@ export const CookingModePage: React.FC = () => {
               {timerSecondsRemaining === null ? (
                 <button
                   onClick={() => setTimer(currentStep.timerMinutes! * 60)}
-                  className="px-4 py-2.5 rounded-xl bg-takosan-mint border border-takosan-mint-deep/60 text-takosan-green-deep font-heading font-semibold text-xs flex items-center justify-center gap-2 mx-auto hover:bg-takosan-mint-hover active:scale-95 transition-all shadow-xs tap-target"
+                  className="px-4 py-2.5 rounded-xl bg-takosan-mint border border-takosan-mint-deep/60 text-takosan-green-deep font-heading font-semibold text-xs flex items-center justify-center gap-2 mx-auto hover:bg-takosan-mint-hover active:scale-95 transition-tap shadow-xs tap-target"
                 >
                   <Clock className="w-4 h-4 text-takosan-green" />
                   <span>Bật hẹn giờ ({currentStep.timerMinutes} phút)</span>
@@ -433,6 +441,7 @@ export const CookingModePage: React.FC = () => {
             </div>
           )}
         </div>
+        </Slide>
       </div>
 
       {/* Step Navigation Buttons */}

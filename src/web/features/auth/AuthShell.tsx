@@ -65,7 +65,7 @@ export const AuthShell: React.FC<AuthShellProps> = ({
             <button
               key={m}
               onClick={() => onModeChange(m)}
-              className={`flex-1 py-2 rounded-lg font-heading font-semibold text-xs transition-all tap-target ${
+              className={`flex-1 py-2 rounded-lg font-heading font-semibold text-xs transition-tap tap-target ${
                 mode === m ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -91,7 +91,7 @@ export const AuthShell: React.FC<AuthShellProps> = ({
       {devOtp && (mode === 'otp_verify' || mode === 'forgot_password') && (
         <div
           onClick={onFillDevOtp}
-          className="mt-3 p-3 bg-takosan-mint border border-takosan-mint-deep/80 rounded-xl text-xs flex items-center justify-between cursor-pointer hover:bg-takosan-mint-hover/70 transition-all shadow-xs"
+          className="mt-3 p-3 bg-takosan-mint border border-takosan-mint-deep/80 rounded-xl text-xs flex items-center justify-between cursor-pointer hover:bg-takosan-mint-hover/70 transition-tap shadow-xs"
         >
           <div className="flex items-center gap-2 text-takosan-green-deep">
             <Sparkles className="w-4 h-4 text-takosan-green" />

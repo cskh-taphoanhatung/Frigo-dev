@@ -67,7 +67,7 @@ export const TopBar: React.FC<TopBarProps> = ({ showBack = false, title, subtitl
           ) : (
             <button
               onClick={() => navigate('/profile')}
-              className="w-9 h-9 rounded-xl bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep hover:bg-takosan-mint-hover active:scale-95 transition-all flex items-center justify-center overflow-hidden"
+              className="w-9 h-9 rounded-xl bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep hover:bg-takosan-mint-hover active:scale-95 transition-tap flex items-center justify-center overflow-hidden"
               aria-label="Tài khoản cá nhân"
             >
               {avatarUrl ? (

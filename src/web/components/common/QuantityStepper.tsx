@@ -23,7 +23,7 @@ export const QuantityStepper: React.FC<QuantityStepperProps> = ({
       <button
         onClick={onDecrement}
         disabled={quantity <= min}
-        className="w-7 h-7 flex items-center justify-center font-bold text-sm text-slate-700 hover:bg-white hover:text-slate-900 hover:shadow-xs active:scale-95 disabled:opacity-30 rounded-lg transition-all tap-target"
+        className="w-7 h-7 flex items-center justify-center font-bold text-sm text-slate-700 hover:bg-white hover:text-slate-900 hover:shadow-xs active:scale-95 disabled:opacity-30 rounded-lg transition-tap tap-target"
         aria-label="Giảm số lượng"
       >
         –
@@ -35,7 +35,7 @@ export const QuantityStepper: React.FC<QuantityStepperProps> = ({
 
       <button
         onClick={onIncrement}
-        className="w-7 h-7 flex items-center justify-center font-bold text-sm text-slate-700 hover:bg-white hover:text-slate-900 hover:shadow-xs active:scale-95 rounded-lg transition-all tap-target"
+        className="w-7 h-7 flex items-center justify-center font-bold text-sm text-slate-700 hover:bg-white hover:text-slate-900 hover:shadow-xs active:scale-95 rounded-lg transition-tap tap-target"
         aria-label="Tăng số lượng"
       >
         +

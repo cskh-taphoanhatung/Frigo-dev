@@ -106,7 +106,7 @@ export const ShoppingPage: React.FC = () => {
                 key={item.id}
                 onClick={() => !toggleItem.isPending && toggleItem.mutate({ id: item.id, current: item.isChecked })}
                 className={clsx(
-                  'p-3 rounded-xl flex items-center justify-between cursor-pointer transition-all border border-slate-200/80 shadow-xs active:scale-[0.99]',
+                  'p-3 rounded-xl flex items-center justify-between cursor-pointer transition-tap border border-slate-200/80 shadow-xs active:scale-[0.99]',
                   item.isChecked ? 'bg-slate-50/70 opacity-60' : 'bg-white hover:border-slate-300'
                 )}
               >

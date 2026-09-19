@@ -128,7 +128,7 @@ export const PlusPaywallPage: React.FC = () => {
                 aria-pressed={isSelected}
                 onClick={() => setSelectedPlan(key)}
                 className={clsx(
-                  'text-left rounded-xl p-4 relative shadow-xs cursor-pointer transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:shadow-t17-focus',
+                  'text-left rounded-xl p-4 relative shadow-xs cursor-pointer transition-tap active:scale-[0.98] focus-visible:outline-none focus-visible:shadow-t17-focus',
                   isSelected
                     ? 'bg-semantic-surface border-semantic-action-primary ring-1 ring-semantic-action-primary'
                     : 'bg-white border border-slate-200/80 hover:border-slate-300'

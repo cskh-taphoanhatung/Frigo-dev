@@ -165,7 +165,7 @@ export const RecipeDetailPage: React.FC = () => {
               aria-selected={activeTab === tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={clsx(
-                'flex-1 py-2 rounded-lg text-xs font-heading font-bold transition-all tap-target',
+                'flex-1 py-2 rounded-lg text-xs font-heading font-bold transition-tap tap-target',
                 activeTab === tab.id
                   ? 'bg-white text-takosan-green shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
@@ -232,7 +232,7 @@ export const RecipeDetailPage: React.FC = () => {
                   <div
                     key={ing.ingredientId}
                     className={clsx(
-                      'p-2.5 rounded-xl border flex items-center justify-between transition-all',
+                      'p-2.5 rounded-xl border flex items-center justify-between transition-tap',
                       hasIngredient
                         ? 'bg-takosan-mint/50 border-takosan-mint-deep/80'
                         : 'bg-white border-slate-100'
@@ -273,7 +273,7 @@ export const RecipeDetailPage: React.FC = () => {
                         onClick={() => addToShopping.mutate(ing)}
                         disabled={isAdded || addToShopping.isPending}
                         className={clsx(
-                          'px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all tap-target',
+                          'px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-tap tap-target',
                           isAdded
                             ? 'bg-slate-100 text-slate-400 border border-slate-200'
                             : 'bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep/80 hover:bg-takosan-mint-hover active:scale-95 shadow-xs'

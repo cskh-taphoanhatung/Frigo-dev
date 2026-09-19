@@ -156,7 +156,7 @@ export const MealDetailPage: React.FC = () => {
               onClick={() => setActiveTab(tab.id)}
               aria-pressed={activeTab === tab.id}
               className={clsx(
-                'flex-1 py-2 rounded-lg text-xs font-heading font-bold transition-all tap-target',
+                'flex-1 py-2 rounded-lg text-xs font-heading font-bold transition-tap tap-target',
                 activeTab === tab.id
                   ? 'bg-white text-takosan-green shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
@@ -300,7 +300,7 @@ export const MealDetailPage: React.FC = () => {
       <div className="fixed bottom-[calc(68px+env(safe-area-inset-bottom,0px))] md:bottom-0 left-0 right-0 md:left-20 lg:left-64 p-4 bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-30 flex gap-3 shadow-lg">
         <button
           onClick={() => openSwap(mealId!)}
-          className="flex-1 py-3.5 px-4 rounded-2xl bg-white border-2 border-takosan-green text-takosan-green-deep font-heading font-bold text-sm hover:bg-takosan-mint active:scale-98 transition-all flex items-center justify-center gap-1.5"
+          className="flex-1 py-3.5 px-4 rounded-2xl bg-white border-2 border-takosan-green text-takosan-green-deep font-heading font-bold text-sm hover:bg-takosan-mint active:scale-98 transition-tap flex items-center justify-center gap-1.5"
         >
           <ArrowRightLeft className="w-4 h-4 text-takosan-green" />
           <span>Đổi món</span>
@@ -308,7 +308,7 @@ export const MealDetailPage: React.FC = () => {
 
         <button
           onClick={() => navigate(`/cook/${recipe.slug}`)}
-          className="flex-1 py-3.5 px-4 rounded-2xl bg-takosan-green hover:bg-takosan-green-hover text-white font-heading font-bold text-sm shadow-md active:scale-98 transition-all flex items-center justify-center gap-2"
+          className="flex-1 py-3.5 px-4 rounded-2xl bg-takosan-green hover:bg-takosan-green-hover text-white font-heading font-bold text-sm shadow-md active:scale-98 transition-tap flex items-center justify-center gap-2"
         >
           <ChefHat className="w-5 h-5" />
           <span>Bắt đầu nấu</span>

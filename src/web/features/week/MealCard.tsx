@@ -16,7 +16,7 @@ export const MealCard: React.FC<MealCardProps> = ({ slot, onClick, onSwapClick }
     return (
       <div
         onClick={onClick}
-        className="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-xs flex items-center justify-between cursor-pointer hover:border-slate-300 active:scale-[0.99] transition-all"
+        className="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-xs flex items-center justify-between cursor-pointer hover:border-slate-300 active:scale-[0.99] transition-tap"
       >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-amber-50 border border-amber-100 text-amber-800 flex items-center justify-center text-lg shrink-0">
@@ -52,7 +52,7 @@ export const MealCard: React.FC<MealCardProps> = ({ slot, onClick, onSwapClick }
     return (
       <div
         onClick={onClick}
-        className="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-xs flex items-center justify-between cursor-pointer hover:border-slate-300 active:scale-[0.99] transition-all"
+        className="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-xs flex items-center justify-between cursor-pointer hover:border-slate-300 active:scale-[0.99] transition-tap"
       >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-takosan-mint border border-takosan-mint-deep text-takosan-green-deep flex items-center justify-center text-lg shrink-0">
@@ -94,7 +94,7 @@ export const MealCard: React.FC<MealCardProps> = ({ slot, onClick, onSwapClick }
     <div
       onClick={onClick}
       className={clsx(
-        'bg-white rounded-xl p-3 border border-slate-200/80 shadow-xs hover:border-slate-300 active:scale-[0.99] transition-all cursor-pointer relative overflow-hidden',
+        'bg-white rounded-xl p-3 border border-slate-200/80 shadow-xs hover:border-slate-300 active:scale-[0.99] transition-tap cursor-pointer relative overflow-hidden',
         isCooked && 'opacity-70 bg-slate-50'
       )}
     >
@@ -179,7 +179,7 @@ export const MealCard: React.FC<MealCardProps> = ({ slot, onClick, onSwapClick }
                   e.stopPropagation();
                   onSwapClick(e);
                 }}
-                className="px-2 py-1 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200/70 text-slate-700 text-[11px] font-semibold flex items-center gap-1 transition-all active:scale-95 cursor-pointer"
+                className="px-2 py-1 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200/70 text-slate-700 text-[11px] font-semibold flex items-center gap-1 transition-tap active:scale-95 cursor-pointer"
                 aria-label={`Đổi món ${recipe.title}`}
               >
                 <ArrowRightLeft className="w-3 h-3 text-slate-500" />

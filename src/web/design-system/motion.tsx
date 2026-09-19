@@ -41,15 +41,16 @@ export const PageTransition: React.FC<HTMLMotionProps<'div'>> = ({ children, ...
 );
 
 /** Auth/onboarding/step state change: horizontal presence transition. */
-export const Slide: React.FC<HTMLMotionProps<'div'> & { direction?: 1 | -1 }> = ({
+export const Slide: React.FC<HTMLMotionProps<'div'> & { direction?: 1 | -1; distance?: number }> = ({
   children,
   direction = 1,
+  distance = 12,
   ...props
 }) => (
   <motion.div
-    initial={{ opacity: 0, x: 12 * direction }}
+    initial={{ opacity: 0, x: distance * direction }}
     animate={{ opacity: 1, x: 0 }}
-    exit={{ opacity: 0, x: -12 * direction }}
+    exit={{ opacity: 0, x: -distance * direction }}
     transition={{ duration: MOTION_TOKENS.duration.normal, ease: MOTION_TOKENS.easing.enter }}
     {...props}
   >

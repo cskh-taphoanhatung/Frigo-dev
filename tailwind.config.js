@@ -144,7 +144,13 @@ export default {
         "t17-md": "0 8px 24px rgba(31, 41, 55, 0.10)",
         "t17-lg": "0 18px 48px rgba(31, 41, 55, 0.14)",
         "t17-focus": "0 0 0 3px rgba(46, 125, 91, 0.28)",
-      }
+      },
+      // T17 scoped interactive transition (motion/micro-interactions.md):
+      // explicitly enumerated properties — layout (width/height/padding) is
+      // never transitioned, unlike indiscriminate `transition-all`.
+      transitionProperty: {
+        tap: "transform, background-color, border-color, color, box-shadow, opacity",
+      },
     },
   },
   plugins: [],

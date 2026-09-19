@@ -2,6 +2,16 @@
 
 ## Current handoff — T17 Takosan UI V2 partial redesign on feat/t17-takosan-ui-v2
 
+### Continuation 3 (same day, same branch)
+
+- **Scoped transitions:** named `transition-tap` token added to tailwind (explicit `transform, background-color, border-color, color, box-shadow, opacity`; layout never transitions); all 86 `transition-all` sites across 32 files migrated; zero remain.
+- **Motion stories:** cooking steps slide directionally (+24px forward, reverse on Back; timers never depend on animation frames); inventory rows animate add/remove/layout via AnimatePresence + layout keyed by stable server identity (instant under reduced motion); scan camera→processing crossfade verified already reduced-motion-safe over preserved context.
+- **State matrix:** new suite tests — inventory bottom sheet (labelled/closable/in-viewport), honest offline banner (driven by browser offline/online events; Playwright `setOffline` only fails requests and is not this component's trigger), and 200% text-zoom survival on Home/Fridge/Recipes/Shopping/Profile.
+- **Real zoom bugs fixed:** the 200% gate exposed rem-sized nav icons forcing flex min-content overflow, Profile-hub/Home truncation gaps, unwrappable RecipeCard meta and IngredientRow action rows, and a missing `min-w-0` on the inventory search. Verified clean by probe at 390 and 360 (desktop and mobile emulation) and by the suite at all six widths (settled measurement).
+- **Gates:** lint PASS, typecheck PASS, full vitest **178/4046 PASS**, migration smoke PASS, build PASS (436.34 kB / 120.90 kB gzip). Full T17 matrix run passed except two test-code defects (case-sensitive offline regex; zoom measured pre-settle) — fixed test-only and re-verified **12/12** at all six widths; no product code changed after the full-suite run.
+- **Next exact actions:** (1) migrate the 856 remaining `slate-*` neutral-palette sites on legacy pages to semantic tokens (brand `takosan-*` aliases may stay per the kit); (2) human design-review of the canonical screenshots before baselining; (3) first local run of the T13 Playwright inventory suite. Status stays `T17_PARTIAL`.
+- **Safety:** worker/PayOS diff zero; `main` untouched; production untouched.
+
 ### Continuation 2 (same day, same branch)
 
 - **Auth decomposed:** `AuthPage.tsx` is now a state machine composing `src/web/features/auth/*` (AuthShell, LoginMode, RegisterMode, OtpMode, ForgotPasswordMode, GoogleAuthSection, AuthField, auth-shared) with the kit's auth-state transition. Security semantics byte-compatible (Turnstile single-use token rotation, GSI retry/width/credential-only contract, DEC-012 deferred guest transfer with explicit continue-without-transfer, private-session capture, exact server error mapping). Auth suites **11/11 PASS**.

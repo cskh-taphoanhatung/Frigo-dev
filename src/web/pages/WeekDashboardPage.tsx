@@ -113,7 +113,7 @@ export const WeekDashboardPage: React.FC = () => {
             {/* Quick action: Đi chợ */}
             <button
               onClick={() => navigate(`/week/${currentPlan.id}/shopping`)}
-              className="px-3 py-2 rounded-xl bg-takosan-green text-white font-heading font-semibold text-xs shadow-xs hover:bg-[#164E3D] active:scale-95 transition-all tap-target flex items-center gap-1.5 cursor-pointer"
+              className="px-3 py-2 rounded-xl bg-takosan-green text-white font-heading font-semibold text-xs shadow-xs hover:bg-[#164E3D] active:scale-95 transition-tap tap-target flex items-center gap-1.5 cursor-pointer"
               aria-label="Đi chợ theo thực đơn tuần"
             >
               <ShoppingBag className="w-3.5 h-3.5" />
@@ -123,7 +123,7 @@ export const WeekDashboardPage: React.FC = () => {
             {/* Quick action: Share */}
             <button
               onClick={() => setIsExportOpen(true)}
-              className="p-2 rounded-xl bg-white border border-slate-200/80 text-slate-700 hover:bg-slate-50 active:scale-95 transition-all tap-target flex items-center justify-center shadow-xs cursor-pointer"
+              className="p-2 rounded-xl bg-white border border-slate-200/80 text-slate-700 hover:bg-slate-50 active:scale-95 transition-tap tap-target flex items-center justify-center shadow-xs cursor-pointer"
               aria-label="Chia sẻ thực đơn"
               title="Chia sẻ thực đơn"
             >
@@ -133,7 +133,7 @@ export const WeekDashboardPage: React.FC = () => {
             {/* Quick action: Regenerate dropdown */}
             <button
               onClick={() => setIsRegeneratingOpen(!isRegeneratingOpen)}
-              className="p-2 rounded-xl bg-white border border-slate-200/80 text-slate-700 hover:bg-slate-50 active:scale-95 transition-all tap-target flex items-center justify-center shadow-xs cursor-pointer"
+              className="p-2 rounded-xl bg-white border border-slate-200/80 text-slate-700 hover:bg-slate-50 active:scale-95 transition-tap tap-target flex items-center justify-center shadow-xs cursor-pointer"
               aria-label="Tùy chọn tạo lại"
             >
               <RefreshCw className="w-4 h-4" />

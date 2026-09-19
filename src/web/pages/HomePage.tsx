@@ -105,7 +105,7 @@ export const HomePage: React.FC = () => {
     <div className="min-h-screen bg-takosan-cream pb-28">
       {/* HEADER: Avatar + Xin chào + Notification Bell */}
       <header className="sticky top-0 z-30 bg-takosan-cream/95 backdrop-blur-md px-4 py-3.5 border-b border-takosan-cream-line flex items-center justify-between shadow-xs">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => navigate('/profile')}
             aria-label="Trang cá nhân"
@@ -119,17 +119,17 @@ export const HomePage: React.FC = () => {
               className="w-full h-full object-cover"
             />
           </button>
-          <div>
-            <h1 className="font-heading font-bold text-lg text-takosan-navy leading-tight">
+          <div className="min-w-0">
+            <h1 className="font-heading font-bold text-lg text-takosan-navy leading-tight truncate">
               Xin chào{firstName ? `, ${firstName}` : ''}! 👋
             </h1>
-            <p className="text-xs text-slate-500 font-medium">Hôm nay ăn gì đây?</p>
+            <p className="text-xs text-slate-500 font-medium truncate">Hôm nay ăn gì đây?</p>
           </div>
         </div>
 
         <button
           onClick={() => navigate('/notifications')}
-          className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/80 hover:bg-slate-100 active:scale-95 flex items-center justify-center text-slate-700 transition-all tap-target"
+          className="shrink-0 w-11 h-11 rounded-xl bg-slate-50 border border-slate-200/80 hover:bg-slate-100 active:scale-95 flex items-center justify-center text-slate-700 transition-tap tap-target"
           aria-label="Thông báo"
         >
           <Bell className="w-5.5 h-5.5 stroke-[2]" />
@@ -166,7 +166,7 @@ export const HomePage: React.FC = () => {
                 </div>
                 <button
                   onClick={() => navigate(`/cook/${todayMeal.recipe!.slug}`)}
-                  className="mt-1 px-5 py-2.5 rounded-xl bg-white hover:bg-takosan-cream text-takosan-green font-heading font-bold text-sm shadow-float active:scale-95 transition-all flex items-center gap-2 tap-target"
+                  className="mt-1 px-5 py-2.5 rounded-xl bg-white hover:bg-takosan-cream text-takosan-green font-heading font-bold text-sm shadow-float active:scale-95 transition-tap flex items-center gap-2 tap-target"
                 >
                   <Sparkles className="w-4 h-4" />
                   <span>Bắt đầu nấu</span>
@@ -207,7 +207,7 @@ export const HomePage: React.FC = () => {
               </p>
               <button
                 onClick={() => navigate(weekPlan ? `/week/${weekPlan.id}` : '/week/setup')}
-                className="mt-1 px-5 py-2.5 rounded-xl bg-white hover:bg-takosan-cream text-takosan-green font-heading font-bold text-sm shadow-float active:scale-95 transition-all inline-flex items-center gap-2 tap-target"
+                className="mt-1 px-5 py-2.5 rounded-xl bg-white hover:bg-takosan-cream text-takosan-green font-heading font-bold text-sm shadow-float active:scale-95 transition-tap inline-flex items-center gap-2 tap-target"
               >
                 <Sparkles className="w-4 h-4" />
                 <span>{weekPlan ? 'Xem thực đơn tuần' : 'Lên thực đơn tuần'}</span>
@@ -256,7 +256,7 @@ export const HomePage: React.FC = () => {
 
               <button
                 onClick={() => navigate(`/week/${weekPlan.id}`)}
-                className="shrink-0 px-4 py-2.5 rounded-xl bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep hover:bg-takosan-mint-hover text-xs font-heading font-bold active:scale-95 transition-all flex items-center gap-1.5 tap-target"
+                className="shrink-0 px-4 py-2.5 rounded-xl bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep hover:bg-takosan-mint-hover text-xs font-heading font-bold active:scale-95 transition-tap flex items-center gap-1.5 tap-target"
               >
                 <span>Xem thực đơn</span>
                 <ChevronRight className="w-4 h-4" />
@@ -298,7 +298,7 @@ export const HomePage: React.FC = () => {
               {inventory.length === 0 && (
                 <button
                   onClick={() => navigate('/scan')}
-                  className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep text-xs font-heading font-bold hover:bg-takosan-mint-hover active:scale-95 transition-all tap-target"
+                  className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep text-xs font-heading font-bold hover:bg-takosan-mint-hover active:scale-95 transition-tap tap-target"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   Quét tủ lạnh
@@ -364,7 +364,7 @@ export const HomePage: React.FC = () => {
               onClick={() => setNoBuyOnly(!noBuyOnly)}
               aria-pressed={noBuyOnly}
               className={clsx(
-                'px-3 py-1.5 rounded-full text-xs font-heading font-semibold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer',
+                'px-3 py-1.5 rounded-full text-xs font-heading font-semibold transition-tap flex items-center gap-1.5 shadow-xs cursor-pointer',
                 noBuyOnly
                   ? 'bg-takosan-green text-white border border-takosan-green'
                   : 'bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50'
@@ -385,7 +385,7 @@ export const HomePage: React.FC = () => {
                   onClick={() => setSelectedCuisine(c.id)}
                   aria-pressed={active}
                   className={clsx(
-                    'px-3.5 py-1.5 rounded-full text-xs font-heading font-semibold whitespace-nowrap transition-all tap-target cursor-pointer',
+                    'px-3.5 py-1.5 rounded-full text-xs font-heading font-semibold whitespace-nowrap transition-tap tap-target cursor-pointer',
                     active
                       ? 'bg-takosan-green text-white shadow-xs'
                       : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'

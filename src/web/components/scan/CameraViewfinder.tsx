@@ -161,7 +161,7 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
           {hasCameraError && (
             <button
               onClick={onSelectFromGallery}
-              className="px-4 py-2 rounded-xl bg-takosan-green hover:bg-takosan-green-hover text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm tap-target transition-all active:scale-[0.98]"
+              className="px-4 py-2 rounded-xl bg-takosan-green hover:bg-takosan-green-hover text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm tap-target transition-tap active:scale-[0.98]"
             >
               <ImageIcon className="w-4 h-4" />
               <span>Tải ảnh từ thư viện</span>
@@ -178,7 +178,7 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
             <button
               onClick={toggleTorch}
               className={clsx(
-                'w-10 h-10 rounded-xl flex items-center justify-center backdrop-blur-md transition-all tap-target border border-white/10',
+                'w-10 h-10 rounded-xl flex items-center justify-center backdrop-blur-md transition-tap tap-target border border-white/10',
                 isTorchOn ? 'bg-amber-400 text-slate-900' : 'bg-slate-900/60 text-white'
               )}
               aria-label="Đèn pin"
@@ -199,7 +199,7 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
 
           <button
             onClick={switchCamera}
-            className="w-10 h-10 rounded-xl bg-slate-900/60 backdrop-blur-md text-white border border-white/10 flex items-center justify-center tap-target hover:bg-slate-800/80 transition-all"
+            className="w-10 h-10 rounded-xl bg-slate-900/60 backdrop-blur-md text-white border border-white/10 flex items-center justify-center tap-target hover:bg-slate-800/80 transition-tap"
             aria-label="Đổi camera"
           >
             <RefreshCw className="w-4 h-4" />
@@ -210,7 +210,7 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
         <div className="relative flex-1 my-3 flex items-center justify-center">
           <div
             className={clsx(
-              'border border-white/30 transition-all duration-300 relative overflow-hidden',
+              'border border-white/30 transition-tap duration-300 relative overflow-hidden',
               scanType === 'receipt'
                 ? 'w-4/5 h-[90%] rounded-xl'
                 : 'w-[85%] h-[85%] rounded-2xl'
@@ -231,7 +231,7 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
         <div className="flex items-center justify-around pointer-events-auto pb-1">
           <button
             onClick={onSelectFromGallery}
-            className="px-4 py-2.5 rounded-xl bg-slate-900/60 border border-white/15 backdrop-blur-md text-white flex items-center gap-2 tap-target hover:bg-slate-800 active:scale-95 transition-all"
+            className="px-4 py-2.5 rounded-xl bg-slate-900/60 border border-white/15 backdrop-blur-md text-white flex items-center gap-2 tap-target hover:bg-slate-800 active:scale-95 transition-tap"
             title="Thư viện"
             aria-label="Thư viện"
           >

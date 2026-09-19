@@ -19,7 +19,7 @@ export const Header: React.FC<HeaderProps> = ({ showBack = false, title, subtitl
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigate(-1)}
-              className="p-2 -ml-2 rounded-xl hover:bg-slate-100 active:scale-95 transition-all text-slate-700"
+              className="p-2 -ml-2 rounded-xl hover:bg-slate-100 active:scale-95 transition-tap text-slate-700"
               aria-label="Quay lại"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -42,7 +42,7 @@ export const Header: React.FC<HeaderProps> = ({ showBack = false, title, subtitl
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigate('/notifications')}
-            className="p-2 rounded-xl hover:bg-slate-100 active:scale-95 relative text-slate-600 hover:text-slate-900 transition-all tap-target"
+            className="p-2 rounded-xl hover:bg-slate-100 active:scale-95 relative text-slate-600 hover:text-slate-900 transition-tap tap-target"
             aria-label="Thông báo"
           >
             <Bell className="w-5 h-5" />
@@ -51,7 +51,7 @@ export const Header: React.FC<HeaderProps> = ({ showBack = false, title, subtitl
 
           <button
             onClick={() => navigate('/profile')}
-            className="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 active:scale-95 transition-all flex items-center justify-center tap-target"
+            className="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 active:scale-95 transition-tap flex items-center justify-center tap-target"
             aria-label="Tài khoản"
           >
             <User className="w-4 h-4" />

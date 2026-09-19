@@ -108,7 +108,7 @@ export const WeekSetupPage: React.FC = () => {
         {/* Step Progress Bar */}
         <div className="w-full bg-slate-200/80 h-1.5 rounded-full overflow-hidden">
           <div
-            className="bg-takosan-green h-full transition-all duration-300 rounded-full"
+            className="bg-takosan-green h-full transition-tap duration-300 rounded-full"
             style={{ width: `${(currentStep / 5) * 100}%` }}
           />
         </div>
@@ -153,7 +153,7 @@ export const WeekSetupPage: React.FC = () => {
                   key={opt.id}
                   onClick={() => setMealPreset(opt.id as any)}
                   className={clsx(
-                    'p-4 rounded-xl border cursor-pointer transition-all active:scale-[0.99] flex items-center justify-between',
+                    'p-4 rounded-xl border cursor-pointer transition-tap active:scale-[0.99] flex items-center justify-between',
                     mealPreset === opt.id
                       ? 'bg-white border-takosan-green shadow-xs ring-1 ring-takosan-green'
                       : 'bg-white border-slate-200/80 hover:border-slate-300'
@@ -218,7 +218,7 @@ export const WeekSetupPage: React.FC = () => {
                     setIsUnlimitedBudget(false);
                   }}
                   className={clsx(
-                    'p-3.5 rounded-xl border text-sm font-heading font-semibold transition-all tap-target active:scale-[0.98]',
+                    'p-3.5 rounded-xl border text-sm font-heading font-semibold transition-tap tap-target active:scale-[0.98]',
                     !isUnlimitedBudget && budgetVnd === p.value
                       ? 'bg-takosan-green text-white shadow-xs border-takosan-green'
                       : 'bg-white text-slate-800 border-slate-200/80 hover:border-slate-300'
@@ -237,7 +237,7 @@ export const WeekSetupPage: React.FC = () => {
                 else setBudgetVnd(750000);
               }}
               className={clsx(
-                'p-4 rounded-xl border cursor-pointer transition-all flex items-center justify-between',
+                'p-4 rounded-xl border cursor-pointer transition-tap flex items-center justify-between',
                 isUnlimitedBudget
                   ? 'bg-white border-takosan-green ring-1 ring-takosan-green shadow-xs'
                   : 'bg-white border-slate-200/80 hover:border-slate-300'
@@ -314,7 +314,7 @@ export const WeekSetupPage: React.FC = () => {
                             setDaySchedules(updated);
                           }}
                           className={clsx(
-                            'px-2.5 py-1 rounded-lg text-xs font-semibold transition-all tap-target',
+                            'px-2.5 py-1 rounded-lg text-xs font-semibold transition-tap tap-target',
                             daySchedules[idx] === t.id
                               ? 'bg-takosan-green text-white shadow-xs'
                               : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -360,7 +360,7 @@ export const WeekSetupPage: React.FC = () => {
                     key={opt.id}
                     onClick={() => togglePriority(opt.id)}
                     className={clsx(
-                      'p-3.5 rounded-xl border cursor-pointer transition-all flex flex-col justify-between h-24 select-none active:scale-[0.98]',
+                      'p-3.5 rounded-xl border cursor-pointer transition-tap flex flex-col justify-between h-24 select-none active:scale-[0.98]',
                       isSelected
                         ? 'bg-white border-takosan-green shadow-xs ring-1 ring-takosan-green'
                         : 'bg-white border-slate-200/80 hover:border-slate-300'
@@ -431,7 +431,7 @@ export const WeekSetupPage: React.FC = () => {
                   key={opt.id}
                   onClick={() => setFrequency(opt.id as ShoppingFrequency)}
                   className={clsx(
-                    'p-4 rounded-xl border cursor-pointer transition-all active:scale-[0.99] flex items-center justify-between',
+                    'p-4 rounded-xl border cursor-pointer transition-tap active:scale-[0.99] flex items-center justify-between',
                     frequency === opt.id
                       ? 'bg-white border-takosan-green shadow-xs ring-1 ring-takosan-green'
                       : 'bg-white border-slate-200/80 hover:border-slate-300'

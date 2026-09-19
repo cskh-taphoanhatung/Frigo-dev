@@ -40,7 +40,7 @@ export const WeekSettingsPage: React.FC = () => {
                 key={b}
                 type="button"
                 onClick={() => setBudget(b)}
-                className={`p-3 rounded-xl border text-xs font-semibold transition-all tap-target active:scale-[0.98] ${
+                className={`p-3 rounded-xl border text-xs font-semibold transition-tap tap-target active:scale-[0.98] ${
                   budget === b
                     ? 'bg-takosan-green text-white shadow-xs border-takosan-green'
                     : 'bg-white text-slate-800 border-slate-200/80 hover:border-slate-300'
@@ -68,7 +68,7 @@ export const WeekSettingsPage: React.FC = () => {
                 key={f.id}
                 type="button"
                 onClick={() => setFrequency(f.id as any)}
-                className={`w-full p-3.5 rounded-xl border text-left text-xs font-semibold transition-all flex items-center justify-between tap-target active:scale-[0.99] ${
+                className={`w-full p-3.5 rounded-xl border text-left text-xs font-semibold transition-tap flex items-center justify-between tap-target active:scale-[0.99] ${
                   frequency === f.id
                     ? 'bg-white border-takosan-green ring-1 ring-takosan-green text-slate-900 shadow-xs'
                     : 'bg-white border-slate-200/80 text-slate-700 hover:border-slate-300'

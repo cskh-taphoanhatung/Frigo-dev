@@ -24,6 +24,16 @@
 - [limit] Still `T17_PARTIAL`: per-screen `transition-all`/motion-primitive migration, semantic-token migration of legacy-styled pages (Home/Inventory/Recipes/Week fallbacks/scan/cooking), partial state-class matrix, and human design review of screenshots.
 - [safety] Worker/PayOS diff zero; `main` untouched; production untouched.
 
+### T17 continuation 3 (same day)
+
+- [done] All 86 `transition-all` utilities replaced with the scoped `transition-tap` token (explicit property list; zero remain).
+- [done] Motion stories: cooking-step directional Slide, inventory AnimatePresence/layout keyed by server identity, scan crossfade verified reduced-motion-safe.
+- [done] State-class matrix: bottom sheet, honest offline banner (browser events), 200% text zoom survival added to the T17 suite.
+- [done] Real 200% zoom overflow defects found and fixed (nav min-content, Profile/Home truncation, RecipeCard/IngredientRow wrapping, inventory search `min-w-0`); probed clean at 390/360 desktop + mobile emulation.
+- [done] Gates: lint PASS, typecheck PASS, vitest 178/4046 PASS, migration smoke PASS, build PASS; T17 matrix green (two test-code defects fixed test-only and re-verified 12/12 at all six widths).
+- [limit] Still `T17_PARTIAL`: 856 `slate-*` sites on legacy pages (kit permits `takosan-*` brand aliases), human screenshot review pending, T13 Playwright suite never run in this environment.
+- [safety] No product-code change after the full-suite run; worker/PayOS diff zero; production untouched.
+
 ## Current T16 follow-up — PWA cache and Google recovery deployed (2026-09-19)
 
 - [done] Confirmed live `/auth` and `/sw.js` were edge-cache hits and production still served fixed cache `takosan-pwa-v2`; repository path mismatch was `/sw.js` registration versus `/service-worker.js` header rule.

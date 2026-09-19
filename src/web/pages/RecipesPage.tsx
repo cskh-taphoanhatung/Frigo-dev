@@ -110,7 +110,7 @@ export const RecipesPage: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Tìm món canh, thịt kho, phở, bún chả, nguyên liệu..."
-            className="w-full h-11 pl-10 pr-4 bg-white rounded-xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-xs transition-all"
+            className="w-full h-11 pl-10 pr-4 bg-white rounded-xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-xs transition-tap"
           />
         </div>
 
@@ -137,7 +137,7 @@ export const RecipesPage: React.FC = () => {
                   key={cat.label}
                   onClick={() => setCategoryFilter(cat.id)}
                   className={clsx(
-                    'px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all flex items-center gap-1.5 tap-target cursor-pointer border shadow-xs',
+                    'px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-tap flex items-center gap-1.5 tap-target cursor-pointer border shadow-xs',
                     isActive
                       ? 'bg-takosan-green text-white border-takosan-green font-semibold shadow-sm'
                       : 'bg-white text-slate-700 border-slate-200/80 hover:bg-slate-50 hover:border-slate-300'
@@ -156,7 +156,7 @@ export const RecipesPage: React.FC = () => {
           <button
             onClick={() => setNoBuyOnly(!noBuyOnly)}
             className={clsx(
-              'px-3 py-1.5 rounded-full text-xs font-heading font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 tap-target shadow-xs cursor-pointer',
+              'px-3 py-1.5 rounded-full text-xs font-heading font-semibold transition-tap whitespace-nowrap flex items-center gap-1.5 tap-target shadow-xs cursor-pointer',
               noBuyOnly
                 ? 'bg-takosan-green text-white border border-takosan-green'
                 : 'bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50'
@@ -169,7 +169,7 @@ export const RecipesPage: React.FC = () => {
           <button
             onClick={() => setUnder20MinsOnly(!under20MinsOnly)}
             className={clsx(
-              'px-3 py-1.5 rounded-full text-xs font-heading font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 tap-target shadow-xs cursor-pointer',
+              'px-3 py-1.5 rounded-full text-xs font-heading font-semibold transition-tap whitespace-nowrap flex items-center gap-1.5 tap-target shadow-xs cursor-pointer',
               under20MinsOnly
                 ? 'bg-takosan-green text-white border border-takosan-green'
                 : 'bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50'
@@ -185,7 +185,7 @@ export const RecipesPage: React.FC = () => {
               key={reg.label}
               onClick={() => setRegionFilter(reg.id)}
               className={clsx(
-                'px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all tap-target cursor-pointer border',
+                'px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-tap tap-target cursor-pointer border',
                 regionFilter === reg.id
                   ? 'bg-takosan-green text-white border-takosan-green font-semibold shadow-xs'
                   : 'bg-white text-slate-600 border-slate-200/80 hover:bg-slate-50 hover:text-slate-900'
@@ -201,7 +201,7 @@ export const RecipesPage: React.FC = () => {
               key={c.label}
               onClick={() => setCuisineFilter(c.id)}
               className={clsx(
-                'px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all tap-target cursor-pointer border',
+                'px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-tap tap-target cursor-pointer border',
                 cuisineFilter === c.id
                   ? 'bg-slate-900 text-white border-slate-900 shadow-xs font-semibold'
                   : 'bg-white text-slate-600 border-slate-200/80 hover:bg-slate-50 hover:text-slate-900'

@@ -125,6 +125,41 @@ canonical screenshots are implemented and verified. Exact gaps preventing
   *.png`. Deterministic seeded fixtures only. Includes a destructive-dialog
   focus-trap/Escape/focus-return assertion and an empty-inbox honesty check.
 
+## Continuation 3 (same date, third checkpoint)
+
+- **Indiscriminate `transition-all` retired**: a named `transition-tap`
+  token (explicitly enumerated `transform, background-color, border-color,
+  color, box-shadow, opacity` — layout properties are never transitioned)
+  was added to the tailwind config; all 86 occurrences across 32 files were
+  migrated. `rg 'transition-all' src/web` → 0.
+- **Per-screen motion stories implemented**: cooking steps now transition
+  directionally (forward +24px, reverse on Back, via the shared Slide primitive
+  keyed by step index; timer logic never depends on animation frames); the
+  inventory list animates add/remove/layout keyed by stable server identity
+  (AnimatePresence + layout, instant under reduced motion); the scan
+  camera→processing crossfade was verified already reduced-motion-safe over
+  preserved capture context.
+- **State-class matrix extended**: new suite tests for the inventory bottom
+  sheet (labelled, closable, in-viewport), the honest offline banner (browser
+  offline/online events; Playwright's `setOffline` only fails requests and is
+  not the trigger this component listens to), and 200% text zoom survival.
+- **Real 200% zoom defects found and fixed** by the new tests and probe
+  scripts (mobile.md: no horizontal scrolling at 200% text zoom): rem-sized
+  navigation icons forced flex min-content overflow (nav items now `min-w-0`
+  with shrinkable icon boxes), the Profile hub card and Home header refused to
+  truncate (`min-w-0`/`truncate`/`shrink-0` chains), the RecipeCard meta row
+  and IngredientRow action cluster could not wrap (`flex-wrap`/`ml-auto`),
+  and the inventory search input lacked `min-w-0`. Verified clean by probe at
+  390 and 360, desktop and mobile emulation, and by the suite at all six
+  widths (`requestAnimationFrame`-settled measurement).
+- **Gates after continuation 3**: `pnpm lint` PASS, `pnpm typecheck` PASS,
+  `pnpm test` **178 files / 4046 tests PASS**, `pnpm check:migrations` PASS
+  (`migration-smoke=ok`), `pnpm build` PASS (436.34 kB / 120.90 kB gzip),
+  full T17 matrix run: 92 passed with 7 failures that were test-code defects
+  (offline-banner case-sensitive regex; zoom measured before layout settle) —
+  both fixed test-only and re-verified: **12/12 passed** for those tests at
+  all six widths. No product code changed after the full-suite run.
+
 ## Verification (exact, post-implementation)
 
 - `pnpm lint` — pass (no output).
@@ -188,15 +223,16 @@ canonical screenshots are implemented and verified. Exact gaps preventing
 
 ## Known gaps → next actions (in order)
 
-1. Migrate per-screen motion to the shared primitives (inventory list layout,
-   scan crossfade, cooking step direction, planner layout) and replace the
-   remaining indiscriminate `transition-all` utilities with scoped properties.
-2. Extend the state-class matrix (bottom sheet, long Vietnamese text,
-   loading/offline per surface) and have a human design-review the captured
-   screenshots; only then baseline them.
-3. Finish per-screen semantic-token migration for the remaining
+1. Finish per-screen semantic-token migration for the remaining
    legacy-styled pages (Home, Inventory, Recipes, Week fallback pages,
-   scan/cooking) — these currently still use `takosan-*`/`slate-*` classes.
+   scan/cooking) — 856 `slate-*` occurrences remain; `takosan-*` brand aliases
+   are permitted to stay per the kit's legacy-alias rule, but the neutral
+   slate palette is not part of the Takosan system.
+2. Have a human design-review the captured screenshots; only then baseline
+   them (loading-state e2e remains unit-covered only; long Vietnamese text is
+   asserted via the 200%-zoom and overflow gates).
+3. Execute the T13 Playwright inventory suite in an environment where it was
+   never run locally, to certify zero regression against the rebuilt shell.
 
 ## Delivery note
 

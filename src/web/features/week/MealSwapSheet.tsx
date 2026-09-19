@@ -82,7 +82,7 @@ export const MealSwapSheet: React.FC = () => {
               return (
                 <div
                   key={alt.recipe.id}
-                  className="bg-white rounded-xl p-3 border border-slate-200/80 shadow-xs flex items-center justify-between gap-3 hover:border-takosan-green/40 transition-all"
+                  className="bg-white rounded-xl p-3 border border-slate-200/80 shadow-xs flex items-center justify-between gap-3 hover:border-takosan-green/40 transition-tap"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <img
@@ -134,7 +134,7 @@ export const MealSwapSheet: React.FC = () => {
                   <button
                     disabled={isLoading}
                     onClick={() => executeSwap(alt.recipe.id)}
-                    className="px-3.5 py-2 rounded-lg bg-takosan-green hover:bg-takosan-green-hover text-white font-semibold text-xs transition-all active:scale-[0.98] shrink-0 tap-target flex items-center gap-1 shadow-xs"
+                    className="px-3.5 py-2 rounded-lg bg-takosan-green hover:bg-takosan-green-hover text-white font-semibold text-xs transition-tap active:scale-[0.98] shrink-0 tap-target flex items-center gap-1 shadow-xs"
                     aria-label={`Chọn món ${alt.recipe.title}`}
                   >
                     <Check className="w-3.5 h-3.5" />

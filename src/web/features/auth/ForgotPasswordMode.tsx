@@ -88,7 +88,7 @@ export const ForgotPasswordMode: React.FC<ForgotPasswordModeProps> = ({
                 value={digit}
                 onChange={(e) => onOtpChange(idx, e.target.value)}
                 onKeyDown={(e) => onOtpKeyDown(idx, e)}
-                className="w-11 h-13 text-center font-heading font-bold text-xl bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 transition-all text-slate-900 shadow-xs"
+                className="w-11 h-13 text-center font-heading font-bold text-xl bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 transition-tap text-slate-900 shadow-xs"
               />
             ))}
           </div>

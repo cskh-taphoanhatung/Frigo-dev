@@ -4,6 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { TopBar } from '../components/common/TopBar';
 import { IngredientRow } from '../components/common/IngredientRow';
 import { EmptyState } from '../components/common/EmptyState';
+import { AnimatePresence, motion, MOTION_TOKENS } from '../design-system/motion';
 import { InlineLoading, InlineError } from '../components/common/AsyncState';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
 import { Button } from '../components/common/Button';
@@ -167,7 +168,7 @@ export const InventoryPage: React.FC = () => {
         <button
           type="button"
           onClick={() => navigate('/inventory-reconciliation')}
-          className="w-full flex items-center justify-between px-4 py-2.5 rounded-2xl bg-white border border-slate-200/80 shadow-card text-left tap-target cursor-pointer hover:border-takosan-green/40 transition-all"
+          className="w-full flex items-center justify-between px-4 py-2.5 rounded-2xl bg-white border border-slate-200/80 shadow-card text-left tap-target cursor-pointer hover:border-takosan-green/40 transition-tap"
         >
           <span className="text-xs font-semibold text-slate-700">Đối chiếu tủ lạnh</span>
           <span className="text-[11px] text-takosan-green font-bold">Xem bằng chứng →</span>
@@ -181,7 +182,7 @@ export const InventoryPage: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Tìm theo tên nguyên liệu..."
-            className="w-full h-12 pl-11 pr-4 bg-white rounded-2xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-card transition-all"
+            className="w-full min-w-0 h-12 pl-11 pr-4 bg-white rounded-2xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-card transition-tap"
           />
         </div>
 
@@ -192,7 +193,7 @@ export const InventoryPage: React.FC = () => {
               key={c.id}
               onClick={() => setFilterCategory(c.id)}
               className={clsx(
-                'px-4 py-2 rounded-full text-xs font-heading font-bold whitespace-nowrap transition-all tap-target cursor-pointer',
+                'px-4 py-2 rounded-full text-xs font-heading font-bold whitespace-nowrap transition-tap tap-target cursor-pointer',
                 filterCategory === c.id
                   ? 'bg-takosan-green text-white shadow-card scale-105'
                   : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50 hover:text-slate-900'
@@ -234,25 +235,34 @@ export const InventoryPage: React.FC = () => {
               onAction={() => navigate('/scan')}
             />
           ) : (
-            filteredItems.map((item) => (
-              <IngredientRow
-                key={item.id}
-                id={item.id}
-                name={item.name}
-                quantity={item.quantity}
-                unit={item.unit}
-                category={item.category}
-                storage={item.storage}
-                freshness={item.freshness}
-                ingredientId={item.ingredientId}
-                expiryDate={item.expiryDate}
-                expiryKind={item.expiryKind}
-                estimatedExpiryDate={item.estimatedExpiryDate}
-                onClick={() => navigate(`/ingredients/${item.id}`)}
-                onUpdateQuantity={(delta) => handleUpdateQty(item.id, item.quantity, delta, item.version)}
-                onDelete={() => setPendingDelete({ id: item.id, version: item.version })}
-              />
-            ))
+            // Add/remove animate by stable server identity; reduced motion
+            // makes the change instant via MotionConfig (layout/motion spec).
+            <AnimatePresence initial={false}>
+              {filteredItems.map((item) => (
+                <motion.div
+                  key={item.id}
+                  layout
+                  transition={{ duration: MOTION_TOKENS.duration.normal, ease: MOTION_TOKENS.easing.standard }}
+                >
+                  <IngredientRow
+                    id={item.id}
+                    name={item.name}
+                    quantity={item.quantity}
+                    unit={item.unit}
+                    category={item.category}
+                    storage={item.storage}
+                    freshness={item.freshness}
+                    ingredientId={item.ingredientId}
+                    expiryDate={item.expiryDate}
+                    expiryKind={item.expiryKind}
+                    estimatedExpiryDate={item.estimatedExpiryDate}
+                    onClick={() => navigate(`/ingredients/${item.id}`)}
+                    onUpdateQuantity={(delta) => handleUpdateQty(item.id, item.quantity, delta, item.version)}
+                    onDelete={() => setPendingDelete({ id: item.id, version: item.version })}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
           )}
         </div>
       </div>
@@ -261,7 +271,7 @@ export const InventoryPage: React.FC = () => {
       <div className="fixed bottom-20 left-0 right-0 px-4 z-30 pointer-events-none">
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="w-full py-4 px-4 rounded-2xl bg-takosan-green hover:bg-takosan-green-hover text-white font-heading font-bold text-[15px] shadow-float active:scale-98 transition-all pointer-events-auto flex items-center justify-center gap-2 tap-target"
+          className="w-full py-4 px-4 rounded-2xl bg-takosan-green hover:bg-takosan-green-hover text-white font-heading font-bold text-[15px] shadow-float active:scale-98 transition-tap pointer-events-auto flex items-center justify-center gap-2 tap-target"
         >
           <Plus className="w-5.5 h-5.5 stroke-[2.5]" />
           <span>Thêm nguyên liệu</span>
@@ -388,7 +398,7 @@ export const InventoryPage: React.FC = () => {
                       type="button"
                       onClick={() => setExpiryDays(d.days)}
                       className={clsx(
-                        'flex-1 py-2 rounded-lg text-xs font-medium border transition-all tap-target cursor-pointer',
+                        'flex-1 py-2 rounded-lg text-xs font-medium border transition-tap tap-target cursor-pointer',
                         expiryDays === d.days
                           ? 'bg-takosan-mint border-takosan-green text-takosan-green-deep font-semibold'
                           : 'bg-white border-slate-200/80 text-slate-600 hover:bg-slate-50'

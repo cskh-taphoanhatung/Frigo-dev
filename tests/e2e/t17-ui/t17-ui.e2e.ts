@@ -140,3 +140,50 @@ test('keyboard focus reaches primary navigation with visible focus state', async
   }));
   expect(['A', 'BUTTON']).toContain((await focused).tag);
 });
+
+test('content survives 200% text zoom without horizontal scrolling', async ({ page }) => {
+  await completeOnboarding(page);
+  for (const path of ['/', '/fridge', '/recipes', '/shopping', '/me']) {
+    await page.goto(path);
+    await expectMainNav(page);
+    // Let fonts/content settle before measuring a zoomed layout.
+    await page.waitForLoadState('networkidle');
+    const overflow = await page.evaluate(() => {
+      document.documentElement.style.fontSize = '200%';
+      // Measure after a reflow frame so transient entrance layout is done.
+      return new Promise((resolve) =>
+        requestAnimationFrame(() =>
+          resolve(document.documentElement.scrollWidth - window.innerWidth)
+        )
+      );
+    });
+    expect(overflow, `${path} must not scroll horizontally at 200% text zoom`).toBeLessThanOrEqual(1);
+    await page.evaluate(() => { document.documentElement.style.fontSize = ''; });
+  }
+});
+
+test('inventory bottom sheet opens labelled, closable and in-viewport', async ({ page }) => {
+  await completeOnboarding(page);
+  await page.goto('/fridge');
+  await page.getByRole('button', { name: 'Thêm nguyên liệu' }).click();
+  await expect(page.getByRole('heading', { name: 'Thêm nguyên liệu vào tủ' })).toBeVisible();
+  const close = page.getByRole('button', { name: 'Đóng' });
+  await expect(close).toBeVisible();
+  await close.click();
+  await expect(page.getByRole('heading', { name: 'Thêm nguyên liệu vào tủ' })).toBeHidden();
+  await layout(page);
+});
+
+test('offline banner states reality and recovers when back online', async ({ page }) => {
+  await completeOnboarding(page);
+  await page.goto('/');
+  await expectMainNav(page);
+  // The banner follows the browser's offline/online events (navigator.onLine);
+  // Playwright's setOffline only fails requests, so emulate the real event.
+  await page.evaluate(() => window.dispatchEvent(new Event('offline')));
+  await expect(page.getByText(/chế độ Ngoại tuyến/i)).toBeVisible();
+  // Content remains usable while offline; the banner is honest about sync.
+  await expect(page.getByRole('navigation', { name: 'Điều hướng chính' })).toBeVisible();
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  await expect(page.getByText(/chế độ Ngoại tuyến/i)).toBeHidden();
+});
