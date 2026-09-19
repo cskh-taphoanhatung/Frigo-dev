@@ -1,6 +1,55 @@
 # Frigo / Takosan current authority — 2026-09-19
 
-## Current T17 — continuation 4: full-diff review with 10 latent defects fixed (2026-09-19)
+## Current T17 — continuation 6: contract gaps closed and certified, status `T17_PARTIAL` (2026-09-19)
+
+Branch `feat/t17-takosan-ui-v2`, PR #44 (repository id `1368281478`, now
+`tako-san1/Frigo-dev`). Final-HEAD evidence lives in
+`docs/ai/T17_UI_V2_REPORT.md`; this section is the summary.
+
+- **Screen 03 is a real route.** `/auth/verify` is registered with the same
+  session guard as `/auth`; the OTP state is derived from the route over the
+  unchanged auth state machine (Turnstile, verify/resend bodies, DEC-012,
+  private-session capture untouched). A tab-scoped, code-free verification
+  context (`features/auth/verify-context.ts`) makes refresh/back safe; a direct
+  load with no context renders an honest "no verification pending" state with
+  real exits. 14 regression tests (`auth-verify-route.test.tsx`).
+- **27 registered screens certified mechanically** per width
+  (`tests/e2e/t17-ui/t17-registry.e2e.ts` + `screen-registry.ts`): route
+  resolves, visible proof, nav rule, no overflow — on real seeded truth
+  (onboarding via UI, planner plan generated, T13 scan evidence).
+- **Semantic-token migration finished.** 991 codemod replacements + manual
+  dark-context sites; zero raw palette classes outside the protected payment
+  UI (43 sites, explicitly allowlisted with reason);
+  `scripts/t17/style-residuals.mjs` is enforced by `takosan-brand.test.tsx`.
+  Two arbitrary hex values removed. Zero emerald / transition-all / animate-in.
+- **WCAG-AA measured**: `scripts/t17/contrast-audit.mjs` 33/33 semantic pairs
+  pass (kit `text-muted` darkened to `#6F6B64`; `warning-strong`/`danger-strong`
+  added). axe-core over 25 surfaces + OTP flow: 0 serious/critical. Viewport
+  zoom re-enabled (was `user-scalable=no`). One h1 per surface, 0 images
+  without alt, all targets ≥ 44 px (measured). Shared `useModalFocus` +
+  `BottomSheet` primitive give every sheet/dialog trap/Escape/focus-return.
+- **Reduced motion certified** on auth, onboarding, sheet/dialog, cooking,
+  planner and scan review (no running keyframes, no spatial transitions
+  > 200 ms; decorative pulse/ping/bounce and `transition-tap` collapse under
+  the media query).
+- **Visual contract**: canonical loop now 25 surfaces incl. `scan-review`,
+  `receipt-review`, `scan`, `notifications`, `household`, `otp-empty`; state
+  matrix (loading/error/empty/offline/sheet/dialog/long Vietnamese/keyboard
+  focus/mobile fixed action + keyboard viewport). Human review of the 1440/390
+  captures fixed: canvas width cap, aligned fixed bars, Plus/cooking phone
+  wrappers, cooking title truncation, UNKNOWN-expiry tone on Home, 44 px brand
+  links, honest OTP subtitle.
+- **Gates at final HEAD**: see the report's Verification table (lint, typecheck,
+  vitest, migration smoke, build, T13 suite, six-width T17 matrix, residual
+  greps, worker diff 0, payment boundary 0 lines from this continuation).
+- **Remaining blockers for `T17_COMPLETE`**: (1) board comparison — the kit
+  ZIP (boards + `screens/*.md` + `SCREEN_REGISTRY`) was not available in the
+  sandbox, so captures were reviewed against in-repo contracts only; a holder
+  of the ZIP must compare the preserved captures and diff
+  `screen-registry.ts`; (2) an assistive-technology (screen reader)
+  walkthrough — automated semantics are clean but the human pass is unexecuted.
+
+## Previous T17 — continuation 4: full-diff review with 10 latent defects fixed (2026-09-19)
 
 **Continuation 5 — release prep (same day).** Inspecting fresh screenshots
 for the PR exposed a **P1**: Tailwind `semantic` colour keys were camelCase so

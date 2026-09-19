@@ -1,6 +1,40 @@
 # Frigo / Takosan current handoff — 2026-09-19
 
-## Current handoff — T17 Takosan UI V2 partial redesign on feat/t17-takosan-ui-v2
+## Current handoff — T17 continuation 6: contract gaps closed, `T17_PARTIAL` (2026-09-19)
+
+- **Branch/PR:** `feat/t17-takosan-ui-v2`, PR #44, repository id `1368281478`
+  (`tako-san1/Frigo-dev`). Implementation commits `dfdd0ab`, `227e36b`,
+  `8f25fbd`, `463bf29`; docs checkpoint follows (hash cannot be recorded in
+  itself — see `git log`).
+- **What changed:** `/auth/verify` real route + code-free tab context + honest
+  empty state; 27-screen registry certification; 991-site semantic-token
+  migration with an enforced residual allowlist (payment UI only); WCAG-AA
+  contrast/axe/h1/alt/44px/dialog/OTP certification with product fixes
+  (viewport zoom re-enabled, `text-muted` darkened, `BottomSheet` +
+  `useModalFocus`); reduced-motion certification on auth/onboarding/sheet/
+  dialog/cooking/planner/scan; canonical `scan-review` + state-matrix captures;
+  visual-review fixes (canvas width cap, aligned fixed bars, wrappers).
+- **Exact verification at final HEAD:** `docs/ai/T17_UI_V2_REPORT.md`
+  §Verification (lint, typecheck, full vitest, `check:migrations`, build,
+  T13 suite at 360/390/430, T17 suite at 360/390/430/768/1024/1440, residual
+  greps, `git diff 769d085 -- src/worker` = 0, payment boundary, `git diff
+  --check`, `git status --short`). Logs under `.hoplite/artifacts/t17-cert/`.
+- **Limitations:** the kit ZIP was not present in the sandbox — board
+  comparison and `SCREEN_REGISTRY` diff are outstanding (registry reconstructed
+  with per-row `source` tags in `tests/e2e/t17-ui/screen-registry.ts`); no
+  human screen-reader walkthrough; virtual keyboard approximated by a shrunk
+  viewport. `sqlite3` had to be installed in-session (repo setup script line).
+- **Next exact action:** with the ZIP in hand, compare
+  `.hoplite/artifacts/t17-cert/canonical/{390,768,1440}/*.png` against the
+  three Takosan boards and `screens/*.md`, diff `screen-registry.ts` vs
+  `SCREEN_REGISTRY`, run an NVDA/VoiceOver pass over the canonical surfaces;
+  fix anything found, then set `T17_COMPLETE`. Do not merge/deploy from this
+  branch without the operator path in `DEPLOYMENT.md`.
+- **Harness notes:** kill any leftover `security-preview.mjs` on :3000 before
+  Playwright; the T17 config clears its output dir per run, so the matrix
+  script copies captures to `.hoplite/artifacts/t17-cert/{canonical,states}`.
+
+## Previous handoff — T17 Takosan UI V2 partial redesign on feat/t17-takosan-ui-v2
 
 ### Continuation 4 (same day) — full-diff review, latent defects fixed
 

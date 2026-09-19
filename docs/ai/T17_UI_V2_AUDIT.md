@@ -5,6 +5,27 @@ v2.0.0 kit. Design contract: attached `takosan-redesign-os-v2.0.0.zip`,
 extracted outside tracked paths under `.hoplite/extracted/` (untracked,
 git-ignored attachment area).
 
+## Continuation record — 2026-09-19 (certification pass)
+
+- Canonical repository re-verified live: id `1368281478` → `tako-san1/Frigo-dev`
+  (renamed again since `frigo-7`; same id, `main` default, not a fork).
+  PR #44 head at start `2216484`. Kit ZIP **not present** in this sandbox
+  (attachment did not survive the workspace rebuild); reconciliation used the
+  in-repo record (this audit, code comments, the previous report) plus the
+  task text. Registry used for certification:
+  `tests/e2e/t17-ui/screen-registry.ts` (`source: kit|reconstructed` per row).
+- New contract facts recorded: screen 03 lives at `/auth/verify` (was an
+  internal `AuthPage` mode — fixed); canonical `scan-review` is a required
+  capture (was missing — added); reduced-motion coverage is required on auth,
+  onboarding, sheet/dialog, cooking and Planner (was Planner-only — added).
+- Baseline before product edits (HEAD `2216484`): lint PASS, typecheck PASS,
+  vitest 4046/4047 with one 5 s timeout in `client-session.test.ts` under
+  concurrent load; the file alone re-ran 33/33.
+- Token deviations from kit values, all for WCAG-AA: `--semantic-text-muted`
+  `#7B776F` → `#6F6B64`; added `--semantic-warning-strong #8F5307`,
+  `--semantic-danger-strong #B53434`; `semantic-overlay` exposed as a Tailwind
+  colour. `index.html` viewport no longer disables zoom.
+
 ## Environment record
 
 - Checkout path: `/tmp/hoplite/workspace` (Hoplite thread workspace).
@@ -78,7 +99,10 @@ git-ignored attachment area).
 | local `Button/Card/Badge/StatusChip/EmptyState/ConfirmDialog/QuantityStepper` in `components/common` | existing shared primitives | keep as the primitive authority; extend to kit semantics (focus ring, loading, sizes) — no parallel family | retain+extend | unit tests around primitives |
 | `components/payment/VietQRModal.tsx` "Frigo Plus", "Frigo Week" strings + emerald | payment success UI copy | Takosan Plus naming + semantic tokens; **payment logic zero change** | adapt (presentation only) | PayOS path diff must be zero; manual copy inventory |
 | `pages/PlusPaywallPage.tsx` "Frigo Week Planner" copy, emerald pricing | Plus presentation | Takosan Plus value section, real entitlement/price source | adapt | Plus tests; no grant/payment change |
-| 15 `emerald-*` usages in tsx | hardcoded legacy green presentation | semantic `action` tokens | adapt | grep gate + visual checks |
+| 15 `emerald-*` usages in tsx | hardcoded legacy green presentation | semantic `action` tokens | adapt (done: 0 remain) | grep gate + visual checks |
+| 856 `slate-*` + 210 status-hue (`rose/amber/sky/orange/red`) raw palette sites | legacy neutral/status palette | `semantic-*` tokens; `payment/VietQRModal.tsx` allowlisted (protected) | adapt (done: 991 codemod + manual; residual audit 43/43 allowlisted) | `scripts/t17/style-residuals.mjs` guarded by `takosan-brand.test.tsx` |
+| `pages/AuthPage.tsx` OTP as internal mode | screen 03 not a route | `/auth/verify` route over the same state machine; tab-scoped, code-free context; honest empty state | add (done) | `auth-verify-route.test.tsx` 14 cases; registry e2e |
+| plain-div bottom sheets (Inventory add, Scan manual-add, MealSwapSheet, WeekExportModal) | no dialog semantics / trap | `BottomSheet` primitive + shared `useModalFocus` (also drives `ConfirmDialog`) | adapt (done) | states e2e (sheet/dialog), a11y e2e |
 | `transition-all`/`animate-in`/`fade-in`/`slide-in` across 21 files | ad-hoc animation classes | motion primitives with token durations; reduce `transition-all` | adapt | reduced-motion suite |
 | `/week/*` routes + Week pages; `/planner/*` behind `VITE_MEAL_PLANNER_ENABLED` redirecting to `/week` | competing Week/Planner products | Planner canonical when enabled; Week routes redirect with params preserved; flag-off fallback keeps Week (honor existing deployments) | bridge | legacy-redirect tests: `/week/:planId` → `/planner/:planId`, `/week/:planId/shopping` → `/planner/:planId/shopping`, `/week/:planId/meal/:mealId` → `/planner/:planId/meal/:mealId`, `/week/setup` → `/planner/new`, `/week` → `/planner` |
 | `/week/:planId/settings` (WeekSettingsPage) | plan-scoped settings used as global settings | when planner enabled redirect to `/settings/planning`; WeekSetup stays the new-plan flow | redirect | settings tests |

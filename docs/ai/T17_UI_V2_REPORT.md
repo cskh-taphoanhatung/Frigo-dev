@@ -1,371 +1,348 @@
-# T17 — Takosan UI V2 report — 2026-09-19
+# T17 — Takosan UI V2 report — 2026-09-19 (final HEAD evidence)
 
-Task: T17 Takosan UI V2 Full Product Redesign per the attached
-`takosan-redesign-os-v2.0.0.zip` design contract. Branch:
-`feat/t17-takosan-ui-v2`. Base: remote main `769d08597563f816ef9c1dd9523fdafb687de3e2`
-(fetched live; historical kit SHA not pinned per the kit's own rule).
+Task: T17 Takosan UI V2 Full Product Redesign per the Takosan Redesign OS
+v2.0.0 design contract. Branch `feat/t17-takosan-ui-v2`, PR #44 into `main`.
+T17 base: remote `main` `769d08597563f816ef9c1dd9523fdafb687de3e2`.
+
+Every statement below describes the **final HEAD of this branch only**.
+Superseded intermediate claims from earlier continuations were removed rather
+than annotated; the commit list is the history.
 
 ## Status: `T17_PARTIAL`
 
-The design-system foundation, responsive AppShell, settings/account IA,
-honest-state migration, planner canonicalization (flag-gated), brand cleanup,
-the isolated T17 visual suite, the AuthPage decomposition, the no-op
-animation-utility retirement, and the full 6-width viewport matrix with
-canonical screenshots are implemented and verified. Exact gaps preventing
-`T17_COMPLETE` are listed under "DoD evidence".
+Everything the contract asked for that could be verified inside this sandbox
+is implemented, mechanically certified and recorded here. Two Definition-of-
+Done items cannot honestly be ticked at this HEAD and are named exactly under
+"Remaining blockers". Nothing in this report is marked PASS unless the
+command in the "Verification" section was executed at the recorded HEAD.
 
-## Implemented
+## Repository / PR identity (verified live)
 
-- **Baseline** (on `769d085`, before edits): `pnpm lint`, `pnpm typecheck`,
-  `pnpm test` (178 files / 4046 tests), `pnpm check:migrations`
-  (sqlite3 installed — the repo setup script's own requirement),
-  `pnpm build` — all pass.
-- **Audit**: `docs/ai/T17_UI_V2_AUDIT.md` (routes, migration map, duplicate
-  primitives, Frigo leaks, phone-width wrappers, Week/Planner + settings +
-  notification overlap, fake-flow survey, baseline record).
-- **Semantic design system**: full kit token set in
-  `src/web/styles/takosan-tokens.css` (`--semantic-*`, motion, z-index,
-  content widths) + tailwind `semantic-*` color family (rgb channels, alpha
-  modifier support), type scale (`text-type-*`), radius (`rounded-card/feature/hero/pill`),
-  elevation/focus ring (`shadow-t17-*`). Legacy values untouched.
-- **Motion system**: `motion@13.4.0` added (kit-preferred API; build verified),
-  `MotionProvider` (`MotionConfig reducedMotion="user"`) wraps the app;
-  `design-system/motion.tsx` exports PageTransition/Slide/Fade/ScalePress/
-  AnimatedDialog/AnimatedSheet/SharedIndicator with token durations;
-  CSS `prefers-reduced-motion` gate stops skeleton pulse and legacy entrance
-  animations.
-- **Shared primitives**: `design-system/primitives.tsx` (Page with semantic
-  width, PageHeader, Section, Surface, BottomCTA, StickyActions, Switch with
-  `role=switch`/`aria-checked`, SettingsRow as real links, StatusBadge,
-  UnavailableState, Skeleton). Existing `components/common` remains the
-  component authority — extended, not duplicated.
-- **AppShell V2**: `AppLayout` owns viewport composition — mobile edge-to-edge
-  canvas + bottom nav, tablet 80px rail, desktop 256px sidebar; nav hidden
-  only in immersive surfaces (scan/cook/auth/onboarding) including planner and
-  settings (previously lost). One navigation model (`design-system/navigation.tsx`)
-  renders all three breakpoints with real `<Link>` + `aria-current="page"`;
-  the central scan action stays a contextual action. Legacy `BottomNav.tsx`
-  retired after its test migrated to the new component with equivalent
-  assertions (brand grammar, `aria-label="Quét AI"`, `aria-current`).
-- **Settings/account IA (screens 19-26)**: `/me` hub (ProfilePage navigation
-  rows are now real links to dedicated routes); new `/me/preferences`
-  (FoodPreferencesPage over real GET/PATCH `/preferences`), `/me/household`
-  (honest unavailable states; the fabricated invite code, fake join success,
-  demo members, and external QR service were removed), `/settings/planning`
-  (PlanningSettingsPage over real GET/PATCH `/week/preferences`; explicitly
-  not the new-plan flow), `/settings/notifications` (preferences; device-local
-  toggles with honest push/email unavailability), `/settings/privacy`
-  (real permission display; honest export/delete unavailability — no fake
-  flows), `/settings/app` (PWA/cache/language/version; logout stays in /me).
-  Redirects: `/profile`→`/me`, `/family`→`/me/household`, `/settings`→`/settings/app`.
-  Inbox `/notifications` no longer contains delivery toggles.
-- **Planner canonicalization**: when `VITE_MEAL_PLANNER_ENABLED=true`, `/week`,
-  `/week/setup`, `/week/:planId`, `/week/:planId/meal/:mealId`,
-  `/week/:planId/shopping` redirect to planner equivalents with params
-  preserved (dedicated redirect components — `Navigate` does not interpolate
-  params); `/week/:planId/settings` → `/settings/planning`. Flag off keeps
-  the existing Week surface (rollout contract preserved).
-- **Onboarding step routes**: `/onboarding/household`, `/onboarding/preferences`,
-  `/onboarding/goals` (kit screens 04-06) render the server-authoritative flow
-  at the right step.
-- **Brand cleanup**: zero `emerald-*` classes remain in tsx; "Frigo Plus"
-  user-visible strings → "Takosan Plus"; PlusPaywallPage hero/pricing/chips
-  moved to semantic tokens, plan selector is a real `button` with
-  `aria-pressed`; Plus hero uses the canonical celebrate mascot. Internal
-  `X-Frigo-*` headers, route names and storage keys retained (rule 11).
-- **Phone-emulation removal**: `max-w-md mx-auto` wrappers removed from 20+
-  shell pages; fixed CTAs now sit above the mobile bottom nav and start after
-  the rail/sidebar on md/lg; Landing/Auth h1 fixes (heading hierarchy).
-- **T17 visual suite** (isolated from T13): `playwright.t17.config.ts` +
-  `tests/e2e/t17-ui/t17-ui.e2e.ts` — 33 tests at mobile-390 / tablet-768 /
-  desktop-1440. **Result: 33 passed** (`pnpm exec playwright test --config
-  playwright.t17.config.ts`, 4.7m). Coverage: shell surfaces without
-  horizontal overflow (`layout()`), nav visible per breakpoint, immersive nav
-  hiding, settings IA + redirects, honest unavailable states (asserts absence
-  of the old fake `FRG-` code), week→planner param-preserving redirects, real
-  onboarding completion (the Home gate trusts server truth — the suite drives
-  screens 04-06 through the UI), food-preferences PATCH round-trip,
-  planning-settings save without plan generation, public landing/auth without
-  auth, reduced-motion usability, keyboard focus. No production/private data;
-  deterministic seeded preview only; screenshots/traces in
-  `.hoplite/artifacts/t17-playwright/`.
+- Canonical repository id `1368281478` → `tako-san1/Frigo-dev` (GitHub API,
+  `gh api repositories/1368281478`; `default_branch=main`, not a fork). The
+  task text named `frigo-7/Frigo-dev`; the earlier audit recorded
+  `frigo-6` → `frigo-7`. All three are renames of the same id-stable
+  repository; history and receipts match.
+- PR #44 head at continuation start: `221648477cd720fa2150a3673a8f874f3d491bf4`
+  (11 commits over base). All prior T17 commits preserved; this continuation
+  adds commits on top (see "Commits").
+- Pre-continuation baseline on `2216484`: `pnpm lint` PASS, `pnpm typecheck`
+  PASS, `pnpm test` 178 files / 4047 tests — **1 timeout** in
+  `client-session.test.ts › does not repopulate Week memory…` (5 s budget,
+  concurrent with a Playwright browser download); the file re-run alone passed
+  **33/33**, so the baseline is treated as green with a noted flake.
 
-## Continuation (same date, second checkpoint)
+## Contract availability (limitation)
 
-- **AuthPage decomposed** (screen 02 acceptance criterion): the 930-line
-  monolith is now a state machine page composing `src/web/features/auth/*` —
-  `AuthShell` (brand chrome, mode switcher, alerts, dev-OTP badge, footer),
-  `LoginMode`, `RegisterMode`, `OtpMode`, `ForgotPasswordMode`,
-  `GoogleAuthSection`, `AuthField`, `auth-shared`. Security semantics are
-  untouched: Turnstile single-use tokens, Google GSI retry/width contract,
-  DEC-012 deferred guest transfer, private-session capture, exact server error
-  mapping. Mode changes now animate with the kit auth transition (fade + 12px
-  horizontal) via the shared Slide primitive; controlled values live in the
-  page so input is never cleared. The four auth suites pass: **11/11**
-  (`auth-funnel-ui`, `auth-resend-turnstile`, `auth-guest-transfer-deferred`,
-  `auth-google-credential`).
-- **No-op animation utilities retired**: the codebase never installed the
-  tailwindcss-animate plugin, so every `animate-in` / `zoom-in-95` /
-  `slide-in-from-*` class was dead weight. All 15 occurrences across overlays,
-  toasts, step bodies and modals were replaced with the real, reduced-motion
-  gated `animate-fade-in` / `animate-slide-up` utilities; zero remain
-  (`rg 'animate-in|zoom-in-95|slide-in-from-' src/web` → 0).
-- **Full viewport matrix**: the T17 config now certifies 360/390/430/768/1024/
-  1440. The 360 run exposed a **real horizontal overflow** on `/shopping`
-  (scrollWidth 379 > 360: the quick-add input refused to shrink below its
-  placeholder width); fixed with `min-w-0` on the input/select and re-probed
-  clean. Final suite results: run 6 (all six widths) — every test except the
-  then-buggy screenshot locator passed; run 7 (certified widths) —
-  **42/42 passed** in 5.9m.
-- **Canonical screenshots** (`t17-screenshots.e2e.ts`): 17 surfaces captured at
-  390 / 768 / 1440 — landing, auth, onboarding, home, inventory, recipes,
-  recipe-detail, cook, planner, shopping, profile, preferences,
-  planning-settings, notification-preferences, privacy, app-settings, plus —
-  under `.hoplite/artifacts/t17-playwright/results/t17-screenshots.e2e.ts-…/
-  *.png`. Deterministic seeded fixtures only. Includes a destructive-dialog
-  focus-trap/Escape/focus-return assertion and an empty-inbox honesty check.
+The user-attached `takosan-redesign-os-v2.0.0.zip` was **not present in this
+sandbox** (no attachment mount; the earlier extraction under
+`.hoplite/extracted/` did not survive the workspace rebuild). Reconciliation
+therefore used the contract facts already recorded in-repo — the audit's route
+inventory and migration map, the kit document names and screen numbers cited
+in code comments (`02`, `03`, `04-06`, `09`, `19-26`), the DoD checklist items
+quoted in the previous report, and the explicit requirements in the task text
+(`/auth/verify`, canonical `scan-review`, reduced-motion surfaces, WCAG-AA,
+27 registered screens). The 27-entry registry used for certification is in
+`tests/e2e/t17-ui/screen-registry.ts`; entries whose number is recorded in-repo
+are tagged `source: 'kit'`, the rest `source: 'reconstructed'`. Anyone holding
+the ZIP can diff that file against `SCREEN_REGISTRY` in one pass.
 
-## Continuation 3 (same date, third checkpoint)
+## Commits in this continuation
 
-- **Indiscriminate `transition-all` retired**: a named `transition-tap`
-  token (explicitly enumerated `transform, background-color, border-color,
-  color, box-shadow, opacity` — layout properties are never transitioned)
-  was added to the tailwind config; all 86 occurrences across 32 files were
-  migrated. `rg 'transition-all' src/web` → 0.
-- **Per-screen motion stories implemented**: cooking steps now transition
-  directionally (forward +24px, reverse on Back, via the shared Slide primitive
-  keyed by step index; timer logic never depends on animation frames); the
-  inventory list animates add/remove/layout keyed by stable server identity
-  (AnimatePresence + layout, instant under reduced motion); the scan
-  camera→processing crossfade was verified already reduced-motion-safe over
-  preserved capture context.
-- **State-class matrix extended**: new suite tests for the inventory bottom
-  sheet (labelled, closable, in-viewport), the honest offline banner (browser
-  offline/online events; Playwright's `setOffline` only fails requests and is
-  not the trigger this component listens to), and 200% text zoom survival.
-- **Real 200% zoom defects found and fixed** by the new tests and probe
-  scripts (mobile.md: no horizontal scrolling at 200% text zoom): rem-sized
-  navigation icons forced flex min-content overflow (nav items now `min-w-0`
-  with shrinkable icon boxes), the Profile hub card and Home header refused to
-  truncate (`min-w-0`/`truncate`/`shrink-0` chains), the RecipeCard meta row
-  and IngredientRow action cluster could not wrap (`flex-wrap`/`ml-auto`),
-  and the inventory search input lacked `min-w-0`. Verified clean by probe at
-  390 and 360, desktop and mobile emulation, and by the suite at all six
-  widths (`requestAnimationFrame`-settled measurement).
-- **Gates after continuation 3**: `pnpm lint` PASS, `pnpm typecheck` PASS,
-  `pnpm test` **178 files / 4046 tests PASS**, `pnpm check:migrations` PASS
-  (`migration-smoke=ok`), `pnpm build` PASS (436.34 kB / 120.90 kB gzip),
-  full T17 matrix run: 92 passed with 7 failures that were test-code defects
-  (offline-banner case-sensitive regex; zoom measured before layout settle) —
-  both fixed test-only and re-verified: **12/12 passed** for those tests at
-  all six widths. No product code changed after the full-suite run.
+- `dfdd0ab` — `/auth/verify` route, semantic-token migration, sheet/dialog
+  semantics, registry/state/motion/a11y certification suites.
+- `227e36b` — visual-review fixes (canvas width cap, aligned fixed bars,
+  Plus/cooking width tokens, 44 px brand links, honest OTP subtitle).
+- `8f25fbd` — cooking header title shrinks within 390 px (found by the
+  registry overflow gate during the matrix run).
+- `463bf29` — chip rails never shrink chips (Recipes/Inventory/Home filter
+  rails were clipping labels at 390), rail labels truncate, status chips stay
+  single-line; a11y spec audits the settled receipt-review state.
+- docs checkpoint (this file, audit, CURRENT_STATE, TASK_BOARD, HANDOFF) —
+  the commit after `463bf29` in `git log`.
 
-## Continuation 4 — full-diff code review of the redesign (same date)
+## 1. Screen 03 — `/auth/verify` (contract discrepancy closed)
 
-Every file in `git diff 769d085..HEAD` (76 files) was reviewed for latent
-defects across routing, data contracts, tenancy, accessibility, motion, and
-the fixed-action layer. Findings and fixes (all product-code unless noted):
+Finding: the registry requires `/auth/verify`; the router exposed `/auth`
+only and OTP was an internal `AuthPage` mode. Fix (no security change):
 
-| # | Severity | Finding | Fix |
-| --- | --- | --- | --- |
-| 1 | P1 tenancy | New `FoodPreferencesPage`/`PlanningSettingsPage` used bare query keys (`['food-preferences']`, `['planning-preferences']`), violating the repo rule that every server-state key embeds user+household so caches cannot leak across account/household switches. | Added `queryKeys.foodPreferences()` / `queryKeys.planningPreferences()` (scoped) and switched both pages; saves now `invalidateQueries` so the server is the authority after write. |
-| 2 | P1 honesty | `weekApi.updateWeekPreferences` returns `{ pendingSync: true }` when offline (queued replay); the planning page showed "Đã lưu" as if the server had it. | Detect `pendingSync` and show an explicit "chưa có mạng — sẽ đồng bộ khi kết nối lại" state instead of success. |
-| 3 | P1 UX | `weekApi.getWeekPreferences` returns `null` offline; the planning page then hung on the loading state forever. | Explicit `UnavailableState` when the query succeeds with `null`. |
-| 4 | P2 IA | `TopBar` detected the hub with `pathname === '/profile'`; after the `/me` move the settings gear never rendered on the hub, and TopBar/Header/Home still navigated to legacy `/profile` and `/settings` (extra redirect hops). | Detect `/me` (and legacy `/profile`); navigate to `/me` and `/settings/app` directly. Regression assertion added to the T17 suite. |
-| 5 | P2 layout | `AppLayout` treated every `/scan/*` path as immersive, so the scan review workspaces (screen 09: `/scan/:id/review`, `/scan/receipt-review`) lost navigation and `ReceiptReviewPage` still used a phone-width wrapper with a fixed CTA at `bottom-0` (would collide with the bottom nav once nav was restored). | Immersive is now camera-only (`/^\/scan\/?$/`); ReceiptReview wrapper removed and its CTA follows the shared nav-clearing offsets. Regression assertion added. |
-| 6 | P2 a11y | New auth field components rendered `<label>` without `htmlFor`/`id`, OTP digit inputs had no accessible name, password reveal buttons had no name/state, and inputs had no `autocomplete` (kit screen 02/03 requirements). | `AuthField` uses `useId` + `htmlFor`; every inline auth input gets an id, label association, `autocomplete` (`email` / `current-password` / `new-password` / `one-time-code`); OTP groups get `role="group"` + `aria-labelledby` and per-digit `aria-label`; reveal buttons get `aria-label` + `aria-pressed`; the login/register mode switcher exposes `aria-pressed`. |
-| 7 | P2 a11y/motion | `Switch` primitive: description text was not associated (`aria-describedby`), and the thumb animated with `layout` on an absolutely-positioned child (unreliable travel, not governed by the reduced-motion config). | `aria-describedby` wired; thumb is now a transform-driven `animate={{ x }}` spring (deterministic, respects `MotionConfig`). |
-| 8 | P2 layout | `BottomCTA` / `StickyActions` primitives pinned to `bottom-0` on mobile, i.e. underneath the 68px bottom nav; the sticky variant also lacked the rail/sidebar offsets. | Both clear the nav on mobile (`bottom-[calc(68px+safe-area)]`) and revert to true bottom at `md+`; BottomCTA offsets for the rail. |
-| 9 | P3 honesty | Household page asserted a server "Đang hoạt động" status badge nothing on the server provides. | Badge now states only the session-derived fact ("Hộ của bạn"). |
-| 10 | P3 motion | Inventory `AnimatePresence` rows had `layout` but no `initial/animate/exit`, so removals disappeared instantly while insertions shifted — the "stable-key insertion/removal" story was half-implemented. | Added opacity enter/exit alongside `layout`. |
-| 11 | test | Screenshot spec waited on `networkidle`, which stalls behind background polling on desktop and hit the 60s budget. | Waits on the main landmark + one settle frame; per-test timeout raised to 180s for the 17-capture loop. |
+- `App.tsx` registers `/auth/verify` with the **same** session guard as
+  `/auth` (signed-in non-guest → `/` or `/onboarding`).
+- `AuthPage` derives `mode = 'otp_verify'` from the route; the other modes stay
+  component state. Registration / unverified-login enter verification by
+  `navigate('/auth/verify')`; Back leaves with `replace` to `/auth`.
+- `features/auth/verify-context.ts`: tab-scoped (`sessionStorage`)
+  `{ email, resendAvailableAt, delivered }`. **Never** stores the OTP code,
+  the dev OTP or a token; corrupt/missing values read as absent. It exists
+  only so refresh/back/forward does not strand the user; the server remains
+  the sole authority on code validity.
+- `features/auth/VerifyUnavailable.tsx`: direct load with no context renders
+  an honest "Không có yêu cầu xác thực đang chờ" note with real exits
+  (register / login). No OTP form, no request is issued for an unknown user.
+- Undelivered email (`OTP_DELIVERY_UNAVAILABLE`, `otpDelivered:false`) is
+  persisted as `delivered:false` so a refresh cannot upgrade "not sent" into
+  "sent": cooldown 0, error alert shown, resend enabled.
+- `AuthShell` subtitle no longer prints "đã gửi tới " with an empty email.
 
-Reviewed and intentionally left as-is: the centered toast in ReceiptReview
-keeps `max-w-md mx-auto` (a centered toast is correct, not a phone shell);
-`OnboardingPage`/`HomePage` still link to `/week/setup` and `/week/:id` because
-the router redirects them to Planner when the flag is on and they are the
-correct targets when it is off; internal `X-Frigo-*` headers and storage keys
-stay per rule 11.
+Unchanged: Turnstile single-use tokens, `api.verifyOtp`/`resendOtp` bodies,
+DEC-012 guest-transfer deferral, private-session capture, exact server error
+mapping. `git diff 769d085 -- src/worker` = **0 lines**.
 
-Verification after the review fixes: `pnpm lint` PASS, `pnpm typecheck` PASS,
-focused UI/auth suites **65/65 PASS**, full `pnpm test` **178 files / 4046
-tests PASS**, `pnpm check:migrations` PASS, `pnpm build` PASS
-(436.44 kB / 120.93 kB gzip), T17 Playwright at 390 + 1440: 33 passed + the
-one screenshot timeout (test-only, fixed, then **6/6** re-verified for the
-screenshot and both new regression assertions). `git diff 769d085 -- src/worker`
-remains **0 lines** (PayOS/payment untouched).
+Tests — `tests/unit/auth-verify-route.test.tsx` **14/14**: direct load without
+context (no form, no request, both exits); registration → `/auth/verify` with
+60 s cooldown and code-free context; refresh restores email + cooldown and
+completes against the server, context cleared after success; undelivered
+context shows the delivery error and enables resend; six-digit typing / focus
+advance / non-digit rejection / Backspace-back; paste of `" 49-38 17abc"` →
+`493817` with focus on the last box; short submit refused locally with alert
+and no request; wrong/expired code shows the exact server error and stays on
+the route; resend locked during cooldown, then re-requests same email+purpose
+and restarts the cooldown; `OTP_DELIVERY_UNAVAILABLE` on register reaches the
+route honestly; failed resend keeps resend available; Back clears context so
+re-entry is honest; corrupt storage treated as absent. Existing suites
+`auth-funnel-ui`, `auth-resend-turnstile`, `auth-guest-transfer-deferred`
+(router now declares `/auth/verify`), `auth-google-credential` pass.
 
-### Continuation 4b — second pass + first local T13 run
+## 2. Mechanical certification of the 27 registered screens
 
-Asked whether the review was truly exhaustive, a second pass added:
+`tests/e2e/t17-ui/t17-registry.e2e.ts` walks every registry entry in the real
+router: public screens without a session (01–03; 03 asserts the honest empty
+state and zero OTP inputs), onboarding steps 04–06 by route, then on real
+seeded truth: onboarding completed through the UI, T13 scan evidence seeded
+(`t13-scans`) for screen 09, a plan generated through the planner for 16–18
+(the meal route is followed from the plan's real link), catalog slug
+`canh-chua-ca-loc-nam-bo` for 13/14, seeded lot `preview-stock-egg` for 11.
+For each: visible proof (h1 / label / test id), navigation rule (visible on
+standard screens, absent on immersive ones), no horizontal overflow. Asserts
+27 distinct ids and attaches `screen-registry-results` JSON. A second test
+certifies legacy redirects (`/profile`, `/family`, `/settings`, `/inventory`,
+`/week`, `/week/setup`) land on registered screens.
 
-| # | Severity | Finding | Fix |
-| --- | --- | --- | --- |
-| 12 | P2 truth | `FoodPreferencesPage` saved through `setOnboardingData`, which unconditionally flips `isOnboarded=true` and writes `frigo_onboarded=true` — a client-side onboarding claim the server never made (screen 20: "never touch onboarding completion"). | Uses `setOnboardingFromServer(auth.isOnboarded, draft)` so only preference fields change. |
-| 13 | P2 motion | Bottom bar and rail share one `layoutId="t17-nav-indicator"`; both navs are mounted (one is `display:none`), so the shared-layout indicator could animate from/to the hidden nav's zero-size box. | Per-nav indicator ids; indicator marked `aria-hidden`. |
-| 14 | P3 a11y | Dev-OTP autofill affordance in `AuthShell` was a clickable `<div>` (no keyboard access/name). | Real `<button type="button">` with `tap-target`, icon `aria-hidden`. |
+Result: **PASS at all six widths** (see Verification).
 
-**First local T13 Playwright run** (`playwright.config.ts`, 20 cases × 360/390/430):
-**54 passed / 6 failed** before fixes. Both failures were consistent across all
-three widths and were bisected against base `769d085` in a clean worktree:
+## 3. Semantic-token migration
 
-- `t13b-ownership E` (logout fences a delayed GET) — **T17 regression**: the
-  test navigated to `/profile`, which is now a redirect to `/me`, so the
-  fixture's exact-URL assertion failed. Test target updated to `/me` (the
-  behavior under test — logout resets the private session — is unchanged).
-- `t13r-b-presentation C` (Home shows ESTIMATED qualifier) — **pre-existing on
-  base, not T17**: it fails identically at `769d085`. Migration 0038 made
-  onboarding server-authoritative (`GET /me` → `onboardingCompleted`), so the
-  test's `localStorage.frigo_onboarded='true'` shim is overwritten on hydrate
-  and `/` redirects to onboarding. Fixed in the test only: it now completes the
-  real onboarding flow (same helper pattern as the T17 suite) instead of faking
-  state. A first attempt seeded the preview profile as onboarded in
-  `scripts/planner-preview-fixtures.mjs`; that was reverted because the T17
-  screenshot spec (and the kit's screens 04-06) need the fresh preview user to
-  land on onboarding. No product code was changed for this case.
+- Codemod `scripts/t17/migrate-semantic-tokens.mjs` (explicit map, word-
+  bounded class tokens only; never touches identifiers, storage keys, headers,
+  `frigo-assets.ts` or the payment UI): **991 replacements in 55 files**.
+  Remaining dark-context and status-hue sites were migrated by hand
+  (`semantic-overlay/*` scrims, `text-white` on green heroes, `takosan-yellow`
+  for the torch/upgrade accents, `text-semantic-text-inverse` dark chips).
+- Two arbitrary hex values removed (`hover:bg-[#164E3D]` →
+  `takosan-green-hover`; `text-[#FACC15]` → `takosan-yellow`).
+- Tokens added (mirrored in `takosan-tokens.css` and `tailwind.config.js`):
+  `semantic-overlay` (kit scrim colour), `semantic-warning-strong` `#8F5307`,
+  `semantic-danger-strong` `#B53434`; `semantic-text-muted` darkened from the
+  kit's `#7B776F` (4.24:1 on background — fails AA body text) to `#6F6B64`
+  (5.04:1). These are the only deviations from kit values and are documented
+  as contrast corrections.
+- Residual authority: `scripts/t17/style-residuals.mjs` scans `src/web` for
+  raw palette classes, arbitrary colour values and legacy motion utilities and
+  fails unless each hit matches an allowlist entry with a written reason.
+  Enforced by `takosan-brand.test.tsx`. **Result: total=43, allowlisted=43,
+  unjustified=0.** The single allowlist entry is `payment-boundary`
+  (`components/payment/VietQRModal.tsx`, 43 occurrences): the PayOS/payment UI
+  is a protected boundary (AGENT_RULES rule 7); this continuation added **0
+  lines** to it. Zero `emerald-*`, zero `transition-all`, zero
+  `animate-in|zoom-in-95|slide-in-from-*` in `src/web`.
+- `rg -o 'slate-[0-9]+' src/web | wc -l` → **41** (all in the allowlisted
+  payment file; 856 before).
 
-**T13 full re-run: 60 passed / 0 failed (7.8 m)** — the first locally
-certified zero-regression result for the rebuilt AppShell (run with the
-interim fixture seed; after reverting to the test-flow fix the two affected
-cases were re-verified **6/6** at 360/390/430, so the 60/60 result holds).
-Harness consumers `tests/e2e/planner-preview.test.mjs` (17/17),
-`tests/integration/t13b-preview-fixtures.test.mjs` + `tests/e2e/t07-operations.test.mjs`
-(10/10) pass.
+## 4. Visual-regression contract
 
-**Full T17 six-width matrix after all continuation-4 fixes:** mobile-360
-**16/16**; 390/430/768/1024/1440 **82 passed, 2 skipped (by design: the
-screenshot spec runs only at 390/768/1440), 1 failed** — the failure was a
-second `networkidle` stall in the notifications screenshot (test-only, same
-root cause as #11). Fixed by waiting on the query's loading label instead; the
-200%-zoom test's `networkidle` was replaced the same way pre-emptively. Both
-re-verified **12/12** across all six widths. An earlier full-matrix attempt
-showed 1.0 m timeouts at 360 that did not reproduce when 360 ran alone
-(16/16) — attributed to a leaked preview server from a killed run holding the
-port, not to product code.
+`t17-screenshots.e2e.ts` canonical loop now captures **25 surfaces** at
+390/768/1440: landing, auth, onboarding, home, inventory, **scan**,
+**scan-review**, **receipt-review**, recipes, recipe-detail, cook, planner,
+shopping, **notifications**, profile, preferences, **household**,
+planning-settings, notification-preferences, privacy, app-settings, plus,
+**otp-empty** (+ logout-dialog, notifications-empty from the existing tests).
+State evidence (`t17-states.e2e.ts`, deterministic, seeded preview, network
+shaped with Playwright routes/controls — never production): loading (held
+inventory read → announced `role=status`), error (armed synthetic 500 →
+`role=alert` + retry recovers), empty (shopping/notifications honest empties),
+offline (banner from `offline`/`online` events), bottom sheet (labelled
+`role=dialog`, focus in, Tab cycling, Escape, focus return), destructive dialog
+(`alertdialog`, cancel focused first, danger styling, Escape + focus return),
+long Vietnamese text (93-char name through sheet → list → detail with no
+overflow), keyboard focus (Tab order over /me: only interactive elements, each
+with a visible ring), mobile fixed action (scan-review CTA above the bottom
+nav; stays inside a 55 %-height viewport with an input focused — the
+virtual-keyboard proxy available headlessly).
 
-Honest residual: this is a *review* pass, not a proof of absence. Areas not
-mechanically re-audited in this continuation: WCAG contrast measurements of the
-remaining `slate-*` legacy palette (still the largest open gap), screen-reader
-walkthroughs of legacy pages, and the 17 canonical screenshots still await
-human design review before baselining. Status remains `T17_PARTIAL`.
+Captures are preserved per width under
+`.hoplite/artifacts/t17-cert/canonical/<width>/*.png` and
+`.hoplite/artifacts/t17-cert/states/<width>/*.png` (private artifact dir).
 
-## Continuation 5 — release preparation (same date)
+## 5. Reduced-motion certification
 
-Preparing the pull request surfaced a **P1 visual defect** while inspecting
-the freshly captured desktop screenshot: the sidebar "Quét nguyên liệu" CTA
-rendered as an empty white pill. Root cause: the Tailwind `semantic` color
-keys were declared camelCase (`actionPrimary`), which Tailwind exposes
-verbatim as `bg-semantic-actionPrimary`, while every page uses the kit's
-kebab-case utilities (`bg-semantic-action-primary`). Only the single-word keys
-(`background`, `surface`, `border`) compiled; **25 of 28** semantic utilities
-referenced in `src/web` produced no CSS — so most of the new semantic layer
-(text colours, action colours, soft fills, strong borders) was silently
-falling through to the browser default on every new screen.
+`t17-reduced-motion.e2e.ts` emulates `prefers-reduced-motion: reduce` and, on
+auth (login/register/`/auth/verify`), onboarding (3 steps), inventory sheet +
+logout dialog, cooking (next/back), planner (setup → generated week →
+shopping) and scan review, asserts: the surface is usable, **no CSS keyframe
+animation is running** (spinners excluded — they signal progress) and **no
+spatial transition (`transform`/`all`/`width`/`height`) longer than 200 ms is
+declared**. Product changes this required: `animate-pulse/bounce/ping` and
+`transition-tap/transition-transform` collapse under the media query
+(`index.css`). Animation is never part of functional logic — the timer,
+step index and plan truth are asserted independently.
 
-Fix: kebab-case keys in `tailwind.config.js`; a new unit guard
-(`takosan-brand.test.tsx › every semantic-* utility referenced in src/web
-resolves to a Tailwind color key`) fails against the old config and passes
-now. Built-CSS audit after rebuild: **28/28** used utilities present.
+## 6. Accessibility certification
 
-This is exactly the class of defect the outstanding "human design review of
-screenshots" gap was meant to catch; it was found by inspecting the captures
-rather than by any automated gate, which is why that review remains listed as
-required before `T17_COMPLETE`.
+Measured, not asserted:
 
-Verification after the token fix: `pnpm lint` PASS, `pnpm typecheck` PASS,
-full `pnpm test` **178 files / 4047 tests PASS** (one new guard), `pnpm build`
-PASS, T17 Playwright at 390/768/1440 **51 passed / 0 failed** with fresh
-canonical captures inspected (sidebar CTA, active-nav highlight, selected
-chips and semantic text now render). Worker diff remains 0.
+- **Contrast** — `scripts/t17/contrast-audit.mjs` computes WCAG ratios for 33
+  semantic pairs read from `tailwind.config.js`: **33/33 pass** (text ≥ 4.5,
+  UI ≥ 3.0). Lowest text pair: `action-primary on background` 4.75;
+  `text-muted on background` 5.04 after the correction above. `border-strong
+  on surface` 1.77 is reported as *decorative* (inputs also change fill and
+  show a 3 px focus ring). Translucent white body copy on green heroes
+  (`text-white/80-90`, 3.8–4.4:1) was made solid white (5.0:1+).
+- **axe-core** (`@axe-core/playwright` 4.10.2, tags wcag2a/2aa/21a/21aa +
+  best-practice) over 25 surfaces + the OTP flow: **0 serious/critical
+  violations** at final HEAD. Fixed on the way: `meta viewport` had
+  `maximum-scale=1, user-scalable=no` (WCAG 1.4.4 critical → removed);
+  onboarding progress grid carried `aria-label` on a `div` → `role=progressbar`
+  with value attributes; scan-review outline button text 3.9:1 → primary text;
+  preferences chips → `*-strong`/`hover` shades.
+- **Heading structure** — exactly one `h1` per canonical surface (Fridge,
+  Recipes, Cook and Scan had none; fixed — Scan uses `sr-only`).
+- **Image alternatives** — 0 `<img>` without `alt` on any surface; scan
+  preview alt made descriptive.
+- **44×44 targets** — every interactive element measured ≥ 44 px (counting a
+  positioned `::before` hit-area on the Switch). Fixed: TopBar/Header icon
+  buttons 36→44, rail/sidebar brand link 32→44, onboarding cuisine chips,
+  Home "Không mua thêm gì", Profile "Nâng cấp", auth "Quên mật khẩu?",
+  receipt-review inputs/selects 34→44.
+- **Dialog/sheet semantics** — shared `design-system/use-modal-focus.ts`
+  (focus in, Tab trap, Escape, focus return) now drives `ConfirmDialog`, the
+  new `BottomSheet` primitive (inventory add, scan manual-add), `MealSwapSheet`
+  and `WeekExportModal`; all expose `role=dialog|alertdialog`, `aria-modal`,
+  `aria-labelledby`. Inventory add-sheet fields are label-associated; expiry
+  chips are a labelled group with `aria-pressed`.
+- **OTP announcements** — digits are a `role=group` labelled "Mã OTP 6 chữ số"
+  with per-digit names, `inputmode=numeric`, `autocomplete=one-time-code`;
+  delivery outcome is a `status` (sent) or `alert` (not sent); short-submit
+  and server errors are `role=alert`; success is `role=status`.
+- **200 % zoom, keyboard order, visible focus, non-colour state** — covered by
+  `t17-ui.e2e.ts` (200 % on 5 surfaces), `t17-states.e2e.ts` (Tab order +
+  ring), status chips carry text labels not only colour, `aria-current` on
+  nav, `aria-pressed` on toggles.
+- **Not executed** (recorded honestly): a human screen-reader walkthrough
+  with NVDA/VoiceOver. Semantics were verified through the accessibility tree
+  (axe + role queries) only.
 
-### Release path (what this branch can and cannot do)
+## 7. Human visual review of captures (390 / 768 / 1440)
 
-Per `AGENT_RULES.md` rule 19 and `DEPLOYMENT.md`, the agent does not deploy.
-The branch is delivered as a pull request into `main`; hosted CI must pass on
-the PR and again on the `main` push; staging deploys automatically from `main`
-(`wrangler.staging.jsonc` is present); production is a manual
-`workflow_dispatch` by an operator under the `production` Environment with
-`confirm_production: true`, a full SHA contained in `main`, and the approved
-`hardened_sha`. There are **no new migrations** in this branch, so the
-separate D1 migration workflow is not required for this release.
+Reviewed by inspecting the freshly captured PNGs at final HEAD. Fixes made
+before baselining (none blindly accepted):
 
-## Verification (exact, post-implementation)
+- Desktop canvas stretched reading lines edge-to-edge → `AppLayout` caps the
+  content canvas at `--content-wide` (75 rem) and centres it.
+- Fixed action bars spanned the full viewport, detached from content → inner
+  content of all seven fixed bars capped to the same width; inventory floating
+  CTA clears the nav/rail and is right-aligned auto-width on desktop.
+- Plus page still used a `max-w-md` phone wrapper (clipped TopBar on desktop)
+  → `--content-compact`; cooking wrapper likewise; auth shell keeps its narrow
+  form column by design.
+- Cooking header title truncated at 180 px on desktop → responsive max width.
+- Home "use soon" chip showed UNKNOWN expiry in warning tone → neutral tone
+  (UNKNOWN ≠ warning; ESTIMATED = info; KNOWN countdown = warning).
+- Boards vs truth: the boards were unavailable in this sandbox (see
+  "Contract availability"), so the review used the per-screen contracts as
+  recorded in-repo and Takosan brand rules. Screenshots are **not** baselined
+  as golden images; they are evidence for the human reviewer holding the
+  boards.
 
-- `pnpm lint` — pass (no output).
-- `pnpm typecheck` — pass (app + worker).
-- `pnpm test` — **178 files / 4046 tests passed** (exit 0), re-run after the
-  AuthPage decomposition and animation-utility retirement.
-- `pnpm check:migrations` — pass (`migration-smoke=ok`).
-- `pnpm build` — pass (vite + worker tsc; index 435.97 kB / 120.74 kB gzip —
-  the motion dependency accounts for the increase from 303.48 kB / 77.86 kB).
-- `pnpm exec playwright test --config playwright.t17.config.ts` —
-  **42/42 passed** at the certified widths (360/430/1024 also green in the
-  full-matrix run).
-- PayOS/payment certification: `git diff 769d085 -- src/worker` is **empty**
-  (zero backend change); `src/web/services/api.ts` billing functions
-  untouched; `components/payment/VietQRModal.tsx` diff is 12/12
-  presentation-only lines (class names + visible strings) — payment logic,
-  endpoints, polling, and grant verification unchanged.
-- Test updates (all justified, none weakened): app-shell ancestry test now
-  includes the presentation-only MotionProvider (containment ordering
-  unchanged); notification-honesty tests wrap the page in MemoryRouter (the
-  inbox now links to the preferences route); brand test targets the new
-  navigation primitive with the same icon/aria assertions.
-- Environment: Node v24.19.0, pnpm 10.26.0; Playwright chromium-headless
-  installed in-session (not a repo change).
+## Verification (exact, at final HEAD)
+
+Environment: Node v24.19.0, pnpm 10.26.0, Playwright 1.63.0 chromium
+headless-shell (installed in-session), `sqlite3` 3.45.1 installed via the
+repo setup script's own `apt-get` line (sandbox lacked it).
+
+| Gate | Command | Result |
+| --- | --- | --- |
+| Lint | `pnpm lint` | PASS |
+| Typecheck | `pnpm typecheck` | PASS (app + worker) |
+| Unit/integration | `pnpm test` | **179 files / 4062 tests PASS** (+1 file, +15 tests vs. start) |
+| Migration smoke | `pnpm check:migrations` | PASS (`migration-smoke=ok`) |
+| Production build | `pnpm build` | PASS — `index-*.js` 437.01 kB / 121.08 kB gzip |
+| Style residuals | `node scripts/t17/style-residuals.mjs` | total 43 / allowlisted 43 / unjustified 0 |
+| Contrast | `node scripts/t17/contrast-audit.mjs` | 33/33 pass |
+| Raw greps | `rg emerald- src/web` / `rg transition-all src/web` / `rg 'animate-in\|zoom-in-95\|slide-in-from' src/web` | 0 / 0 / 0 |
+| T17 suite 360×800 | `playwright test --config playwright.t17.config.ts --project mobile-360` | **35 passed / 1 skipped (by design) / 0 failed** |
+| T17 suite 390×844 | `… --project mobile-390` | **36 passed / 0 failed** |
+| T17 suite 430×932 | `… --project mobile-430` | **35 passed / 1 skipped (by design) / 0 failed** |
+| T17 suite 768×1024 | `… --project tablet-768` | **35 passed / 1 skipped (by design) / 0 failed** |
+| T17 suite 1024×768 | `… --project desktop-1024` | **34 passed / 2 skipped (by design) / 0 failed** |
+| T17 suite 1440×900 | `… --project desktop-1440` | **35 passed / 1 skipped (by design) / 0 failed** |
+| Canonical captures | part of the 390/768/1440 runs above | 25 surfaces × 3 widths preserved under `.hoplite/artifacts/t17-cert/canonical/` |
+| T13 inventory suite | `pnpm exec playwright test` (playwright.config.ts, 20 cases × 360/390/430) | **60 passed / 0 failed** (7.4 m) |
+| Worker boundary | `git diff 769d085 -- src/worker` | **0 lines** |
+| Payment boundary | `git diff 769d085 -- src/web/components/payment src/web/services` | `VietQRModal.tsx` 16+/16− presentation-only lines from earlier T17 commits (class names, "Takosan Plus" copy); **0 lines added by this continuation**; services untouched |
+| Whitespace | `git diff --check` | clean |
+| Worktree | `git status --short` | clean after the docs checkpoint (only the platform-managed `.hoplite/settings.json` may show as modified in-session; it is restored and never committed) |
+
+Skips by design: the mobile-only fixed-action test skips at ≥768 (1 skip at
+768/1440, 2 at 1024 together with the screenshot skip); the canonical
+screenshot test skips at 360/430/1024 (captures are 390/768/1440 per the
+visual-regression plan). All six widths were run **after** the last product
+commit `463bf29`; the 390/430 runs in the first matrix pass caught the cooking
+header overflow (`8f25fbd`) and the a11y run at 390 caught the transitional
+receipt-review CTA frame (test-only wait), both re-verified green.
+
+Test changes (justified, none weakened): `t13b-browser.e2e.ts` UNKNOWN-expiry
+class assertion `bg-slate-100` → `bg-semantic-border/60` (+ asserts not
+mint/emerald) because the token migration renamed the class, not the
+behaviour; `auth-guest-transfer-deferred.test.tsx` declares the new
+`/auth/verify` route in its MemoryRouter.
 
 ## DoD evidence (QA/definition-of-done.md)
 
-- [x] 27 screen contracts represented: all 27 registry routes exist (2-6, 19-26
-  are the new/reworked surfaces; 16-18 planner covers `:planId` routes).
-- [x] One semantic design system + shared primitive authority.
-- [x] Mobile/tablet/desktop AppShell; fullscreen exceptions work (suite).
-- [~] Required motion works (provider + primitives wired; reduced motion
-  verified; auth mode transitions + all overlay/toast entrances now animate
-  with reduced-motion-safe utilities). **Gap:** layout animations on inventory
-  list / scan crossfade / cooking-step direction and the remaining
-  `transition-all` utilities are not yet migrated.
+- [x] 27 screen contracts represented — mechanically certified per width
+  (`t17-registry.e2e.ts`), including `/auth/verify`.
+- [x] One semantic design system + shared primitive authority — residual audit
+  zero-unjustified; `BottomSheet`/`useModalFocus` shared.
+- [x] Mobile/tablet/desktop AppShell; fullscreen exceptions (suite).
+- [x] Required motion works; reduced motion certified on auth, onboarding,
+  sheet/dialog, cooking, Planner (+ scan review).
 - [x] Settings/account IA separated correctly (suite).
-- [x] Planner canonical with Week compatibility redirects (flag-gated,
-  params preserved; suite).
-- [x] Visible Frigo presentation leaks removed from migrated UI (audit
-  grep: zero emerald, zero user-visible "Frigo Plus"; internal identifiers
-  retained by rule 11).
-- [x] No fake success/data/truth clone introduced; fake household/privacy
-  flows removed.
+- [x] Planner canonical with Week compatibility redirects (suite).
+- [x] Visible Frigo presentation leaks removed (greps; seeded display name
+  "Frigo Preview" is fixture data, not UI copy).
+- [x] No fake success/data/truth clone introduced; `/auth/verify` without
+  context is an honest empty state.
 - [x] Auth, Inventory Truth, OCR/AI, recipe authority, planning algorithms
-  preserved (full regression green; no service/worker changes).
-- [x] PayOS/payment: zero application change (path diff certified above).
-- [x] Required regression commands pass.
-- [x] T17 Playwright suite passes at all six certification widths;
-  canonical screenshots of the surfaces captured at 390/768/1440.
-  **Gap:** the full state-class matrix (bottom sheet, long Vietnamese text,
-  loading/offline per surface) is covered only partially, and the screenshots
-  await human design review.
-- [~] Accessibility: h1/heading hierarchy fixed on landing/auth; real links in
-  nav/profile; `role=switch`; `aria-pressed` selection; 44px targets.
-  **Gap:** a full WCAG-AA contrast/zoom/screen-reader pass per screen is not
-  evidenced.
-- [x] Audit + this report complete.
-- [ ] Worktree clean and branch pushed — see delivery note.
-- [x] `main` untouched; no merge; no deploy; production untouched.
+  preserved — worker diff 0; full regression green.
+- [x] PayOS/payment: zero application change; payment UI untouched by this
+  continuation.
+- [x] Required regression commands pass (table above).
+- [x] T17 Playwright suite passes at all six widths; canonical `scan-review`
+  captured; state matrix evidenced.
+- [~] Accessibility: contrast measured, axe clean, headings/alt/targets/
+  dialogs/OTP semantics verified. **Not executed:** assistive-technology
+  walkthrough (screen reader).
+- [~] Human design review against the **three Takosan boards** — the boards
+  (in the ZIP) were not available in this sandbox; captures were reviewed
+  against in-repo contracts and fixed, but the board comparison itself is
+  outstanding.
+- [x] Audit + this report reflect final HEAD only.
+- [x] Branch pushed to `feat/t17-takosan-ui-v2`; `main` untouched; no merge;
+  no deploy; production untouched.
 
-## Known gaps → next actions (in order)
+## Remaining blockers (why not `T17_COMPLETE`)
 
-1. Finish per-screen semantic-token migration for the remaining
-   legacy-styled pages (Home, Inventory, Recipes, Week fallback pages,
-   scan/cooking) — 856 `slate-*` occurrences remain; `takosan-*` brand aliases
-   are permitted to stay per the kit's legacy-alias rule, but the neutral
-   slate palette is not part of the Takosan system.
-2. Have a human design-review the captured screenshots; only then baseline
-   them (loading-state e2e remains unit-covered only; long Vietnamese text is
-   asserted via the 200%-zoom and overflow gates).
-3. Execute the T13 Playwright inventory suite in an environment where it was
-   never run locally, to certify zero regression against the rebuilt shell.
+1. **Board comparison** — a reviewer with the ZIP must compare
+   `.hoplite/artifacts/t17-cert/canonical/{390,768,1440}/*.png` against the
+   three Takosan boards and `screens/*.md`, and diff
+   `tests/e2e/t17-ui/screen-registry.ts` against `SCREEN_REGISTRY`.
+2. **Screen-reader walkthrough** — NVDA/VoiceOver pass over the canonical
+   surfaces (automated semantics are clean; the human check is unexecuted).
 
-## Delivery note
+## Known limitations
 
-Branch pushed to origin as `feat/t17-takosan-ui-v2` (this file cannot contain
-its own commit hash). `main` was not modified; no merge or deploy was
-performed. `.hoplite/settings.json` carries platform-managed preview metadata
-modified by the session environment, intentionally excluded from T17 commits.
+- Kit ZIP absent in sandbox (above). Contrast corrections to `text-muted`,
+  `warning-strong`, `danger-strong` deviate from kit hexes for AA compliance.
+- Virtual keyboard is approximated by a reduced-height viewport; real
+  `visualViewport` resize on device is not reproducible headlessly.
+- The payment UI keeps 43 raw neutral classes by explicit allowlist.
+- Screenshot PNGs live in the private artifact directory, not in git.

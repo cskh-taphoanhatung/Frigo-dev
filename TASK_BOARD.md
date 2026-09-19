@@ -1,3 +1,16 @@
+## Current T17 — Takosan UI V2 certification pass, `T17_PARTIAL` (2026-09-19)
+
+- [done] `/auth/verify` real route over the existing OTP state machine; tab-scoped code-free context; honest empty state; 14 regression tests.
+- [done] 27 registered screens certified per width (`t17-registry.e2e.ts`).
+- [done] Semantic-token migration: 991 sites; residual audit 43/43 allowlisted (payment UI only), 0 unjustified; zero emerald/transition-all/animate-in; arbitrary hex removed.
+- [done] WCAG-AA: contrast 33/33 measured; axe 0 serious/critical on 25 surfaces; zoom re-enabled; h1/alt/44px/dialog semantics/OTP announcements verified.
+- [done] Reduced-motion certification on auth, onboarding, sheet/dialog, cooking, planner, scan review.
+- [done] Canonical `scan-review` + 8 more surfaces captured; state matrix evidenced; visual review fixes applied.
+- [done] Gates at final HEAD recorded in `docs/ai/T17_UI_V2_REPORT.md` (lint, typecheck, vitest, migration smoke, build, T13 suite, six-width T17 matrix, greps, worker diff 0).
+- [limit] Kit ZIP absent in sandbox: boards/`screens/*.md`/`SCREEN_REGISTRY` comparison outstanding; registry reconstructed in `tests/e2e/t17-ui/screen-registry.ts` with per-row source tags.
+- [next] Holder of the ZIP: compare preserved captures against the three boards, diff `screen-registry.ts` vs `SCREEN_REGISTRY`; run a screen-reader walkthrough; then flip to `T17_COMPLETE`.
+- [safety] `main` untouched; no merge; no deploy; production untouched; PayOS/worker zero-change.
+
 ## Current T16 — PWA cache and Google recovery deployed (2026-09-19)
 
 - [done] Root cause: live `/auth` + `/sw.js` cache hits, wrong `_headers` worker path, fixed `takosan-pwa-v2` cache; clean Chromium proves real Google GIS works.
