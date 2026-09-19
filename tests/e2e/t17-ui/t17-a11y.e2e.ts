@@ -108,6 +108,9 @@ test.describe('accessibility certification', () => {
       await page.goto(path); await settle(page);
       // Scan review polls until the seeded scan is ready; audit the settled state.
       if (name === 'scan-review') await expect(page.getByRole('button', { name: /Xác nhận nguyên liệu/ })).toBeEnabled();
+      // Receipt review resolves its scan asynchronously; the disabled-CTA
+      // frame is transitional, audit the settled state.
+      if (name === 'receipt-review') await expect(page.getByRole('button', { name: /Nhập \d+ món vào Tủ lạnh/ })).toBeEnabled();
       reports.push(await auditSurface(page, name, path));
     }
 

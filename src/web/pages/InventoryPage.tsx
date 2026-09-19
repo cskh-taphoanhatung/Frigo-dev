@@ -196,7 +196,7 @@ export const InventoryPage: React.FC = () => {
               className={clsx(
                 'px-4 py-2 rounded-full text-xs font-heading font-bold whitespace-nowrap transition-tap tap-target cursor-pointer',
                 filterCategory === c.id
-                  ? 'bg-takosan-green text-white shadow-card scale-105'
+                  ? 'bg-takosan-green text-white shadow-card'
                   : 'bg-white text-semantic-text-secondary border border-semantic-border hover:bg-semantic-background-subtle hover:text-semantic-text-primary'
               )}
             >

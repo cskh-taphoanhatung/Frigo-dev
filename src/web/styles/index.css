@@ -50,6 +50,12 @@
     scrollbar-width: none;
   }
 
+  /* Horizontal chip rails: children keep their intrinsic width and the rail
+     scrolls, instead of flex shrinking every chip into clipped text. */
+  .no-scrollbar > * {
+    flex-shrink: 0;
+  }
+
   .animate-fade-in {
     animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }

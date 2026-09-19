@@ -62,8 +62,8 @@ export const IngredientRow: React.FC<IngredientRowProps> = ({
         </div>
 
         <div className="min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <h4 className="font-heading font-bold text-[15px] text-semantic-text-primary truncate">
+          <div className="flex min-w-0 items-center gap-2 mb-1">
+            <h4 className="min-w-0 font-heading font-bold text-[15px] text-semantic-text-primary truncate">
               {name}
             </h4>
             <StatusChip status={expiry.tone === 'unknown' ? 'unknown'

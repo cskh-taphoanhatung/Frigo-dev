@@ -28,7 +28,7 @@ export const StatusChip: React.FC<StatusChipProps> = ({ status, className }) => 
   return (
     <span
       className={clsx(
-        'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-tight',
+        'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-tight',
         config.bg,
         config.text,
         className

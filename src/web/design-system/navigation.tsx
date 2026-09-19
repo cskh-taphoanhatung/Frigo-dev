@@ -143,10 +143,11 @@ export const RailSidebar: React.FC = () => {
               to={item.path}
               aria-label={item.label}
               aria-current={active ? 'page' : undefined}
-              className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-feature tap-target focus-visible:outline-none focus-visible:shadow-t17-focus"
+              className="flex w-full flex-col items-center gap-1 px-1 py-1.5 rounded-feature tap-target focus-visible:outline-none focus-visible:shadow-t17-focus"
             >
               <NavLinkContent item={item} active={active} withLabel={false} indicatorId="t17-nav-indicator-rail" />
-              <span className={clsx('text-[10px] leading-none', active ? 'font-bold text-semantic-action-primary' : 'text-semantic-text-muted')}>
+              {/* Rail labels stay on one line and truncate rather than wrap. */}
+              <span className={clsx('max-w-full truncate text-center text-[10px] leading-none', active ? 'font-bold text-semantic-action-primary' : 'text-semantic-text-muted')}>
                 {item.label}
               </span>
             </Link>
