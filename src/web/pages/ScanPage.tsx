@@ -188,7 +188,7 @@ export const ScanPage: React.FC = () => {
 
           {/* Processing Overlay */}
           {isProcessing && (
-            <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-30 rounded-2xl animate-in fade-in duration-300">
+            <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-30 rounded-2xl animate-fade-in">
               <div className="w-full max-w-sm"><ScanProcessingState stage={processingStage} kind={activeTab === 'receipt' ? 'receipt' : 'fridge'} /></div>
               <p className="sr-only">{statusText}</p>
             </div>

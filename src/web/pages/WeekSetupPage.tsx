@@ -115,7 +115,7 @@ export const WeekSetupPage: React.FC = () => {
 
         {/* STEP 1: Meal Slots */}
         {currentStep === 1 && (
-          <div className="space-y-4 animate-in fade-in duration-200">
+          <div className="space-y-4 animate-fade-in">
             <div>
               <span className="text-[11px] font-semibold uppercase px-2.5 py-0.5 rounded-md bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep/60">
                 Bước 1 / 5
@@ -189,7 +189,7 @@ export const WeekSetupPage: React.FC = () => {
 
         {/* STEP 2: Budget */}
         {currentStep === 2 && (
-          <div className="space-y-4 animate-in fade-in duration-200">
+          <div className="space-y-4 animate-fade-in">
             <div>
               <span className="text-[11px] font-semibold uppercase px-2.5 py-0.5 rounded-md bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep/60">
                 Bước 2 / 5
@@ -268,7 +268,7 @@ export const WeekSetupPage: React.FC = () => {
 
         {/* STEP 3: Cooking Schedule */}
         {currentStep === 3 && (
-          <div className="space-y-4 animate-in fade-in duration-200">
+          <div className="space-y-4 animate-fade-in">
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-[11px] font-semibold uppercase px-2.5 py-0.5 rounded-md bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep/60">
@@ -339,7 +339,7 @@ export const WeekSetupPage: React.FC = () => {
 
         {/* STEP 4: Weekly Priorities */}
         {currentStep === 4 && (
-          <div className="space-y-4 animate-in fade-in duration-200">
+          <div className="space-y-4 animate-fade-in">
             <div>
               <span className="text-[11px] font-semibold uppercase px-2.5 py-0.5 rounded-md bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep/60">
                 Bước 4 / 5
@@ -391,7 +391,7 @@ export const WeekSetupPage: React.FC = () => {
 
         {/* STEP 5: Shopping Frequency */}
         {currentStep === 5 && (
-          <div className="space-y-4 animate-in fade-in duration-200">
+          <div className="space-y-4 animate-fade-in">
             <div>
               <span className="text-[11px] font-semibold uppercase px-2.5 py-0.5 rounded-md bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep/60">
                 Bước 5 / 5

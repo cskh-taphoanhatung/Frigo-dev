@@ -9,8 +9,10 @@ Task: T17 Takosan UI V2 Full Product Redesign per the attached
 
 The design-system foundation, responsive AppShell, settings/account IA,
 honest-state migration, planner canonicalization (flag-gated), brand cleanup,
-and the isolated T17 visual suite are implemented and verified. Exact gaps
-preventing `T17_COMPLETE` are listed under "DoD evidence".
+the isolated T17 visual suite, the AuthPage decomposition, the no-op
+animation-utility retirement, and the full 6-width viewport matrix with
+canonical screenshots are implemented and verified. Exact gaps preventing
+`T17_COMPLETE` are listed under "DoD evidence".
 
 ## Implemented
 
@@ -88,15 +90,53 @@ preventing `T17_COMPLETE` are listed under "DoD evidence".
   deterministic seeded preview only; screenshots/traces in
   `.hoplite/artifacts/t17-playwright/`.
 
+## Continuation (same date, second checkpoint)
+
+- **AuthPage decomposed** (screen 02 acceptance criterion): the 930-line
+  monolith is now a state machine page composing `src/web/features/auth/*` —
+  `AuthShell` (brand chrome, mode switcher, alerts, dev-OTP badge, footer),
+  `LoginMode`, `RegisterMode`, `OtpMode`, `ForgotPasswordMode`,
+  `GoogleAuthSection`, `AuthField`, `auth-shared`. Security semantics are
+  untouched: Turnstile single-use tokens, Google GSI retry/width contract,
+  DEC-012 deferred guest transfer, private-session capture, exact server error
+  mapping. Mode changes now animate with the kit auth transition (fade + 12px
+  horizontal) via the shared Slide primitive; controlled values live in the
+  page so input is never cleared. The four auth suites pass: **11/11**
+  (`auth-funnel-ui`, `auth-resend-turnstile`, `auth-guest-transfer-deferred`,
+  `auth-google-credential`).
+- **No-op animation utilities retired**: the codebase never installed the
+  tailwindcss-animate plugin, so every `animate-in` / `zoom-in-95` /
+  `slide-in-from-*` class was dead weight. All 15 occurrences across overlays,
+  toasts, step bodies and modals were replaced with the real, reduced-motion
+  gated `animate-fade-in` / `animate-slide-up` utilities; zero remain
+  (`rg 'animate-in|zoom-in-95|slide-in-from-' src/web` → 0).
+- **Full viewport matrix**: the T17 config now certifies 360/390/430/768/1024/
+  1440. The 360 run exposed a **real horizontal overflow** on `/shopping`
+  (scrollWidth 379 > 360: the quick-add input refused to shrink below its
+  placeholder width); fixed with `min-w-0` on the input/select and re-probed
+  clean. Final suite results: run 6 (all six widths) — every test except the
+  then-buggy screenshot locator passed; run 7 (certified widths) —
+  **42/42 passed** in 5.9m.
+- **Canonical screenshots** (`t17-screenshots.e2e.ts`): 17 surfaces captured at
+  390 / 768 / 1440 — landing, auth, onboarding, home, inventory, recipes,
+  recipe-detail, cook, planner, shopping, profile, preferences,
+  planning-settings, notification-preferences, privacy, app-settings, plus —
+  under `.hoplite/artifacts/t17-playwright/results/t17-screenshots.e2e.ts-…/
+  *.png`. Deterministic seeded fixtures only. Includes a destructive-dialog
+  focus-trap/Escape/focus-return assertion and an empty-inbox honesty check.
+
 ## Verification (exact, post-implementation)
 
 - `pnpm lint` — pass (no output).
 - `pnpm typecheck` — pass (app + worker).
-- `pnpm test` — **178 files / 4046 tests passed** (exit 0).
+- `pnpm test` — **178 files / 4046 tests passed** (exit 0), re-run after the
+  AuthPage decomposition and animation-utility retirement.
 - `pnpm check:migrations` — pass (`migration-smoke=ok`).
 - `pnpm build` — pass (vite + worker tsc; index 435.97 kB / 120.74 kB gzip —
   the motion dependency accounts for the increase from 303.48 kB / 77.86 kB).
-- `pnpm exec playwright test --config playwright.t17.config.ts` — **33 passed**.
+- `pnpm exec playwright test --config playwright.t17.config.ts` —
+  **42/42 passed** at the certified widths (360/430/1024 also green in the
+  full-matrix run).
 - PayOS/payment certification: `git diff 769d085 -- src/worker` is **empty**
   (zero backend change); `src/web/services/api.ts` billing functions
   untouched; `components/payment/VietQRModal.tsx` diff is 12/12
@@ -117,9 +157,10 @@ preventing `T17_COMPLETE` are listed under "DoD evidence".
 - [x] One semantic design system + shared primitive authority.
 - [x] Mobile/tablet/desktop AppShell; fullscreen exceptions work (suite).
 - [~] Required motion works (provider + primitives wired; reduced motion
-  verified). **Gap:** most existing screens still use legacy CSS animation
-  classes; per-screen motion integration (layout animations, transitions on
-  inventory list, scan, cooking steps) is not yet migrated.
+  verified; auth mode transitions + all overlay/toast entrances now animate
+  with reduced-motion-safe utilities). **Gap:** layout animations on inventory
+  list / scan crossfade / cooking-step direction and the remaining
+  `transition-all` utilities are not yet migrated.
 - [x] Settings/account IA separated correctly (suite).
 - [x] Planner canonical with Week compatibility redirects (flag-gated,
   params preserved; suite).
@@ -132,11 +173,11 @@ preventing `T17_COMPLETE` are listed under "DoD evidence".
   preserved (full regression green; no service/worker changes).
 - [x] PayOS/payment: zero application change (path diff certified above).
 - [x] Required regression commands pass.
-- [~] T17 Playwright suite passes at 390/768/1440 with reviewed screenshots.
-  **Gap:** 360/430/1024 certification widths, the full state-class matrix
-  (dialog, bottom sheet, long Vietnamese text, loading/empty/error/offline
-  per surface), and canonical screenshots of all 15 listed surfaces are not
-  captured yet.
+- [x] T17 Playwright suite passes at all six certification widths;
+  canonical screenshots of the surfaces captured at 390/768/1440.
+  **Gap:** the full state-class matrix (bottom sheet, long Vietnamese text,
+  loading/offline per surface) is covered only partially, and the screenshots
+  await human design review.
 - [~] Accessibility: h1/heading hierarchy fixed on landing/auth; real links in
   nav/profile; `role=switch`; `aria-pressed` selection; 44px targets.
   **Gap:** a full WCAG-AA contrast/zoom/screen-reader pass per screen is not
@@ -147,15 +188,15 @@ preventing `T17_COMPLETE` are listed under "DoD evidence".
 
 ## Known gaps → next actions (in order)
 
-1. Decompose `AuthPage.tsx` (930 lines) into `features/auth/*` components
-   with the kit's mode-presence transition; keep auth unit/e2e tests green.
-2. Migrate per-screen motion to the shared primitives (inventory list layout,
-   scan crossfade, cooking step direction, planner layout) and retire the
-   remaining `animate-in`/`transition-all` utilities.
-3. Extend the T17 suite to 360/430/1024, the state-class matrix, and canonical
-  screenshots of the 15 surfaces; then review them.
-4. Finish per-screen semantic-token migration for the remaining legacy-styled
-  pages (Home, Inventory, Recipes, Week fallback pages, scan/cooking).
+1. Migrate per-screen motion to the shared primitives (inventory list layout,
+   scan crossfade, cooking step direction, planner layout) and replace the
+   remaining indiscriminate `transition-all` utilities with scoped properties.
+2. Extend the state-class matrix (bottom sheet, long Vietnamese text,
+   loading/offline per surface) and have a human design-review the captured
+   screenshots; only then baseline them.
+3. Finish per-screen semantic-token migration for the remaining
+   legacy-styled pages (Home, Inventory, Recipes, Week fallback pages,
+   scan/cooking) — these currently still use `takosan-*`/`slate-*` classes.
 
 ## Delivery note
 

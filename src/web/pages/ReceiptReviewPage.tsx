@@ -266,7 +266,7 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
 
       {/* Success Toast */}
       {successToast && (
-        <div className="fixed top-16 left-4 right-4 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-200 max-w-md mx-auto border border-white/10">
+        <div className="fixed top-16 left-4 right-4 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 animate-fade-in max-w-md mx-auto border border-white/10">
           <CheckCircle2 className="w-5 h-5 text-takosan-mint shrink-0" />
           <p className="text-xs font-semibold leading-tight">{successToast}</p>
         </div>

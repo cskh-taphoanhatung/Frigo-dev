@@ -87,8 +87,8 @@ export const VietQRModal: React.FC<VietQRModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl border border-slate-200/80 flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm animate-fade-in">
+      <div className="bg-white w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl border border-slate-200/80 flex flex-col max-h-[92vh] animate-fade-in">
         {/* Header */}
         <div className="p-4 bg-semantic-action-primary-pressed text-white flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -112,7 +112,7 @@ export const VietQRModal: React.FC<VietQRModalProps> = ({
         {/* Content */}
         <div className="p-4 overflow-y-auto space-y-3.5 text-slate-900 bg-slate-50/50">
           {isPaid ? (
-            <div className="py-8 text-center space-y-3 animate-in zoom-in-95">
+            <div className="py-8 text-center space-y-3 animate-fade-in">
               <div className="w-16 h-16 rounded-full bg-semantic-success-soft text-semantic-success border border-semantic-action-primary/30 flex items-center justify-center mx-auto shadow-xs">
                 <CheckCircle2 className="w-10 h-10" />
               </div>
@@ -126,7 +126,7 @@ export const VietQRModal: React.FC<VietQRModalProps> = ({
               </div>
             </div>
           ) : pending ? (
-            <div className="py-8 text-center space-y-3 animate-in zoom-in-95">
+            <div className="py-8 text-center space-y-3 animate-fade-in">
               <div className="w-16 h-16 rounded-full bg-amber-50 text-amber-600 border border-amber-200/60 flex items-center justify-center mx-auto shadow-xs">
                 <Inbox className="w-9 h-9" />
               </div>

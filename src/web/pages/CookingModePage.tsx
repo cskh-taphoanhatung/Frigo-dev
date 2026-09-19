@@ -357,7 +357,7 @@ export const CookingModePage: React.FC = () => {
 
         {/* Listening Status Banner */}
         {isListening && (
-          <div className="mb-2.5 px-3 py-1.5 rounded-xl bg-takosan-mint border border-takosan-mint-deep/60 flex items-center justify-between gap-2 animate-in fade-in slide-in-from-top-2">
+          <div className="mb-2.5 px-3 py-1.5 rounded-xl bg-takosan-mint border border-takosan-mint-deep/60 flex items-center justify-between gap-2 animate-fade-in">
             <div className="flex items-center gap-1.5 text-xs text-takosan-green-deep font-medium">
               <span className="w-2 h-2 rounded-full bg-takosan-green animate-ping" />
               <span>{heardText ? `Đã nghe: "${heardText}"` : 'Trợ lý đang nghe khẩu lệnh: "tiếp", "lùi", "đọc lại"...'}</span>

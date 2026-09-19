@@ -37,7 +37,7 @@ export const OfflineBanner: React.FC = () => {
   if (!isOffline && pending === 0) return null;
 
   return (
-    <div className="bg-takosan-navy text-white px-4 py-2 text-xs flex items-center justify-between gap-2 sticky top-0 z-50 animate-in slide-in-from-top duration-300 shadow-md">
+    <div className="bg-takosan-navy text-white px-4 py-2 text-xs flex items-center justify-between gap-2 sticky top-0 z-50 animate-slide-up shadow-md">
       <span className="font-medium flex items-center gap-2 min-w-0">
         <WifiOff className="w-3.5 h-3.5 text-[#FACC15] shrink-0" />
         {isOffline

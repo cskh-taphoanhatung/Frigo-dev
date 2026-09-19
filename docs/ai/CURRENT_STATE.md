@@ -1,6 +1,6 @@
 # Frigo / Takosan current authority — 2026-09-19
 
-## Current T17 — Takosan UI V2 partial redesign delivered on feat/t17-takosan-ui-v2 (2026-09-19)
+## Current T17 — Takosan UI V2 partial redesign, continuation 2 delivered (2026-09-19)
 
 Status `T17_PARTIAL` per the Takosan Redesign OS v2.0.0 kit. Branch
 `feat/t17-takosan-ui-v2` from live main `769d08597563f816ef9c1dd9523fdafb687de3e2`
@@ -22,18 +22,34 @@ application change: `git diff 769d085 -- src/worker` is empty and the only
 payment-file diff is 12/12 presentation-only lines in VietQRModal.
 
 Verification executed after implementation: `pnpm lint` PASS, `pnpm typecheck`
-PASS, `pnpm test` **178 files / 4046 tests PASS**, `pnpm check:migrations` PASS
+PASS, `pnpm test` **178 files / 4046 tests PASS** (re-run after the
+continuation), `pnpm check:migrations` PASS
 (sqlite3 CLI installed into the session environment, as the repo setup script
 does), `pnpm build` PASS, and the new isolated T17 Playwright suite
-(`playwright.t17.config.ts`, `tests/e2e/t17-ui/`) **33/33 PASS** at
+(`playwright.t17.config.ts`, `tests/e2e/t17-ui/`) passing at
 mobile-390 / tablet-768 / desktop-1440. Baseline gates on main `769d085` passed
-identically before edits. Remaining gaps for `T17_COMPLETE` are recorded in
-`docs/ai/T17_UI_V2_REPORT.md`: AuthPage decomposition into feature components,
-per-screen motion/semantic-token migration for legacy-styled pages, and the
-full visual matrix (360/430/1024 widths, state classes, canonical
-screenshots). `main` untouched; no merge, deploy, D1, PayOS, or production
-mutation; worktree clean apart from platform-managed `.hoplite/settings.json`
-(excluded from T17 commits).
+identically before edits. `main` untouched; no merge, deploy, D1, PayOS, or
+production mutation. (The gaps listed when this paragraph was first written —
+AuthPage decomposition, the 360/430/1024 matrix and canonical screenshots —
+were closed by continuation 2 below; the current honest gap list lives at the
+end of this section and in `docs/ai/T17_UI_V2_REPORT.md`.)
+
+Continuation 2 (same day, same branch): the **AuthPage monolith was
+decomposed** into `src/web/features/auth/*` (AuthShell/LoginMode/RegisterMode/
+OtpMode/ForgotPasswordMode/GoogleAuthSection/AuthField) with the kit's
+auth-state transition and byte-compatible security semantics — the four auth
+suites pass **11/11**. All **no-op animation utilities** (`animate-in`,
+`zoom-in-95`, `slide-in-from-*` — dead classes from an uninstalled plugin)
+were retired across 15 files onto reduced-motion-safe utilities. The T17
+visual suite now certifies **all six widths** (360/390/430/768/1024/1440) and
+captured **17 canonical screenshots per certified width**; the 360 run exposed
+and fixed a real `/shopping` horizontal overflow (`min-w-0` on the quick-add
+controls). Final gates after continuation: lint PASS, typecheck PASS, full
+vitest **178/4046 PASS**, migration smoke PASS, build PASS, T17 Playwright
+**42/42 PASS** at certified widths (full matrix green). Remaining honest gaps:
+per-screen `transition-all`/motion-primitive migration, semantic-token
+migration of legacy-styled pages, partial state-class matrix, and human design
+review of the screenshots. Worker/PayOS diff remains zero.
 
 ## Current T16 follow-up — PWA cache and Google recovery deployed (2026-09-19)
 

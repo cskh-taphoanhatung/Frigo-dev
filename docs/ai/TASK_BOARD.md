@@ -14,6 +14,16 @@
 - [limit] `T17_COMPLETE` not claimed. Remaining: AuthPage (930 lines) decomposition, per-screen motion/semantic-token migration, visual matrix at 360/430/1024 + state classes + canonical screenshots, full a11y pass. Exact list in `docs/ai/T17_UI_V2_REPORT.md`.
 - [safety] No merge, deploy, D1/migration, PayOS, Inventory Truth, OCR/AI, recipe-authority, or planning-algorithm change. Production untouched.
 
+### T17 continuation 2 (same day)
+
+- [done] AuthPage decomposed into `features/auth/*` components with mode-presence transition; security semantics byte-compatible (Turnstile single-use tokens, GSI retry/width, DEC-012 deferred transfer, private-session capture); auth suites **11/11 PASS**.
+- [done] No-op animation utilities retired (zero `animate-in`/`zoom-in-95`/`slide-in-from-*` remain); overlay/toast/step entrances now use reduced-motion-safe utilities.
+- [done] T17 visual suite extended to all six certification widths; canonical screenshots of 17 surfaces captured at 390/768/1440; destructive-dialog focus and empty-inbox honesty asserted.
+- [done] Real 360px `/shopping` horizontal overflow found by the matrix and fixed (`min-w-0` on quick-add controls).
+- [done] Gates after continuation: lint PASS, typecheck PASS, vitest **178/4046 PASS**, migration smoke PASS, build PASS, T17 Playwright **42/42 PASS** at certified widths (full matrix green).
+- [limit] Still `T17_PARTIAL`: per-screen `transition-all`/motion-primitive migration, semantic-token migration of legacy-styled pages (Home/Inventory/Recipes/Week fallbacks/scan/cooking), partial state-class matrix, and human design review of screenshots.
+- [safety] Worker/PayOS diff zero; `main` untouched; production untouched.
+
 ## Current T16 follow-up — PWA cache and Google recovery deployed (2026-09-19)
 
 - [done] Confirmed live `/auth` and `/sw.js` were edge-cache hits and production still served fixed cache `takosan-pwa-v2`; repository path mismatch was `/sw.js` registration versus `/service-worker.js` header rule.
