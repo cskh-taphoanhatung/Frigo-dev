@@ -16,10 +16,10 @@ import { clsx } from 'clsx';
 import { resolveRecipeImage, recipeImageErrorHandler } from '../lib/recipe-media';
 
 const EXPIRY_TONE_CLASS: Record<string, string> = {
-  unknown: 'bg-slate-100 text-slate-700 border-slate-200',
-  expired: 'bg-rose-50 text-rose-800 border-rose-200',
-  expiring: 'bg-amber-50 text-amber-900 border-amber-200',
-  estimated: 'bg-sky-50 text-sky-900 border-sky-200',
+  unknown: 'bg-semantic-border/60 text-semantic-text-secondary border-semantic-border',
+  expired: 'bg-semantic-danger-soft text-semantic-danger-strong border-semantic-danger/30',
+  expiring: 'bg-semantic-warning-soft text-semantic-warning-strong border-semantic-warning/30',
+  estimated: 'bg-semantic-info-soft text-semantic-info border-semantic-info/30',
   fresh: 'bg-takosan-mint text-takosan-green-deep border-takosan-mint-deep',
 };
 
@@ -128,7 +128,7 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
           {legacyQuery.isError ? (
             <InlineError error={legacyQuery.error} onRetry={() => void legacyQuery.refetch()} />
           ) : (
-            <p className="text-xs text-slate-500">Không tìm thấy nguyên liệu này trong tủ.</p>
+            <p className="text-xs text-semantic-text-muted">Không tìm thấy nguyên liệu này trong tủ.</p>
           )}
           <Button className="mt-4" onClick={() => navigate('/fridge')}>Về tủ lạnh</Button>
         </div>
@@ -195,13 +195,13 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
       <TopBar showBack title={item.name} subtitle="Thông tin nguyên liệu" />
 
       <div className="px-4 pt-4 space-y-4">
-        <div className="bg-white rounded-xl p-4 flex items-center gap-4 border border-slate-200/80 shadow-xs">
-          <div className="w-16 h-16 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center p-2 overflow-hidden shrink-0">
+        <div className="bg-white rounded-xl p-4 flex items-center gap-4 border border-semantic-border shadow-xs">
+          <div className="w-16 h-16 rounded-xl bg-semantic-background-subtle border border-semantic-border/70 flex items-center justify-center p-2 overflow-hidden shrink-0">
             <img src={getIngredientImage(item.ingredientId, item.name)} alt={item.name} className="w-full h-full object-contain" />
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-heading font-bold text-xl text-slate-900 leading-tight">{item.name}</h3>
+              <h3 className="font-heading font-bold text-xl text-semantic-text-primary leading-tight">{item.name}</h3>
               <StatusChip status={status} />
             </div>
             <p className="text-sm font-semibold text-takosan-green">{item.quantity} {item.unit}</p>
@@ -209,7 +209,7 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
         </div>
 
         {actionError && (
-          <div className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2 font-medium space-y-2" role="alert"
+          <div className="text-xs text-semantic-danger-strong bg-semantic-danger-soft border border-semantic-danger/30 rounded-xl px-3 py-2 font-medium space-y-2" role="alert"
             data-refetch-state={refetchFailed ? 'failed' : 'ok'}>
             <p>{actionError}</p>
             {refetchFailed && (
@@ -226,18 +226,18 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
         )}
 
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-xs">
-            <div className="flex items-center gap-1.5 text-slate-500 mb-1">
+          <div className="bg-white rounded-xl p-3.5 border border-semantic-border shadow-xs">
+            <div className="flex items-center gap-1.5 text-semantic-text-muted mb-1">
               <Layers className="w-4 h-4 text-takosan-green" />
               <span className="text-[11px] font-semibold">Vị trí</span>
             </div>
-            <p className="font-heading font-semibold text-sm text-slate-900">
+            <p className="font-heading font-semibold text-sm text-semantic-text-primary">
               {STORAGE_LABEL[item.storage] ?? 'Ngăn mát tủ lạnh'}
             </p>
           </div>
 
-          <div className="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-xs">
-            <div className="flex items-center gap-1.5 text-slate-500 mb-1">
+          <div className="bg-white rounded-xl p-3.5 border border-semantic-border shadow-xs">
+            <div className="flex items-center gap-1.5 text-semantic-text-muted mb-1">
               <Calendar className="w-4 h-4 text-takosan-green" />
               <span className="text-[11px] font-semibold">Hạn sử dụng</span>
             </div>
@@ -249,24 +249,24 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
         </div>
 
         {lot && (
-          <div className="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-xs space-y-2">
-            <div className="flex items-center gap-1.5 text-slate-500">
+          <div className="bg-white rounded-xl p-3.5 border border-semantic-border shadow-xs space-y-2">
+            <div className="flex items-center gap-1.5 text-semantic-text-muted">
               <Receipt className="w-4 h-4 text-takosan-green" />
               <span className="text-[11px] font-semibold">Nguồn gốc &amp; lô</span>
             </div>
             <dl className="grid grid-cols-2 gap-y-1.5 text-xs">
-              <dt className="text-slate-500">Nguồn</dt>
-              <dd className="text-slate-900 font-semibold text-right" data-testid="lot-provenance">
+              <dt className="text-semantic-text-muted">Nguồn</dt>
+              <dd className="text-semantic-text-primary font-semibold text-right" data-testid="lot-provenance">
                 {provenanceLabel(lot.dataSource)}
               </dd>
-              <dt className="text-slate-500">Ngày mua</dt>
-              <dd className="text-slate-900 font-semibold text-right">{presentPurchaseDate(lot.purchasedAt)}</dd>
-              <dt className="text-slate-500">Trạng thái mở</dt>
-              <dd className="text-slate-900 font-semibold text-right" data-testid="lot-opened">{presentOpenedState(lot.openedAt)}</dd>
-              <dt className="text-slate-500">Mã lô</dt>
-              <dd className="text-slate-900 font-mono text-[10px] text-right break-all">{lot.lotId}</dd>
-              <dt className="text-slate-500">Phiên bản lô</dt>
-              <dd className="text-slate-900 font-semibold text-right">v{lot.lotVersion}</dd>
+              <dt className="text-semantic-text-muted">Ngày mua</dt>
+              <dd className="text-semantic-text-primary font-semibold text-right">{presentPurchaseDate(lot.purchasedAt)}</dd>
+              <dt className="text-semantic-text-muted">Trạng thái mở</dt>
+              <dd className="text-semantic-text-primary font-semibold text-right" data-testid="lot-opened">{presentOpenedState(lot.openedAt)}</dd>
+              <dt className="text-semantic-text-muted">Mã lô</dt>
+              <dd className="text-semantic-text-primary font-mono text-[10px] text-right break-all">{lot.lotId}</dd>
+              <dt className="text-semantic-text-muted">Phiên bản lô</dt>
+              <dd className="text-semantic-text-primary font-semibold text-right">v{lot.lotVersion}</dd>
             </dl>
           </div>
         )}
@@ -278,7 +278,7 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
           </Button>
         ) : (
           <form
-            className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-xs space-y-3"
+            className="bg-white rounded-xl p-4 border border-semantic-border shadow-xs space-y-3"
             data-draft-owner={draftOwner?.itemId ?? ''}
             onSubmit={(event) => {
               event.preventDefault();
@@ -286,7 +286,7 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
             }}
           >
             <div>
-              <label htmlFor="lot-name-input" className="block text-xs font-semibold text-slate-700 mb-1">
+              <label htmlFor="lot-name-input" className="block text-xs font-semibold text-semantic-text-secondary mb-1">
                 Tên nguyên liệu
               </label>
               <input
@@ -295,19 +295,19 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
                 maxLength={100}
                 value={draft.name}
                 onChange={(event) => setDraft({ ...draft, name: event.target.value })}
-                className="w-full h-11 px-3 rounded-xl border border-slate-200/80 text-sm font-medium text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green"
+                className="w-full h-11 px-3 rounded-xl border border-semantic-border text-sm font-medium text-semantic-text-primary bg-white focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label htmlFor="lot-unit-input" className="block text-xs font-semibold text-slate-700 mb-1">
+                <label htmlFor="lot-unit-input" className="block text-xs font-semibold text-semantic-text-secondary mb-1">
                   Đơn vị
                 </label>
                 <select
                   id="lot-unit-input"
                   value={draft.unit}
                   onChange={(event) => setDraft({ ...draft, unit: event.target.value })}
-                  className="w-full h-11 px-3 rounded-xl border border-slate-200/80 text-sm font-medium text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green"
+                  className="w-full h-11 px-3 rounded-xl border border-semantic-border text-sm font-medium text-semantic-text-primary bg-white focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green"
                 >
                   <option value="g">gam (g)</option>
                   <option value="kg">kg</option>
@@ -320,14 +320,14 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
                 </select>
               </div>
               <div>
-                <label htmlFor="lot-category-input" className="block text-xs font-semibold text-slate-700 mb-1">
+                <label htmlFor="lot-category-input" className="block text-xs font-semibold text-semantic-text-secondary mb-1">
                   Danh mục
                 </label>
                 <select
                   id="lot-category-input"
                   value={draft.category}
                   onChange={(event) => setDraft({ ...draft, category: event.target.value })}
-                  className="w-full h-11 px-3 rounded-xl border border-slate-200/80 text-sm font-medium text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green"
+                  className="w-full h-11 px-3 rounded-xl border border-semantic-border text-sm font-medium text-semantic-text-primary bg-white focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green"
                 >
                   {!Object.hasOwn(CATEGORY_LABEL, editBaseline.category) && <option value={editBaseline.category}>{editBaseline.category}</option>}
                   {Object.entries(CATEGORY_LABEL).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
@@ -335,7 +335,7 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
               </div>
             </div>
             <div>
-              <label htmlFor="lot-expiry-input" className="block text-xs font-semibold text-slate-700 mb-1">
+              <label htmlFor="lot-expiry-input" className="block text-xs font-semibold text-semantic-text-secondary mb-1">
                 Hạn sử dụng chính xác
               </label>
               <input
@@ -343,21 +343,21 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
                 type="date"
                 value={draft.expiryDate}
                 onChange={(event) => setDraft({ ...draft, expiryDate: event.target.value })}
-                className="w-full h-11 px-3 rounded-xl border border-slate-200/80 text-sm font-medium text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green"
+                className="w-full h-11 px-3 rounded-xl border border-semantic-border text-sm font-medium text-semantic-text-primary bg-white focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green"
               />
-              <p className="text-[11px] text-slate-500 mt-1">
+              <p className="text-[11px] text-semantic-text-muted mt-1">
                 Ngày bạn chọn được lưu là hạn dùng đã biết chắc chắn.
               </p>
             </div>
             <div>
-              <label htmlFor="lot-storage-input" className="block text-xs font-semibold text-slate-700 mb-1">
+              <label htmlFor="lot-storage-input" className="block text-xs font-semibold text-semantic-text-secondary mb-1">
                 Chuyển vị trí bảo quản
               </label>
               <select
                 id="lot-storage-input"
                 value={draft.storage}
                 onChange={(event) => setDraft({ ...draft, storage: event.target.value })}
-                className="w-full h-11 px-3 rounded-xl border border-slate-200/80 text-sm font-medium text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green"
+                className="w-full h-11 px-3 rounded-xl border border-semantic-border text-sm font-medium text-semantic-text-primary bg-white focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green"
               >
                 <option value="fridge">Ngăn mát</option>
                 <option value="freezer">Ngăn đông</option>
@@ -374,7 +374,7 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
         )}
 
         <div className="pt-2">
-          <h4 className="font-heading font-bold text-base text-slate-900 flex items-center gap-1.5 mb-3">
+          <h4 className="font-heading font-bold text-base text-semantic-text-primary flex items-center gap-1.5 mb-3">
             <ChefHat className="w-4 h-4 text-takosan-green" />
             <span>Món ngon có thể nấu ({matchingRecipes.length})</span>
           </h4>
@@ -384,20 +384,20 @@ const LotDetail: React.FC<{ routeId: string }> = ({ routeId }) => {
               <div
                 key={recipe.id}
                 onClick={() => navigate(`/recipes/${recipe.slug}`)}
-                className="bg-white rounded-xl p-3 flex items-center gap-3.5 border border-slate-200/80 shadow-xs cursor-pointer hover:border-takosan-green/40 active:scale-[0.99] transition-tap"
+                className="bg-white rounded-xl p-3 flex items-center gap-3.5 border border-semantic-border shadow-xs cursor-pointer hover:border-takosan-green/40 active:scale-[0.99] transition-tap"
               >
-                <img src={resolveRecipeImage(recipe).src} alt={recipe.title} className="w-14 h-14 rounded-lg object-cover shrink-0 border border-slate-100" loading="lazy" onError={recipeImageErrorHandler(resolveRecipeImage(recipe).fallbackSrc)} />
+                <img src={resolveRecipeImage(recipe).src} alt={recipe.title} className="w-14 h-14 rounded-lg object-cover shrink-0 border border-semantic-border/70" loading="lazy" onError={recipeImageErrorHandler(resolveRecipeImage(recipe).fallbackSrc)} />
                 <div className="flex-1 min-w-0">
                   <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep/60 uppercase">
                     {recipe.cuisine}
                   </span>
-                  <h5 className="font-heading font-semibold text-sm text-slate-900 truncate mt-1">{recipe.title}</h5>
-                  <span className="flex items-center gap-1 text-xs text-slate-500 mt-0.5">
-                    <Clock className="w-3 h-3 text-slate-400" />
+                  <h5 className="font-heading font-semibold text-sm text-semantic-text-primary truncate mt-1">{recipe.title}</h5>
+                  <span className="flex items-center gap-1 text-xs text-semantic-text-muted mt-0.5">
+                    <Clock className="w-3 h-3 text-semantic-text-muted" />
                     <span>{recipe.cookTimeMinutes} phút</span>
                   </span>
                 </div>
-                <ArrowRight className="w-4 h-4 text-slate-400" />
+                <ArrowRight className="w-4 h-4 text-semantic-text-muted" />
               </div>
             ))}
           </div>

@@ -39,19 +39,19 @@ export const AuthShell: React.FC<AuthShellProps> = ({
       <div className="flex items-center justify-between">
         <button
           onClick={onBack}
-          className="p-2 -ml-2 rounded-xl hover:bg-slate-100 active:scale-95 text-slate-700 tap-target flex items-center justify-center transition-colors"
+          className="p-2 -ml-2 rounded-xl hover:bg-semantic-border/60 active:scale-95 text-semantic-text-secondary tap-target flex items-center justify-center transition-colors"
           aria-label="Quay lại"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <span className="text-xs font-semibold text-slate-400">Tài khoản Takosan</span>
+        <span className="text-xs font-semibold text-semantic-text-muted">Tài khoản Takosan</span>
       </div>
 
       <div className="mt-6 text-center">
         <img src={TAKOSAN_BRAND.logos.horizontal} alt="Takosan" className="h-11 mx-auto mb-3 object-contain" />
         {/* Single page heading (accessibility checklist: sequential levels). */}
-        <h1 className="font-heading font-bold text-xl text-slate-900 tracking-tight">{HEADING[mode]}</h1>
-        <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto leading-relaxed">
+        <h1 className="font-heading font-bold text-xl text-semantic-text-primary tracking-tight">{HEADING[mode]}</h1>
+        <p className="text-xs text-semantic-text-muted mt-1 max-w-xs mx-auto leading-relaxed">
           {mode === 'login' && 'Đồng bộ tủ lạnh, thực đơn tuần và gợi ý món ăn mọi lúc mọi nơi'}
           {mode === 'register' && 'Gia nhập Takosan để quản lý thực phẩm thông minh và giảm lãng phí'}
           {mode === 'otp_verify' && `Nhập 6 số mã OTP đã gửi tới ${email}`}
@@ -60,7 +60,7 @@ export const AuthShell: React.FC<AuthShellProps> = ({
       </div>
 
       {(mode === 'login' || mode === 'register') && (
-        <div className="flex bg-slate-200/70 p-1 rounded-xl mt-6">
+        <div className="flex bg-semantic-border/70 p-1 rounded-xl mt-6">
           {(['login', 'register'] as const).map((m) => (
             <button
               key={m}
@@ -68,7 +68,7 @@ export const AuthShell: React.FC<AuthShellProps> = ({
               aria-pressed={mode === m}
               onClick={() => onModeChange(m)}
               className={`flex-1 py-2 rounded-lg font-heading font-semibold text-xs transition-tap tap-target ${
-                mode === m ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                mode === m ? 'bg-white text-semantic-text-primary shadow-xs' : 'text-semantic-text-secondary hover:text-semantic-text-primary'
               }`}
             >
               {m === 'login' ? 'Đăng nhập' : 'Đăng ký tài khoản'}
@@ -78,8 +78,8 @@ export const AuthShell: React.FC<AuthShellProps> = ({
       )}
 
       {errorMessage && (
-        <div className="mt-4 p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs flex items-center gap-2 animate-fade-in" role="alert">
-          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+        <div className="mt-4 p-3 bg-semantic-danger-soft border border-semantic-danger/30 text-semantic-danger-strong rounded-xl text-xs flex items-center gap-2 animate-fade-in" role="alert">
+          <AlertCircle className="w-4 h-4 shrink-0 text-semantic-danger" />
           <span>{errorMessage}</span>
         </div>
       )}
@@ -113,7 +113,7 @@ export const AuthShell: React.FC<AuthShellProps> = ({
     </div>
 
     <div className="text-center pt-8">
-      <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500">
+      <div className="flex items-center justify-center gap-1.5 text-xs text-semantic-text-muted">
         <ShieldCheck className="w-4 h-4 text-takosan-green" aria-hidden="true" />
         <span>Bảo mật dữ liệu thực phẩm & Tôn trọng quyền riêng tư</span>
       </div>

@@ -43,7 +43,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         {title}
       </h3>
 
-      <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto leading-relaxed">
+      <p className="text-xs text-semantic-text-muted mt-1 max-w-xs mx-auto leading-relaxed">
         {description}
       </p>
 
@@ -64,7 +64,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
               size="md"
               variant="outline"
               onClick={onSecondaryAction}
-              className="flex-1 border-slate-200 text-slate-700 font-heading font-semibold text-xs py-2.5 rounded-xl hover:bg-slate-50"
+              className="flex-1 border-semantic-border text-semantic-text-secondary font-heading font-semibold text-xs py-2.5 rounded-xl hover:bg-semantic-background-subtle"
             >
               {secondaryActionText}
             </Button>

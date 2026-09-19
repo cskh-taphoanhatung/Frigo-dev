@@ -43,7 +43,8 @@
   --semantic-surface-raised: #FFFFFF;
   --semantic-text-primary: #1F2937;
   --semantic-text-secondary: #4A4741;
-  --semantic-text-muted: #7B776F;
+  /* Kit #7B776F is 4.24:1 on --semantic-background (below AA); darkened. */
+  --semantic-text-muted: #6F6B64;
   --semantic-text-inverse: #FFFFFF;
   --semantic-action-primary: #2E7D5B;
   --semantic-action-primary-hover: #246648;
@@ -55,8 +56,10 @@
   --semantic-success-soft: #E7F5EC;
   --semantic-warning: #B66A09;
   --semantic-warning-soft: #FFF3D6;
+  --semantic-warning-strong: #8F5307;
   --semantic-danger: #C93D3D;
   --semantic-danger-soft: #FFF0F0;
+  --semantic-danger-strong: #B53434;
   --semantic-info: #2F6F9F;
   --semantic-info-soft: #EAF4FB;
   --semantic-border: #E7E3DA;

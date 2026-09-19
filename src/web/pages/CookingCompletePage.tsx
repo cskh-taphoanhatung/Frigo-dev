@@ -16,7 +16,7 @@ export const CookingCompletePage: React.FC = () => {
   if (!activeRecipe) {
     return (
       <div className="min-h-screen bg-takosan-cream p-6 flex flex-col justify-center items-center text-center">
-        <p className="text-base text-slate-800 font-medium mb-4">Không có món ăn đang hoàn tất</p>
+        <p className="text-base text-semantic-text-primary font-medium mb-4">Không có món ăn đang hoàn tất</p>
         <Button onClick={() => navigate('/recipes')}>Xem công thức</Button>
       </div>
     );
@@ -48,25 +48,25 @@ export const CookingCompletePage: React.FC = () => {
               className="w-full h-full object-contain"
             />
           </div>
-          <h2 className="font-heading font-bold text-2xl text-slate-900">
+          <h2 className="font-heading font-bold text-2xl text-semantic-text-primary">
             Món ăn đã hoàn thành! 🎉
           </h2>
-          <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
-            Chúc mừng bạn đã nấu xong <span className="font-semibold text-slate-900">{activeRecipe.title}</span>.
+          <p className="text-xs text-semantic-text-muted mt-1 max-w-xs mx-auto">
+            Chúc mừng bạn đã nấu xong <span className="font-semibold text-semantic-text-primary">{activeRecipe.title}</span>.
           </p>
         </div>
 
         {/* Inventory Deduction Confirmation Draft */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="font-heading font-bold text-base text-slate-900 flex items-center gap-1.5">
+            <h3 className="font-heading font-bold text-base text-semantic-text-primary flex items-center gap-1.5">
               <Refrigerator className="w-4 h-4 text-takosan-green" />
               <span>Cập nhật số lượng trong tủ lạnh</span>
             </h3>
-            <span className="text-xs text-slate-500 font-medium">Kiểm tra & chỉnh sửa</span>
+            <span className="text-xs text-semantic-text-muted font-medium">Kiểm tra & chỉnh sửa</span>
           </div>
 
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-semantic-text-muted">
             Dưới đây là lượng nguyên liệu dự kiến được trừ. Bạn có thể điều chỉnh lại nếu thực tế dùng khác.
           </p>
 
@@ -74,30 +74,30 @@ export const CookingCompletePage: React.FC = () => {
             {deductions.map((d) => (
               <Card key={d.ingredientId} className="p-3.5 flex items-center justify-between shadow-xs">
                 <div>
-                  <h4 className="font-heading font-semibold text-sm text-slate-900">
+                  <h4 className="font-heading font-semibold text-sm text-semantic-text-primary">
                     {d.name}
                   </h4>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-semantic-text-muted mt-0.5">
                     Ban đầu: {d.currentQuantity} {d.unit} &rarr; Còn lại: {d.remainingQuantity} {d.unit}
                   </p>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-rose-600">
+                  <span className="text-xs font-bold text-semantic-danger">
                     -{d.quantityDeducted} {d.unit}
                   </span>
 
-                  <div className="flex items-center bg-slate-50 rounded-lg p-0.5 border border-slate-200 shadow-xs">
+                  <div className="flex items-center bg-semantic-background-subtle rounded-lg p-0.5 border border-semantic-border shadow-xs">
                     <button
                       onClick={() => updateDeduction(d.ingredientId, Math.max(0, d.quantityDeducted - (d.unit === 'g' ? 50 : 1)))}
-                      className="w-7 h-7 flex items-center justify-center font-bold text-slate-700 hover:bg-white rounded-md tap-target transition-colors"
+                      className="w-7 h-7 flex items-center justify-center font-bold text-semantic-text-secondary hover:bg-white rounded-md tap-target transition-colors"
                       aria-label="Giảm số lượng trừ"
                     >
                       –
                     </button>
                     <button
                       onClick={() => updateDeduction(d.ingredientId, Math.min(d.currentQuantity, d.quantityDeducted + (d.unit === 'g' ? 50 : 1)))}
-                      className="w-7 h-7 flex items-center justify-center font-bold text-slate-700 hover:bg-white rounded-md tap-target transition-colors"
+                      className="w-7 h-7 flex items-center justify-center font-bold text-semantic-text-secondary hover:bg-white rounded-md tap-target transition-colors"
                       aria-label="Tăng số lượng trừ"
                     >
                       +

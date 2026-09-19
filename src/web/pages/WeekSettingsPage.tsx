@@ -30,8 +30,8 @@ export const WeekSettingsPage: React.FC = () => {
 
       <div className="px-4 pt-4 space-y-5">
         {/* Budget Setting */}
-        <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-xs space-y-3">
-          <h3 className="font-heading font-bold text-sm text-slate-900">
+        <div className="bg-white rounded-xl p-4 border border-semantic-border shadow-xs space-y-3">
+          <h3 className="font-heading font-bold text-sm text-semantic-text-primary">
             Ngân sách mặc định mỗi tuần
           </h3>
           <div className="grid grid-cols-2 gap-2.5">
@@ -43,7 +43,7 @@ export const WeekSettingsPage: React.FC = () => {
                 className={`p-3 rounded-xl border text-xs font-semibold transition-tap tap-target active:scale-[0.98] ${
                   budget === b
                     ? 'bg-takosan-green text-white shadow-xs border-takosan-green'
-                    : 'bg-white text-slate-800 border-slate-200/80 hover:border-slate-300'
+                    : 'bg-white text-semantic-text-primary border-semantic-border hover:border-semantic-border-strong'
                 }`}
               >
                 {Math.round(b / 1000)}k VND
@@ -53,8 +53,8 @@ export const WeekSettingsPage: React.FC = () => {
         </div>
 
         {/* Shopping Frequency */}
-        <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-xs space-y-3">
-          <h3 className="font-heading font-bold text-sm text-slate-900">
+        <div className="bg-white rounded-xl p-4 border border-semantic-border shadow-xs space-y-3">
+          <h3 className="font-heading font-bold text-sm text-semantic-text-primary">
             Tần suất đi chợ
           </h3>
           <div className="space-y-2">
@@ -70,8 +70,8 @@ export const WeekSettingsPage: React.FC = () => {
                 onClick={() => setFrequency(f.id as any)}
                 className={`w-full p-3.5 rounded-xl border text-left text-xs font-semibold transition-tap flex items-center justify-between tap-target active:scale-[0.99] ${
                   frequency === f.id
-                    ? 'bg-white border-takosan-green ring-1 ring-takosan-green text-slate-900 shadow-xs'
-                    : 'bg-white border-slate-200/80 text-slate-700 hover:border-slate-300'
+                    ? 'bg-white border-takosan-green ring-1 ring-takosan-green text-semantic-text-primary shadow-xs'
+                    : 'bg-white border-semantic-border text-semantic-text-secondary hover:border-semantic-border-strong'
                 }`}
               >
                 <span>{f.label}</span>

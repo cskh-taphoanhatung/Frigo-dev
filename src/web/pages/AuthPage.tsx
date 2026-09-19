@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../stores/useAuthStore';
 import { api } from '../services/api';
 import { isInventoryTransferDeferred } from '../services/auth';
@@ -10,15 +10,31 @@ import { AuthShell } from '../features/auth/AuthShell';
 import { LoginMode } from '../features/auth/LoginMode';
 import { RegisterMode } from '../features/auth/RegisterMode';
 import { OtpMode } from '../features/auth/OtpMode';
+import { VerifyUnavailable } from '../features/auth/VerifyUnavailable';
 import { ForgotPasswordMode } from '../features/auth/ForgotPasswordMode';
+import {
+  clearVerifyContext,
+  readVerifyContext,
+  resendSecondsRemaining,
+  writeVerifyContext,
+} from '../features/auth/verify-context';
+
+export const AUTH_VERIFY_PATH = '/auth/verify';
+const EMPTY_OTP = ['', '', '', '', '', ''];
 
 /**
  * Auth state machine (screen 02). Presentation lives in `features/auth/*`;
  * security semantics (Turnstile, GSI, DEC-012 guest transfer, private-session
  * capture) stay here, byte-compatible with the previous monolith.
+ *
+ * Screen 03 lives at `/auth/verify`: the OTP state is the route, not a hidden
+ * mode. A tab-scoped verification context (email, delivery, resend cooldown —
+ * never the code) lets refresh/back recover; without it the route says so.
  */
 export const AuthPage: React.FC = () => {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const isVerifyRoute = pathname === AUTH_VERIFY_PATH;
   const [searchParams] = useSearchParams();
   const requestedMode = searchParams.get('mode');
   const requestedProvider = searchParams.get('provider');
@@ -28,14 +44,18 @@ export const AuthPage: React.FC = () => {
     : '/';
   const { setAuthSession } = useAuthStore();
 
-  const [mode, setMode] = useState<AuthMode>(() => requestedMode === 'register' ? 'register' : 'login');
+  // Non-route modes; `otp_verify` is derived from the route below.
+  const [baseMode, setBaseMode] = useState<Exclude<AuthMode, 'otp_verify'>>(() =>
+    requestedMode === 'register' ? 'register' : 'login');
+  const mode: AuthMode = isVerifyRoute ? 'otp_verify' : baseMode;
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Form Fields
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  // Direct load / refresh of /auth/verify restores the address being verified.
+  const [email, setEmail] = useState(() => (isVerifyRoute ? readVerifyContext()?.email ?? '' : ''));
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
@@ -43,13 +63,14 @@ export const AuthPage: React.FC = () => {
   const [newPassword, setNewPassword] = useState('');
 
   // OTP State
-  const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
+  const [otpDigits, setOtpDigits] = useState(EMPTY_OTP);
   const [otpPurpose, setOtpPurpose] = useState<'register' | 'forgot_password'>('register');
   const [devOtp, setDevOtp] = useState<string | null>(null);
   // Production responses intentionally omit devOtp; this flag tracks that a
   // reset code was requested so the user can still enter it and set a password.
   const [forgotOtpRequested, setForgotOtpRequested] = useState(false);
-  const [resendCountdown, setResendCountdown] = useState(0);
+  const [resendCountdown, setResendCountdown] = useState(() =>
+    isVerifyRoute ? resendSecondsRemaining(readVerifyContext()) : 0);
   // DEC-012: guest data transfer was refused by the server; the guest session
   // stays intact until the user explicitly continues without a transfer.
   const [transferDeferred, setTransferDeferred] = useState(false);
@@ -77,8 +98,22 @@ export const AuthPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (requestedMode === 'register') setMode('register');
+    if (requestedMode === 'register') setBaseMode('register');
   }, [requestedMode]);
+
+  // Arriving at /auth/verify (direct load, refresh, back/forward) restores the
+  // tab-scoped context. A verification whose email was never delivered must
+  // say so rather than claim a code is on its way.
+  useEffect(() => {
+    if (!isVerifyRoute) return;
+    const context = readVerifyContext();
+    if (!context) return;
+    setEmail((current) => current || context.email);
+    setResendCountdown((current) => (current > 0 ? current : resendSecondsRemaining(context)));
+    if (!context.delivered && resendSecondsRemaining(context) === 0) {
+      setErrorMessage((current) => current ?? 'Email OTP chưa gửi được. Hãy bấm gửi lại mã.');
+    }
+  }, [isVerifyRoute]);
 
   const otpInputsRef = useRef<(HTMLInputElement | null)[]>([]);
   const googleBtnRef = useRef<HTMLDivElement>(null);
@@ -191,6 +226,22 @@ export const AuthPage: React.FC = () => {
     }
   }, [resendCountdown]);
 
+  /** Enter screen 03 for `email` (registration purpose). `delivered` mirrors
+   *  the server's statement about the OTP email; it drives the cooldown and
+   *  is persisted so a refresh cannot upgrade "not sent" into "sent". */
+  const enterVerification = (delivered: boolean) => {
+    const cooldown = delivered ? 60 : 0;
+    writeVerifyContext({
+      email,
+      resendAvailableAt: cooldown ? Date.now() + cooldown * 1000 : 0,
+      delivered,
+    });
+    setOtpPurpose('register');
+    setTransferDeferred(false);
+    setResendCountdown(cooldown);
+    if (!isVerifyRoute) navigate(AUTH_VERIFY_PATH);
+  };
+
   // Handle Login
   const handleLogin = async (e: React.FormEvent) => {
     const isCurrent = capturePrivateSession();
@@ -217,15 +268,12 @@ export const AuthPage: React.FC = () => {
       }
     } catch (err: any) {
       if (err?.payload?.requireOtp === true) {
-        setOtpPurpose('register');
         if (typeof err.payload.devOtp === 'string') setDevOtp(err.payload.devOtp);
-        setTransferDeferred(false);
-        setMode('otp_verify');
-        if (err.payload.otpDelivered === true) {
-          setResendCountdown(60);
+        const delivered = err.payload.otpDelivered === true;
+        enterVerification(delivered);
+        if (delivered) {
           setSuccessMessage('Mã OTP mới đã được gửi đến email của bạn.');
         } else {
-          setResendCountdown(0);
           setErrorMessage('Tài khoản chưa xác thực và email OTP chưa gửi được. Hãy bấm gửi lại mã.');
         }
       } else {
@@ -257,18 +305,12 @@ export const AuthPage: React.FC = () => {
       const res = await api.register(name, email, password, turnstileToken);
       if (res.success) {
         if (res.devOtp) setDevOtp(res.devOtp);
-        setOtpPurpose('register');
-        setTransferDeferred(false);
-        setMode('otp_verify');
-        setResendCountdown(60);
+        enterVerification(true);
         setSuccessMessage(res.message);
       }
     } catch (err: any) {
       if (err?.code === 'OTP_DELIVERY_UNAVAILABLE') {
-        setOtpPurpose('register');
-        setTransferDeferred(false);
-        setMode('otp_verify');
-        setResendCountdown(0);
+        enterVerification(false);
         setSuccessMessage(null);
         setErrorMessage('Tài khoản đã được lưu nhưng email OTP chưa gửi được. Hãy bấm gửi lại mã.');
       } else {
@@ -344,6 +386,7 @@ export const AuthPage: React.FC = () => {
       if (res.success) {
         setTransferDeferred(false);
         if (otpPurpose === 'register') {
+          clearVerifyContext();
           if (res.user) {
             setAuthSession({
               id: res.user.id,
@@ -400,6 +443,9 @@ export const AuthPage: React.FC = () => {
         if (res.devOtp) setDevOtp(res.devOtp);
         setResendCountdown(60);
         setTransferDeferred(false);
+        if (otpPurpose === 'register') {
+          writeVerifyContext({ email, resendAvailableAt: Date.now() + 60_000, delivered: true });
+        }
         setSuccessMessage(res.message);
       }
     } catch (err: any) {
@@ -470,9 +516,9 @@ export const AuthPage: React.FC = () => {
         setPassword(newPassword);
         setDevOtp(null);
         setForgotOtpRequested(false);
-        setOtpDigits(['', '', '', '', '', '']);
+        setOtpDigits(EMPTY_OTP);
         setTimeout(() => {
-          setMode('login');
+          setBaseMode('login');
           setSuccessMessage(null);
         }, 1500);
       }
@@ -499,39 +545,52 @@ export const AuthPage: React.FC = () => {
   };
 
   const switchMode = (next: 'login' | 'register') => {
-    setMode(next);
+    setBaseMode(next);
     setErrorMessage(null);
     setSuccessMessage(null);
   };
 
   const backOutOfVerification = () => {
-    if (mode === 'otp_verify' || mode === 'forgot_password') {
-      setMode('login');
+    if (mode === 'otp_verify') {
+      // Abandoning verification: the tab-scoped context goes with it so the
+      // route cannot later imply a code is pending.
+      clearVerifyContext();
+      setBaseMode('login');
+      setErrorMessage(null);
+      setSuccessMessage(null);
+      setDevOtp(null);
+      setTransferDeferred(false);
+      setOtpDigits(EMPTY_OTP);
+      navigate('/auth', { replace: true });
+    } else if (mode === 'forgot_password') {
+      setBaseMode('login');
       setErrorMessage(null);
       setSuccessMessage(null);
       setDevOtp(null);
       setForgotOtpRequested(false);
-      setTransferDeferred(false);
-      setOtpDigits(['', '', '', '', '', '']);
+      setOtpDigits(EMPTY_OTP);
     } else {
       navigate('/landing');
     }
   };
 
   const startForgotPassword = () => {
-    setMode('forgot_password');
+    setBaseMode('forgot_password');
     setErrorMessage(null);
     setSuccessMessage(null);
     setDevOtp(null);
     setForgotOtpRequested(false);
-    setOtpDigits(['', '', '', '', '', '']);
+    setOtpDigits(EMPTY_OTP);
   };
 
   const backToLogin = () => {
-    setMode('login');
+    setBaseMode('login');
     setErrorMessage(null);
     setSuccessMessage(null);
   };
+
+  // /auth/verify without any verification in progress on this device.
+  const verifyContextMissing = isVerifyRoute && email.length === 0;
 
   return (
     <AuthShell
@@ -584,7 +643,13 @@ export const AuthPage: React.FC = () => {
             isLoading={isLoading}
           />
         )}
-        {mode === 'otp_verify' && (
+        {mode === 'otp_verify' && verifyContextMissing && (
+          <VerifyUnavailable
+            onRegister={() => navigate('/auth?mode=register', { replace: true })}
+            onLogin={() => navigate('/auth', { replace: true })}
+          />
+        )}
+        {mode === 'otp_verify' && !verifyContextMissing && (
           <OtpMode
             turnstileSiteKey={turnstileSiteKey}
             turnstileGeneration={turnstileGeneration}

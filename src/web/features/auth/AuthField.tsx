@@ -29,9 +29,9 @@ export const AuthField: React.FC<AuthFieldProps> = ({
   const id = useId();
   return (
     <div>
-      <label htmlFor={id} className="block text-xs font-semibold text-slate-700 mb-1">{label}</label>
+      <label htmlFor={id} className="block text-xs font-semibold text-semantic-text-secondary mb-1">{label}</label>
       <div className="relative">
-        <Icon className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" aria-hidden="true" />
+        <Icon className="w-4 h-4 absolute left-3.5 top-3.5 text-semantic-text-muted" aria-hidden="true" />
         <input
           id={id}
           type={reveal?.show ? 'text' : type}
@@ -40,7 +40,7 @@ export const AuthField: React.FC<AuthFieldProps> = ({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           autoComplete={autoComplete ?? (type === 'email' ? 'email' : type === 'password' ? 'current-password' : 'name')}
-          className={`w-full h-11 pl-10 bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 text-sm font-medium text-slate-900 shadow-xs ${reveal ? 'pr-10' : 'pr-4'}`}
+          className={`w-full h-11 pl-10 bg-white border border-semantic-border focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 text-sm font-medium text-semantic-text-primary shadow-xs ${reveal ? 'pr-10' : 'pr-4'}`}
         />
         {reveal && (
           <button
@@ -48,7 +48,7 @@ export const AuthField: React.FC<AuthFieldProps> = ({
             onClick={reveal.onToggle}
             aria-label={reveal.show ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
             aria-pressed={reveal.show}
-            className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 p-1 tap-target"
+            className="absolute right-3 top-3 text-semantic-text-muted hover:text-semantic-text-secondary p-1 tap-target"
           >
             {reveal.show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>

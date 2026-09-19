@@ -57,7 +57,7 @@ export const WeekShoppingPage: React.FC = () => {
           ) : planId && planQuery.isPending ? (
             <InlineLoading label="Đang tải danh sách đi chợ…" />
           ) : (
-            <p role="status" className="py-12 text-center text-sm text-slate-600">Không tìm thấy thực đơn này.</p>
+            <p role="status" className="py-12 text-center text-sm text-semantic-text-secondary">Không tìm thấy thực đơn này.</p>
           )}
         </div>
       </div>
@@ -108,10 +108,10 @@ export const WeekShoppingPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-takosan-cream flex flex-col justify-between p-6 animate-fade-in">
         <div className="text-center pt-8 space-y-2">
-          <h2 className="font-heading font-extrabold text-2xl text-slate-900 tracking-tight">
+          <h2 className="font-heading font-extrabold text-2xl text-semantic-text-primary tracking-tight">
             Tuyệt vời! 🎉
           </h2>
-          <p className="text-xs text-slate-500 max-w-xs mx-auto">
+          <p className="text-xs text-semantic-text-muted max-w-xs mx-auto">
             Hãy giải trí xem việc tràn ngập niềm vui. Thực phẩm đã sẵn sàng trong tủ lạnh!
           </p>
         </div>
@@ -128,9 +128,9 @@ export const WeekShoppingPage: React.FC = () => {
         </div>
 
         {/* Bought Summary List */}
-        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-card space-y-2.5 mb-6">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-            <span className="font-heading font-bold text-xs text-slate-800 uppercase tracking-wider">
+        <div className="bg-white rounded-2xl p-4 border border-semantic-border shadow-card space-y-2.5 mb-6">
+          <div className="flex items-center justify-between border-b border-semantic-border/70 pb-2">
+            <span className="font-heading font-bold text-xs text-semantic-text-primary uppercase tracking-wider">
               Đã chọn ({completedShopping.items.length} món)
             </span>
             <span className="text-xs font-bold text-takosan-green">Đã nhập {completedShopping.count} món</span>
@@ -142,11 +142,11 @@ export const WeekShoppingPage: React.FC = () => {
                 key={item.ingredientId}
                 className="flex items-center justify-between text-xs py-1"
               >
-                <div className="flex items-center gap-2 text-slate-800">
+                <div className="flex items-center gap-2 text-semantic-text-primary">
                   <Check className="w-3.5 h-3.5 text-takosan-green stroke-[3]" />
                   <span>{item.name}</span>
                 </div>
-                <span className="font-heading font-semibold text-slate-700">
+                <span className="font-heading font-semibold text-semantic-text-secondary">
                   {item.recommendedPurchaseQuantity} {item.unit}
                 </span>
               </div>
@@ -171,7 +171,7 @@ export const WeekShoppingPage: React.FC = () => {
             size="md"
             variant="outline"
             onClick={() => navigate('/')}
-            className="rounded-2xl text-slate-700"
+            className="rounded-2xl text-semantic-text-secondary"
           >
             Về trang chủ
           </Button>
@@ -195,9 +195,9 @@ export const WeekShoppingPage: React.FC = () => {
       <div className="px-4 pt-3 space-y-4 animate-fade-in">
         {/* Header Progress (Active mode 6.2) */}
         {shoppingMode === 'active' ? (
-          <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs space-y-2">
+          <div className="bg-white rounded-2xl p-4 border border-semantic-border shadow-xs space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-heading font-bold text-slate-900">
+              <span className="font-heading font-bold text-semantic-text-primary">
                 Đang đi chợ — {checkedCount}/{totalCount} món
               </span>
               <span className="font-bold text-takosan-green">
@@ -205,7 +205,7 @@ export const WeekShoppingPage: React.FC = () => {
               </span>
             </div>
 
-            <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+            <div className="w-full bg-semantic-border/60 h-2.5 rounded-full overflow-hidden">
               <div
                 className="bg-takosan-green h-full transition-tap duration-300 rounded-full"
                 style={{ width: `${progressPercent}%` }}
@@ -216,10 +216,10 @@ export const WeekShoppingPage: React.FC = () => {
           /* Header Info (List mode 6.1) */
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="font-heading font-bold text-lg text-slate-900">
+              <h2 className="font-heading font-bold text-lg text-semantic-text-primary">
                 Danh sách đi chợ
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-semantic-text-muted mt-0.5">
                 {items.length} món · {currentPlan.budget.displayText}
               </p>
             </div>
@@ -238,7 +238,7 @@ export const WeekShoppingPage: React.FC = () => {
               'px-3.5 py-1.5 rounded-full text-xs font-heading font-semibold whitespace-nowrap transition-tap tap-target',
               selectedSection === 'all'
                 ? 'bg-takosan-green text-white shadow-xs'
-                : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'
+                : 'bg-white text-semantic-text-secondary border border-semantic-border hover:bg-semantic-background-subtle'
             )}
           >
             Tất cả ({items.length})
@@ -252,7 +252,7 @@ export const WeekShoppingPage: React.FC = () => {
                 'px-3.5 py-1.5 rounded-full text-xs font-heading font-semibold whitespace-nowrap transition-tap tap-target',
                 selectedSection === sec
                   ? 'bg-takosan-green text-white shadow-xs'
-                  : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'
+                  : 'bg-white text-semantic-text-secondary border border-semantic-border hover:bg-semantic-background-subtle'
               )}
             >
               {sec} ({sections[sec].length})
@@ -276,8 +276,8 @@ export const WeekShoppingPage: React.FC = () => {
                 className={clsx(
                   'w-full text-left p-3.5 rounded-2xl flex items-center justify-between cursor-pointer transition-tap border shadow-xs active:scale-99',
                   isChecked
-                    ? 'bg-slate-50/80 border-slate-200/60 opacity-60'
-                    : 'bg-white border-slate-200/80 hover:border-slate-300'
+                    ? 'bg-semantic-background-subtle/80 border-semantic-border/60 opacity-60'
+                    : 'bg-white border-semantic-border hover:border-semantic-border-strong'
                 )}
               >
                 <div className="flex items-center gap-3.5 min-w-0">
@@ -287,14 +287,14 @@ export const WeekShoppingPage: React.FC = () => {
                       'w-5 h-5 rounded-lg flex items-center justify-center transition-tap border shrink-0',
                       isChecked
                         ? 'bg-takosan-green border-takosan-green text-white'
-                        : 'border-slate-300 bg-white'
+                        : 'border-semantic-border-strong bg-white'
                     )}
                   >
                     {isChecked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                   </div>
 
                   {/* Thumbnail */}
-                  <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 p-1 flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-semantic-background-subtle border border-semantic-border/70 p-1 flex items-center justify-center shrink-0">
                     <img
                       src={imgSrc}
                       alt={item.name}
@@ -306,14 +306,14 @@ export const WeekShoppingPage: React.FC = () => {
                   <div className="min-w-0">
                     <h4
                       className={clsx(
-                        'font-heading font-bold text-sm text-slate-900 truncate',
-                        isChecked && 'line-through text-slate-400'
+                        'font-heading font-bold text-sm text-semantic-text-primary truncate',
+                        isChecked && 'line-through text-semantic-text-muted'
                       )}
                     >
                       {item.name}
                     </h4>
-                    <p className="text-xs text-slate-500 truncate mt-0.5">
-                      <span className="font-semibold text-slate-800">
+                    <p className="text-xs text-semantic-text-muted truncate mt-0.5">
+                      <span className="font-semibold text-semantic-text-primary">
                         {item.recommendedPurchaseQuantity} {item.unit}
                       </span>
                       {item.sourceRecipes.length > 1 ? (
@@ -325,7 +325,7 @@ export const WeekShoppingPage: React.FC = () => {
 
                 {/* Estimated Price */}
                 <div className="text-right shrink-0 ml-2">
-                  <span className="font-heading font-bold text-xs text-slate-700">
+                  <span className="font-heading font-bold text-xs text-semantic-text-secondary">
                     ~{Math.round(item.estimatedPriceMin / 1000)}–{Math.round(item.estimatedPriceMax / 1000)}k
                   </span>
                 </div>
@@ -336,7 +336,7 @@ export const WeekShoppingPage: React.FC = () => {
       </div>
 
       {/* Sticky Bottom Actions */}
-      <div className="fixed bottom-[calc(68px+env(safe-area-inset-bottom,0px))] md:bottom-0 left-0 right-0 md:left-20 lg:left-64 p-4 bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-40 shadow-lg">
+      <div className="fixed bottom-[calc(68px+env(safe-area-inset-bottom,0px))] md:bottom-0 left-0 right-0 md:left-20 lg:left-64 p-4 bg-white/95 backdrop-blur-md border-t border-semantic-border z-40 shadow-lg">
         {shoppingMode === 'list' ? (
           <Button
             fullWidth

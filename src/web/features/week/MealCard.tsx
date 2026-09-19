@@ -16,22 +16,22 @@ export const MealCard: React.FC<MealCardProps> = ({ slot, onClick, onSwapClick }
     return (
       <div
         onClick={onClick}
-        className="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-xs flex items-center justify-between cursor-pointer hover:border-slate-300 active:scale-[0.99] transition-tap"
+        className="bg-white rounded-xl p-3.5 border border-semantic-border shadow-xs flex items-center justify-between cursor-pointer hover:border-semantic-border-strong active:scale-[0.99] transition-tap"
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-amber-50 border border-amber-100 text-amber-800 flex items-center justify-center text-lg shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-semantic-warning-soft border border-semantic-warning/20 text-semantic-warning-strong flex items-center justify-center text-lg shrink-0">
             🍽️
           </div>
           <div>
             <div className="flex items-center gap-1.5 mb-0.5">
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-900 border border-amber-200/80">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-semantic-warning-soft text-semantic-warning-strong border border-semantic-warning/30">
                 Ăn ngoài
               </span>
             </div>
-            <h4 className="font-heading font-bold text-sm text-slate-900">
+            <h4 className="font-heading font-bold text-sm text-semantic-text-primary">
               Bữa ăn ngoài
             </h4>
-            <p className="text-[11px] text-slate-500 mt-0.5">
+            <p className="text-[11px] text-semantic-text-muted mt-0.5">
               Không cần chuẩn bị nguyên liệu ở nhà
             </p>
           </div>
@@ -39,7 +39,7 @@ export const MealCard: React.FC<MealCardProps> = ({ slot, onClick, onSwapClick }
 
         <button
           onClick={onSwapClick}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 active:scale-95 tap-target flex items-center justify-center transition-colors"
+          className="p-1.5 rounded-lg text-semantic-text-muted hover:text-semantic-text-secondary active:scale-95 tap-target flex items-center justify-center transition-colors"
           aria-label="Đổi trạng thái bữa ăn"
         >
           <ArrowRightLeft className="w-4 h-4" />
@@ -52,7 +52,7 @@ export const MealCard: React.FC<MealCardProps> = ({ slot, onClick, onSwapClick }
     return (
       <div
         onClick={onClick}
-        className="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-xs flex items-center justify-between cursor-pointer hover:border-slate-300 active:scale-[0.99] transition-tap"
+        className="bg-white rounded-xl p-3.5 border border-semantic-border shadow-xs flex items-center justify-between cursor-pointer hover:border-semantic-border-strong active:scale-[0.99] transition-tap"
       >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-takosan-mint border border-takosan-mint-deep text-takosan-green-deep flex items-center justify-center text-lg shrink-0">
@@ -64,10 +64,10 @@ export const MealCard: React.FC<MealCardProps> = ({ slot, onClick, onSwapClick }
                 Bữa linh hoạt
               </span>
             </div>
-            <h4 className="font-heading font-bold text-sm text-slate-900">
+            <h4 className="font-heading font-bold text-sm text-semantic-text-primary">
               Tùy chọn lúc đó
             </h4>
-            <p className="text-[11px] text-slate-500 mt-0.5">
+            <p className="text-[11px] text-semantic-text-muted mt-0.5">
               Dùng đồ ăn thừa (leftovers) hoặc chọn món tự do
             </p>
           </div>
@@ -75,7 +75,7 @@ export const MealCard: React.FC<MealCardProps> = ({ slot, onClick, onSwapClick }
 
         <button
           onClick={onSwapClick}
-          className="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200/80 text-xs font-semibold text-slate-700 hover:bg-slate-100 active:scale-95 shadow-xs tap-target flex items-center gap-1"
+          className="px-3 py-1.5 rounded-lg bg-semantic-background-subtle border border-semantic-border text-xs font-semibold text-semantic-text-secondary hover:bg-semantic-border/60 active:scale-95 shadow-xs tap-target flex items-center gap-1"
           aria-label="Chọn món"
         >
           <Utensils className="w-3.5 h-3.5 text-takosan-green" />
@@ -94,8 +94,8 @@ export const MealCard: React.FC<MealCardProps> = ({ slot, onClick, onSwapClick }
     <div
       onClick={onClick}
       className={clsx(
-        'bg-white rounded-xl p-3 border border-slate-200/80 shadow-xs hover:border-slate-300 active:scale-[0.99] transition-tap cursor-pointer relative overflow-hidden',
-        isCooked && 'opacity-70 bg-slate-50'
+        'bg-white rounded-xl p-3 border border-semantic-border shadow-xs hover:border-semantic-border-strong active:scale-[0.99] transition-tap cursor-pointer relative overflow-hidden',
+        isCooked && 'opacity-70 bg-semantic-background-subtle'
       )}
     >
       {isCooked && (
@@ -106,7 +106,7 @@ export const MealCard: React.FC<MealCardProps> = ({ slot, onClick, onSwapClick }
 
       <div className="flex gap-3 items-start">
         {/* Recipe Thumbnail */}
-        <div className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0 bg-slate-100 shadow-xs">
+        <div className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0 bg-semantic-border/60 shadow-xs">
           <img
             src={resolveRecipeImage(recipe).src}
             alt={recipe.title}
@@ -129,24 +129,24 @@ export const MealCard: React.FC<MealCardProps> = ({ slot, onClick, onSwapClick }
                 className={clsx(
                   'text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-0.5 border',
                   badge.includes('Dùng đồ sắp hết')
-                    ? 'bg-amber-50 text-amber-900 border-amber-200/80'
+                    ? 'bg-semantic-warning-soft text-semantic-warning-strong border-semantic-warning/30'
                     : badge.includes('100%')
                     ? 'bg-takosan-mint text-takosan-green-deep border-takosan-mint-deep/80'
-                    : 'bg-slate-100 text-slate-700 border-slate-200'
+                    : 'bg-semantic-border/60 text-semantic-text-secondary border-semantic-border'
                 )}
               >
-                {badge.includes('Dùng đồ sắp hết') && <Sparkles className="w-2.5 h-2.5 text-amber-600" />}
+                {badge.includes('Dùng đồ sắp hết') && <Sparkles className="w-2.5 h-2.5 text-semantic-warning" />}
                 {badge}
               </span>
             ))}
           </div>
 
-          <h4 className="font-heading font-bold text-sm text-slate-900 truncate leading-tight">
+          <h4 className="font-heading font-bold text-sm text-semantic-text-primary truncate leading-tight">
             {recipe.title}
           </h4>
 
           {/* Quick specs */}
-          <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
+          <div className="flex items-center gap-3 text-xs text-semantic-text-muted mt-1">
             <span className="flex items-center gap-1 font-medium">
               <Clock className="w-3.5 h-3.5 text-takosan-green" />
               <span>{recipe.cookTimeMinutes}p</span>
@@ -158,14 +158,14 @@ export const MealCard: React.FC<MealCardProps> = ({ slot, onClick, onSwapClick }
           </div>
 
           {/* Fridge Availability & Cost */}
-          <div className="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between text-xs">
+          <div className="mt-2 pt-1.5 border-t border-semantic-border/70 flex items-center justify-between text-xs">
             <div className="text-[11px]">
               {slot.availabilityPercent === 100 ? (
                 <span className="text-takosan-green font-bold">Đủ 100% trong tủ</span>
               ) : (
-                <span className="text-slate-600 font-medium">
+                <span className="text-semantic-text-secondary font-medium">
                   Có sẵn {slot.availabilityPercent}% •{' '}
-                  <span className="text-amber-800 font-semibold">
+                  <span className="text-semantic-warning-strong font-semibold">
                     Mua ~{Math.round(slot.incrementalCostVnd / 1000)}k
                   </span>
                 </span>
@@ -179,10 +179,10 @@ export const MealCard: React.FC<MealCardProps> = ({ slot, onClick, onSwapClick }
                   e.stopPropagation();
                   onSwapClick(e);
                 }}
-                className="px-2 py-1 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200/70 text-slate-700 text-[11px] font-semibold flex items-center gap-1 transition-tap active:scale-95 cursor-pointer"
+                className="px-2 py-1 rounded-lg bg-semantic-background-subtle hover:bg-semantic-border/60 border border-semantic-border/70 text-semantic-text-secondary text-[11px] font-semibold flex items-center gap-1 transition-tap active:scale-95 cursor-pointer"
                 aria-label={`Đổi món ${recipe.title}`}
               >
-                <ArrowRightLeft className="w-3 h-3 text-slate-500" />
+                <ArrowRightLeft className="w-3 h-3 text-semantic-text-muted" />
                 <span>Đổi món</span>
               </button>
             )}

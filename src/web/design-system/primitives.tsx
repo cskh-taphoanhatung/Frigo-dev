@@ -1,8 +1,9 @@
-import React, { useId } from 'react';
+import React, { useId, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { motion } from 'motion/react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, X } from 'lucide-react';
+import { useModalFocus } from './use-modal-focus';
 
 /**
  * T17 shared primitives (components/*.md contracts). These extend — never
@@ -163,7 +164,9 @@ export const Switch: React.FC<{
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={clsx(
-          'relative shrink-0 w-[52px] h-8 rounded-pill transition-colors duration-150 focus-visible:outline-none focus-visible:shadow-t17-focus',
+          // 52×32 visual track; the ::before pseudo-element extends the hit
+          // area to the 44px touch target without changing the visual size.
+          'relative shrink-0 w-[52px] h-8 rounded-pill transition-colors duration-150 focus-visible:outline-none focus-visible:shadow-t17-focus before:absolute before:-inset-y-1.5 before:-inset-x-1 before:content-[""]',
           checked ? 'bg-semantic-action-primary' : 'bg-semantic-border-strong',
           disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
         )}
@@ -275,3 +278,64 @@ export const Skeleton: React.FC<{ className?: string; label?: string }> = ({ cla
     className={clsx('rounded-card bg-semantic-background-subtle t17-skeleton', className)}
   />
 );
+
+/**
+ * Bottom sheet (components/BOTTOM_SHEET.md): a labelled modal dialog anchored
+ * to the bottom edge on phones and centred from `sm` up. Owns the scrim,
+ * focus trap, Escape and focus return; content is the caller's. Entrance uses
+ * the reduced-motion-gated `animate-slide-up` utility.
+ */
+export const BottomSheet: React.FC<{
+  open: boolean;
+  title: string;
+  onClose: () => void;
+  closeLabel?: string;
+  children: React.ReactNode;
+  className?: string;
+  /** Extra class on the scrim (z-index override, etc.). */
+  scrimClassName?: string;
+}> = ({ open, title, onClose, closeLabel = 'Đóng', children, className, scrimClassName }) => {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const titleId = useId();
+  useModalFocus(open, panelRef, onClose, closeRef);
+  if (!open) return null;
+  return (
+    <div
+      className={clsx(
+        'fixed inset-0 z-50 flex items-end justify-center bg-semantic-overlay/40 p-0 backdrop-blur-xs sm:items-center sm:p-4 animate-fade-in',
+        scrimClassName,
+      )}
+      onClick={onClose}
+      role="presentation"
+    >
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        onClick={(e) => e.stopPropagation()}
+        className={clsx(
+          'w-full max-w-md max-h-[90dvh] overflow-y-auto rounded-t-2xl border border-semantic-border bg-semantic-surface p-5 shadow-2xl sm:rounded-2xl animate-slide-up',
+          className,
+        )}
+      >
+        {/* Grab bar is decorative; the close button is the real affordance. */}
+        <div className="mx-auto mb-3 h-1 w-10 shrink-0 rounded-full bg-semantic-border sm:hidden" aria-hidden="true" />
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h2 id={titleId} className="font-heading text-base font-bold text-semantic-text-primary">{title}</h2>
+          <button
+            ref={closeRef}
+            type="button"
+            onClick={onClose}
+            aria-label={closeLabel}
+            className="tap-target flex items-center justify-center rounded-lg p-1.5 text-semantic-text-muted transition-colors hover:bg-semantic-border/60 hover:text-semantic-text-secondary"
+          >
+            <X className="h-5 w-5" aria-hidden="true" />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+};

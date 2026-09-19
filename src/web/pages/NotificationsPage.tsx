@@ -45,14 +45,14 @@ export const NotificationsPage: React.FC = () => {
               onRetry={() => notificationsQuery.refetch()}
             />
           ) : (notificationsQuery.data ?? []).length === 0 ? (
-            <div className="bg-white rounded-2xl border border-slate-200/80 p-5 text-center">
-              <Bell className="w-6 h-6 text-slate-300 mx-auto mb-1.5" aria-hidden="true" />
-              <p className="text-xs text-slate-600 font-medium">
+            <div className="bg-white rounded-2xl border border-semantic-border p-5 text-center">
+              <Bell className="w-6 h-6 text-semantic-border-strong mx-auto mb-1.5" aria-hidden="true" />
+              <p className="text-xs text-semantic-text-secondary font-medium">
                 Chưa có thông báo mới. Takosan sẽ nhắc khi có nguyên liệu cần dùng sớm.
               </p>
             </div>
           ) : (
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs divide-y divide-slate-100 overflow-hidden">
+            <div className="bg-white rounded-2xl border border-semantic-border shadow-xs divide-y divide-semantic-border/70 overflow-hidden">
               {(notificationsQuery.data ?? []).map((n) => {
                 const Icon = TYPE_ICONS[n.type] || Bell;
                 return (
@@ -61,11 +61,11 @@ export const NotificationsPage: React.FC = () => {
                       <Icon className="w-5 h-5" aria-hidden="true" />
                     </div>
                     <div className="min-w-0">
-                      <h4 className="font-heading font-semibold text-sm text-slate-900 leading-snug">
+                      <h4 className="font-heading font-semibold text-sm text-semantic-text-primary leading-snug">
                         {n.title}
                       </h4>
-                      <p className="text-xs text-slate-500 mt-0.5 leading-snug">{n.message}</p>
-                      <p className="text-[10px] text-slate-400 mt-1">{relativeTimeVi(n.createdAt)}</p>
+                      <p className="text-xs text-semantic-text-muted mt-0.5 leading-snug">{n.message}</p>
+                      <p className="text-[10px] text-semantic-text-muted mt-1">{relativeTimeVi(n.createdAt)}</p>
                     </div>
                   </div>
                 );
@@ -78,13 +78,13 @@ export const NotificationsPage: React.FC = () => {
             notifications only (screen 23). */}
         <Link
           to="/settings/notifications"
-          className="flex items-center justify-between gap-3 rounded-2xl border border-takosan-cream-line bg-white px-4 py-3.5 text-sm font-semibold text-slate-800 hover:bg-slate-50/60 transition-colors"
+          className="flex items-center justify-between gap-3 rounded-2xl border border-takosan-cream-line bg-white px-4 py-3.5 text-sm font-semibold text-semantic-text-primary hover:bg-semantic-background-subtle/60 transition-colors"
         >
           <span className="flex items-center gap-3">
             <SlidersHorizontal className="w-5 h-5 text-takosan-green" aria-hidden="true" />
             Tùy chỉnh nhắc nhở
           </span>
-          <ChevronRight className="w-4 h-4 text-slate-400" aria-hidden="true" />
+          <ChevronRight className="w-4 h-4 text-semantic-text-muted" aria-hidden="true" />
         </Link>
       </div>
     </div>

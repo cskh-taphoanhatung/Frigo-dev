@@ -53,9 +53,9 @@ export const LoginMode: React.FC<LoginModeProps> = ({
     />
 
     <div className="flex items-center my-2">
-      <div className="flex-1 border-t border-slate-200"></div>
-      <span className="px-3 text-[10px] text-slate-400 uppercase font-semibold tracking-wider">Hoặc qua Email</span>
-      <div className="flex-1 border-t border-slate-200"></div>
+      <div className="flex-1 border-t border-semantic-border"></div>
+      <span className="px-3 text-[10px] text-semantic-text-muted uppercase font-semibold tracking-wider">Hoặc qua Email</span>
+      <div className="flex-1 border-t border-semantic-border"></div>
     </div>
 
     <form onSubmit={onSubmit} className="space-y-3">
@@ -74,17 +74,17 @@ export const LoginMode: React.FC<LoginModeProps> = ({
 
       <div>
         <div className="flex items-center justify-between mb-1">
-          <label htmlFor={passwordId} className="block text-xs font-semibold text-slate-700">Mật khẩu</label>
+          <label htmlFor={passwordId} className="block text-xs font-semibold text-semantic-text-secondary">Mật khẩu</label>
           <button
             type="button"
             onClick={onForgotPassword}
-            className="text-xs font-semibold text-takosan-green hover:underline"
+            className="tap-target -my-2 inline-flex items-center px-2 text-xs font-semibold text-takosan-green hover:underline"
           >
             Quên mật khẩu?
           </button>
         </div>
         <div className="relative">
-          <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" aria-hidden="true" />
+          <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-semantic-text-muted" aria-hidden="true" />
           <input
             id={passwordId}
             type={showPassword ? 'text' : 'password'}
@@ -93,14 +93,14 @@ export const LoginMode: React.FC<LoginModeProps> = ({
             onChange={(e) => onPasswordChange(e.target.value)}
             placeholder="••••••••"
             autoComplete="current-password"
-            className="w-full h-11 pl-10 pr-10 bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 text-sm font-medium text-slate-900 shadow-xs"
+            className="w-full h-11 pl-10 pr-10 bg-white border border-semantic-border focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 text-sm font-medium text-semantic-text-primary shadow-xs"
           />
           <button
             type="button"
             onClick={onToggleShowPassword}
             aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
             aria-pressed={showPassword}
-            className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 p-1 tap-target"
+            className="absolute right-3 top-3 text-semantic-text-muted hover:text-semantic-text-secondary p-1 tap-target"
           >
             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>

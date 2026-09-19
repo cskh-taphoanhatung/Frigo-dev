@@ -44,12 +44,12 @@ export const WeekGeneratingPage: React.FC = () => {
     <div className="min-h-screen bg-takosan-cream text-takosan-navy flex flex-col justify-center gap-8 p-6 mx-auto max-w-[45rem]">
       <div className="text-center">
         <img src={TAKOSAN_BRAND.mascot.calendar} alt="Takosan lên lịch" className="w-28 h-28 mx-auto mb-4" />
-        <h2 className="font-heading font-bold text-2xl text-slate-900">
+        <h2 className="font-heading font-bold text-2xl text-semantic-text-primary">
           {error ? 'Chưa tạo được thực đơn' : 'Takosan đang lên thực đơn tuần…'}
         </h2>
-        <p className="text-xs text-slate-500 mt-2">Ăn đủ • Mua đủ • Dùng hết</p>
+        <p className="text-xs text-semantic-text-muted mt-2">Ăn đủ • Mua đủ • Dùng hết</p>
       </div>
-      <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-card">
+      <div className="bg-white rounded-2xl p-6 border border-semantic-border shadow-card">
         {error ? (
           <>
             <InlineError error={error} />

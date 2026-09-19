@@ -130,7 +130,9 @@ export const ScanPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-takosan-navy text-white flex flex-col justify-between p-4 relative overflow-hidden select-none">
-      {/* Top Header */}
+      {/* Top Header: the page heading is visually the mode switcher, so the
+          h1 is screen-reader-only (one h1 per surface). */}
+      <h1 className="sr-only">Quét nguyên liệu bằng AI</h1>
       <div className="flex items-center justify-between z-10 pt-2">
         <button
           onClick={() => {
@@ -144,10 +146,12 @@ export const ScanPage: React.FC = () => {
         </button>
 
         {/* Tab Pills */}
-        <div className="flex bg-slate-900/50 rounded-xl p-1 backdrop-blur-md border border-white/10">
+        <div className="flex bg-semantic-overlay/50 rounded-xl p-1 backdrop-blur-md border border-white/10" role="group" aria-label="Chế độ quét">
           {tabs.map((tab) => (
             <button
               key={tab.id}
+              type="button"
+              aria-pressed={activeTab === tab.id}
               onClick={() => {
                 setActiveTab(tab.id);
                 setScanType(tab.id);
@@ -156,7 +160,7 @@ export const ScanPage: React.FC = () => {
                 'px-3.5 py-1.5 rounded-lg text-xs font-heading font-semibold transition-tap relative tap-target',
                 activeTab === tab.id
                   ? 'bg-takosan-green text-white shadow-xs'
-                  : 'text-slate-300 hover:text-white'
+                  : 'text-white hover:text-white'
               )}
             >
               {tab.label}
@@ -172,7 +176,7 @@ export const ScanPage: React.FC = () => {
         <div className="relative w-full">
           {imagePreviewUrl ? (
             <div className="relative w-full h-[360px] sm:h-[420px] rounded-2xl overflow-hidden border border-white/20 bg-black/40 shadow-2xl flex items-center justify-center">
-              <img src={imagePreviewUrl} alt="Preview" className="w-full h-full object-cover" />
+              <img src={imagePreviewUrl} alt="Ảnh vừa chọn để quét" className="w-full h-full object-cover" />
             </div>
           ) : (
             <CameraViewfinder
@@ -188,7 +192,7 @@ export const ScanPage: React.FC = () => {
 
           {/* Processing Overlay */}
           {isProcessing && (
-            <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-30 rounded-2xl animate-fade-in">
+            <div className="absolute inset-0 bg-semantic-overlay/85 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-30 rounded-2xl animate-fade-in">
               <div className="w-full max-w-sm"><ScanProcessingState stage={processingStage} kind={activeTab === 'receipt' ? 'receipt' : 'fridge'} /></div>
               <p className="sr-only">{statusText}</p>
             </div>
@@ -196,8 +200,8 @@ export const ScanPage: React.FC = () => {
         </div>
 
         {errorMsg && (
-          <div className="mt-3 bg-rose-500/20 border border-rose-500/40 rounded-xl p-3 text-xs text-rose-100 flex items-center gap-2 max-w-sm w-full">
-            <AlertCircle className="w-4 h-4 shrink-0 text-rose-300" />
+          <div className="mt-3 bg-semantic-danger/25 border border-semantic-danger/50 rounded-xl p-3 text-xs text-white flex items-center gap-2 max-w-sm w-full">
+            <AlertCircle className="w-4 h-4 shrink-0 text-white" />
             <span>{errorMsg}</span>
             <button className="underline shrink-0" onClick={() => {
               if (commandRef.current) void startAIScan(commandRef.current.image);

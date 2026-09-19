@@ -1,4 +1,4 @@
-import { test, expect, reset } from '../t13b/fixtures';
+import { test, expect, reset, control } from '../t13b/fixtures';
 
 const CERTIFIED_WIDTHS = [390, 768, 1440];
 
@@ -9,8 +9,8 @@ const CERTIFIED_WIDTHS = [390, 768, 1440];
  */
 
 test('canonical surfaces captured per certification width', async ({ page }, info) => {
-  // 17 full-page captures; give the loop headroom instead of the default budget.
-  test.setTimeout(180_000);
+  // 25 full-page captures; give the loop headroom instead of the default budget.
+  test.setTimeout(240_000);
   test.skip(
     !CERTIFIED_WIDTHS.includes(page.viewportSize()!.width),
     'canonical screenshots are captured at 390 / 768 / 1440 only (visual-regression-plan)'
@@ -38,17 +38,24 @@ test('canonical surfaces captured per certification width', async ({ page }, inf
   await page.getByRole('button', { name: 'Tiếp tục' }).click();
   await page.getByRole('button', { name: /Bắt đầu với Takosan/ }).click();
   await expect(page).toHaveURL(/\/onboarding|\/week\/setup|\/$/);
+  // Screen 09 needs a real pending scan: seeded T13 review evidence.
+  await control(page, 't13-scans');
 
   const surfaces: [string, string][] = [
     ['home', '/'],
     ['inventory', '/fridge'],
+    ['scan', '/scan'],
+    ['scan-review', '/scan/t13b-preview-fridge/review'],
+    ['receipt-review', '/scan/receipt-review?scanId=t13b-preview-receipt'],
     ['recipes', '/recipes'],
-    ['recipe-detail', '/recipes/preview-chicken'],
-    ['cook', '/cook/preview-chicken'],
+    ['recipe-detail', '/recipes/canh-chua-ca-loc-nam-bo'],
+    ['cook', '/cook/canh-chua-ca-loc-nam-bo'],
     ['planner', '/planner'],
     ['shopping', '/shopping'],
+    ['notifications', '/notifications'],
     ['profile', '/me'],
     ['preferences', '/me/preferences'],
+    ['household', '/me/household'],
     ['planning-settings', '/settings/planning'],
     ['notification-preferences', '/settings/notifications'],
     ['privacy', '/settings/privacy'],
@@ -60,9 +67,15 @@ test('canonical surfaces captured per certification width', async ({ page }, inf
     // `networkidle` can stall behind background polling; wait for the page's
     // main landmark and a settle frame instead.
     await page.locator('main, [role="main"], h1').first().waitFor({ state: 'visible' });
-    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 150))));
+    await page.evaluate(() => document.fonts.ready.then(() => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 150)))));
     await page.screenshot({ path: info.outputPath(`${name}.png`), fullPage: true });
   }
+  // Screen 03 empty state (no verification in progress) is part of the canon.
+  await page.context().clearCookies();
+  await page.evaluate(() => { localStorage.clear(); sessionStorage.clear(); });
+  await page.goto('/auth/verify');
+  await expect(page.getByTestId('verify-context-missing')).toBeVisible();
+  await page.screenshot({ path: info.outputPath('otp-empty.png'), fullPage: true });
 });
 
 test('destructive confirmation dialog traps focus and returns it', async ({ page }, info) => {

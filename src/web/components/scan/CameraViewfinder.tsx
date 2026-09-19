@@ -127,7 +127,7 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
   };
 
   return (
-    <div className="relative w-full h-[360px] sm:h-[420px] rounded-2xl overflow-hidden bg-slate-950 flex items-center justify-center border border-white/15 shadow-2xl">
+    <div className="relative w-full h-[360px] sm:h-[420px] rounded-2xl overflow-hidden bg-semantic-overlay flex items-center justify-center border border-white/15 shadow-2xl">
       {/* Video stream */}
       {!hasCameraError && (
         <video
@@ -144,7 +144,7 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
 
       {/* Fallback Viewfinder if camera blocked/unavailable */}
       {(hasCameraError || isStartingCamera) && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center space-y-3 bg-slate-950/90 backdrop-blur-sm">
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center space-y-3 bg-semantic-overlay/90 backdrop-blur-sm">
           <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center text-white/80">
             <Camera className="w-7 h-7 text-takosan-mint" />
           </div>
@@ -152,7 +152,7 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
             <p className="font-heading font-bold text-sm text-white">
               {hasCameraError ? 'Camera không sẵn sàng' : 'Đang bật camera...'}
             </p>
-            <p className="text-xs text-slate-300 mt-1 max-w-xs leading-relaxed">
+            <p className="text-xs text-white mt-1 max-w-xs leading-relaxed">
               {hasCameraError
                 ? 'Bạn có thể chọn ảnh từ thư viện để tiếp tục'
                 : 'Vui lòng cấp quyền truy cập camera nếu được hỏi'}
@@ -179,7 +179,7 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
               onClick={toggleTorch}
               className={clsx(
                 'w-10 h-10 rounded-xl flex items-center justify-center backdrop-blur-md transition-tap tap-target border border-white/10',
-                isTorchOn ? 'bg-amber-400 text-slate-900' : 'bg-slate-900/60 text-white'
+                isTorchOn ? 'bg-takosan-yellow text-takosan-navy' : 'bg-semantic-overlay/60 text-white'
               )}
               aria-label="Đèn pin"
             >
@@ -189,7 +189,7 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
             <div className="w-10" />
           )}
 
-          <div className="px-3.5 py-1.5 rounded-full bg-slate-900/75 backdrop-blur-md text-[11px] font-heading font-semibold text-white border border-white/15 shadow-md">
+          <div className="px-3.5 py-1.5 rounded-full bg-semantic-overlay/75 backdrop-blur-md text-[11px] font-heading font-semibold text-white border border-white/15 shadow-md">
             {scanType === 'receipt'
               ? 'Căn chỉnh toàn bộ hóa đơn vào khung'
               : scanType === 'fridge'
@@ -199,7 +199,7 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
 
           <button
             onClick={switchCamera}
-            className="w-10 h-10 rounded-xl bg-slate-900/60 backdrop-blur-md text-white border border-white/10 flex items-center justify-center tap-target hover:bg-slate-800/80 transition-tap"
+            className="w-10 h-10 rounded-xl bg-semantic-overlay/60 backdrop-blur-md text-white border border-white/10 flex items-center justify-center tap-target hover:bg-semantic-overlay/80 transition-tap"
             aria-label="Đổi camera"
           >
             <RefreshCw className="w-4 h-4" />
@@ -231,7 +231,7 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
         <div className="flex items-center justify-around pointer-events-auto pb-1">
           <button
             onClick={onSelectFromGallery}
-            className="px-4 py-2.5 rounded-xl bg-slate-900/60 border border-white/15 backdrop-blur-md text-white flex items-center gap-2 tap-target hover:bg-slate-800 active:scale-95 transition-tap"
+            className="px-4 py-2.5 rounded-xl bg-semantic-overlay/60 border border-white/15 backdrop-blur-md text-white flex items-center gap-2 tap-target hover:bg-semantic-overlay/85 active:scale-95 transition-tap"
             title="Thư viện"
             aria-label="Thư viện"
           >
@@ -246,7 +246,7 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
             aria-label="Chụp ảnh"
           >
             <div className="w-full h-full rounded-full bg-gradient-to-br from-white to-takosan-mint flex items-center justify-center shadow-md">
-              <Camera className="w-8 h-8 text-slate-900 stroke-[2.2]" />
+              <Camera className="w-8 h-8 text-semantic-text-primary stroke-[2.2]" />
             </div>
           </button>
 

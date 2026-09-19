@@ -49,10 +49,10 @@ export const IngredientRow: React.FC<IngredientRowProps> = ({
       onClick={onClick}
       data-testid="inventory-row"
       data-item-id={id}
-      className="bg-white rounded-2xl p-3.5 flex flex-wrap items-center justify-between gap-y-1 border border-slate-200/80 shadow-card hover:border-takosan-green/40 hover:shadow-elevated active:scale-[0.99] transition-tap cursor-pointer"
+      className="bg-white rounded-2xl p-3.5 flex flex-wrap items-center justify-between gap-y-1 border border-semantic-border shadow-card hover:border-takosan-green/40 hover:shadow-elevated active:scale-[0.99] transition-tap cursor-pointer"
     >
       <div className="flex items-center gap-3.5 min-w-0">
-        <div className="w-14 h-14 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 p-2 overflow-hidden">
+        <div className="w-14 h-14 rounded-xl bg-semantic-background-subtle border border-semantic-border/70 flex items-center justify-center shrink-0 p-2 overflow-hidden">
           <img
             src={imgSrc}
             alt={name}
@@ -63,14 +63,14 @@ export const IngredientRow: React.FC<IngredientRowProps> = ({
 
         <div className="min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h4 className="font-heading font-bold text-[15px] text-slate-900 truncate">
+            <h4 className="font-heading font-bold text-[15px] text-semantic-text-primary truncate">
               {name}
             </h4>
             <StatusChip status={expiry.tone === 'unknown' ? 'unknown'
               : expiry.tone === 'estimated' ? 'estimated' : freshness} />
           </div>
 
-          <p className="text-xs text-slate-500 font-semibold truncate">
+          <p className="text-xs text-semantic-text-muted font-semibold truncate">
             {quantity} {unit}
             {storage === 'freezer' ? ' · Ngăn đông' : ''}
             {expiry.date === null ? ' · Chưa rõ hạn' : (() => {
@@ -98,7 +98,7 @@ export const IngredientRow: React.FC<IngredientRowProps> = ({
         {onDelete && (
           <button
             onClick={onDelete}
-            className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 active:scale-95 transition-colors tap-target flex items-center justify-center"
+            className="p-2 rounded-lg text-semantic-text-muted hover:text-semantic-danger hover:bg-semantic-danger-soft active:scale-95 transition-colors tap-target flex items-center justify-center"
             aria-label="Xóa nguyên liệu"
           >
             <Trash2 className="w-4.5 h-4.5 stroke-[2]" />

@@ -19,7 +19,7 @@ export const Header: React.FC<HeaderProps> = ({ showBack = false, title, subtitl
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigate(-1)}
-              className="p-2 -ml-2 rounded-xl hover:bg-slate-100 active:scale-95 transition-tap text-slate-700"
+              className="p-2 -ml-2 rounded-xl hover:bg-semantic-border/60 active:scale-95 transition-tap text-semantic-text-secondary"
               aria-label="Quay lại"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -28,8 +28,8 @@ export const Header: React.FC<HeaderProps> = ({ showBack = false, title, subtitl
             </button>
             {title && (
               <div>
-                <h1 className="font-heading font-bold text-base text-slate-900 leading-tight">{title}</h1>
-                {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
+                <h1 className="font-heading font-bold text-base text-semantic-text-primary leading-tight">{title}</h1>
+                {subtitle && <p className="text-xs text-semantic-text-muted">{subtitle}</p>}
               </div>
             )}
           </div>
@@ -42,16 +42,16 @@ export const Header: React.FC<HeaderProps> = ({ showBack = false, title, subtitl
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigate('/notifications')}
-            className="p-2 rounded-xl hover:bg-slate-100 active:scale-95 relative text-slate-600 hover:text-slate-900 transition-tap tap-target"
+            className="p-2 rounded-xl hover:bg-semantic-border/60 active:scale-95 relative text-semantic-text-secondary hover:text-semantic-text-primary transition-tap tap-target"
             aria-label="Thông báo"
           >
             <Bell className="w-5 h-5" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-semantic-danger rounded-full ring-2 ring-white" />
           </button>
 
           <button
             onClick={() => navigate('/me')}
-            className="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 active:scale-95 transition-tap flex items-center justify-center tap-target"
+            className="w-11 h-11 rounded-xl bg-semantic-border/60 text-semantic-text-secondary hover:bg-semantic-border active:scale-95 transition-tap flex items-center justify-center tap-target"
             aria-label="Tài khoản"
           >
             <User className="w-4 h-4" />

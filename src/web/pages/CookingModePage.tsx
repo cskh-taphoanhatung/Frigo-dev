@@ -216,7 +216,7 @@ export const CookingModePage: React.FC = () => {
     return (
       <div className="min-h-screen bg-takosan-cream p-4 flex flex-col justify-between pb-10 max-w-md mx-auto">
         <div className="space-y-4">
-          {completionError && <p role="alert" className="text-sm text-rose-700">{completionError}</p>}
+          {completionError && <p role="alert" className="text-sm text-semantic-danger-strong">{completionError}</p>}
           <div className="text-center pt-4">
             <div className="w-28 h-28 mx-auto mb-2 overflow-hidden flex items-center justify-center">
               <img
@@ -225,24 +225,24 @@ export const CookingModePage: React.FC = () => {
                 className="w-full h-full object-contain"
               />
             </div>
-            <h2 className="font-heading font-bold text-2xl text-slate-900">
+            <h1 className="font-heading font-bold text-2xl text-semantic-text-primary">
               Món ăn hoàn tất! 🎉
-            </h2>
-            <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
-              Bạn đã nấu xong <span className="font-semibold text-slate-900">{activeRecipe.title}</span>.
+            </h1>
+            <p className="text-xs text-semantic-text-muted mt-1 max-w-xs mx-auto">
+              Bạn đã nấu xong <span className="font-semibold text-semantic-text-primary">{activeRecipe.title}</span>.
             </p>
           </div>
 
           <div className="space-y-2.5 pt-2">
             <div className="flex items-center justify-between">
-              <h3 className="font-heading font-bold text-sm text-slate-900 flex items-center gap-1.5">
+              <h3 className="font-heading font-bold text-sm text-semantic-text-primary flex items-center gap-1.5">
                 <Refrigerator className="w-4 h-4 text-takosan-green" />
                 <span>Cập nhật số lượng trong tủ lạnh</span>
               </h3>
-              <span className="text-xs text-slate-500 font-medium">Tự động trừ đồ</span>
+              <span className="text-xs text-semantic-text-muted font-medium">Tự động trừ đồ</span>
             </div>
 
-            <p className="text-xs text-slate-500 leading-relaxed">
+            <p className="text-xs text-semantic-text-muted leading-relaxed">
               Dưới đây là lượng nguyên liệu đã dùng. Bạn có thể chỉnh sửa trước khi xác nhận cập nhật tủ lạnh.
             </p>
 
@@ -250,33 +250,33 @@ export const CookingModePage: React.FC = () => {
               {deductions.map((d) => (
                 <div
                   key={d.ingredientId}
-                  className="bg-white rounded-xl p-3.5 flex items-center justify-between border border-slate-200/80 shadow-xs"
+                  className="bg-white rounded-xl p-3.5 flex items-center justify-between border border-semantic-border shadow-xs"
                 >
                   <div>
-                    <h4 className="font-heading font-semibold text-sm text-slate-900">
+                    <h4 className="font-heading font-semibold text-sm text-semantic-text-primary">
                       {d.name}
                     </h4>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <p className="text-xs text-semantic-text-muted mt-0.5">
                       Ban đầu: {d.currentQuantity} {d.unit} &rarr; Còn: {d.remainingQuantity} {d.unit}
                     </p>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-rose-600">
+                    <span className="text-xs font-bold text-semantic-danger">
                       -{d.quantityDeducted} {d.unit}
                     </span>
 
-                    <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg p-0.5 shadow-xs">
+                    <div className="flex items-center bg-semantic-background-subtle border border-semantic-border rounded-lg p-0.5 shadow-xs">
                       <button
                         onClick={() => updateDeduction(d.ingredientId, Math.max(0, d.quantityDeducted - (d.unit === 'g' ? 50 : 1)))}
-                        className="w-7 h-7 flex items-center justify-center font-bold text-slate-700 hover:bg-white rounded-md tap-target transition-colors"
+                        className="w-7 h-7 flex items-center justify-center font-bold text-semantic-text-secondary hover:bg-white rounded-md tap-target transition-colors"
                         aria-label="Giảm"
                       >
                         –
                       </button>
                       <button
                         onClick={() => updateDeduction(d.ingredientId, Math.min(d.currentQuantity, d.quantityDeducted + (d.unit === 'g' ? 50 : 1)))}
-                        className="w-7 h-7 flex items-center justify-center font-bold text-slate-700 hover:bg-white rounded-md tap-target transition-colors"
+                        className="w-7 h-7 flex items-center justify-center font-bold text-semantic-text-secondary hover:bg-white rounded-md tap-target transition-colors"
                         aria-label="Tăng"
                       >
                         +
@@ -313,17 +313,17 @@ export const CookingModePage: React.FC = () => {
         <div className="flex items-center justify-between mb-3">
           <button
             onClick={() => setConfirmExit(true)}
-            className="w-10 h-10 rounded-xl hover:bg-slate-100 active:scale-95 text-slate-700 flex items-center justify-center tap-target transition-colors"
+            className="w-10 h-10 rounded-xl hover:bg-semantic-border/60 active:scale-95 text-semantic-text-secondary flex items-center justify-center tap-target transition-colors"
             aria-label="Thoát chế độ nấu"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
 
           <div className="text-center">
-            <h2 className="font-heading font-bold text-base text-slate-900 truncate max-w-[180px]">
+            <h1 className="font-heading font-bold text-base text-semantic-text-primary truncate max-w-[180px]">
               {activeRecipe.title}
-            </h2>
-            <p className="text-xs text-slate-500 font-medium">
+            </h1>
+            <p className="text-xs text-semantic-text-muted font-medium">
               Bước {currentStepIndex + 1} / {activeRecipe.steps.length}
             </p>
           </div>
@@ -335,7 +335,7 @@ export const CookingModePage: React.FC = () => {
               className={clsx(
                 'w-10 h-10 rounded-xl flex items-center justify-center tap-target transition-tap active:scale-95 border',
                 isListening
-                  ? 'bg-rose-500 border-rose-500 text-white shadow-xs animate-pulse'
+                  ? 'bg-semantic-danger border-semantic-danger text-white shadow-xs animate-pulse'
                   : 'bg-takosan-mint border-takosan-mint-deep/60 text-takosan-green-deep hover:bg-takosan-mint-hover'
               )}
               title={isListening ? 'Đang nghe... Bấm để tắt' : 'Bật trợ lý rảnh tay'}
@@ -372,7 +372,7 @@ export const CookingModePage: React.FC = () => {
         )}
 
         {/* Progress Bar */}
-        <div className="w-full h-1.5 bg-slate-200/80 rounded-full overflow-hidden">
+        <div className="w-full h-1.5 bg-semantic-border/80 rounded-full overflow-hidden">
           <div
             className="h-full bg-takosan-green transition-tap duration-300 rounded-full"
             style={{ width: `${progressPercent}%` }}
@@ -385,17 +385,17 @@ export const CookingModePage: React.FC = () => {
         {/* Directional step transition: +24px forward, reverse on Back;
             timer logic never depends on animation frames. */}
         <Slide key={currentStepIndex} direction={stepDirection} distance={24}>
-        <div className="bg-white rounded-2xl p-6 shadow-card border border-slate-200/80 text-center space-y-4">
+        <div className="bg-white rounded-2xl p-6 shadow-card border border-semantic-border text-center space-y-4">
           <span className="w-10 h-10 rounded-xl bg-takosan-mint border border-takosan-mint-deep/60 flex items-center justify-center font-heading font-bold text-base text-takosan-green-deep mx-auto shadow-xs">
             {currentStep.stepNumber}
           </span>
 
-          <p className="font-heading font-bold text-xl sm:text-2xl text-slate-900 leading-relaxed text-left">
+          <p className="font-heading font-bold text-xl sm:text-2xl text-semantic-text-primary leading-relaxed text-left">
             {currentStep.instruction}
           </p>
 
           {currentStep.tip && (
-            <div className="bg-amber-50 rounded-xl p-3 text-xs text-amber-900 text-left border border-amber-200/60 font-medium">
+            <div className="bg-semantic-warning-soft rounded-xl p-3 text-xs text-semantic-warning-strong text-left border border-semantic-warning/30 font-medium">
               💡 <span className="font-bold">Mẹo:</span> {currentStep.tip}
             </div>
           )}
@@ -412,10 +412,10 @@ export const CookingModePage: React.FC = () => {
                   <span>Bật hẹn giờ ({currentStep.timerMinutes} phút)</span>
                 </button>
               ) : (
-                <div className="bg-slate-50 rounded-xl p-3.5 border border-slate-200/80 flex items-center justify-between max-w-xs mx-auto shadow-xs">
+                <div className="bg-semantic-background-subtle rounded-xl p-3.5 border border-semantic-border flex items-center justify-between max-w-xs mx-auto shadow-xs">
                   <div className="flex items-center gap-2">
                     <Clock className="w-5 h-5 text-takosan-green animate-pulse" />
-                    <span className="font-heading font-bold text-2xl text-slate-900 font-mono">
+                    <span className="font-heading font-bold text-2xl text-semantic-text-primary font-mono">
                       {formatTimer(timerSecondsRemaining)}
                     </span>
                   </div>
@@ -423,14 +423,14 @@ export const CookingModePage: React.FC = () => {
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={toggleTimer}
-                      className="p-2 rounded-lg bg-white border border-slate-200 shadow-xs hover:bg-slate-50 text-slate-700 tap-target flex items-center justify-center transition-colors"
+                      className="p-2 rounded-lg bg-white border border-semantic-border shadow-xs hover:bg-semantic-background-subtle text-semantic-text-secondary tap-target flex items-center justify-center transition-colors"
                       aria-label={isTimerRunning ? 'Tạm dừng' : 'Bắt đầu'}
                     >
                       {isTimerRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                     </button>
                     <button
                       onClick={() => setTimer(currentStep.timerMinutes! * 60)}
-                      className="p-2 rounded-lg bg-white border border-slate-200 shadow-xs hover:bg-slate-50 text-slate-700 tap-target flex items-center justify-center transition-colors"
+                      className="p-2 rounded-lg bg-white border border-semantic-border shadow-xs hover:bg-semantic-background-subtle text-semantic-text-secondary tap-target flex items-center justify-center transition-colors"
                       aria-label="Đặt lại giờ"
                     >
                       <RotateCcw className="w-4 h-4" />

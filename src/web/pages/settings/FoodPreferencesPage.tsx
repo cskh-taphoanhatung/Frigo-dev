@@ -124,8 +124,8 @@ export const FoodPreferencesPage: React.FC = () => {
     `h-11 px-4 rounded-pill text-sm font-medium border transition-colors focus-visible:outline-none focus-visible:shadow-t17-focus ${
       selected
         ? tone === 'action'
-          ? 'bg-semantic-success-soft text-semantic-action-primary border-semantic-action-primary/40 font-semibold'
-          : 'bg-semantic-warning-soft text-semantic-warning border-semantic-warning/40'
+          ? 'bg-semantic-success-soft text-semantic-action-primary-hover border-semantic-action-primary/40 font-semibold'
+          : 'bg-semantic-warning-soft text-semantic-warning-strong border-semantic-warning/40'
         : 'bg-semantic-surface text-semantic-text-secondary border-semantic-border'
     }`;
 

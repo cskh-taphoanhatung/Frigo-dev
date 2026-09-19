@@ -41,7 +41,7 @@ export const LandingPage: React.FC = () => {
         </div>
         {/* Single page heading (accessibility checklist). */}
         <h1 className="font-heading font-extrabold text-xl text-takosan-navy mb-1">{TAKOSAN_BRAND.tagline}</h1>
-        <p className="text-xs text-slate-600 max-w-xs mx-auto leading-relaxed">
+        <p className="text-xs text-semantic-text-secondary max-w-xs mx-auto leading-relaxed">
           Trợ lý bếp thân thiện: quản lý thực phẩm, giảm lãng phí và gợi ý món ngon chuẩn xác cùng AI.
         </p>
       </div>
@@ -60,7 +60,7 @@ export const LandingPage: React.FC = () => {
             />
           </div>
           <h3 className="font-heading font-bold text-base text-takosan-navy">Nhận diện nguyên liệu tức thì</h3>
-          <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
+          <p className="text-xs text-semantic-text-muted mt-1 max-w-xs mx-auto">
             Chỉ cần 1 bức ảnh chụp tủ lạnh, Takosan sẽ phân loại và tính toán món ăn tối ưu ngay cho bạn.
           </p>
         </div>
@@ -68,7 +68,7 @@ export const LandingPage: React.FC = () => {
 
       {/* Action Buttons */}
       <div className="relative z-10 space-y-3">
-        {guestError && <p role="alert" className="text-sm text-rose-700">{guestError}</p>}
+        {guestError && <p role="alert" className="text-sm text-semantic-danger-strong">{guestError}</p>}
         <Button
           fullWidth
           size="lg"
@@ -84,7 +84,7 @@ export const LandingPage: React.FC = () => {
           <LogIn className="h-4 w-4" />
           <span>Đăng nhập hoặc tạo tài khoản</span>
         </Button>
-        <p className="pt-1 text-center text-[11px] leading-relaxed text-slate-500">Dùng thử không cần tài khoản. Đăng nhập khi bạn muốn đồng bộ giữa các thiết bị.</p>
+        <p className="pt-1 text-center text-[11px] leading-relaxed text-semantic-text-muted">Dùng thử không cần tài khoản. Đăng nhập khi bạn muốn đồng bộ giữa các thiết bị.</p>
       </div>
     </div>
   );

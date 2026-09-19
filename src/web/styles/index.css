@@ -76,6 +76,20 @@
     opacity: 1;
     transform: none;
   }
+  /* Decorative Tailwind keyframes (pulse/bounce) stop as well; spinners
+     keep turning because they communicate progress, not decoration. */
+  .animate-pulse,
+  .animate-bounce,
+  .animate-bounce-slow,
+  .animate-ping {
+    animation: none;
+  }
+  /* Spatial transitions collapse to instant; colour/opacity feedback may stay
+     but never longer than the "instant" motion token. */
+  .transition-tap,
+  .transition-transform {
+    transition-duration: 1ms !important;
+  }
 }
 
 @keyframes t17SkeletonPulse {

@@ -11,6 +11,6 @@ export const RouteFallback: React.FC = () => (
   >
     <img src={TAKOSAN_BRAND.symbol} alt="" width={64} height={64} className="w-16 h-16" />
     <div className="animate-spin w-7 h-7 border-2 border-takosan-green border-t-transparent rounded-full motion-reduce:animate-none" />
-    <p className="text-xs text-slate-500 font-medium">Đang tải…</p>
+    <p className="text-xs text-semantic-text-muted font-medium">Đang tải…</p>
   </div>
 );

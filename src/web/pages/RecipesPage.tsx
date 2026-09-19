@@ -94,30 +94,30 @@ export const RecipesPage: React.FC = () => {
 
       <div className="px-4 pt-3 space-y-3.5 animate-fade-in">
         <div>
-          <h2 className="font-heading font-bold text-xl text-slate-900 tracking-tight">
+          <h1 className="font-heading font-bold text-xl text-semantic-text-primary tracking-tight">
             Gợi ý món ngon
-          </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          </h1>
+          <p className="text-xs text-semantic-text-muted mt-0.5">
             Ngân hàng 60+ công thức món Việt đa danh mục & tối ưu theo tủ lạnh
           </p>
         </div>
 
         {/* Search Bar */}
         <div className="relative">
-          <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
+          <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-semantic-text-muted" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Tìm món canh, thịt kho, phở, bún chả, nguyên liệu..."
-            className="w-full h-11 pl-10 pr-4 bg-white rounded-xl border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-xs transition-tap"
+            className="w-full h-11 pl-10 pr-4 bg-white rounded-xl border border-semantic-border focus:outline-none focus:ring-2 focus:ring-takosan-green/20 focus:border-takosan-green text-sm font-medium text-semantic-text-primary placeholder:text-semantic-text-muted shadow-xs transition-tap"
           />
         </div>
 
         {/* 10 Vietnamese Culinary Categories */}
         <div className="space-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+            <span className="text-[11px] font-bold text-semantic-text-secondary uppercase tracking-wider">
               Danh mục món Việt
             </span>
             {categoryFilter && (
@@ -140,7 +140,7 @@ export const RecipesPage: React.FC = () => {
                     'px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-tap flex items-center gap-1.5 tap-target cursor-pointer border shadow-xs',
                     isActive
                       ? 'bg-takosan-green text-white border-takosan-green font-semibold shadow-sm'
-                      : 'bg-white text-slate-700 border-slate-200/80 hover:bg-slate-50 hover:border-slate-300'
+                      : 'bg-white text-semantic-text-secondary border-semantic-border hover:bg-semantic-background-subtle hover:border-semantic-border-strong'
                   )}
                 >
                   <span className="text-sm leading-none">{cat.icon}</span>
@@ -159,7 +159,7 @@ export const RecipesPage: React.FC = () => {
               'px-3 py-1.5 rounded-full text-xs font-heading font-semibold transition-tap whitespace-nowrap flex items-center gap-1.5 tap-target shadow-xs cursor-pointer',
               noBuyOnly
                 ? 'bg-takosan-green text-white border border-takosan-green'
-                : 'bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50'
+                : 'bg-white text-semantic-text-secondary border border-semantic-border hover:bg-semantic-background-subtle'
             )}
           >
             <CheckCircle className={clsx('w-3.5 h-3.5', noBuyOnly ? 'text-takosan-mint' : 'text-takosan-green')} />
@@ -172,7 +172,7 @@ export const RecipesPage: React.FC = () => {
               'px-3 py-1.5 rounded-full text-xs font-heading font-semibold transition-tap whitespace-nowrap flex items-center gap-1.5 tap-target shadow-xs cursor-pointer',
               under20MinsOnly
                 ? 'bg-takosan-green text-white border border-takosan-green'
-                : 'bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50'
+                : 'bg-white text-semantic-text-secondary border border-semantic-border hover:bg-semantic-background-subtle'
             )}
           >
             <Clock className={clsx('w-3.5 h-3.5', under20MinsOnly ? 'text-takosan-mint' : 'text-takosan-green')} />
@@ -188,7 +188,7 @@ export const RecipesPage: React.FC = () => {
                 'px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-tap tap-target cursor-pointer border',
                 regionFilter === reg.id
                   ? 'bg-takosan-green text-white border-takosan-green font-semibold shadow-xs'
-                  : 'bg-white text-slate-600 border-slate-200/80 hover:bg-slate-50 hover:text-slate-900'
+                  : 'bg-white text-semantic-text-secondary border-semantic-border hover:bg-semantic-background-subtle hover:text-semantic-text-primary'
               )}
             >
               {reg.label}
@@ -203,8 +203,8 @@ export const RecipesPage: React.FC = () => {
               className={clsx(
                 'px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-tap tap-target cursor-pointer border',
                 cuisineFilter === c.id
-                  ? 'bg-slate-900 text-white border-slate-900 shadow-xs font-semibold'
-                  : 'bg-white text-slate-600 border-slate-200/80 hover:bg-slate-50 hover:text-slate-900'
+                  ? 'bg-semantic-text-primary text-semantic-text-inverse border-semantic-text-primary shadow-xs font-semibold'
+                  : 'bg-white text-semantic-text-secondary border-semantic-border hover:bg-semantic-background-subtle hover:text-semantic-text-primary'
               )}
             >
               {c.label}
@@ -214,7 +214,7 @@ export const RecipesPage: React.FC = () => {
 
         {/* Active Filters Summary Header */}
         <div className="flex items-center justify-between pt-1">
-          <span className="text-xs font-semibold text-slate-700">
+          <span className="text-xs font-semibold text-semantic-text-secondary">
             Tìm thấy <span className="text-takosan-green font-bold">{filtered.length}</span> món ngon
           </span>
           {(categoryFilter || regionFilter || cuisineFilter || noBuyOnly || under20MinsOnly || search) && (
@@ -239,7 +239,7 @@ export const RecipesPage: React.FC = () => {
           {loading ? (
             <div className="text-center py-10">
               <div className="animate-spin w-7 h-7 border-2 border-takosan-green border-t-transparent rounded-full mx-auto mb-2" />
-              <p className="text-xs text-slate-500 font-medium">Đang tìm món...</p>
+              <p className="text-xs text-semantic-text-muted font-medium">Đang tìm món...</p>
             </div>
           ) : recommendationsQuery.isError ? (
             <InlineError error={recommendationsQuery.error} onRetry={() => recommendationsQuery.refetch()} />

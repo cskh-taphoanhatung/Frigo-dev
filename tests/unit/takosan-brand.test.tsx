@@ -80,6 +80,18 @@ describe('Takosan brand contract', () => {
     expect(used.size).toBeGreaterThan(10);
     expect([...used].filter((k) => !keys.has(k))).toEqual([]);
   });
+
+  it('raw palette classes, arbitrary colour values and legacy motion utilities are gone or explicitly allowlisted', async () => {
+    // scripts/t17/style-residuals.mjs is the residual authority; this keeps
+    // the allowlist enforced by the unit gate, not only by a manual script.
+    // @ts-expect-error plain ESM script without a declaration file (same pattern as tailwind.config.js above).
+    const { audit, ALLOWLIST } = await import('../../scripts/t17/style-residuals.mjs');
+    const findings: Array<{ file: string; line: number; token: string; allow: string | null }> = audit(root);
+    expect(findings.filter((f) => !f.allow)).toEqual([]);
+    // The only sanctioned residue is the protected payment UI.
+    expect(ALLOWLIST.map((a: { id: string }) => a.id)).toEqual(['payment-boundary']);
+    expect(new Set(findings.map((f) => f.file))).toEqual(new Set(['src/web/components/payment/VietQRModal.tsx']));
+  });
 });
 
 describe('PWA metadata', () => {

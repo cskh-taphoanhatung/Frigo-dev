@@ -39,7 +39,7 @@ export const OfflineBanner: React.FC = () => {
   return (
     <div className="bg-takosan-navy text-white px-4 py-2 text-xs flex items-center justify-between gap-2 sticky top-0 z-50 animate-slide-up shadow-md">
       <span className="font-medium flex items-center gap-2 min-w-0">
-        <WifiOff className="w-3.5 h-3.5 text-[#FACC15] shrink-0" />
+        <WifiOff className="w-3.5 h-3.5 text-takosan-yellow shrink-0" />
         {isOffline
           ? 'Đang ở chế độ Ngoại tuyến. Thay đổi sẽ được tự đồng bộ khi có mạng.'
           : `Đang chờ đồng bộ (${pending} thay đổi).`}

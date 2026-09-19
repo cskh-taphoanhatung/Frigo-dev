@@ -106,7 +106,7 @@ export const WeekSetupPage: React.FC = () => {
 
       <div className="px-4 pt-4 space-y-5">
         {/* Step Progress Bar */}
-        <div className="w-full bg-slate-200/80 h-1.5 rounded-full overflow-hidden">
+        <div className="w-full bg-semantic-border/80 h-1.5 rounded-full overflow-hidden">
           <div
             className="bg-takosan-green h-full transition-tap duration-300 rounded-full"
             style={{ width: `${(currentStep / 5) * 100}%` }}
@@ -120,10 +120,10 @@ export const WeekSetupPage: React.FC = () => {
               <span className="text-[11px] font-semibold uppercase px-2.5 py-0.5 rounded-md bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep/60">
                 Bước 1 / 5
               </span>
-              <h2 className="font-heading font-bold text-xl text-slate-900 mt-2">
+              <h2 className="font-heading font-bold text-xl text-semantic-text-primary mt-2">
                 Bạn muốn Takosan lên kế hoạch cho những bữa nào?
               </h2>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-semantic-text-muted mt-1">
                 Chọn tần suất bữa ăn gia đình bạn cần nấu tại nhà
               </p>
             </div>
@@ -156,19 +156,19 @@ export const WeekSetupPage: React.FC = () => {
                     'p-4 rounded-xl border cursor-pointer transition-tap active:scale-[0.99] flex items-center justify-between',
                     mealPreset === opt.id
                       ? 'bg-white border-takosan-green shadow-xs ring-1 ring-takosan-green'
-                      : 'bg-white border-slate-200/80 hover:border-slate-300'
+                      : 'bg-white border-semantic-border hover:border-semantic-border-strong'
                   )}
                 >
                   <div>
                     <div className="flex items-center gap-2 mb-0.5">
-                      <h4 className="font-heading font-semibold text-sm text-slate-900">
+                      <h4 className="font-heading font-semibold text-sm text-semantic-text-primary">
                         {opt.title}
                       </h4>
-                      <span className="text-[10px] font-medium px-1.5 py-0.2 rounded bg-slate-100 text-slate-600">
+                      <span className="text-[10px] font-medium px-1.5 py-0.2 rounded bg-semantic-border/60 text-semantic-text-secondary">
                         {opt.badge}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500">{opt.desc}</p>
+                    <p className="text-xs text-semantic-text-muted">{opt.desc}</p>
                   </div>
 
                   <div
@@ -176,7 +176,7 @@ export const WeekSetupPage: React.FC = () => {
                       'w-5 h-5 rounded-full flex items-center justify-center border shrink-0',
                       mealPreset === opt.id
                         ? 'bg-takosan-green border-takosan-green text-white'
-                        : 'border-slate-300'
+                        : 'border-semantic-border-strong'
                     )}
                   >
                     {mealPreset === opt.id && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
@@ -194,10 +194,10 @@ export const WeekSetupPage: React.FC = () => {
               <span className="text-[11px] font-semibold uppercase px-2.5 py-0.5 rounded-md bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep/60">
                 Bước 2 / 5
               </span>
-              <h2 className="font-heading font-bold text-xl text-slate-900 mt-2">
+              <h2 className="font-heading font-bold text-xl text-semantic-text-primary mt-2">
                 Ngân sách thực phẩm tuần này
               </h2>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-semantic-text-muted mt-1">
                 Takosan sẽ tối ưu mua nguyên liệu vừa vặn trong hạn mức
               </p>
             </div>
@@ -221,7 +221,7 @@ export const WeekSetupPage: React.FC = () => {
                     'p-3.5 rounded-xl border text-sm font-heading font-semibold transition-tap tap-target active:scale-[0.98]',
                     !isUnlimitedBudget && budgetVnd === p.value
                       ? 'bg-takosan-green text-white shadow-xs border-takosan-green'
-                      : 'bg-white text-slate-800 border-slate-200/80 hover:border-slate-300'
+                      : 'bg-white text-semantic-text-primary border-semantic-border hover:border-semantic-border-strong'
                   )}
                 >
                   {p.label}
@@ -240,14 +240,14 @@ export const WeekSetupPage: React.FC = () => {
                 'p-4 rounded-xl border cursor-pointer transition-tap flex items-center justify-between',
                 isUnlimitedBudget
                   ? 'bg-white border-takosan-green ring-1 ring-takosan-green shadow-xs'
-                  : 'bg-white border-slate-200/80 hover:border-slate-300'
+                  : 'bg-white border-semantic-border hover:border-semantic-border-strong'
               )}
             >
               <div>
-                <h4 className="font-heading font-semibold text-sm text-slate-900">
+                <h4 className="font-heading font-semibold text-sm text-semantic-text-primary">
                   Không giới hạn ngân sách
                 </h4>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-semantic-text-muted mt-0.5">
                   Tập trung tối đa vào độ ngon và chất lượng món ăn
                 </p>
               </div>
@@ -257,7 +257,7 @@ export const WeekSetupPage: React.FC = () => {
                   'w-5 h-5 rounded-full flex items-center justify-center border shrink-0',
                   isUnlimitedBudget
                     ? 'bg-takosan-green border-takosan-green text-white'
-                    : 'border-slate-300'
+                    : 'border-semantic-border-strong'
                 )}
               >
                 {isUnlimitedBudget && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
@@ -274,7 +274,7 @@ export const WeekSetupPage: React.FC = () => {
                 <span className="text-[11px] font-semibold uppercase px-2.5 py-0.5 rounded-md bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep/60">
                   Bước 3 / 5
                 </span>
-                <h2 className="font-heading font-bold text-xl text-slate-900 mt-2">
+                <h2 className="font-heading font-bold text-xl text-semantic-text-primary mt-2">
                   Lịch nấu ăn trong tuần
                 </h2>
               </div>
@@ -293,9 +293,9 @@ export const WeekSetupPage: React.FC = () => {
                 {DAY_LABELS.map((dayName, idx) => (
                   <div
                     key={dayName}
-                    className="p-3 bg-white rounded-xl border border-slate-200/80 flex items-center justify-between shadow-xs"
+                    className="p-3 bg-white rounded-xl border border-semantic-border flex items-center justify-between shadow-xs"
                   >
-                    <span className="font-heading font-semibold text-xs text-slate-900 w-16">
+                    <span className="font-heading font-semibold text-xs text-semantic-text-primary w-16">
                       {dayName}
                     </span>
 
@@ -317,7 +317,7 @@ export const WeekSetupPage: React.FC = () => {
                             'px-2.5 py-1 rounded-lg text-xs font-semibold transition-tap tap-target',
                             daySchedules[idx] === t.id
                               ? 'bg-takosan-green text-white shadow-xs'
-                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                              : 'bg-semantic-border/60 text-semantic-text-secondary hover:bg-semantic-border'
                           )}
                         >
                           {t.label}
@@ -328,8 +328,8 @@ export const WeekSetupPage: React.FC = () => {
                 ))}
               </div>
             ) : (
-              <div className="p-6 bg-white rounded-xl border border-slate-200/80 text-center">
-                <p className="text-xs text-slate-500">
+              <div className="p-6 bg-white rounded-xl border border-semantic-border text-center">
+                <p className="text-xs text-semantic-text-muted">
                   Takosan sẽ lên kế hoạch nấu ăn cho tất cả các ngày trong tuần.
                 </p>
               </div>
@@ -344,10 +344,10 @@ export const WeekSetupPage: React.FC = () => {
               <span className="text-[11px] font-semibold uppercase px-2.5 py-0.5 rounded-md bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep/60">
                 Bước 4 / 5
               </span>
-              <h2 className="font-heading font-bold text-xl text-slate-900 mt-2">
+              <h2 className="font-heading font-bold text-xl text-semantic-text-primary mt-2">
                 Tuần này bạn ưu tiên điều gì?
               </h2>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-semantic-text-muted mt-1">
                 Chọn tối đa 3 ưu tiên (Đang chọn: {priorities.length}/3)
               </p>
             </div>
@@ -363,7 +363,7 @@ export const WeekSetupPage: React.FC = () => {
                       'p-3.5 rounded-xl border cursor-pointer transition-tap flex flex-col justify-between h-24 select-none active:scale-[0.98]',
                       isSelected
                         ? 'bg-white border-takosan-green shadow-xs ring-1 ring-takosan-green'
-                        : 'bg-white border-slate-200/80 hover:border-slate-300'
+                        : 'bg-white border-semantic-border hover:border-semantic-border-strong'
                     )}
                   >
                     <div className="flex items-center justify-between">
@@ -373,13 +373,13 @@ export const WeekSetupPage: React.FC = () => {
                           'w-4 h-4 rounded-full flex items-center justify-center border',
                           isSelected
                             ? 'bg-takosan-green border-takosan-green text-white'
-                            : 'border-slate-300'
+                            : 'border-semantic-border-strong'
                         )}
                       >
                         {isSelected && <Check className="w-2.5 h-2.5 stroke-[2.5]" />}
                       </div>
                     </div>
-                    <span className="font-heading font-semibold text-xs text-slate-800 leading-snug">
+                    <span className="font-heading font-semibold text-xs text-semantic-text-primary leading-snug">
                       {opt.label}
                     </span>
                   </div>
@@ -396,10 +396,10 @@ export const WeekSetupPage: React.FC = () => {
               <span className="text-[11px] font-semibold uppercase px-2.5 py-0.5 rounded-md bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep/60">
                 Bước 5 / 5
               </span>
-              <h2 className="font-heading font-bold text-xl text-slate-900 mt-2">
+              <h2 className="font-heading font-bold text-xl text-semantic-text-primary mt-2">
                 Bạn muốn đi chợ mấy lần?
               </h2>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-semantic-text-muted mt-1">
                 Giúp Takosan sắp xếp nguyên liệu dễ hỏng và tính toán chuyến mua sắm
               </p>
             </div>
@@ -434,14 +434,14 @@ export const WeekSetupPage: React.FC = () => {
                     'p-4 rounded-xl border cursor-pointer transition-tap active:scale-[0.99] flex items-center justify-between',
                     frequency === opt.id
                       ? 'bg-white border-takosan-green shadow-xs ring-1 ring-takosan-green'
-                      : 'bg-white border-slate-200/80 hover:border-slate-300'
+                      : 'bg-white border-semantic-border hover:border-semantic-border-strong'
                   )}
                 >
                   <div>
-                    <h4 className="font-heading font-semibold text-sm text-slate-900">
+                    <h4 className="font-heading font-semibold text-sm text-semantic-text-primary">
                       {opt.title}
                     </h4>
-                    <p className="text-xs text-slate-500 mt-0.5">{opt.desc}</p>
+                    <p className="text-xs text-semantic-text-muted mt-0.5">{opt.desc}</p>
                   </div>
 
                   <div
@@ -449,7 +449,7 @@ export const WeekSetupPage: React.FC = () => {
                       'w-5 h-5 rounded-full flex items-center justify-center border shrink-0',
                       frequency === opt.id
                         ? 'bg-takosan-green border-takosan-green text-white'
-                        : 'border-slate-300'
+                        : 'border-semantic-border-strong'
                     )}
                   >
                     {frequency === opt.id && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
@@ -462,7 +462,7 @@ export const WeekSetupPage: React.FC = () => {
       </div>
 
       {/* Fixed Next / Complete CTA */}
-      <div className="fixed bottom-[calc(68px+env(safe-area-inset-bottom,0px))] md:bottom-0 left-0 right-0 md:left-20 lg:left-64 p-4 md:pb-[calc(1rem+env(safe-area-inset-bottom,0px))] bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-40 shadow-lg">
+      <div className="fixed bottom-[calc(68px+env(safe-area-inset-bottom,0px))] md:bottom-0 left-0 right-0 md:left-20 lg:left-64 p-4 md:pb-[calc(1rem+env(safe-area-inset-bottom,0px))] bg-white/95 backdrop-blur-md border-t border-semantic-border z-40 shadow-lg">
         <Button
           fullWidth
           size="lg"

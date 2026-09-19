@@ -47,7 +47,7 @@ export const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-takosan-cream pb-12 text-slate-900">
+    <div className="min-h-screen bg-takosan-cream pb-12 text-semantic-text-primary">
       <TopBar showBack title="Cài đặt ứng dụng" />
 
       <div className="px-4 pt-3 space-y-4">
@@ -55,9 +55,9 @@ export const SettingsPage: React.FC = () => {
         <Card className="p-4 space-y-3">
           <div className="flex items-center gap-2">
             <Smartphone className="w-4 h-4 text-takosan-green" />
-            <h4 className="font-heading font-bold text-sm text-slate-900">Ứng dụng Takosan trên điện thoại</h4>
+            <h4 className="font-heading font-bold text-sm text-semantic-text-primary">Ứng dụng Takosan trên điện thoại</h4>
           </div>
-          <p className="text-xs text-slate-600 leading-relaxed">
+          <p className="text-xs text-semantic-text-secondary leading-relaxed">
             {isStandalone
               ? '✅ Ứng dụng đã được cài đặt và đang chạy ở chế độ Độc lập (Standalone PWA).'
               : 'Cài đặt Takosan lên màn hình chính để mở nhanh không qua trình duyệt và sử dụng ngoại tuyến mọi lúc mọi nơi.'}
@@ -67,7 +67,7 @@ export const SettingsPage: React.FC = () => {
               variant="outline"
               size="sm"
               onClick={handleInstallPwa}
-              className="w-full flex items-center justify-center gap-2 text-xs text-slate-800"
+              className="w-full flex items-center justify-center gap-2 text-xs text-semantic-text-primary"
             >
               <Smartphone className="w-3.5 h-3.5 text-takosan-green" />
               <span>Cài đặt lên Màn hình chính (PWA)</span>
@@ -79,18 +79,18 @@ export const SettingsPage: React.FC = () => {
         <Card className="p-4 space-y-3">
           <div className="flex items-center gap-2">
             <Wifi className="w-4 h-4 text-takosan-green" />
-            <h4 className="font-heading font-bold text-sm text-slate-900">Bộ nhớ đệm ứng dụng</h4>
+            <h4 className="font-heading font-bold text-sm text-semantic-text-primary">Bộ nhớ đệm ứng dụng</h4>
           </div>
-          <p className="text-xs text-slate-600 leading-relaxed">
+          <p className="text-xs text-semantic-text-secondary leading-relaxed">
             Xóa tài nguyên PWA đã lưu trên trình duyệt. Thao tác này không xóa dữ liệu ngoại tuyến hoặc thay đổi chưa đồng bộ của bạn.
           </p>
           <Button
             variant="outline"
             size="sm"
             onClick={handleClearCache}
-            className="w-full flex items-center justify-center gap-2 text-xs text-slate-800"
+            className="w-full flex items-center justify-center gap-2 text-xs text-semantic-text-primary"
           >
-            <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+            <Trash2 className="w-3.5 h-3.5 text-semantic-danger" />
             <span>{cacheCleared ? '✓ Đã xóa bộ nhớ đệm ứng dụng' : 'Xóa bộ nhớ đệm ứng dụng'}</span>
           </Button>
         </Card>
@@ -99,25 +99,25 @@ export const SettingsPage: React.FC = () => {
         <Card className="p-4 space-y-2.5">
           <div className="flex items-center gap-2">
             <Globe className="w-4 h-4 text-takosan-green" />
-            <h4 className="font-heading font-bold text-sm text-slate-900">Ngôn ngữ hiển thị</h4>
+            <h4 className="font-heading font-bold text-sm text-semantic-text-primary">Ngôn ngữ hiển thị</h4>
           </div>
-          <p className="text-xs text-slate-600 leading-relaxed">
+          <p className="text-xs text-semantic-text-secondary leading-relaxed">
             Tiếng Việt (hiện tại). Tiếng Anh sẽ được bổ sung khi bản dịch đầy đủ sẵn sàng.
           </p>
         </Card>
 
-        <p className="text-xs text-slate-500 leading-relaxed">
+        <p className="text-xs text-semantic-text-muted leading-relaxed">
           Nội dung quyền riêng tư, dữ liệu và AI đã chuyển sang trang Quyền riêng tư &amp; dữ liệu
           trong Hồ sơ.
         </p>
 
         {/* App Version Info */}
         <div className="text-center py-2 space-y-1">
-          <div className="flex items-center justify-center gap-1 text-xs text-slate-400">
+          <div className="flex items-center justify-center gap-1 text-xs text-semantic-text-muted">
             <Info className="w-3.5 h-3.5" />
             <span>Takosan v{import.meta.env.VITE_APP_VERSION} • Build {import.meta.env.VITE_GIT_COMMIT || 'local'} • {import.meta.env.VITE_BUILD_TIMESTAMP || 'local build'}</span>
           </div>
-          <p className="text-[11px] text-slate-400">Ăn đủ. Mua đủ. Dùng hết.</p>
+          <p className="text-[11px] text-semantic-text-muted">Ăn đủ. Mua đủ. Dùng hết.</p>
         </div>
 
       </div>

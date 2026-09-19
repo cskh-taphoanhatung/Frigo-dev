@@ -17,7 +17,9 @@ export default {
           "surface-raised": "rgb(255 255 255 / <alpha-value>)",
           "text-primary": "rgb(31 41 55 / <alpha-value>)",
           "text-secondary": "rgb(74 71 65 / <alpha-value>)",
-          "text-muted": "rgb(123 119 111 / <alpha-value>)",
+          // Kit value #7B776F measures 4.24:1 on --semantic-background (fails
+          // WCAG AA body text); darkened to #6F6B64 (5.04:1) — see T17 report.
+          "text-muted": "rgb(111 107 100 / <alpha-value>)",
           "text-inverse": "rgb(255 255 255 / <alpha-value>)",
           "action-primary": "rgb(46 125 91 / <alpha-value>)",
           "action-primary-hover": "rgb(36 102 72 / <alpha-value>)",
@@ -29,13 +31,20 @@ export default {
           "success-soft": "rgb(231 245 236 / <alpha-value>)",
           "warning": "rgb(182 106 9 / <alpha-value>)",
           "warning-soft": "rgb(255 243 214 / <alpha-value>)",
+          // Derived text shades for use on the *-soft fills where the base
+          // hue falls under 4.5:1 (warning 3.77, danger 4.498). Not kit values.
+          "warning-strong": "rgb(143 83 7 / <alpha-value>)",
           "danger": "rgb(201 61 61 / <alpha-value>)",
           "danger-soft": "rgb(255 240 240 / <alpha-value>)",
+          "danger-strong": "rgb(181 52 52 / <alpha-value>)",
           "info": "rgb(47 111 159 / <alpha-value>)",
           "info-soft": "rgb(234 244 251 / <alpha-value>)",
           "border": "rgb(231 227 218 / <alpha-value>)",
           "border-strong": "rgb(201 194 182 / <alpha-value>)",
           "focus": "rgb(46 125 91 / <alpha-value>)",
+          // Scrim colour from design-tokens.json (--semantic-overlay); alpha
+          // is supplied per use (bg-semantic-overlay/50).
+          "overlay": "rgb(18 25 23 / <alpha-value>)",
         },
         // Takosan locked palette (design-tokens/brand-tokens.json v1.1.0) plus a few
         // derived shades for hover/depth/borders so runtime UI never falls back to emerald.

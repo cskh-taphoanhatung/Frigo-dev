@@ -64,14 +64,14 @@ export const ShoppingPage: React.FC = () => {
             value={newItemName}
             onChange={(e) => setNewItemName(e.target.value)}
             placeholder="Thêm món: Hành tím, Tiêu, Nấm..."
-            className="flex-1 min-w-0 h-11 px-3.5 rounded-xl border border-slate-200/80 text-sm font-medium text-slate-900 focus:outline-none focus:border-takosan-green bg-white shadow-xs transition-colors"
+            className="flex-1 min-w-0 h-11 px-3.5 rounded-xl border border-semantic-border text-sm font-medium text-semantic-text-primary focus:outline-none focus:border-takosan-green bg-white shadow-xs transition-colors"
           />
 
           <select
             aria-label="Đơn vị"
             value={newItemUnit}
             onChange={(e) => setNewItemUnit(e.target.value)}
-            className="h-11 min-w-0 px-2.5 rounded-xl border border-slate-200/80 text-xs font-semibold text-slate-800 bg-white focus:outline-none focus:border-takosan-green transition-colors"
+            className="h-11 min-w-0 px-2.5 rounded-xl border border-semantic-border text-xs font-semibold text-semantic-text-primary bg-white focus:outline-none focus:border-takosan-green transition-colors"
           >
             <option value="piece">quả/bìa</option>
             <option value="g">gam (g)</option>
@@ -106,8 +106,8 @@ export const ShoppingPage: React.FC = () => {
                 key={item.id}
                 onClick={() => !toggleItem.isPending && toggleItem.mutate({ id: item.id, current: item.isChecked })}
                 className={clsx(
-                  'p-3 rounded-xl flex items-center justify-between cursor-pointer transition-tap border border-slate-200/80 shadow-xs active:scale-[0.99]',
-                  item.isChecked ? 'bg-slate-50/70 opacity-60' : 'bg-white hover:border-slate-300'
+                  'p-3 rounded-xl flex items-center justify-between cursor-pointer transition-tap border border-semantic-border shadow-xs active:scale-[0.99]',
+                  item.isChecked ? 'bg-semantic-background-subtle/70 opacity-60' : 'bg-white hover:border-semantic-border-strong'
                 )}
               >
                 <div className="flex items-center gap-3">
@@ -118,20 +118,20 @@ export const ShoppingPage: React.FC = () => {
                     {item.isChecked ? (
                       <CheckCircle2 className="w-5 h-5 fill-takosan-green text-white" />
                     ) : (
-                      <Circle className="w-5 h-5 text-slate-300" />
+                      <Circle className="w-5 h-5 text-semantic-text-muted" />
                     )}
                   </button>
 
                   <div>
                     <h4
                       className={clsx(
-                        'font-heading font-semibold text-sm text-slate-900',
-                        item.isChecked && 'line-through text-slate-400'
+                        'font-heading font-semibold text-sm text-semantic-text-primary',
+                        item.isChecked && 'line-through text-semantic-text-muted'
                       )}
                     >
                       {item.name}
                     </h4>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-semantic-text-muted">
                       {item.quantity} {item.unit}
                       {item.sourceRecipeTitle && ` • Cần cho ${item.sourceRecipeTitle}`}
                     </p>
@@ -143,7 +143,7 @@ export const ShoppingPage: React.FC = () => {
                     e.stopPropagation();
                     deleteItem.mutate(item.id);
                   }}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors tap-target flex items-center justify-center"
+                  className="p-1.5 rounded-lg text-semantic-text-muted hover:text-semantic-danger hover:bg-semantic-danger-soft transition-colors tap-target flex items-center justify-center"
                   aria-label="Xóa món"
                 >
                   <Trash2 className="w-4 h-4" />

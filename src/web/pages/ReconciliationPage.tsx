@@ -103,7 +103,7 @@ export const ReconciliationPage: React.FC = () => {
 
       <div className="px-4 pt-3 space-y-3">
         {actionError && (
-          <p className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2 font-medium" role="alert">
+          <p className="text-xs text-semantic-danger-strong bg-semantic-danger-soft border border-semantic-danger/30 rounded-xl px-3 py-2 font-medium" role="alert">
             {actionError}
           </p>
         )}
@@ -129,35 +129,35 @@ export const ReconciliationPage: React.FC = () => {
               <div
                 key={observation.observationId}
                 data-testid="reconciliation-item"
-                className="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-xs space-y-2"
+                className="bg-white rounded-xl p-3.5 border border-semantic-border shadow-xs space-y-2"
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <ScanLine className="w-4 h-4 text-takosan-green shrink-0" />
-                    <h4 className="font-heading font-semibold text-sm text-slate-900 truncate">
+                    <h4 className="font-heading font-semibold text-sm text-semantic-text-primary truncate">
                       {observation.rawName ?? observation.ingredientId ?? 'Nguyên liệu'}
                     </h4>
                   </div>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-medium shrink-0">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-semantic-border/60 text-semantic-text-secondary font-medium shrink-0">
                     {provenanceLabel(observation.dataSource)}
                   </span>
                 </div>
 
                 <dl className="text-xs space-y-1">
                   <div className="flex justify-between gap-3">
-                    <dt className="text-slate-500 shrink-0">Ghi nhận</dt>
-                    <dd className="text-slate-900 font-medium text-right">{claimSummary(observation)}</dd>
+                    <dt className="text-semantic-text-muted shrink-0">Ghi nhận</dt>
+                    <dd className="text-semantic-text-primary font-medium text-right">{claimSummary(observation)}</dd>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <dt className="text-slate-500 shrink-0">Kết luận</dt>
-                    <dd className="text-slate-900 font-medium text-right">
+                    <dt className="text-semantic-text-muted shrink-0">Kết luận</dt>
+                    <dd className="text-semantic-text-primary font-medium text-right">
                       {VERDICT_LABEL[observation.verdict ?? ''] ?? 'Đang chờ xử lý'}
                     </dd>
                   </div>
                   {observation.reasons.length > 0 && (
                     <div className="flex justify-between gap-3">
-                      <dt className="text-slate-500 shrink-0">Khác biệt</dt>
-                      <dd className="text-slate-700 text-right">
+                      <dt className="text-semantic-text-muted shrink-0">Khác biệt</dt>
+                      <dd className="text-semantic-text-secondary text-right">
                         {observation.reasons.map((reason) => REASON_LABEL[reason] ?? reason).join('; ')}
                       </dd>
                     </div>
@@ -184,7 +184,7 @@ export const ReconciliationPage: React.FC = () => {
                   </Button>
                 </div>
                 {!actionable && (
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-semantic-text-muted">
                     Mục này không có thao tác tự động an toàn; bạn có thể bỏ qua hoặc sửa trực tiếp trong tủ lạnh.
                   </p>
                 )}

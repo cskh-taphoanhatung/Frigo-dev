@@ -57,6 +57,8 @@ async function mount() {
       <LocationProbe />
       <Routes>
         <Route path="/auth" element={<AuthPage />} />
+        {/* Screen 03: OTP verification is its own route in the app router. */}
+        <Route path="/auth/verify" element={<AuthPage />} />
         <Route path="/onboarding" element={<output data-testid="onboarding">onboarding</output>} />
       </Routes>
     </MemoryRouter>);

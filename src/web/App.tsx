@@ -158,6 +158,10 @@ export const App: React.FC = () => {
                 <Route path="/auth" element={userId && householdId && !isGuest
                   ? <Navigate to={isOnboarded ? '/' : '/onboarding'} replace />
                   : <AuthPage />} />
+                {/* Screen 03: OTP verification is a real route (same state machine). */}
+                <Route path="/auth/verify" element={userId && householdId && !isGuest
+                  ? <Navigate to={isOnboarded ? '/' : '/onboarding'} replace />
+                  : <AuthPage />} />
                 <Route path="/onboarding" element={userId && householdId
                   ? isOnboarded ? <Navigate to="/" replace /> : <OnboardingPage />
                   : <Navigate to="/landing" replace />} />

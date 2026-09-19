@@ -63,7 +63,7 @@ export const OtpMode: React.FC<OtpModeProps> = ({
             value={digit}
             onChange={(e) => onOtpChange(idx, e.target.value)}
             onKeyDown={(e) => onOtpKeyDown(idx, e)}
-            className="w-11 h-13 text-center font-heading font-bold text-xl bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 transition-tap text-slate-900 shadow-xs"
+            className="w-11 h-13 text-center font-heading font-bold text-xl bg-white border border-semantic-border focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 transition-tap text-semantic-text-primary shadow-xs"
           />
         ))}
       </div>
@@ -72,10 +72,10 @@ export const OtpMode: React.FC<OtpModeProps> = ({
         <div
           role="status"
           data-testid="transfer-deferred"
-          className="p-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl text-xs space-y-3 animate-fade-in"
+          className="p-3 bg-semantic-warning-soft border border-semantic-warning/30 text-semantic-warning-strong rounded-xl text-xs space-y-3 animate-fade-in"
         >
           <div className="flex items-start gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
+            <AlertCircle className="w-4 h-4 shrink-0 text-semantic-warning mt-0.5" />
             <p className="leading-relaxed">
               Hiện Takosan chưa thể chuyển dữ liệu trong tủ khách sang tài khoản mới một cách an toàn.
               Bạn vẫn có thể tiếp tục tạo tài khoản: dữ liệu của phiên khách được giữ riêng trên
@@ -93,7 +93,7 @@ export const OtpMode: React.FC<OtpModeProps> = ({
       )}
 
       <div className="flex items-center justify-between text-xs pt-2">
-        <span className="text-slate-500">Chưa nhận được mã?</span>
+        <span className="text-semantic-text-muted">Chưa nhận được mã?</span>
         <button
           type="button"
           disabled={resendCountdown > 0 || isLoading || Boolean(turnstileSiteKey && !turnstileToken)}

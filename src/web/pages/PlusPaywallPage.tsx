@@ -50,11 +50,11 @@ export const PlusPaywallPage: React.FC = () => {
           <section className="overflow-hidden rounded-feature border border-semantic-border bg-semantic-surface shadow-card">
             <div className="bg-gradient-to-br from-semantic-action-primary-pressed to-semantic-action-primary-hover px-6 py-7 text-white">
               <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/12 ring-1 ring-white/15">
-                <ShieldCheck aria-hidden="true" className="h-6 w-6 text-amber-300" />
+                <ShieldCheck aria-hidden="true" className="h-6 w-6 text-takosan-yellow" />
               </div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-amber-300">Tài khoản bắt buộc</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-takosan-yellow">Tài khoản bắt buộc</p>
               <h1 className="mt-2 text-balance font-heading text-2xl font-bold leading-tight text-white">Đăng nhập trước khi chọn gói Plus</h1>
-              <p className="mt-3 text-sm leading-relaxed text-white/85">
+              <p className="mt-3 text-sm leading-relaxed text-white">
                 Gói Plus được gắn với tài khoản để quyền lợi không mất khi bạn đổi thiết bị. Dữ liệu phiên khách vẫn được giữ riêng khi bạn đăng nhập.
               </p>
             </div>
@@ -68,11 +68,11 @@ export const PlusPaywallPage: React.FC = () => {
               </Link>
               <Link
                 to="/"
-                className="flex min-h-11 w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
+                className="flex min-h-11 w-full items-center justify-center rounded-xl border border-semantic-border bg-white px-4 py-3 text-sm font-semibold text-semantic-text-secondary transition hover:bg-semantic-background-subtle active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-semantic-border-strong focus-visible:ring-offset-2"
               >
                 Quay lại bảng điều khiển
               </Link>
-              <p className="text-center text-xs leading-relaxed text-slate-500">
+              <p className="text-center text-xs leading-relaxed text-semantic-text-muted">
                 Chưa có tài khoản? Bạn có thể đăng ký từ màn hình đăng nhập.
               </p>
             </div>
@@ -91,15 +91,15 @@ export const PlusPaywallPage: React.FC = () => {
         <div className="bg-gradient-to-br from-semantic-action-primary-pressed to-semantic-action-primary-hover text-white rounded-card p-5 shadow-card flex items-center justify-between gap-3 overflow-hidden border border-semantic-action-primary/40">
           <div className="space-y-1 max-w-[200px]">
             <div className="flex items-center gap-1.5 mb-1">
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              <span className="text-[10px] font-semibold text-amber-300 uppercase tracking-wider">
+              <Sparkles className="w-4 h-4 text-takosan-yellow" />
+              <span className="text-[10px] font-semibold text-takosan-yellow uppercase tracking-wider">
                 Takosan Plus
               </span>
             </div>
             <h2 className="font-heading font-bold text-xl leading-tight text-white">
               {isPlus ? 'Bạn là hội viên Plus' : 'Nấu ăn thông minh hơn'}
             </h2>
-            <p className="text-xs text-slate-200">
+            <p className="text-xs text-white">
               {isPlus
                 ? 'Gói hội viên đang hoạt động với đầy đủ đặc quyền'
                 : 'Mở khóa toàn bộ tính năng cao cấp cùng AI Chef'}
@@ -131,27 +131,27 @@ export const PlusPaywallPage: React.FC = () => {
                   'text-left rounded-xl p-4 relative shadow-xs cursor-pointer transition-tap active:scale-[0.98] focus-visible:outline-none focus-visible:shadow-t17-focus',
                   isSelected
                     ? 'bg-semantic-surface border-semantic-action-primary ring-1 ring-semantic-action-primary'
-                    : 'bg-white border border-slate-200/80 hover:border-slate-300'
+                    : 'bg-white border border-semantic-border hover:border-semantic-border-strong'
                 )}
               >
                 {p.badge && (
-                  <span className="absolute -top-2.5 right-3 bg-rose-500 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full shadow-xs">
+                  <span className="absolute -top-2.5 right-3 bg-semantic-danger text-white text-[10px] font-semibold px-2 py-0.5 rounded-full shadow-xs">
                     {p.badge}
                   </span>
                 )}
-                <p className="font-heading font-semibold text-xs text-slate-700">{p.name}</p>
-                <p className="font-heading font-bold text-xl text-slate-900 mt-1">
+                <p className="font-heading font-semibold text-xs text-semantic-text-secondary">{p.name}</p>
+                <p className="font-heading font-bold text-xl text-semantic-text-primary mt-1">
                   {p.price.toLocaleString('vi-VN')}đ
                 </p>
-                <p className="text-[11px] text-slate-500 mt-0.5">{p.monthlyPriceText}</p>
+                <p className="text-[11px] text-semantic-text-muted mt-0.5">{p.monthlyPriceText}</p>
               </button>
             );
           })}
         </div>
 
         {/* Feature Comparison List */}
-        <div className="space-y-2 bg-white rounded-xl p-4 border border-slate-200/80 shadow-xs">
-          <h3 className="font-heading font-bold text-sm text-slate-900 mb-2">Quyền lợi thành viên:</h3>
+        <div className="space-y-2 bg-white rounded-xl p-4 border border-semantic-border shadow-xs">
+          <h3 className="font-heading font-bold text-sm text-semantic-text-primary mb-2">Quyền lợi thành viên:</h3>
           {[
             'Không giới hạn số lượng nguyên liệu trong tủ lạnh',
             'Không giới hạn lượt quét AI tủ lạnh & hóa đơn siêu thị OCR',
@@ -161,7 +161,7 @@ export const PlusPaywallPage: React.FC = () => {
             'Gợi ý công thức nâng cao bởi DeepSeek AI Chef',
             'Chia sẻ tủ lạnh gia đình không giới hạn thiết bị',
           ].map((feature) => (
-            <div key={feature} className="flex items-center gap-2.5 text-xs text-slate-700 font-medium py-1">
+            <div key={feature} className="flex items-center gap-2.5 text-xs text-semantic-text-secondary font-medium py-1">
               <div className="w-5 h-5 rounded-full bg-semantic-success-soft border border-semantic-action-primary/30 flex items-center justify-center shrink-0">
                 <Check className="w-3.5 h-3.5 text-semantic-action-primary stroke-[2.5]" />
               </div>
