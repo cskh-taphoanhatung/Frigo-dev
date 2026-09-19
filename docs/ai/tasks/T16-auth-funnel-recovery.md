@@ -162,3 +162,27 @@ build-time sharp; no dependency changed in this follow-up and remediation is
 deferred to a separately reviewed dependency upgrade.
 No migration, production data, payment, recipe-authority or Canary change is
 included. Protected production deployment must preserve `shadow/0/false`.
+
+## PWA cache and Google production receipt — 2026-09-19
+
+- PR #42 head `54dd81b3ba260843ed39d625c8e0b7c2f4cef831` passed exact-head CI
+  `35415335137` and merged as main `6a016f185cae9c51ab5a1fc873a8a05a10a57edd`.
+- Exact-main CI `35415536459` and automatic staging Deploy `35415763483`
+  passed, including the new exact-SHA/header smoke.
+- Protected production Deploy `35415843682` passed local gates, read-only
+  schema/ledger gate, exact-SHA convergence and post-deploy smoke. Cloudflare
+  Worker version is `2f228dc9-d97b-4eb1-8cff-9a0f2df3b51c`.
+- Production remains D1 ledger 38 / tip `0038_auth_onboarding_completion.sql`
+  and recipe authority `shadow / 0 / false`; no migration or customer-data
+  mutation was performed.
+- Independent public verification found readiness commit equal to main,
+  database/queue OK, `/auth` and `/sw.js` no-store, exact SHA embedded in the
+  worker, and hashed assets immutable. Cloudflare Assets can label the current
+  `/auth` edge response `HIT`; the response body is the new release and browser
+  storage is prohibited by `no-store`.
+- A clean Chromium profile loaded GIS with the configured client ID, opened the
+  real `accounts.google.com` account chooser, and showed the exact-SHA worker
+  controller with only cache `takosan-pwa-6a016f185cae9c51ab5a1fc873a8a05a10a57edd`.
+- Remaining manual evidence: receive one real OTP email without exposing its
+  code. Closed/suspended/browser-blocked legacy tabs still require
+  reload/reopen/navigation before any deployment can update them.

@@ -1,6 +1,6 @@
 # Frigo Project Status
 
-## T16 — PWA cache and Google recovery ready for production (2026-09-19)
+## T16 — PWA cache and Google recovery deployed to production (2026-09-19)
 
 The stale auth client was traced to a real Service Worker/header mismatch:
 production served cached `/auth` and `/sw.js`, `_headers` targeted the wrong
@@ -11,8 +11,11 @@ HTML/worker policy, immutable hashed assets, numeric Google GIS button sizing,
 and protected deploy smoke for effective headers plus embedded SHA. Independent
 review findings are closed. Full local result: **178 files / 4046 tests**, lint,
 typecheck, migrations and build PASS; local Wrangler headers and a two-release
-Chromium update pass. Production is unchanged pending protected deployment and
-must remain recipe `shadow/0/false`. Reload/reopen/navigation remains the
+Chromium update pass. PR #42 merged as main `6a016f185cae9c51ab5a1fc873a8a05a10a57edd`;
+CI/staging passed and production Deploy `35415843682` published Worker
+`2f228dc9-d97b-4eb1-8cff-9a0f2df3b51c` while preserving recipe
+`shadow/0/false`. Live headers, embedded SHA, readiness and a clean Google popup
+all passed. Reload/reopen/navigation remains the
 reliable recovery boundary for closed, suspended, or browser-blocked old tabs.
 
 ## T15C-D — production 1% Canary blocked before mutation (2026-09-19)

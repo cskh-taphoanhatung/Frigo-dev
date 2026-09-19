@@ -1,6 +1,6 @@
 # Frigo / Takosan current task board — 2026-09-19
 
-## Current T16 follow-up — PWA cache and Google recovery release candidate (2026-09-19)
+## Current T16 follow-up — PWA cache and Google recovery deployed (2026-09-19)
 
 - [done] Confirmed live `/auth` and `/sw.js` were edge-cache hits and production still served fixed cache `takosan-pwa-v2`; repository path mismatch was `/sw.js` registration versus `/service-worker.js` header rule.
 - [done] Added release-SHA Service Worker cache/version injection, SHA-qualified registration with bypassed update cache, load/online/foreground checks, prior-release eviction, best-effort one-time navigation of stale open clients after claim, and fetch-lifetime-safe cache writes.
@@ -10,7 +10,10 @@
 - [done] Independent release review findings were remediated. Local Wrangler effective-header check passed; two-release Chromium check showed no extra clean-install document request and exactly one update navigation, new controller/cache only.
 - [limit] Closed, suspended, or browser-blocked legacy tabs cannot be forced by a deployment; reload/reopen/navigation is the reliable recovery boundary. Awaiting same-client navigation during activation was rejected because it deadlocks the document fetch.
 - [done] Gates PASS: focused **116 tests / 3 files**, full **178 files / 4046 tests**, lint, typecheck, migration smoke, production build, shell syntax and diff check.
-- [pending] Commit/push, exact-head CI, merge, exact-main CI/staging, protected production deploy preserving `shadow/0/false`, then live header/SW/Google verification.
+- [done] PR #42 head `54dd81b...` passed CI `35415335137`, merged as main `6a016f1...`; exact-main CI `35415536459` and staging Deploy `35415763483` passed.
+- [done] Protected production Deploy `35415843682` passed on Worker `2f228dc9-d97b-4eb1-8cff-9a0f2df3b51c`, D1 38/0038, recipe `shadow/0/false`.
+- [done] Live verification: exact readiness SHA, `/auth` and `/sw.js` no-store, exact SHA embedded in the worker, hashed asset immutable, clean Google popup, exact-SHA controller and sole matching cache.
+- [pending] Manual real-inbox OTP receipt only; do not record or expose the OTP value.
 - [safety] No migration, D1/R2/customer-data mutation, PayOS/payment change, Canary activation, full D1 cutover, Inventory Truth change or Week change.
 
 ## Current T15C-D — production 1% Canary certification — safe stop (2026-09-19)

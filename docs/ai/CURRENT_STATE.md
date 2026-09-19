@@ -1,6 +1,6 @@
 # Frigo / Takosan current authority — 2026-09-19
 
-## Current T16 follow-up — PWA cache and Google recovery ready for release (2026-09-19)
+## Current T16 follow-up — PWA cache and Google recovery deployed (2026-09-19)
 
 Production evidence showed `/auth` and `/sw.js` returning `CF-Cache-Status: HIT`,
 while the deployed Service Worker still used the fixed `takosan-pwa-v2` cache.
@@ -11,7 +11,7 @@ GIS itself loaded and opened the real account popup in a clean Chromium profile;
 the affected browser's unavailable state is therefore consistent with that
 stale client/content-blocking boundary, not a credential-less fallback.
 
-The release candidate now injects the exact release SHA into `sw.js`, registers
+The deployed release injects the exact release SHA into `sw.js`, registers
 the SHA-qualified worker with `updateViaCache: none`, checks for updates on load,
 online and foreground, deletes only previous Takosan release caches, and
 best-effort navigates already-open same-origin clients once when an older release
@@ -37,8 +37,22 @@ paths (`wrangler`/`miniflare` `undici`, `jsdom` `ws`, and direct build-time
 `sharp`); this change does not modify dependencies or ship those packages in the
 browser bundle, so remediation remains a separate dependency-upgrade task. No
 migration, D1 write, PayOS/payment change, recipe-authority change or
-production mutation is included. Production remains `shadow/0/false` pending
-merge and the protected production deployment. A deployment cannot force a
+production data mutation is included. PR #42 head
+`54dd81b3ba260843ed39d625c8e0b7c2f4cef831` passed CI `35415335137` and merged
+as main `6a016f185cae9c51ab5a1fc873a8a05a10a57edd`. Exact-main CI `35415536459`
+and staging Deploy `35415763483` passed. Protected production Deploy
+`35415843682` passed every gate and published Worker version
+`2f228dc9-d97b-4eb1-8cff-9a0f2df3b51c`, preserving recipe authority
+`shadow/0/false` and D1 ledger 38 / tip `0038_auth_onboarding_completion.sql`.
+
+Independent production checks found readiness on the exact main SHA with
+database/queue OK and only the existing `CONFIG_PLUS_GRANT_SECRET_MISSING`
+warning. `/auth` serves the current bundle with `no-store` (Cloudflare Assets
+may still label the edge response `HIT`), `/sw.js` is `MISS` plus `no-store`,
+the worker embeds the exact main SHA, and hashed assets are one-year immutable.
+A clean Chromium profile loaded real GIS, opened the `accounts.google.com`
+account chooser, and obtained the exact-SHA Service Worker controller with only
+the matching Takosan cache. A deployment cannot force a
 closed, suspended, or browser-blocked legacy tab to execute; reload/reopen or
 navigation is the guaranteed recovery boundary, while this release adds future
 load/online/foreground update checks.
