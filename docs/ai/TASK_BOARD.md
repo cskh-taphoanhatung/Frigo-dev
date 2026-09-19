@@ -36,6 +36,10 @@
 
 ### T17 continuation 4 — full-diff code review (same day)
 
+- [done] 4b second pass: FoodPreferences no longer flips onboarding client-side; per-nav indicator `layoutId`; dev-OTP autofill is a `<button>`.
+- [done] First local T13 Playwright run: 54/60 → **60/60** (logout test target `/profile`→`/me`; presentation test's fake-onboarding shim replaced by the real flow — pre-existing failure confirmed on base).
+- [done] Full T17 matrix: 360 16/16; other widths 82 pass + 2 by-design skips; one test-only `networkidle` stall fixed and re-verified 12/12 at all six widths.
+
 - [done] Reviewed all 76 changed files against base `769d085` for routing, tenancy, honesty, a11y, motion and fixed-layer defects.
 - [done] Fixed P1: unscoped query keys on new settings pages (tenancy leak risk) → scoped `queryKeys` + invalidate-after-write; offline planning save falsely reporting success → pending-sync state; offline planning read hanging → unavailable state.
 - [done] Fixed P2: TopBar hub detection/legacy nav targets; `/scan/*` review workspaces wrongly immersive + ReceiptReview CTA/nav collision; auth label/OTP/reveal/autocomplete a11y; Switch `aria-describedby` + transform thumb; BottomCTA/StickyActions under the mobile nav.

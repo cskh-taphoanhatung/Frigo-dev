@@ -2,6 +2,21 @@
 
 ## Current T17 — continuation 4: full-diff review with 10 latent defects fixed (2026-09-19)
 
+**Continuation 4b (same day) — second pass + first local T13 run.** Three more
+defects fixed: `FoodPreferencesPage` no longer flips onboarding completion
+client-side (uses `setOnboardingFromServer(auth.isOnboarded, draft)`); nav
+indicator `layoutId` is per-nav so the hidden bottom bar/rail cannot hijack
+the shared-layout animation; dev-OTP autofill is a real `<button>`. **T13
+Playwright ran locally for the first time: 54/60 → 60/60** after (a) updating
+the logout test's target from `/profile` to `/me` (T17 redirect) and (b)
+fixing a *pre-existing* failure (confirmed on base `769d085`) where the
+presentation test faked onboarding via `localStorage`, which migration 0038's
+server-authoritative hydrate overwrites — the test now completes the real
+onboarding flow. Full T17 matrix: 360 **16/16**; other five widths **82 pass /
+2 by-design skips / 1 test-only `networkidle` stall**, fixed and re-verified
+**12/12** at all six widths. Lint/typecheck PASS; harness consumers 27/27.
+Worker/PayOS diff still zero. Status remains `T17_PARTIAL`.
+
 A file-by-file review of the entire redesign diff (`769d085..HEAD`, 76 files)
 found and fixed: two **tenancy** violations (new settings pages used unscoped
 query keys; now `queryKeys.foodPreferences()`/`planningPreferences()` with

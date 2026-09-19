@@ -172,7 +172,7 @@ test('E fences a delayed real GET when profile logout resets the private session
     await page.goto(reviewPath(ids.receiptPurchase));
     await requestCaptured;
 
-    await navigate(page, '/profile');
+    await navigate(page, '/me');
     await page.getByRole('button', { name: 'Đăng xuất khỏi tài khoản' }).click();
     const dialog = page.getByRole('alertdialog', { name: 'Đăng xuất tài khoản?' });
     await expect(dialog).toBeVisible();

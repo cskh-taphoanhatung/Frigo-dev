@@ -35,10 +35,14 @@ export const NAV_ITEMS: NavItem[] = [
 const SCAN_PATH = '/scan';
 const useActive = (item: NavItem) => item.match(useLocation().pathname);
 
-const NavLinkContent: React.FC<{ item: NavItem; active: boolean; withLabel: boolean }> = ({
+// Bottom bar and rail are both mounted (one display:none per breakpoint), so
+// each nav needs its own shared-layout id or the indicator can jump to the
+// hidden nav's zero-size box.
+const NavLinkContent: React.FC<{ item: NavItem; active: boolean; withLabel: boolean; indicatorId: string }> = ({
   item,
   active,
   withLabel,
+  indicatorId,
 }) => (
   <>
     <span
@@ -51,7 +55,8 @@ const NavLinkContent: React.FC<{ item: NavItem; active: boolean; withLabel: bool
     >
       {active && (
         <motion.span
-          layoutId="t17-nav-indicator"
+          layoutId={indicatorId}
+          aria-hidden="true"
           className="absolute inset-0 rounded-card bg-semantic-success-soft"
           transition={{ duration: 0.14, ease: [0.2, 0, 0, 1] }}
         />
@@ -111,7 +116,7 @@ const NavItemButton: React.FC<{ item: NavItem }> = ({ item }) => {
         aria-current={active ? 'page' : undefined}
           className="flex flex-col items-center justify-center gap-1 h-[68px] w-full py-1.5 rounded-card focus-visible:outline-none focus-visible:shadow-t17-focus"
       >
-        <NavLinkContent item={item} active={active} withLabel />
+        <NavLinkContent item={item} active={active} withLabel indicatorId="t17-nav-indicator-bottom" />
       </Link>
     </li>
   );
@@ -140,7 +145,7 @@ export const RailSidebar: React.FC = () => {
               aria-current={active ? 'page' : undefined}
               className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-feature tap-target focus-visible:outline-none focus-visible:shadow-t17-focus"
             >
-              <NavLinkContent item={item} active={active} withLabel={false} />
+              <NavLinkContent item={item} active={active} withLabel={false} indicatorId="t17-nav-indicator-rail" />
               <span className={clsx('text-[10px] leading-none', active ? 'font-bold text-semantic-action-primary' : 'text-semantic-text-muted')}>
                 {item.label}
               </span>

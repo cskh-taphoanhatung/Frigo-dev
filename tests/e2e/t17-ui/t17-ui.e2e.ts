@@ -151,8 +151,9 @@ test('content survives 200% text zoom without horizontal scrolling', async ({ pa
   for (const path of ['/', '/fridge', '/recipes', '/shopping', '/me']) {
     await page.goto(path);
     await expectMainNav(page);
-    // Let fonts/content settle before measuring a zoomed layout.
-    await page.waitForLoadState('networkidle');
+    // Let fonts/content settle before measuring a zoomed layout. Avoid
+    // `networkidle` (stalls behind background polling); fonts + a frame suffice.
+    await page.evaluate(() => document.fonts.ready.then(() => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 200)))));
     const overflow = await page.evaluate(() => {
       document.documentElement.style.fontSize = '200%';
       // Measure after a reflow frame so transient entrance layout is done.

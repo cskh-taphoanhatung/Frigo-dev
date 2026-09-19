@@ -91,12 +91,13 @@ export const AuthShell: React.FC<AuthShellProps> = ({
       )}
 
       {devOtp && (mode === 'otp_verify' || mode === 'forgot_password') && (
-        <div
+        <button
+          type="button"
           onClick={onFillDevOtp}
-          className="mt-3 p-3 bg-takosan-mint border border-takosan-mint-deep/80 rounded-xl text-xs flex items-center justify-between cursor-pointer hover:bg-takosan-mint-hover/70 transition-tap shadow-xs"
+          className="mt-3 w-full text-left p-3 bg-takosan-mint border border-takosan-mint-deep/80 rounded-xl text-xs flex items-center justify-between cursor-pointer hover:bg-takosan-mint-hover/70 transition-tap shadow-xs tap-target"
         >
           <div className="flex items-center gap-2 text-takosan-green-deep">
-            <Sparkles className="w-4 h-4 text-takosan-green" />
+            <Sparkles className="w-4 h-4 text-takosan-green" aria-hidden="true" />
             <div>
               <span className="font-medium">Mã OTP Thử nghiệm: </span>
               <span className="font-heading font-bold text-sm tracking-widest text-takosan-green-deep">{devOtp}</span>
@@ -105,7 +106,7 @@ export const AuthShell: React.FC<AuthShellProps> = ({
           <span className="text-[10px] font-semibold text-takosan-green bg-white px-2 py-0.5 rounded-md border border-takosan-mint-deep">
             Tự điền
           </span>
-        </div>
+        </button>
       )}
 
       {children}

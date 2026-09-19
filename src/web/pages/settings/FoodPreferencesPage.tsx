@@ -109,7 +109,9 @@ export const FoodPreferencesPage: React.FC = () => {
         // Server is the authority for the saved profile; drop the stale read.
         await queryClient.invalidateQueries({ queryKey: queryKeys.foodPreferences() });
       }
-      auth.setOnboardingData(draft as never);
+      // Preference-only store update: never flips onboarding completion,
+      // which is server truth (screen 20 acceptance).
+      auth.setOnboardingFromServer(auth.isOnboarded, draft);
       setSavedAt(Date.now());
     } catch {
       setError('Chưa thể lưu sở thích. Vui lòng kiểm tra kết nối và thử lại.');

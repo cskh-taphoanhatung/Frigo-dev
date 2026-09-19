@@ -81,11 +81,14 @@ test('destructive confirmation dialog traps focus and returns it', async ({ page
 test('empty inbox states a real empty, not an error', async ({ page }, info) => {
   await reset(page);
   await page.goto('/notifications');
-  const body = page.locator('body');
-  await body.first().waitFor({ state: 'visible' });
-  await page.waitForLoadState('networkidle');
+  // Wait for the query to resolve (loading label gone) rather than
+  // `networkidle`, which stalls behind background polling.
+  await expect(page.getByText('Đang tải thông báo…')).toHaveCount(0);
   // The seeded preview either shows real notifications or the honest empty
   // state; a fabricated promotional alert must never appear.
   await expect(page.getByText(/Khuyến mãi từ Takosan/i)).toHaveCount(0);
+  await expect(
+    page.getByText(/Chưa có thông báo mới/).or(page.getByRole('heading', { level: 4 }).first()),
+  ).toBeVisible();
   await page.screenshot({ path: info.outputPath('notifications.png'), fullPage: true });
 });

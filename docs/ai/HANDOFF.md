@@ -4,6 +4,8 @@
 
 ### Continuation 4 (same day) — full-diff review, latent defects fixed
 
+**4b addendum:** three more fixes (FoodPreferences onboarding-flag leak; per-nav `layoutId`; dev-OTP `<button>`). **T13 suite first local run: 60/60** after two test-only fixes — `/profile`→`/me` target, and the presentation test's `localStorage.frigo_onboarded` shim (broken on base by migration 0038, not by T17) replaced with the real onboarding flow. Do **not** seed the preview profile as onboarded: the T17 screenshot spec and screens 04-06 need the fresh preview user to land on onboarding. Full T17 matrix green after one more test-only `networkidle` fix (12/12 re-verify, 6 widths). Prefer `--reporter=line` and make sure no `security-preview.mjs` is left listening on :3000 before a Playwright run — a leaked server from a killed run caused spurious 1.0 m timeouts once.
+
 - **Scope:** every file in `git diff 769d085..HEAD` reviewed; 10 product defects + 1 test defect fixed. Table with severity/finding/fix in `docs/ai/T17_UI_V2_REPORT.md` §Continuation 4.
 - **Most important:** (P1) new settings pages had unscoped React Query keys — fixed with scoped `queryKeys.foodPreferences()`/`planningPreferences()` and invalidate-after-write; (P1) offline planning save showed success while only queued — now explicit pending-sync copy; (P1) offline planning read hung — now honest unavailable state.
 - **IA/layout:** TopBar detects `/me`, navigates to `/me` and `/settings/app` directly; immersive shell is camera-only so `/scan/:id/review` and `/scan/receipt-review` keep navigation; ReceiptReview wrapper removed and its CTA clears the nav; `BottomCTA`/`StickyActions` primitives clear the mobile nav.

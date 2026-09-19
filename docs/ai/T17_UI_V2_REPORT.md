@@ -195,6 +195,60 @@ one screenshot timeout (test-only, fixed, then **6/6** re-verified for the
 screenshot and both new regression assertions). `git diff 769d085 -- src/worker`
 remains **0 lines** (PayOS/payment untouched).
 
+### Continuation 4b — second pass + first local T13 run
+
+Asked whether the review was truly exhaustive, a second pass added:
+
+| # | Severity | Finding | Fix |
+| --- | --- | --- | --- |
+| 12 | P2 truth | `FoodPreferencesPage` saved through `setOnboardingData`, which unconditionally flips `isOnboarded=true` and writes `frigo_onboarded=true` — a client-side onboarding claim the server never made (screen 20: "never touch onboarding completion"). | Uses `setOnboardingFromServer(auth.isOnboarded, draft)` so only preference fields change. |
+| 13 | P2 motion | Bottom bar and rail share one `layoutId="t17-nav-indicator"`; both navs are mounted (one is `display:none`), so the shared-layout indicator could animate from/to the hidden nav's zero-size box. | Per-nav indicator ids; indicator marked `aria-hidden`. |
+| 14 | P3 a11y | Dev-OTP autofill affordance in `AuthShell` was a clickable `<div>` (no keyboard access/name). | Real `<button type="button">` with `tap-target`, icon `aria-hidden`. |
+
+**First local T13 Playwright run** (`playwright.config.ts`, 20 cases × 360/390/430):
+**54 passed / 6 failed** before fixes. Both failures were consistent across all
+three widths and were bisected against base `769d085` in a clean worktree:
+
+- `t13b-ownership E` (logout fences a delayed GET) — **T17 regression**: the
+  test navigated to `/profile`, which is now a redirect to `/me`, so the
+  fixture's exact-URL assertion failed. Test target updated to `/me` (the
+  behavior under test — logout resets the private session — is unchanged).
+- `t13r-b-presentation C` (Home shows ESTIMATED qualifier) — **pre-existing on
+  base, not T17**: it fails identically at `769d085`. Migration 0038 made
+  onboarding server-authoritative (`GET /me` → `onboardingCompleted`), so the
+  test's `localStorage.frigo_onboarded='true'` shim is overwritten on hydrate
+  and `/` redirects to onboarding. Fixed in the test only: it now completes the
+  real onboarding flow (same helper pattern as the T17 suite) instead of faking
+  state. A first attempt seeded the preview profile as onboarded in
+  `scripts/planner-preview-fixtures.mjs`; that was reverted because the T17
+  screenshot spec (and the kit's screens 04-06) need the fresh preview user to
+  land on onboarding. No product code was changed for this case.
+
+**T13 full re-run: 60 passed / 0 failed (7.8 m)** — the first locally
+certified zero-regression result for the rebuilt AppShell (run with the
+interim fixture seed; after reverting to the test-flow fix the two affected
+cases were re-verified **6/6** at 360/390/430, so the 60/60 result holds).
+Harness consumers `tests/e2e/planner-preview.test.mjs` (17/17),
+`tests/integration/t13b-preview-fixtures.test.mjs` + `tests/e2e/t07-operations.test.mjs`
+(10/10) pass.
+
+**Full T17 six-width matrix after all continuation-4 fixes:** mobile-360
+**16/16**; 390/430/768/1024/1440 **82 passed, 2 skipped (by design: the
+screenshot spec runs only at 390/768/1440), 1 failed** — the failure was a
+second `networkidle` stall in the notifications screenshot (test-only, same
+root cause as #11). Fixed by waiting on the query's loading label instead; the
+200%-zoom test's `networkidle` was replaced the same way pre-emptively. Both
+re-verified **12/12** across all six widths. An earlier full-matrix attempt
+showed 1.0 m timeouts at 360 that did not reproduce when 360 ran alone
+(16/16) — attributed to a leaked preview server from a killed run holding the
+port, not to product code.
+
+Honest residual: this is a *review* pass, not a proof of absence. Areas not
+mechanically re-audited in this continuation: WCAG contrast measurements of the
+remaining `slate-*` legacy palette (still the largest open gap), screen-reader
+walkthroughs of legacy pages, and the 17 canonical screenshots still await
+human design review before baselining. Status remains `T17_PARTIAL`.
+
 ## Verification (exact, post-implementation)
 
 - `pnpm lint` — pass (no output).
