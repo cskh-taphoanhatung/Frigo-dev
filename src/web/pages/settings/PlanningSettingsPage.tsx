@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Wallet, ShoppingBag, CalendarDays, Sparkles } from 'lucide-react';
 import { weekApi } from '../../services/week';
+import { queryKeys } from '../../lib/queryKeys';
 import { InlineError, InlineLoading } from '../../components/common/AsyncState';
 import { Button } from '../../components/common/Button';
-import { Page, PageHeader, StickyActions, Surface, Switch } from '../../design-system/primitives';
+import { Page, PageHeader, StickyActions, Surface, Switch, UnavailableState } from '../../design-system/primitives';
 
 const MEAL_SLOT_PRESETS = [
   { id: 'dinner_only', label: 'Chỉ bữa tối', desc: 'Một món chính mỗi ngày' },
@@ -33,6 +34,7 @@ const PRIORITIES = [
  */
 export const PlanningSettingsPage: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [draft, setDraft] = useState<{
     mealSlotsPreset: string;
     budgetTargetVnd: number | null;
@@ -45,7 +47,7 @@ export const PlanningSettingsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const prefsQuery = useQuery({
-    queryKey: ['planning-preferences'],
+    queryKey: queryKeys.planningPreferences(),
     queryFn: () => weekApi.getWeekPreferences(),
   });
 
@@ -67,7 +69,14 @@ export const PlanningSettingsPage: React.FC = () => {
     setError(null);
     setSaving(true);
     try {
-      await weekApi.updateWeekPreferences(draft);
+      const result = await weekApi.updateWeekPreferences(draft);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.planningPreferences() });
+      // Offline replay queued: say so rather than implying the server has it.
+      if ((result as { pendingSync?: boolean })?.pendingSync) {
+        setSavedAt(null);
+        setError('Chưa có mạng: cài đặt sẽ được đồng bộ lên máy chủ khi kết nối lại.');
+        return;
+      }
       setSavedAt(Date.now());
     } catch {
       setError('Chưa thể lưu cài đặt lập kế hoạch. Thử lại khi có kết nối.');
@@ -101,6 +110,13 @@ export const PlanningSettingsPage: React.FC = () => {
       {prefsQuery.isPending && !draft && <InlineLoading label="Đang tải cài đặt…" />}
       {prefsQuery.isError && (
         <InlineError error={prefsQuery.error} onRetry={() => prefsQuery.refetch()} />
+      )}
+      {/* getWeekPreferences returns null when offline: say so instead of
+          showing an endless loading state or fabricating defaults. */}
+      {prefsQuery.isSuccess && prefsQuery.data === null && !draft && (
+        <UnavailableState title="Không tải được cài đặt khi ngoại tuyến">
+          Cần kết nối mạng để đọc cài đặt lập thực đơn hiện tại từ máy chủ. Thử lại khi có mạng.
+        </UnavailableState>
       )}
 
       {draft && (

@@ -15,7 +15,8 @@ export const TopBar: React.FC<TopBarProps> = ({ showBack = false, title, subtitl
   const navigate = useNavigate();
   const location = useLocation();
   const { avatarUrl, displayName } = useAuthStore();
-  const isProfilePage = location.pathname === '/profile';
+  // /me is the account hub (T17); /profile only redirects there.
+  const isProfilePage = location.pathname === '/me' || location.pathname === '/profile';
 
   return (
     <header className="sticky top-0 z-30 bg-takosan-cream/95 backdrop-blur-md px-4 py-3 border-b border-takosan-cream-line transition-colors shadow-xs">
@@ -58,7 +59,7 @@ export const TopBar: React.FC<TopBarProps> = ({ showBack = false, title, subtitl
 
           {isProfilePage ? (
             <button
-              onClick={() => navigate('/settings')}
+              onClick={() => navigate('/settings/app')}
               className="w-9 h-9 rounded-xl hover:bg-slate-100 active:scale-95 flex items-center justify-center text-slate-700 transition-colors border border-slate-200/60"
               aria-label="Cài đặt"
             >
@@ -66,7 +67,7 @@ export const TopBar: React.FC<TopBarProps> = ({ showBack = false, title, subtitl
             </button>
           ) : (
             <button
-              onClick={() => navigate('/profile')}
+              onClick={() => navigate('/me')}
               className="w-9 h-9 rounded-xl bg-takosan-mint text-takosan-green-deep border border-takosan-mint-deep hover:bg-takosan-mint-hover active:scale-95 transition-tap flex items-center justify-center overflow-hidden"
               aria-label="Tài khoản cá nhân"
             >

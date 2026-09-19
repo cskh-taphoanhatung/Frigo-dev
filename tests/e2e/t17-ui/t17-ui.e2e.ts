@@ -44,6 +44,9 @@ test('navigation hides in immersive surfaces and stays in standard ones', async 
   await expectMainNav(page);
   await page.goto('/scan');
   await expect(page.getByRole('navigation', { name: 'Điều hướng chính' })).toHaveCount(0);
+  // Scan review is a standard workspace (screen 09), not a camera surface.
+  await page.goto('/scan/receipt-review');
+  await expectMainNav(page);
   await page.goto('/planner');
   await expectMainNav(page);
 });
@@ -55,6 +58,8 @@ test('settings IA is separated with legacy redirects', async ({ page }) => {
 
   await page.goto('/profile');
   await expect(page).toHaveURL(/\/me$/);
+  // The hub's top bar exposes the settings gear on /me (not only legacy /profile).
+  await expect(page.getByRole('button', { name: 'Cài đặt' })).toBeVisible();
 
   await page.goto('/family');
   await expect(page).toHaveURL(/\/me\/household$/);

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Flame, Heart, Utensils, Users } from 'lucide-react';
 import { authApi } from '../../services/auth';
+import { queryKeys } from '../../lib/queryKeys';
 import { isOfflineGuestSession } from '../../lib/private-session';
 import { useAuthStore } from '../../stores/useAuthStore';
 import { InlineError, InlineLoading } from '../../components/common/AsyncState';
@@ -57,6 +58,7 @@ const asSpicyLevel = (v: unknown, fallback: SpicyLevel = 'medium'): SpicyLevel =
  */
 export const FoodPreferencesPage: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const auth = useAuthStore();
   const isGuestOffline = isOfflineGuestSession();
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -65,7 +67,7 @@ export const FoodPreferencesPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const prefsQuery = useQuery({
-    queryKey: ['food-preferences'],
+    queryKey: queryKeys.foodPreferences(),
     queryFn: () => authApi.getFoodPreferences(),
     enabled: !isGuestOffline,
   });
@@ -104,6 +106,8 @@ export const FoodPreferencesPage: React.FC = () => {
     try {
       if (!isGuestOffline) {
         await authApi.updateFoodPreferences(draft);
+        // Server is the authority for the saved profile; drop the stale read.
+        await queryClient.invalidateQueries({ queryKey: queryKeys.foodPreferences() });
       }
       auth.setOnboardingData(draft as never);
       setSavedAt(Date.now());

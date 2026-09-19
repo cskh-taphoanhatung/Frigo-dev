@@ -242,6 +242,9 @@ export const InventoryPage: React.FC = () => {
                 <motion.div
                   key={item.id}
                   layout
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                   transition={{ duration: MOTION_TOKENS.duration.normal, ease: MOTION_TOKENS.easing.standard }}
                 >
                   <IngredientRow

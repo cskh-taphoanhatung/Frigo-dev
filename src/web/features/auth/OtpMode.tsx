@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '../../components/common/Button';
 import { TurnstileWidget } from '../../components/common/TurnstileWidget';
@@ -41,19 +41,24 @@ export const OtpMode: React.FC<OtpModeProps> = ({
   resendCountdown,
   onResend,
   turnstileToken,
-}) => (
+}) => {
+  const otpGroupId = useId();
+  return (
   <div className="mt-6 space-y-5">
     {turnstileSiteKey && (
       <TurnstileWidget key={turnstileGeneration} siteKey={turnstileSiteKey} onToken={onTurnstileToken} />
     )}
     <form onSubmit={onSubmitVerify} className="space-y-4">
-      <div className="flex justify-center gap-2" onPaste={onOtpPaste}>
+      <p id={otpGroupId} className="sr-only">Mã OTP 6 chữ số</p>
+      <div className="flex justify-center gap-2" role="group" aria-labelledby={otpGroupId} onPaste={onOtpPaste}>
         {otpDigits.map((digit, idx) => (
           <input
             key={idx}
             ref={(el) => (otpInputsRef.current[idx] = el)}
             type="text"
             inputMode="numeric"
+            autoComplete="one-time-code"
+            aria-label={`Chữ số ${idx + 1} của 6`}
             maxLength={1}
             value={digit}
             onChange={(e) => onOtpChange(idx, e.target.value)}
@@ -107,4 +112,5 @@ export const OtpMode: React.FC<OtpModeProps> = ({
       </div>
     </form>
   </div>
-);
+  );
+};

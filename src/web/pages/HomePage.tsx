@@ -107,7 +107,7 @@ export const HomePage: React.FC = () => {
       <header className="sticky top-0 z-30 bg-takosan-cream/95 backdrop-blur-md px-4 py-3.5 border-b border-takosan-cream-line flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-3 min-w-0">
           <button
-            onClick={() => navigate('/profile')}
+            onClick={() => navigate('/me')}
             aria-label="Trang cá nhân"
             className="w-11 h-11 rounded-full border-2 border-takosan-green ring-2 ring-takosan-mint bg-takosan-mint overflow-hidden cursor-pointer active:scale-95 transition-transform shrink-0"
           >

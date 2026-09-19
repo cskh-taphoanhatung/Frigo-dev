@@ -160,6 +160,41 @@ canonical screenshots are implemented and verified. Exact gaps preventing
   both fixed test-only and re-verified: **12/12 passed** for those tests at
   all six widths. No product code changed after the full-suite run.
 
+## Continuation 4 — full-diff code review of the redesign (same date)
+
+Every file in `git diff 769d085..HEAD` (76 files) was reviewed for latent
+defects across routing, data contracts, tenancy, accessibility, motion, and
+the fixed-action layer. Findings and fixes (all product-code unless noted):
+
+| # | Severity | Finding | Fix |
+| --- | --- | --- | --- |
+| 1 | P1 tenancy | New `FoodPreferencesPage`/`PlanningSettingsPage` used bare query keys (`['food-preferences']`, `['planning-preferences']`), violating the repo rule that every server-state key embeds user+household so caches cannot leak across account/household switches. | Added `queryKeys.foodPreferences()` / `queryKeys.planningPreferences()` (scoped) and switched both pages; saves now `invalidateQueries` so the server is the authority after write. |
+| 2 | P1 honesty | `weekApi.updateWeekPreferences` returns `{ pendingSync: true }` when offline (queued replay); the planning page showed "Đã lưu" as if the server had it. | Detect `pendingSync` and show an explicit "chưa có mạng — sẽ đồng bộ khi kết nối lại" state instead of success. |
+| 3 | P1 UX | `weekApi.getWeekPreferences` returns `null` offline; the planning page then hung on the loading state forever. | Explicit `UnavailableState` when the query succeeds with `null`. |
+| 4 | P2 IA | `TopBar` detected the hub with `pathname === '/profile'`; after the `/me` move the settings gear never rendered on the hub, and TopBar/Header/Home still navigated to legacy `/profile` and `/settings` (extra redirect hops). | Detect `/me` (and legacy `/profile`); navigate to `/me` and `/settings/app` directly. Regression assertion added to the T17 suite. |
+| 5 | P2 layout | `AppLayout` treated every `/scan/*` path as immersive, so the scan review workspaces (screen 09: `/scan/:id/review`, `/scan/receipt-review`) lost navigation and `ReceiptReviewPage` still used a phone-width wrapper with a fixed CTA at `bottom-0` (would collide with the bottom nav once nav was restored). | Immersive is now camera-only (`/^\/scan\/?$/`); ReceiptReview wrapper removed and its CTA follows the shared nav-clearing offsets. Regression assertion added. |
+| 6 | P2 a11y | New auth field components rendered `<label>` without `htmlFor`/`id`, OTP digit inputs had no accessible name, password reveal buttons had no name/state, and inputs had no `autocomplete` (kit screen 02/03 requirements). | `AuthField` uses `useId` + `htmlFor`; every inline auth input gets an id, label association, `autocomplete` (`email` / `current-password` / `new-password` / `one-time-code`); OTP groups get `role="group"` + `aria-labelledby` and per-digit `aria-label`; reveal buttons get `aria-label` + `aria-pressed`; the login/register mode switcher exposes `aria-pressed`. |
+| 7 | P2 a11y/motion | `Switch` primitive: description text was not associated (`aria-describedby`), and the thumb animated with `layout` on an absolutely-positioned child (unreliable travel, not governed by the reduced-motion config). | `aria-describedby` wired; thumb is now a transform-driven `animate={{ x }}` spring (deterministic, respects `MotionConfig`). |
+| 8 | P2 layout | `BottomCTA` / `StickyActions` primitives pinned to `bottom-0` on mobile, i.e. underneath the 68px bottom nav; the sticky variant also lacked the rail/sidebar offsets. | Both clear the nav on mobile (`bottom-[calc(68px+safe-area)]`) and revert to true bottom at `md+`; BottomCTA offsets for the rail. |
+| 9 | P3 honesty | Household page asserted a server "Đang hoạt động" status badge nothing on the server provides. | Badge now states only the session-derived fact ("Hộ của bạn"). |
+| 10 | P3 motion | Inventory `AnimatePresence` rows had `layout` but no `initial/animate/exit`, so removals disappeared instantly while insertions shifted — the "stable-key insertion/removal" story was half-implemented. | Added opacity enter/exit alongside `layout`. |
+| 11 | test | Screenshot spec waited on `networkidle`, which stalls behind background polling on desktop and hit the 60s budget. | Waits on the main landmark + one settle frame; per-test timeout raised to 180s for the 17-capture loop. |
+
+Reviewed and intentionally left as-is: the centered toast in ReceiptReview
+keeps `max-w-md mx-auto` (a centered toast is correct, not a phone shell);
+`OnboardingPage`/`HomePage` still link to `/week/setup` and `/week/:id` because
+the router redirects them to Planner when the flag is on and they are the
+correct targets when it is off; internal `X-Frigo-*` headers and storage keys
+stay per rule 11.
+
+Verification after the review fixes: `pnpm lint` PASS, `pnpm typecheck` PASS,
+focused UI/auth suites **65/65 PASS**, full `pnpm test` **178 files / 4046
+tests PASS**, `pnpm check:migrations` PASS, `pnpm build` PASS
+(436.44 kB / 120.93 kB gzip), T17 Playwright at 390 + 1440: 33 passed + the
+one screenshot timeout (test-only, fixed, then **6/6** re-verified for the
+screenshot and both new regression assertions). `git diff 769d085 -- src/worker`
+remains **0 lines** (PayOS/payment untouched).
+
 ## Verification (exact, post-implementation)
 
 - `pnpm lint` — pass (no output).

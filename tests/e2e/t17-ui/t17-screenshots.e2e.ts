@@ -9,6 +9,8 @@ const CERTIFIED_WIDTHS = [390, 768, 1440];
  */
 
 test('canonical surfaces captured per certification width', async ({ page }, info) => {
+  // 17 full-page captures; give the loop headroom instead of the default budget.
+  test.setTimeout(180_000);
   test.skip(
     !CERTIFIED_WIDTHS.includes(page.viewportSize()!.width),
     'canonical screenshots are captured at 390 / 768 / 1440 only (visual-regression-plan)'
@@ -55,7 +57,10 @@ test('canonical surfaces captured per certification width', async ({ page }, inf
   ];
   for (const [name, path] of surfaces) {
     await page.goto(path);
-    await page.waitForLoadState('networkidle');
+    // `networkidle` can stall behind background polling; wait for the page's
+    // main landmark and a settle frame instead.
+    await page.locator('main, [role="main"], h1').first().waitFor({ state: 'visible' });
+    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 150))));
     await page.screenshot({ path: info.outputPath(`${name}.png`), fullPage: true });
   }
 });

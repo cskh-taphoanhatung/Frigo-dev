@@ -261,7 +261,7 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
   };
 
   return (
-    <div className="min-h-screen bg-takosan-cream pb-[calc(12rem+env(safe-area-inset-bottom))] max-w-md mx-auto">
+    <div className="min-h-screen bg-takosan-cream pb-[calc(12rem+env(safe-area-inset-bottom))]">
       <TopBar showBack title="Chi tiết Hóa đơn" subtitle="Bóc tách tự động bởi AI Vision" />
 
       {/* Success Toast */}
@@ -505,7 +505,7 @@ const ReceiptReview: React.FC<{ receiptScanId: string | null }> = ({ receiptScan
       </div>
 
       {/* Floating Action Bottom */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-40 max-w-md mx-auto space-y-2 shadow-lg">
+      <div className="fixed bottom-[calc(68px+env(safe-area-inset-bottom,0px))] md:bottom-0 left-0 right-0 md:left-20 lg:left-64 p-4 md:pb-[calc(1rem+env(safe-area-inset-bottom))] bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-40 space-y-2 shadow-lg">
         {submitError && <p role="alert" className="text-xs text-rose-800">{submitError}</p>}
         {isConfirmed ? <Button fullWidth onClick={() => navigate('/fridge')}>Xem tủ lạnh</Button> : <>
         <Button

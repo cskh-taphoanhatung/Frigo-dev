@@ -63,6 +63,7 @@ export const RegisterMode: React.FC<RegisterModeProps> = ({
         value={password}
         onChange={onPasswordChange}
         placeholder="••••••••"
+        autoComplete="new-password"
         reveal={{ show: showPassword, onToggle: onToggleShowPassword }}
       />
 

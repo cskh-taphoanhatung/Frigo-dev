@@ -1,6 +1,28 @@
 # Frigo / Takosan current authority — 2026-09-19
 
-## Current T17 — continuation 3 delivered (2026-09-19)
+## Current T17 — continuation 4: full-diff review with 10 latent defects fixed (2026-09-19)
+
+A file-by-file review of the entire redesign diff (`769d085..HEAD`, 76 files)
+found and fixed: two **tenancy** violations (new settings pages used unscoped
+query keys; now `queryKeys.foodPreferences()`/`planningPreferences()` with
+invalidate-after-write), two **honesty** gaps (offline planning save showed
+success although the write was only queued — now an explicit pending-sync
+state; offline planning read hung forever — now an honest unavailable state;
+household badge claimed a server status — now session fact only), two
+**IA/layout** regressions (TopBar never showed the settings gear on `/me` and
+still navigated to legacy paths; `/scan/*` review workspaces were wrongly
+immersive and ReceiptReview's CTA would collide with the restored nav), three
+**accessibility** gaps in the new auth components and Switch primitive (label
+association, OTP group/digit names, reveal-button name/state, autocomplete,
+`aria-describedby`), a **motion** defect (Switch thumb `layout` on an absolute
+child; now transform-driven and reduced-motion-governed) plus half-implemented
+inventory row enter/exit, and the **fixed-action primitives** pinned under the
+mobile nav. One test-only fix (screenshot spec `networkidle` stall). Gates
+after fixes: lint PASS, typecheck PASS, full vitest **178/4046 PASS**,
+migration smoke PASS, build PASS, focused UI/auth **65/65**, T17 Playwright
+re-verified for the affected tests. Worker/PayOS diff still zero. Status
+remains `T17_PARTIAL` (slate-palette migration, human screenshot review, T13
+local run outstanding). Full table: `docs/ai/T17_UI_V2_REPORT.md`.
 
 Third checkpoint on `feat/t17-takosan-ui-v2`: all 86 indiscriminate
 `transition-all` utilities were replaced by a scoped `transition-tap` token
@@ -23,6 +45,8 @@ Remaining honest gaps for `T17_COMPLETE`: 856 `slate-*` neutral-palette sites
 still on legacy pages (brand `takosan-*` aliases are kit-permitted), human
 design review of the canonical screenshots, and a first local run of the T13
 Playwright inventory suite. Worker/PayOS diff remains zero; `main` untouched.
+
+## Previous T17 — continuation 3 (2026-09-19)
 
 ## Previous T17 — continuation 2 (2026-09-19)
 

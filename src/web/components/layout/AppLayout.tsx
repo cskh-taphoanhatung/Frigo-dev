@@ -10,7 +10,9 @@ import { OfflineBanner } from '../common/OfflineBanner';
  * onboarding, fullscreen states) — never on planner/settings pages.
  */
 const IMMERSIVE_PATTERNS = [
-  /^\/scan(\/.*)?$/,
+  // Camera only; /scan/:id/review and /scan/receipt-review are standard
+  // review workspaces (screen 09) with navigation.
+  /^\/scan\/?$/,
   /^\/cook(\/.*)?$/,
   /^\/cooking(\/.*)?$/,
   /^\/auth(\/.*)?$/,

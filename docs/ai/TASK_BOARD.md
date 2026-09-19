@@ -34,6 +34,15 @@
 - [limit] Still `T17_PARTIAL`: 856 `slate-*` sites on legacy pages (kit permits `takosan-*` brand aliases), human screenshot review pending, T13 Playwright suite never run in this environment.
 - [safety] No product-code change after the full-suite run; worker/PayOS diff zero; production untouched.
 
+### T17 continuation 4 — full-diff code review (same day)
+
+- [done] Reviewed all 76 changed files against base `769d085` for routing, tenancy, honesty, a11y, motion and fixed-layer defects.
+- [done] Fixed P1: unscoped query keys on new settings pages (tenancy leak risk) → scoped `queryKeys` + invalidate-after-write; offline planning save falsely reporting success → pending-sync state; offline planning read hanging → unavailable state.
+- [done] Fixed P2: TopBar hub detection/legacy nav targets; `/scan/*` review workspaces wrongly immersive + ReceiptReview CTA/nav collision; auth label/OTP/reveal/autocomplete a11y; Switch `aria-describedby` + transform thumb; BottomCTA/StickyActions under the mobile nav.
+- [done] Fixed P3: fabricated household status badge; inventory row enter/exit motion. Test-only: screenshot spec `networkidle` stall.
+- [done] Gates: lint PASS, typecheck PASS, vitest 178/4046 PASS, migrations PASS, build PASS, focused UI/auth 65/65, T17 regressions re-verified 6/6. Worker diff 0.
+- [limit] Still `T17_PARTIAL`: 856 `slate-*` sites, human screenshot review, T13 Playwright local run.
+
 ## Current T16 follow-up — PWA cache and Google recovery deployed (2026-09-19)
 
 - [done] Confirmed live `/auth` and `/sw.js` were edge-cache hits and production still served fixed cache `takosan-pwa-v2`; repository path mismatch was `/sw.js` registration versus `/service-worker.js` header rule.

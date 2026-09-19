@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { Eye, EyeOff, KeyRound, Mail } from 'lucide-react';
 import { Button } from '../../components/common/Button';
 import { TurnstileWidget } from '../../components/common/TurnstileWidget';
@@ -45,7 +45,11 @@ export const ForgotPasswordMode: React.FC<ForgotPasswordModeProps> = ({
   onResetPassword,
   isLoading,
   onBackToLogin,
-}) => (
+}) => {
+  const emailId = useId();
+  const newPasswordId = useId();
+  const otpGroupId = useId();
+  return (
   <div className="mt-5 space-y-4">
     {!forgotOtpRequested && (
       <form onSubmit={onRequestOtp} className="space-y-3">
@@ -53,15 +57,17 @@ export const ForgotPasswordMode: React.FC<ForgotPasswordModeProps> = ({
           <TurnstileWidget key={turnstileGeneration} siteKey={turnstileSiteKey} onToken={onTurnstileToken} />
         )}
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1">Email đăng ký tài khoản</label>
+          <label htmlFor={emailId} className="block text-xs font-semibold text-slate-700 mb-1">Email đăng ký tài khoản</label>
           <div className="relative">
-            <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
+            <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" aria-hidden="true" />
             <input
+              id={emailId}
               type="email"
               required
               value={email}
               onChange={(e) => onEmailChange(e.target.value)}
               placeholder="ban@example.com"
+              autoComplete="email"
               className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 text-sm font-medium text-slate-900 shadow-xs"
             />
           </div>
@@ -76,14 +82,16 @@ export const ForgotPasswordMode: React.FC<ForgotPasswordModeProps> = ({
     {forgotOtpRequested && (
       <form onSubmit={onResetPassword} className="space-y-3 animate-fade-in">
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-2 text-center">Mã xác thực OTP (6 số)</label>
-          <div className="flex justify-center gap-2" onPaste={onOtpPaste}>
+          <p id={otpGroupId} className="block text-xs font-semibold text-slate-700 mb-2 text-center">Mã xác thực OTP (6 số)</p>
+          <div className="flex justify-center gap-2" role="group" aria-labelledby={otpGroupId} onPaste={onOtpPaste}>
             {otpDigits.map((digit, idx) => (
               <input
                 key={idx}
                 ref={(el) => (otpInputsRef.current[idx] = el)}
                 type="text"
                 inputMode="numeric"
+                autoComplete="one-time-code"
+                aria-label={`Chữ số ${idx + 1} của 6`}
                 maxLength={1}
                 value={digit}
                 onChange={(e) => onOtpChange(idx, e.target.value)}
@@ -95,20 +103,24 @@ export const ForgotPasswordMode: React.FC<ForgotPasswordModeProps> = ({
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1">Mật khẩu mới (tối thiểu 6 ký tự)</label>
+          <label htmlFor={newPasswordId} className="block text-xs font-semibold text-slate-700 mb-1">Mật khẩu mới (tối thiểu 6 ký tự)</label>
           <div className="relative">
-            <KeyRound className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
+            <KeyRound className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" aria-hidden="true" />
             <input
+              id={newPasswordId}
               type={showPassword ? 'text' : 'password'}
               required
               value={newPassword}
               onChange={(e) => onNewPasswordChange(e.target.value)}
               placeholder="Nhập mật khẩu mới"
+              autoComplete="new-password"
               className="w-full h-11 pl-10 pr-10 bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 text-sm font-medium text-slate-900 shadow-xs"
             />
             <button
               type="button"
               onClick={onToggleShowPassword}
+              aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+              aria-pressed={showPassword}
               className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 p-1 tap-target"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -132,4 +144,5 @@ export const ForgotPasswordMode: React.FC<ForgotPasswordModeProps> = ({
       </button>
     </div>
   </div>
-);
+  );
+};

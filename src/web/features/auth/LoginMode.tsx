@@ -1,4 +1,4 @@
-import React, { type RefObject } from 'react';
+import React, { useId, type RefObject } from 'react';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import { Button } from '../../components/common/Button';
 import { TurnstileWidget } from '../../components/common/TurnstileWidget';
@@ -41,7 +41,9 @@ export const LoginMode: React.FC<LoginModeProps> = ({
   onSubmit,
   isLoading,
   onForgotPassword,
-}) => (
+}) => {
+  const passwordId = useId();
+  return (
   <div className="mt-5 space-y-4">
     <GoogleAuthSection
       buttonRef={googleButtonRef}
@@ -72,7 +74,7 @@ export const LoginMode: React.FC<LoginModeProps> = ({
 
       <div>
         <div className="flex items-center justify-between mb-1">
-          <label className="block text-xs font-semibold text-slate-700">Mật khẩu</label>
+          <label htmlFor={passwordId} className="block text-xs font-semibold text-slate-700">Mật khẩu</label>
           <button
             type="button"
             onClick={onForgotPassword}
@@ -82,18 +84,22 @@ export const LoginMode: React.FC<LoginModeProps> = ({
           </button>
         </div>
         <div className="relative">
-          <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
+          <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" aria-hidden="true" />
           <input
+            id={passwordId}
             type={showPassword ? 'text' : 'password'}
             required
             value={password}
             onChange={(e) => onPasswordChange(e.target.value)}
             placeholder="••••••••"
+            autoComplete="current-password"
             className="w-full h-11 pl-10 pr-10 bg-white border border-slate-200/80 focus:border-takosan-green rounded-xl focus:outline-none focus:ring-2 focus:ring-takosan-green/20 text-sm font-medium text-slate-900 shadow-xs"
           />
           <button
             type="button"
             onClick={onToggleShowPassword}
+            aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+            aria-pressed={showPassword}
             className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 p-1 tap-target"
           >
             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -106,4 +112,5 @@ export const LoginMode: React.FC<LoginModeProps> = ({
       </Button>
     </form>
   </div>
-);
+  );
+};

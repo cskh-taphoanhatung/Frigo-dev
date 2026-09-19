@@ -106,14 +106,16 @@ export const Surface: React.FC<React.HTMLAttributes<HTMLDivElement> & { tone?: '
   </div>
 );
 
-/** One mobile primary action above bottom nav/safe area (components/FIXED_ACTIONS.md). */
+/** One mobile primary action above bottom nav/safe area (components/FIXED_ACTIONS.md).
+ *  Mobile: clears the 68px bottom nav; md+: nav is a rail/sidebar so bottom-0
+ *  and a left offset apply; lg: renders inline. */
 export const BottomCTA: React.FC<{ children: React.ReactNode; hideOnDesktop?: boolean }> = ({
   children,
   hideOnDesktop = false,
 }) => (
   <div
     className={clsx(
-      'fixed inset-x-0 bottom-0 z-20 bg-semantic-background/95 backdrop-blur border-t border-semantic-border px-4 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] lg:static lg:bottom-auto lg:z-auto lg:bg-transparent lg:border-0 lg:p-0',
+      'fixed inset-x-0 bottom-[calc(68px+env(safe-area-inset-bottom,0px))] md:bottom-0 md:left-20 z-20 bg-semantic-background/95 backdrop-blur border-t border-semantic-border px-4 py-3 md:pb-[calc(env(safe-area-inset-bottom,0px)+12px)] lg:static lg:left-auto lg:bottom-auto lg:z-auto lg:bg-transparent lg:border-0 lg:p-0',
       hideOnDesktop && 'lg:hidden'
     )}
   >
@@ -121,9 +123,11 @@ export const BottomCTA: React.FC<{ children: React.ReactNode; hideOnDesktop?: bo
   </div>
 );
 
-/** Paired editor actions; stays visible, never conceals validation errors. */
+/** Paired editor actions; stays visible, never conceals validation errors.
+ *  Sticky offset equals the mobile bottom nav height so actions never hide
+ *  behind it; rail/sidebar breakpoints stick to the true bottom. */
 export const StickyActions: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="sticky bottom-0 z-20 -mx-4 md:-mx-6 lg:-mx-8 mt-4 bg-semantic-background/95 backdrop-blur border-t border-semantic-border px-4 md:px-6 lg:px-8 py-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] flex gap-3">
+  <div className="sticky bottom-[calc(68px+env(safe-area-inset-bottom,0px))] md:bottom-0 z-20 -mx-4 md:-mx-6 lg:-mx-8 mt-4 bg-semantic-background/95 backdrop-blur border-t border-semantic-border px-4 md:px-6 lg:px-8 py-3 md:pb-[calc(env(safe-area-inset-bottom,0px)+12px)] flex gap-3">
     {children}
   </div>
 );
@@ -143,7 +147,11 @@ export const Switch: React.FC<{
         <label id={`${id}-label`} htmlFor={id} className="text-sm font-semibold text-semantic-text-primary block">
           {label}
         </label>
-        {description && <p className="text-xs text-semantic-text-muted mt-0.5">{description}</p>}
+        {description && (
+          <p id={`${id}-desc`} className="text-xs text-semantic-text-muted mt-0.5">
+            {description}
+          </p>
+        )}
       </div>
       <button
         id={id}
@@ -151,6 +159,7 @@ export const Switch: React.FC<{
         role="switch"
         aria-checked={checked}
         aria-labelledby={`${id}-label`}
+        aria-describedby={description ? `${id}-desc` : undefined}
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={clsx(
@@ -159,13 +168,13 @@ export const Switch: React.FC<{
           disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
         )}
       >
+        {/* Transform-driven thumb: deterministic travel, respects MotionConfig
+            reduced motion (layout animations on absolute children are not). */}
         <motion.span
-          layout
+          aria-hidden="true"
+          animate={{ x: checked ? 20 : 0 }}
           transition={{ type: 'spring', stiffness: 500, damping: 32 }}
-          className={clsx(
-            'absolute top-1 w-6 h-6 rounded-full bg-white shadow-t17-sm',
-            checked ? 'right-1' : 'left-1'
-          )}
+          className="absolute top-1 left-1 w-6 h-6 rounded-full bg-white shadow-t17-sm"
         />
       </button>
     </div>

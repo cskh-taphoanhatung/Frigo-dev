@@ -50,7 +50,7 @@ export const Header: React.FC<HeaderProps> = ({ showBack = false, title, subtitl
           </button>
 
           <button
-            onClick={() => navigate('/profile')}
+            onClick={() => navigate('/me')}
             className="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 active:scale-95 transition-tap flex items-center justify-center tap-target"
             aria-label="Tài khoản"
           >

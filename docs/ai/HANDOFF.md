@@ -2,6 +2,15 @@
 
 ## Current handoff — T17 Takosan UI V2 partial redesign on feat/t17-takosan-ui-v2
 
+### Continuation 4 (same day) — full-diff review, latent defects fixed
+
+- **Scope:** every file in `git diff 769d085..HEAD` reviewed; 10 product defects + 1 test defect fixed. Table with severity/finding/fix in `docs/ai/T17_UI_V2_REPORT.md` §Continuation 4.
+- **Most important:** (P1) new settings pages had unscoped React Query keys — fixed with scoped `queryKeys.foodPreferences()`/`planningPreferences()` and invalidate-after-write; (P1) offline planning save showed success while only queued — now explicit pending-sync copy; (P1) offline planning read hung — now honest unavailable state.
+- **IA/layout:** TopBar detects `/me`, navigates to `/me` and `/settings/app` directly; immersive shell is camera-only so `/scan/:id/review` and `/scan/receipt-review` keep navigation; ReceiptReview wrapper removed and its CTA clears the nav; `BottomCTA`/`StickyActions` primitives clear the mobile nav.
+- **A11y/motion:** auth fields label-associated with ids, autocomplete, OTP group/digit names, reveal-button name/state, mode switcher `aria-pressed`; Switch gets `aria-describedby` and a transform-driven, reduced-motion-governed thumb; inventory rows fade on enter/exit.
+- **Verification:** lint PASS, typecheck PASS, full vitest **178/4046 PASS**, migration smoke PASS, build PASS, focused UI/auth **65/65**, T17 Playwright at 390 + 1440 (33 pass + screenshot timeout fixed test-only, then 6/6 re-verified incl. two new regression assertions). `git diff 769d085 -- src/worker` = 0 lines.
+- **Next exact actions:** unchanged — slate-palette semantic migration, human screenshot review before baselining, first local T13 Playwright run. Status `T17_PARTIAL`.
+
 ### Continuation 3 (same day, same branch)
 
 - **Scoped transitions:** named `transition-tap` token added to tailwind (explicit `transform, background-color, border-color, color, box-shadow, opacity`; layout never transitions); all 86 `transition-all` sites across 32 files migrated; zero remain.

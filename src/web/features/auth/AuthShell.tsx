@@ -64,6 +64,8 @@ export const AuthShell: React.FC<AuthShellProps> = ({
           {(['login', 'register'] as const).map((m) => (
             <button
               key={m}
+              type="button"
+              aria-pressed={mode === m}
               onClick={() => onModeChange(m)}
               className={`flex-1 py-2 rounded-lg font-heading font-semibold text-xs transition-tap tap-target ${
                 mode === m ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'

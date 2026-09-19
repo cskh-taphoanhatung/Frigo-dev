@@ -35,7 +35,9 @@ export const FamilySharingPage: React.FC = () => {
                   <p className="text-xs text-semantic-text-muted truncate">Mã hộ: {householdId}</p>
                 </div>
               </div>
-              <StatusBadge tone="info">Đang hoạt động</StatusBadge>
+              {/* Only the session-derived fact is asserted: this account
+                  belongs to the household. No server status is invented. */}
+              <StatusBadge tone="info">Hộ của bạn</StatusBadge>
             </div>
             <p className="text-sm text-semantic-text-secondary leading-relaxed">
               Dữ liệu tủ lạnh, lịch sử quét và thực đơn được phân tách theo hộ. Tài khoản của bạn
