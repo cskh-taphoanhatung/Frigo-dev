@@ -122,9 +122,9 @@ See `recipe-catalog/T15B_PRE_STATIC_RECEIPT.md` for the durable receipt. Main st
 
 No approved Shadow switch existed in the certified main workflow/config path, so no undocumented Cloudflare mutation was attempted. PR #30 from `codex/t15b-shadow-wiring` adds only validated `static|shadow` deploy input/manifest propagation plus tests; canary/full-D1 remain unavailable. Full local gates pass: focused 99/99; lint, typecheck, full 173 files/3976 tests, migration smoke, build, diff-check. Implementation head `97aff50d…` exact CI `35335079345` is SUCCESS; require independent review and final docs-head exact CI, then stop. Do not merge, activate Shadow, enable canary/full D1, write R2/media, start T14G, change Inventory Truth/T09/T11, PayOS, auth, or production infrastructure.
 
-## Current — T15A pre-production hardening (T15A-R2); Phase B (production) not started
+## Current — T15A pre-production hardening COMPLETE; Phase B (production) not started
 
-See `recipe-catalog/T15A_WIP_HANDOFF.md` for exact heads, the T15A-R2 safe stop (`T15A_R2_BLOCKED_WORKFLOW_PERMISSION`: commit identity contract pushed; workflow wiring + unconditional guardrails committed locally but rejected by GitHub — the App still lacks `workflows` scope; ready-made `git am` series in `recipe-catalog/t15a-r/r2-wired-series.mbox`), and the production resume requirements. PR #27 is not merged. Historical last verified production tip = 0034; Phase B must re-query the live ledger before any mutation. No production D1/R2/deploy/authority change has occurred.
+See `recipe-catalog/T15A_WIP_HANDOFF.md` for the final T15A-R receipt: PR #27 merged to main `0fe2cf071693208f6c642d8cbd994f5a79b5a2cf` (merge commit by maintainer; certified head `776422fb…`; tree delta 0), exact-main CI SUCCESS, automatic staging deploy SUCCESS with exact-SHA convergence through `wait-for-deployed-release.mjs`, production job SKIPPED. Historical last verified production tip = 0034; Phase B must re-query the live ledger before any mutation. No production D1/R2/deploy/authority change has occurred.
 
 ## Current T14F — T14F_DEVELOPMENT_COMPLETE (T14F-C certified + closed; production untouched)
 
