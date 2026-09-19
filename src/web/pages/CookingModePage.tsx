@@ -319,8 +319,8 @@ export const CookingModePage: React.FC = () => {
             <ArrowLeft className="w-5 h-5" />
           </button>
 
-          <div className="text-center">
-            <h1 className="font-heading font-bold text-base text-semantic-text-primary truncate max-w-[180px] sm:max-w-xs md:max-w-md">
+          <div className="text-center min-w-0 flex-1 px-2">
+            <h1 className="font-heading font-bold text-base text-semantic-text-primary truncate">
               {activeRecipe.title}
             </h1>
             <p className="text-xs text-semantic-text-muted font-medium">
